@@ -1,0 +1,12 @@
+version: '3'
+services:
+  dosgato-admin:
+    container_name: dosgato-admin
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - 3000:3000
+    volumes:
+      - ./src:/usr/app/src
+      - ./svelte.config.js:/usr/app/svelte.config.js

@@ -1,0 +1,13 @@
+FROM node:16-alpine as build
+RUN apk update && apk upgrade
+
+WORKDIR /usr/app
+COPY package.json ./
+COPY package-lock.json ./
+COPY svelte.config.js ./
+COPY tsconfig.json ./
+COPY static static
+COPY src src
+
+RUN npm --quiet install
+CMD npm run dev
