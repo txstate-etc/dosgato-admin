@@ -1,12 +1,50 @@
 version: '3'
 services:
   dosgato-admin:
-    container_name: dosgato-admin
     build:
       context: .
       dockerfile: Dockerfile.dev
     ports:
       - 3000:3000
+    environment:
+      API_BASE: http://localhost
+      AUTH_REDIRECT: http://localhost:3001/login?clientId=dosgato-admin&returnUrl=http%3A%2F%2Flocalhost%3A3000%2Fadmin
     volumes:
       - ./src:/usr/app/src
       - ./svelte.config.js:/usr/app/svelte.config.js
+  dosgato-api:
+    build:
+      context: ../dosgato
+      dockerfile: Dockerfile.dev
+    ports:
+      - 80:80
+      - 9229:9229
+    environment:
+      NODE_ENV: development
+      MYSQL_USER: dosgato
+      MYSQL_PASS: password
+      MYSQL_DATABASE: dosgatodev
+      MYSQL_HOST: mysql
+      RESET_DB_ON_STARTUP: 'false'
+      JWT_TRUSTED_ISSUERS: '{ "iss": "unified-auth", "url": "http://fakeauth/jwks" }'
+    volumes:
+      - ../dosgato/src:/usr/app/src
+    depends_on:
+      - mysql
+  fakeauth:
+    image: registry.its.txstate.edu/unified-auth-stub:dev
+    ports:
+      - 3001:80
+  mysql:
+    image: percona:5
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: dosgatodev
+      MYSQL_USER: dosgato
+      MYSQL_PASSWORD: password
+    volumes:
+      - dosgatodb:/var/lib/mysql
+volumes:
+  dosgatodb: {}
