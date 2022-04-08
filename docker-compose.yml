@@ -11,6 +11,7 @@ services:
       AUTH_REDIRECT: http://localhost:3001/login?clientId=dosgato-admin&returnUrl=http%3A%2F%2Flocalhost%3A3000%2Fadmin
     volumes:
       - ./src:/usr/app/src
+      - ./static:/usr/app/static
       - ./svelte.config.js:/usr/app/svelte.config.js
   dosgato-api:
     build:

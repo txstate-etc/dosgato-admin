@@ -11,6 +11,7 @@ module.exports = {
   rules: {
     'import/first': 'off',
 		'no-multiple-empty-lines': 'off',
+		'no-undef': 'off', // redundant with typescript
     'no-undef-init': 'off',
 		'no-unused-vars': 'off',
 		'no-use-before-define': 'off',
