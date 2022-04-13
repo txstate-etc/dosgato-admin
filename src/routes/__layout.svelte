@@ -5,7 +5,7 @@
   import cogOutline from '@iconify-icons/mdi/cog-outline'
   import databaseOutline from '@iconify-icons/mdi/database-outline'
   import fileCodeOutline from '@iconify-icons/mdi/file-code-outline'
-  import fileImageOutline from '@iconify-icons/mdi/file-image-outline'
+  import imageMultipleOutline from '@iconify-icons/mdi/image-multiple-outline'
   import menuDown from '@iconify-icons/mdi/menu-down'
   import webIcon from '@iconify-icons/mdi/web'
   import type { Load } from '@sveltejs/kit'
@@ -52,7 +52,7 @@
     <div class="logo"></div>
     <ul class="topnav">
       <li><a href="{base}/pages"><Icon icon={fileCodeOutline} width="2.5em" hiddenLabel="Pages" /></a></li>
-      <li><a href="{base}/assets"><Icon icon={fileImageOutline} width="2.5em" hiddenLabel="Assets" /></a></li>
+      <li><a href="{base}/assets"><Icon icon={imageMultipleOutline} width="2.5em" hiddenLabel="Assets" /></a></li>
       <li><a href="{base}/data"><Icon icon={databaseOutline} width="2.5em" hiddenLabel="Data" /></a></li>
       <li><a href="{base}/sites"><Icon icon={webIcon} width="2.5em" hiddenLabel="Sites" /></a></li>
       <li><a href="{base}/settings"><Icon icon={cogOutline} width="2.5em" hiddenLabel="Settings" /></a></li>
@@ -82,9 +82,14 @@
 </main>
 
 <style>
-  nav {
-    margin-bottom: 1em;
+  :global(body) {
+    display: flex;
+    flex-direction: column;
   }
+  main {
+    flex-grow: 1;
+  }
+
   .topbar {
     display: flex;
     flex-wrap: wrap;
@@ -133,13 +138,8 @@
   .subnav li.selected {
     background-color: white;
   }
-  :global(button.reset) {
-    background: none;
-    color: inherit;
-    border: none;
-    padding: 0;
-    font: inherit;
-    cursor: pointer;
-    outline: inherit;
+
+  main {
+    padding: 1em;
   }
 </style>
