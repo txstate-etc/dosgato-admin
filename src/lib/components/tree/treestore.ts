@@ -140,6 +140,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
       if (child.open) {
         child.children = await this.fetch(child)
         child.hasChildren = child.children.length > 0
+        if (!child.hasChildren) child.open = false
       }
     })))
 
@@ -147,6 +148,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
       this.visitSync(item, itm => { if (itm.id !== item.id) this.value.itemsById[itm.id] = undefined })
       item.children = children
       item.hasChildren = children.length > 0
+      if (!item.hasChildren) item.open = false
     } else {
       this.value.itemsById = {}
       for (const child of children) (child as unknown as TypedTreeItem<T>).level = 1
