@@ -6,17 +6,11 @@
   import menuRight from '@iconify-icons/mdi/menu-right'
   import { modifierKey } from '@txstate-mws/svelte-components'
   import { createEventDispatcher, getContext } from 'svelte'
-  import { get, hashid, toArray } from 'txstate-utils'
+  import { hashid, toArray } from 'txstate-utils'
   import { type TreeStore, TREE_STORE_CONTEXT, type TypedTreeItem, type TreeItemFromDB, type TreeHeader } from './treestore'
+  import TreeCell from './TreeCell.svelte'
 
   type T = $$Generic<TreeItemFromDB>
-
-  interface $$Slots {
-    default: {
-      item: TypedTreeItem<T>
-      isSelected: boolean
-    }
-  }
 
   export let headers: TreeHeader<T>[]
   export let item: TypedTreeItem<T>
@@ -253,16 +247,7 @@
         {#if i === 0 && item.hasChildren}
           <span class="arrow"><Icon icon={item.open ? menuDown : menuRight} inline /></span>
         {/if}
-        {#if header.icon}
-          <span class="icon"><Icon icon={header.icon(item)} inline /></span>
-        {/if}
-        {#if header.component}
-          <svelte:component this={header.component} {item} {header} />
-        {:else if header.render}
-          {@html header.render(item)}
-        {:else if header.get}
-          {#if get(item, header.get)}{get(item, header.get)}{:else}&nbsp;{/if}
-        {/if}
+        <TreeCell {header} {item} />
       </div>
     {/each}
   </div>
@@ -277,7 +262,9 @@
           level={child.level}
           prev={i === 0 ? item : item.children[i - 1]}
           next={i === item.children.length - 1 ? next : item.children[i + 1]}
-          parent={item} on:choose let:item let:isSelected><slot {item} {isSelected} /></svelte:self>
+          parent={item}
+          on:choose
+        />
       {/each}
     </ul>
   {/if}
@@ -307,7 +294,7 @@
     margin-left: -1.1em;
     margin-right: 0.1em;
   }
-  .tree-node > div.left .icon {
+  .tree-node > div.left :global(.icon) {
     margin-right: 0.4em;
   }
   .tree-node.selected {

@@ -1,33 +1,22 @@
 <script lang="ts">
   import { Icon } from '@dosgato/dialog'
   import homeIcon from '@iconify-icons/mdi/home'
-  import { Loading, resize, ResizeStore } from '@txstate-mws/svelte-components'
+  import { Loading } from '@txstate-mws/svelte-components'
   import { afterUpdate, beforeUpdate, onDestroy, onMount, setContext } from 'svelte'
   import { hashid } from 'txstate-utils'
   import TreeNode from './TreeNode.svelte'
   import { TreeStore, TREE_STORE_CONTEXT } from './treestore'
   import type { DragEligibleFn, DropEligibleFn, DropHandlerFn, DropEffectFn, FetchChildrenFn, TreeHeader, TreeItemFromDB, TypedTreeItem } from './treestore'
+  import TreeCell from './TreeCell.svelte'
 
   type T = $$Generic<TreeItemFromDB>
-
-  interface $$Slots {
-    default: {
-      item: TypedTreeItem<T>
-      level: number
-      isSelected: boolean
-    }
-    breadcrumb: {
-      item: TypedTreeItem<T>
-      level: 0
-      isSelected: undefined
-    }
-  }
 
   interface $$Events {
     choose: CustomEvent<T>
   }
 
   export let headers: TreeHeader<T>[]
+  export let singleSelect: boolean|undefined = undefined
   export let fetchChildren: FetchChildrenFn<T>|undefined = undefined
   export let dragEligible: DragEligibleFn<T>|undefined = undefined
   export let dropEligible: DropEligibleFn<T>|undefined = undefined
@@ -35,6 +24,8 @@
   export let dropEffect: DropEffectFn<T>|undefined = undefined
   export let store = new TreeStore<T>(fetchChildren!, { dropHandler, dragEligible, dropEligible, dropEffect })
   setContext(TREE_STORE_CONTEXT, store)
+
+  $: store.singleSelect = singleSelect
 
   function gatherBreadcrumbs (..._: any) {
     const ret: TypedTreeItem<T>[] = []
@@ -80,13 +71,13 @@
 </script>
 
 {#if $store.viewUnder}
-  <slot name="breadcrumbroot"><button class="reset" on:click={breadcrumbClick()}><Icon icon={homeIcon} inline /></button></slot>
+  <button class="reset" on:click={breadcrumbClick()}><Icon icon={homeIcon} inline /></button>
   {#each breadcrumbs as crumb (crumb.id)}
     <span class="crumb-separator"> / </span>
-    <button class="breadcrumb reset" on:click={breadcrumbClick(crumb)}><slot name="breadcrumb" item={crumb} level={0}>{crumb.id}</slot></button>
+    <button class="breadcrumb reset" on:click={breadcrumbClick(crumb)}><TreeCell item={crumb} header={headers[0]} /></button>
   {/each}
   <span class="crumb-separator"> / </span>
-  <span class="breadcrumb selected"><slot name="breadcrumb" item={$store.viewUnder} level={0}>{$store.viewUnder.id}</slot></span>
+  <span class="breadcrumb selected"><TreeCell item={$store.viewUnder} header={headers[0]} /></span>
 {/if}
 <div class="tree-header" aria-hidden="true">
   <div class="checkbox">&nbsp;</div>
@@ -106,10 +97,7 @@
         prev={$store.viewItems[i - 1]}
         next={$store.viewItems[i + 1]}
         on:choose
-        let:item
-        let:isSelected>
-        <slot {item} level={item.level - ($store.viewUnder ? $store.viewUnder.level : 0)} {isSelected} />
-      </TreeNode>
+      />
     {/each}
   </ul>
 {/if}

@@ -77,6 +77,7 @@
   import { DateTime } from 'luxon'
   import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreePage } from '$lib'
   import { base } from '$app/paths'
+  import './index.css'
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
@@ -89,30 +90,5 @@
       { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` },
       { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
     ]}
-  >
-    <svelte:fragment slot="breadcrumb" let:item>{item.name}</svelte:fragment>
-  </Tree>
+  />
 </ActionPanel>
-
-<style>
-  :global(.name, .template) {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  :global(.status) {
-    text-align: center;
-  }
-  :global(.status.published) {
-    color: var(--dosgato-green, #689600);
-  }
-  :global(.status.modified) {
-    color: var(--dosgato-yellow, #ffbf28);
-  }
-  :global(.status.unpublished) {
-    color: var(--dosgato-red, #9a3332);
-  }
-  :global(.modified span) {
-    font-size: 0.9em;
-  }
-</style>

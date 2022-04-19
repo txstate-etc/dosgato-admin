@@ -59,14 +59,16 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
   public dragEligibleHandler?: DragEligibleFn<T>
   public dropEligibleHandler?: DropEligibleFn<T>
   public dropEffectHandler?: DropEffectFn<T>
+  public singleSelect?: boolean
 
   constructor (
     public fetchChildren: FetchChildrenFn<T>,
-    { dropHandler, dragEligible, dropEligible, dropEffect }: {
+    { dropHandler, dragEligible, dropEligible, dropEffect, singleSelect }: {
       dropHandler?: DropHandlerFn<T>
       dragEligible?: DragEligibleFn<T>
       dropEligible?: DropEligibleFn<T>
       dropEffect?: DropEffectFn<T>
+      singleSelect?: boolean
     }
   ) {
     super({ itemsById: {}, viewItems: [], viewDepth: Infinity, selected: new Map(), selectedItems: [], dragging: false, draggable: !!dropHandler })
@@ -74,6 +76,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     this.dragEligibleHandler = dragEligible
     this.dropEligibleHandler = dropEligible
     this.dropEffectHandler = dropEffect
+    this.singleSelect = singleSelect
   }
 
   async visit (item: TypedTreeItem<T>, cb: (item: TypedTreeItem<T>) => Promise<void>) {
@@ -172,6 +175,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
   select (item: TypedTreeItem<T>, { clear = false, notify = true, toggle = false }) {
     const selected = this.isSelected(item)
     const numSelected = this.value.selected.size
+    if (this.singleSelect) clear = true
     if (clear) {
       this.value.selected.clear()
       this.focus(item, false)

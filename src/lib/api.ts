@@ -14,7 +14,7 @@ export class Loader<T> {
     this.rejects = {}
   }
 
-  async get (id: string): Promise<T> {
+  async get (id: string): Promise<T|undefined> {
     return await new Promise((resolve, reject) => {
       this.ids.add(id)
       this.resolves[id] ??= []
@@ -93,12 +93,12 @@ class API {
   }
 
   async getSubPages (pageId: string) {
-    const { children } = await this.pageChildrenLoader.get(pageId)
-    return children
+    const page = await this.pageChildrenLoader.get(pageId)
+    return page?.children ?? []
   }
 
   protected async getSubPagesBatch (pageId: string|string[]) {
-    const { pages } = await this.query<{ pages: (TreePage & { children: TreePage[] })[] }>(GET_TREE_PAGES, { ids: toArray(pageId) })
+    const { pages } = await this.query<{ pages: { id: string, children: TreePage[] }[] }>(GET_TREE_PAGES, { ids: toArray(pageId) })
     return pages
   }
 }

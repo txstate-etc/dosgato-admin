@@ -1,0 +1,20 @@
+.name, .template {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status {
+  text-align: center;
+}
+.status.published {
+  color: var(--dosgato-green, #689600);
+}
+.status.modified {
+  color: var(--dosgato-yellow, #ffbf28);
+}
+.status.unpublished {
+  color: var(--dosgato-red, #9a3332);
+}
+.modified span {
+  font-size: 0.9em;
+}
