@@ -1,9 +1,12 @@
-import { ActiveStore } from '@txstate-mws/svelte-store'
+import { ActiveStore, derivedStore } from '@txstate-mws/svelte-store'
+import type { IconifyIcon } from '@iconify/svelte'
+import type { SvelteComponent } from 'svelte'
 
 export const TREE_STORE_CONTEXT = {}
 
 export interface TreeItemFromDB {
   id: string
+  hasChildren?: boolean
 }
 
 export interface TreeItem extends TreeItemFromDB {
@@ -21,17 +24,56 @@ export interface ITreeStore<T extends TreeItemFromDB> {
   rootItems?: TypedTreeItem<T>[]
   itemsById: Record<string, TypedTreeItem<T>|undefined>
   focused?: TypedTreeItem<T>
-  selected?: TypedTreeItem<T>
+  selected: Map<string, TypedTreeItem<T>>
+  selectedItems: TypedTreeItem<T>[]
   viewUnder?: TypedTreeItem<T>
   viewItems: TypedTreeItem<T>[]
   viewDepth: number
+  draggable: boolean
+  selectedUndraggable?: boolean
+  dragging: boolean
 }
 
 export type FetchChildrenFn<T extends TreeItemFromDB> = (item?: TypedTreeItem<T>) => Promise<T[]>
+export type DragEligibleFn<T extends TreeItemFromDB> = (item: TypedTreeItem<T>) => boolean
+export type DropEligibleFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => boolean
+export type DropEffectFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => 'move'|'copy'
+export type DropHandlerFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => boolean|Promise<boolean>
+
+export interface TreeHeader<T extends TreeItemFromDB> {
+  id: string
+  label: string
+  defaultWidth: string
+  icon?: (item: TypedTreeItem<T>) => IconifyIcon
+  get?: string
+  render?: (item: TypedTreeItem<T>) => string
+  component?: SvelteComponent
+  class?: (item: TypedTreeItem<T>) => string|string[]
+}
 
 export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<T>> {
-  constructor (public fetchChildren: FetchChildrenFn<T>) {
-    super({ itemsById: {}, viewItems: [], viewDepth: Infinity })
+  public treeElement?: HTMLElement
+  public draggable = derivedStore(this, 'draggable')
+  public dragging = derivedStore(this, 'dragging')
+  public dropHandler?: DropHandlerFn<T>
+  public dragEligibleHandler?: DragEligibleFn<T>
+  public dropEligibleHandler?: DropEligibleFn<T>
+  public dropEffectHandler?: DropEffectFn<T>
+
+  constructor (
+    public fetchChildren: FetchChildrenFn<T>,
+    { dropHandler, dragEligible, dropEligible, dropEffect }: {
+      dropHandler?: DropHandlerFn<T>
+      dragEligible?: DragEligibleFn<T>
+      dropEligible?: DropEligibleFn<T>
+      dropEffect?: DropEffectFn<T>
+    }
+  ) {
+    super({ itemsById: {}, viewItems: [], viewDepth: Infinity, selected: new Map(), selectedItems: [], dragging: false, draggable: !!dropHandler })
+    this.dropHandler = dropHandler
+    this.dragEligibleHandler = dragEligible
+    this.dropEligibleHandler = dropEligible
+    this.dropEffectHandler = dropEffect
   }
 
   async visit (item: TypedTreeItem<T>, cb: (item: TypedTreeItem<T>) => Promise<void>) {
@@ -45,7 +87,25 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
   }
 
   addLookup (items: TypedTreeItem<T>[]) {
-    for (const item of items) this.visitSync(item, itm => { this.value.itemsById[itm.id] = itm })
+    for (const item of items) {
+      this.visitSync(item, itm => {
+        this.value.itemsById[itm.id] = itm
+        if (this.value.selected.has(itm.id)) this.value.selected.set(itm.id, itm)
+      })
+    }
+    this.cleanSelected()
+  }
+
+  cleanSelected () {
+    for (const selected of this.value.selected.values()) {
+      if (!this.value.itemsById[selected.id]) this.value.selected.delete(selected.id)
+    }
+    this.determineDraggable()
+  }
+
+  determineDraggable () {
+    this.value.selectedItems = Array.from(this.value.selected.values())
+    this.value.selectedUndraggable = this.value.selectedItems.some(itm => !this.dragEligible(itm))
   }
 
   set (state: ITreeStore<T>) {
@@ -72,14 +132,18 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     this.trigger()
     const children = await this.fetch(item)
     // re-open any open children
-    await Promise.all(children.map(async (child: TypedTreeItem<T>) => await this.visit(child, async () => {
+    await Promise.all(children.map(async (child: TypedTreeItem<T>) => await this.visit(child, async (child) => {
       child.open = this.value.itemsById[child.id]?.open
-      if (child.open) child.children = await this.fetch(child)
+      if (child.open) {
+        child.children = await this.fetch(child)
+        child.hasChildren = child.children.length > 0
+      }
     })))
 
     if (item) {
-      this.visitSync(item, itm => { this.value.itemsById[itm.id] = undefined })
+      this.visitSync(item, itm => { if (itm.id !== item.id) this.value.itemsById[itm.id] = undefined })
       item.children = children
+      item.hasChildren = children.length > 0
     } else {
       this.value.itemsById = {}
       for (const child of children) (child as unknown as TypedTreeItem<T>).level = 1
@@ -105,10 +169,31 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     if (notify) this.trigger()
   }
 
-  select (item: TypedTreeItem<T>, notify = true) {
-    this.focus(item, false)
-    this.value.selected = item
+  select (item: TypedTreeItem<T>, { clear = false, notify = true, toggle = false }) {
+    const selected = this.isSelected(item)
+    const numSelected = this.value.selected.size
+    if (clear) {
+      this.value.selected.clear()
+      this.focus(item, false)
+    }
+    if (toggle && selected && (!clear || numSelected === 1)) this.value.selected.delete(item.id)
+    else this.value.selected.set(item.id, item)
+    this.determineDraggable()
     if (notify) this.trigger()
+  }
+
+  selectById (id: string, { clear = false, notify = true, toggle = false }) {
+    const item = this.value.itemsById[id]
+    if (item) this.select(item, { clear, notify, toggle })
+  }
+
+  deselect (notify = true) {
+    this.value.selected.clear()
+    if (notify) this.trigger()
+  }
+
+  isSelected (item: TypedTreeItem<T>) {
+    return this.value.selected.has(item.id)
   }
 
   async open (item: TypedTreeItem<T>) {
@@ -120,6 +205,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
 
   close (item: TypedTreeItem<T>) {
     for (const child of item.children ?? []) this.value.itemsById[child.id] = undefined
+    this.cleanSelected()
     item.children = undefined
     item.open = false
     this.trigger()
@@ -134,5 +220,57 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     if (item) await this.open(item)
     this.value.viewUnder = item
     this.trigger()
+  }
+
+  dragStart (item: TypedTreeItem<T>) {
+    if (this.value.dragging || !this.value.draggable) return
+    if (!this.value.selected.has(item.id)) {
+      this.select(item, { clear: true, notify: false })
+    }
+    this.value.dragging = true
+    this.trigger()
+  }
+
+  drop (item: TypedTreeItem<T>, above: boolean) {
+    if (!this.dropHandler) return false
+    this.value.dragging = false
+    if (!this.dropEligible(item, above)) return false
+    this.value.loading = true
+    this.trigger()
+    const result = this.dropHandler(this.value.selectedItems, item, above)
+    if (result === false || result === true) return result
+    result
+      .then(async result => {
+        await this.refresh()
+      })
+      .catch(console.error)
+    return true
+  }
+
+  collectAncestors (item: TypedTreeItem<T>) {
+    const ret: TypedTreeItem<T>[] = []
+    let itm = item
+    while (itm.parent) {
+      ret.push(itm.parent)
+      itm = itm.parent
+    }
+    return ret
+  }
+
+  dragEligible (item: TypedTreeItem<T>) {
+    return !this.dragEligibleHandler || this.dragEligibleHandler(item)
+  }
+
+  dropEligible (item: TypedTreeItem<T>, above: boolean) {
+    if (this.value.selected.has(item.id)) return false
+    for (const ancestor of this.collectAncestors(item)) {
+      if (this.value.selected.has(ancestor.id)) return false
+    }
+    return !this.dropEligibleHandler || this.dropEligibleHandler(this.value.selectedItems, item, above)
+  }
+
+  dropEffect (item: TypedTreeItem<T>, above: boolean) {
+    if (!this.dropEffectHandler) return 'move'
+    return this.dropEffectHandler(this.value.selectedItems, item, above)
   }
 }

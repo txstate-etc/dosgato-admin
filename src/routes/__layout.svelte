@@ -20,7 +20,7 @@
     if (api.token) {
       sessionStorage.setItem('token', api.token)
     } else {
-      api.token = sessionStorage.getItem('token')
+      api.token = sessionStorage.getItem('token') ?? undefined
     }
     const me = await api.query('query getSelf { users (filter:{ ids: ["self"] }) { name } }')
     return { props: { me: me.users[0] } }
@@ -82,14 +82,6 @@
 </main>
 
 <style>
-  :global(body) {
-    display: flex;
-    flex-direction: column;
-  }
-  main {
-    flex-grow: 1;
-  }
-
   .topbar {
     display: flex;
     flex-wrap: wrap;

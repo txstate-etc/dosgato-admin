@@ -1,52 +1,118 @@
-<script type="ts">
-  import { Icon } from '@dosgato/dialog'
-  import fileOutline from '@iconify-icons/mdi/file-outline'
-  import fileRefreshOutline from '@iconify-icons/mdi/file-refresh-outline'
-  import menuDown from '@iconify-icons/mdi/menu-down'
-  import menuRight from '@iconify-icons/mdi/menu-right'
-  import { DateTime } from 'luxon'
-  import { api, ActionPanel, Tree, type TreeItemFromDB, GET_ROOT_PAGES, GET_TREE_PAGES, type TreePage } from '$lib'
+<script type="ts" context="module">
+  import applicationOutline from '@iconify-icons/mdi/application-outline'
+  import circleIcon from '@iconify-icons/mdi/circle'
+  import pencilIcon from '@iconify-icons/mdi/pencil'
+  import publishIcon from '@iconify-icons/mdi/publish'
+  import squareIcon from '@iconify-icons/mdi/square'
+  import triangleIcon from '@iconify-icons/mdi/triangle'
 
-  async function fetchChildren (item?: TreeItemFromDB) {
-    const children = item ? await api.getSubPages(item.id) : await api.getRootPages()
-    return children.map(p => ({ ...p, children: undefined, hasChildren: !!p.children.length, modifiedAt: DateTime.fromISO(p.modifiedAt) }))
+  const statusIcon = {
+    published: triangleIcon,
+    modified: circleIcon,
+    unpublished: squareIcon
   }
+  interface PageItem extends Omit<Omit<Omit<TreePage, 'modifiedAt'>, 'publishedAt'>, 'children'> {
+    modifiedAt: DateTime
+    publishedAt: DateTime
+    hasChildren: boolean
+    status: string
+  }
+  type TypedPageItem = TypedTreeItem<PageItem>
+
+  async function fetchChildren (item?: TypedPageItem) {
+    const children = item ? await api.getSubPages(item.id) : await api.getRootPages()
+    return children.map(p => {
+      const modifiedAt = DateTime.fromISO(p.modifiedAt)
+      const publishedAt = DateTime.fromISO(p.publishedAt)
+      return {
+        ...p,
+        children: undefined,
+        hasChildren: !!p.children.length,
+        modifiedAt,
+        publishedAt,
+        status: p.published ? (publishedAt >= modifiedAt ? 'published' : 'modified') : 'unpublished'
+      } as PageItem
+    })
+  }
+  function singlepageactions (page: TypedPageItem) {
+    return [
+      { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
+      { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => {} }
+    ]
+  }
+  function multipageactions (pages: TypedPageItem[]) {
+    if (!pages?.length) return []
+    return [
+      { label: 'Move', disabled: pages.some(p => !p.permissions.move), onClick: () => {} },
+      { label: 'Publish', disabled: pages.some(p => !p.permissions.publish), onClick: () => {} }
+    ]
+  }
+  async function dropHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
+    return true
+  }
+  function dragEligible (item: TypedPageItem) {
+    // sites cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites
+    return !!item.parent
+  }
+  function dropEligible (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
+    // cannot place an item at the root: instead create a new site in the site management UI
+    if (!dropTarget.parent && above) return false
+    return true
+  }
+  function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
+    const selectedSites = new Set<string>()
+    for (const slctd of selectedItems) {
+      const ancestors = store.collectAncestors(slctd)
+      selectedSites.add((ancestors[ancestors.length - 1] ?? slctd).id)
+    }
+    if (selectedSites.size > 1) return 'copy'
+    const anc = store.collectAncestors(dropTarget)
+    const targetSite = (anc[anc.length - 1] ?? dropTarget).id
+    return selectedSites.has(targetSite) ? 'move' : 'copy'
+  }
+  const store: TreeStore<PageItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
+</script>
+<script type="ts">
+  import { goto } from '$app/navigation'
+  import { DateTime } from 'luxon'
+  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreePage } from '$lib'
+  import { base } from '$app/paths'
 </script>
 
-<ActionPanel actions={[]}>
-  <Tree let:item let:level {fetchChildren} on:choose={() => alert('dbl click!')}>
+<ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
+  <Tree {store} let:item let:level let:isSelected on:choose={({ detail }) => goto(base + '/pages/' + detail.id)}
+    headers={[
+      { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => applicationOutline, get: 'name' },
+      { label: 'Title', id: 'title', defaultWidth: 'calc(40% - 10.75em)', get: 'title' },
+      { label: 'Template', id: 'template', defaultWidth: '8.5em', get: 'template.name' },
+      { label: 'Status', id: 'status', defaultWidth: '4em', icon: item => statusIcon[item.status], class: item => item.status },
+      { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` },
+      { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
+    ]}
+  >
     <svelte:fragment slot="breadcrumb" let:item>{item.name}</svelte:fragment>
-    <div class="name" style:padding-left="{level - 0.15}em">
-      {#if item.hasChildren}
-        <span><Icon icon={item.open ? menuDown : menuRight} inline /></span>
-      {/if}
-      <Icon icon={item.loading ? fileRefreshOutline : fileOutline} inline/>
-      {item.name}
-    </div>
-    <div class="modified">
-      {item.modifiedAt.toFormat('LLL d yyyy h:mma')}
-    </div>
-    <div class="modifiedBy">
-      {item.modifiedBy.id}
-    </div>
   </Tree>
 </ActionPanel>
 
 <style>
-  .name {
-    width: 30%;
+  :global(.name, .template) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .modified {
+  :global(.status) {
+    text-align: center;
+  }
+  :global(.status.published) {
+    color: var(--dosgato-green, #689600);
+  }
+  :global(.status.modified) {
+    color: var(--dosgato-yellow, #ffbf28);
+  }
+  :global(.status.unpublished) {
+    color: var(--dosgato-red, #9a3332);
+  }
+  :global(.modified span) {
     font-size: 0.9em;
-    width: 25%;
-  }
-  .modifiedBy {
-    font-size: 0.9em;
-    width: 45%;
-  }
-  span {
-    display: inline-block;
-    margin-left: -0.85em;
-    margin-right: -.4em;
   }
 </style>
