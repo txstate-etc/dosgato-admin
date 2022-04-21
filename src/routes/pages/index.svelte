@@ -57,15 +57,17 @@
   function dropEligible (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
     // cannot place an item at the root: instead create a new site in the site management UI
     if (!dropTarget.parent && above) return false
-    return true
+    return above ? dropTarget.parent!.permissions.create : dropTarget.permissions.create
   }
   function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
     const selectedSites = new Set<string>()
+    let noMovePerm = false
     for (const slctd of selectedItems) {
       const ancestors = store.collectAncestors(slctd)
       selectedSites.add((ancestors[ancestors.length - 1] ?? slctd).id)
+      if (!slctd.permissions.move) noMovePerm = true
     }
-    if (selectedSites.size > 1) return 'copy'
+    if (selectedSites.size > 1 || noMovePerm) return 'copy'
     const anc = store.collectAncestors(dropTarget)
     const targetSite = (anc[anc.length - 1] ?? dropTarget).id
     return selectedSites.has(targetSite) ? 'move' : 'copy'

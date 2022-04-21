@@ -8,6 +8,7 @@
   import { createEventDispatcher, getContext } from 'svelte'
   import { hashid, toArray } from 'txstate-utils'
   import { type TreeStore, TREE_STORE_CONTEXT, type TypedTreeItem, type TreeItemFromDB, type TreeHeader } from './treestore'
+  import LoadIcon from '../LoadIcon.svelte'
   import TreeCell from './TreeCell.svelte'
 
   type T = $$Generic<TreeItemFromDB>
@@ -22,16 +23,16 @@
   export let parent: TypedTreeItem<T>|undefined = undefined
 
   const store = getContext<TreeStore<T>>(TREE_STORE_CONTEXT)
-  const { dragging, draggable } = store
-  $: isSelected = $store.selected.has(item.id)
+  const { dragging, draggable, selectedUndraggable, viewUnderStore, selected, focused, viewDepth } = store
 
   const dispatch = createEventDispatcher()
   let nodeelement: HTMLElement
 
-  $: leftLevel = ($store.viewUnder?.level ?? 0) + 1
-  $: showChildren = !!item.open && !!item.children?.length && item.level - leftLevel < $store.viewDepth - 1
+  $: isSelected = $selected.has(item.id)
+  $: leftLevel = ($viewUnderStore?.level ?? 0) + 1
+  $: showChildren = !!item.open && !!item.children?.length && item.level - leftLevel < $viewDepth - 1
   $: hashedId = hashid(item.id)
-  $: isDraggable = $draggable && store.dragEligible(item) && (!isSelected || !$store.selectedUndraggable)
+  $: isDraggable = $draggable && store.dragEligible(item) && (!isSelected || !$selectedUndraggable)
   $: dropZone = $dragging && store.dropEligible(item, false)
   $: dropDisabled = $dragging && !dropZone
   $: dropAbove = $dragging && store.dropEligible(item, true)
@@ -127,7 +128,7 @@
     } else {
       const wasFocused = $store.focused?.id === item.id
       store.select(item, { clear: true, toggle: false })
-      if (item.open && wasFocused) store.close(item)
+      if (item.open && wasFocused && !item.loading) store.close(item)
       else if (!item.open) store.open(item)
     }
   }
@@ -218,11 +219,11 @@
     role="treeitem"
     data-id={item.id}
     draggable={isDraggable}
-    tabindex={$store.focused && $store.focused.id === item.id ? 0 : -1}
+    tabindex={$focused && $focused.id === item.id ? 0 : -1}
     aria-level={level}
     aria-posinset={posinset}
     aria-setsize={setsize}
-    aria-expanded={item.open && !!item.children && !!item.children.length}
+    aria-expanded={item.hasChildren ? item.open && !!item.children && !!item.children.length : undefined}
     aria-busy={item.loading}
     on:keydown={onKeyDown}
     on:click={onClick}
@@ -248,6 +249,9 @@
           <span class="arrow"><Icon icon={item.open ? menuDown : menuRight} inline /></span>
         {/if}
         <TreeCell {header} {item} />
+        {#if i === 0 && item.loading}
+          <LoadIcon />
+        {/if}
       </div>
     {/each}
   </div>
@@ -326,9 +330,4 @@
     margin: 0;
     list-style: none;
   }
-
-  :global([data-eq~="650px"]) .tree-node > div {
-    font-size: 0.8em;
-  }
-
 </style>

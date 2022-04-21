@@ -1,6 +1,7 @@
 import { ActiveStore, derivedStore } from '@txstate-mws/svelte-store'
 import type { IconifyIcon } from '@iconify/svelte'
 import type { SvelteComponent } from 'svelte'
+import { keyby } from 'txstate-utils'
 
 export const TREE_STORE_CONTEXT = {}
 
@@ -53,8 +54,16 @@ export interface TreeHeader<T extends TreeItemFromDB> {
 
 export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<T>> {
   public treeElement?: HTMLElement
+
   public draggable = derivedStore(this, 'draggable')
   public dragging = derivedStore(this, 'dragging')
+  public selectedUndraggable = derivedStore(this, 'selectedUndraggable')
+  public selected = derivedStore(this, 'selected')
+  public focused = derivedStore(this, 'focused')
+  public viewUnderStore = derivedStore(this, 'viewUnder')
+  public viewDepth = derivedStore(this, 'viewDepth')
+  public viewItems = derivedStore(this, 'viewItems')
+
   public dropHandler?: DropHandlerFn<T>
   public dragEligibleHandler?: DragEligibleFn<T>
   public dropEligibleHandler?: DropEligibleFn<T>
@@ -156,7 +165,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     }
     this.addLookup(children)
     if (item) item.loading = false
-    else this.value.loading = false
+    this.value.loading = false
     if (notify) this.trigger()
   }
 
@@ -203,7 +212,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
   }
 
   async open (item: TypedTreeItem<T>) {
-    if (item.open) return
+    if (item.open === true || item.hasChildren === false) return
     await this.refresh(item, false)
     item.open = !!item.children?.length
     this.trigger()
@@ -243,11 +252,12 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     if (!this.dropEligible(item, above)) return false
     this.value.loading = true
     this.trigger()
+    const commonparent = this.findCommonParent([...this.value.selectedItems, item])
     const result = this.dropHandler(this.value.selectedItems, item, above)
     if (result === false || result === true) return result
     result
       .then(async result => {
-        await this.refresh()
+        await this.refresh(commonparent)
       })
       .catch(console.error)
     return true
@@ -261,6 +271,23 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
       itm = itm.parent
     }
     return ret
+  }
+
+  findCommonParent (items: TypedTreeItem<T>[]) {
+    if (items.length <= 1) return
+    const [first, ...rest] = items
+    const ancestors = [first, ...this.collectAncestors(first)]
+    const lookup = keyby(ancestors, 'id')
+    const depthById = ancestors.reduce((depthById, a, i) => ({ ...depthById, [a.id]: i }), {})
+    let idx = -1
+    for (const item of rest) {
+      const itemAncestors = this.collectAncestors(item)
+      const firstcommon = itemAncestors.find(a => lookup[a.id])
+      if (!firstcommon) return
+      const found = depthById[firstcommon.id]
+      if (found > idx) idx = found
+    }
+    return ancestors[idx]
   }
 
   dragEligible (item: TypedTreeItem<T>) {

@@ -24,6 +24,7 @@
   export let dropEffect: DropEffectFn<T>|undefined = undefined
   export let store = new TreeStore<T>(fetchChildren!, { dropHandler, dragEligible, dropEligible, dropEffect })
   setContext(TREE_STORE_CONTEXT, store)
+  const { viewUnderStore, viewItems } = store
 
   $: store.singleSelect = singleSelect
 
@@ -37,7 +38,7 @@
     return ret.reverse()
   }
 
-  $: breadcrumbs = gatherBreadcrumbs($store.viewUnder)
+  $: breadcrumbs = gatherBreadcrumbs($viewUnderStore)
 
   function breadcrumbClick (item?: TypedTreeItem<T>) {
     return () => {
@@ -70,14 +71,15 @@
   })
 </script>
 
-{#if $store.viewUnder}
+<Loading loading={!!$store.loading}></Loading>
+{#if $viewUnderStore}
   <button class="reset" on:click={breadcrumbClick()}><Icon icon={homeIcon} inline /></button>
   {#each breadcrumbs as crumb (crumb.id)}
     <span class="crumb-separator"> / </span>
     <button class="breadcrumb reset" on:click={breadcrumbClick(crumb)}><TreeCell item={crumb} header={headers[0]} /></button>
   {/each}
   <span class="crumb-separator"> / </span>
-  <span class="breadcrumb selected"><TreeCell item={$store.viewUnder} header={headers[0]} /></span>
+  <span class="breadcrumb selected"><TreeCell item={$viewUnderStore} header={headers[0]} /></span>
 {/if}
 <div class="tree-header" aria-hidden="true">
   <div class="checkbox">&nbsp;</div>
@@ -85,23 +87,22 @@
     <div id={header.id} style:width={header.defaultWidth}>{header.label}</div>
   {/each}
 </div>
-{#if $store.viewItems.length}
+{#if $viewItems.length}
   <ul bind:this={store.treeElement} role="tree">
-    {#each $store.viewItems as item, i (item.id)}
+    {#each $viewItems as item, i (item.id)}
       <TreeNode
         {item}
         {headers}
         posinset={i + 1}
-        setsize={$store.viewItems.length}
+        setsize={$viewItems.length}
         level={item.level}
-        prev={$store.viewItems[i - 1]}
-        next={$store.viewItems[i + 1]}
+        prev={$viewItems[i - 1]}
+        next={$viewItems[i + 1]}
         on:choose
       />
     {/each}
   </ul>
 {/if}
-<Loading loading={!!$store.loading}></Loading>
 
 <style>
   .tree-header {
@@ -113,10 +114,13 @@
     top: 0;
     left: 0;
     z-index: 1;
+    font-size: 0.9em;
   }
   .tree-header > div {
     padding: 0.4em 0.3em;
-    font-size: 0.9em;
+  }
+  :global([data-eq~="650px"]) .tree-header {
+    font-size: 0.8em;
   }
   .checkbox {
     width: 1.3em;
@@ -126,5 +130,8 @@
     margin: 0;
     list-style: none;
     font-size: 0.9em;
+  }
+  :global([data-eq~="650px"]) ul {
+    font-size: 0.8em;
   }
 </style>
