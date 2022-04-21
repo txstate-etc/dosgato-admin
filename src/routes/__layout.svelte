@@ -1,7 +1,7 @@
 <script lang="ts" context="module">
   import { Icon } from '@dosgato/dialog'
   import accountMultiple from '@iconify-icons/mdi/account-multiple'
-  import chartLine from '@iconify-icons/mdi/chart-line'
+  import closeThick from '@iconify-icons/mdi/close-thick'
   import cogOutline from '@iconify-icons/mdi/cog-outline'
   import databaseOutline from '@iconify-icons/mdi/database-outline'
   import fileCodeOutline from '@iconify-icons/mdi/file-code-outline'
@@ -11,7 +11,7 @@
   import type { Load } from '@sveltejs/kit'
   import { PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
   import { base } from '$app/paths'
-  import { api, subnav } from '$lib'
+  import { api, globalStore, subnav, type SubNavLink } from '$lib'
   import { getToken } from '../local'
 
   export const load: Load = async (input) => {
@@ -22,13 +22,14 @@
     } else {
       api.token = sessionStorage.getItem('token') ?? undefined
     }
-    const me = await api.query('query getSelf { users (filter:{ ids: ["self"] }) { name } }')
-    return { props: { me: me.users[0] } }
+    const { me, access } = await api.getSelf()
+    globalStore.update(v => ({ ...v, me, access }))
+    return {}
   }
 </script>
 <script lang="ts">
   import { page } from '$app/stores'
-  export let me: { name: string }
+  import LabeledIcon from '$lib/components/LabeledIcon.svelte'
   let buttonelement: HTMLElement
 
   const profileItems: PopupMenuItem[] = [
@@ -45,31 +46,41 @@
       location.replace(url)
     }
   }
+
+  function closeSubNav (link: SubNavLink, i: number) {
+    return () => {
+      link.onClose?.(i)
+    }
+  }
 </script>
 
 <nav>
   <div class="topbar">
     <div class="logo"></div>
     <ul class="topnav">
-      <li><a href="{base}/pages"><Icon icon={fileCodeOutline} width="2.5em" hiddenLabel="Pages" /></a></li>
-      <li><a href="{base}/assets"><Icon icon={imageMultipleOutline} width="2.5em" hiddenLabel="Assets" /></a></li>
-      <li><a href="{base}/data"><Icon icon={databaseOutline} width="2.5em" hiddenLabel="Data" /></a></li>
-      <li><a href="{base}/sites"><Icon icon={webIcon} width="2.5em" hiddenLabel="Sites" /></a></li>
-      <li><a href="{base}/settings"><Icon icon={cogOutline} width="2.5em" hiddenLabel="Settings" /></a></li>
-      <li><a href="{base}/reports"><Icon icon={chartLine} width="2.5em" hiddenLabel="Reports" /></a></li>
-      <li><a href="{base}/auth/users"><Icon icon={accountMultiple} width="2.5em" hiddenLabel="Users and Roles" /></a></li>
+      {#if $globalStore.access.viewPageManager}<li><LabeledIcon href="{base}/pages" icon={fileCodeOutline} label="Pages"/></li>{/if}
+      {#if $globalStore.access.viewAssetManager}<li><LabeledIcon href="{base}/assets" icon={imageMultipleOutline} label="Assets" /></li>{/if}
+      {#if $globalStore.access.viewDataManager}<li><LabeledIcon href="{base}/data" icon={databaseOutline} label="Data" /></li>{/if}
+      {#if $globalStore.access.viewSiteManager}<li class="separator"><LabeledIcon href="{base}/sites" icon={webIcon} label="Sites" /></li>{/if}
+      {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings" icon={cogOutline} label="Admin" /></li>{/if}
+      {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={accountMultiple} label="Roles" /></li>{/if}
     </ul>
     <button bind:this={buttonelement} class="login-status reset">
-      {me.name}
+      {$globalStore.me.name}
       <Icon icon={menuDown} inline />
     </button>
   </div>
   {#if showsubnav}
     <div class="subnav">
       <ul>
-        {#each $subnav as link}
+        {#each $subnav as link, i}
           {@const selected = $page.url.pathname === link.href}
-          <li class:selected><a href={link.href}>{#if link.icon}<Icon icon={link.icon} inline/>{/if}{link.label}</a></li>
+          <li class:selected class:closeable={!!link.onClose}>
+            <a href={link.href}>{#if link.icon}<Icon icon={link.icon} inline/>{/if}{link.label}</a>
+            {#if link.onClose}
+              <button type="button" class="reset" on:click={closeSubNav(link, i)}><Icon icon={closeThick} inline hiddenLabel="Close {link.label}" width="1.2em" /></button>
+            {/if}
+          </li>
         {/each}
       </ul>
       <div></div>
@@ -91,7 +102,7 @@
     background-color: #501214;
     padding: 0.5em;
   }
-  .topbar, .topbar a {
+  .topbar {
     color: white;
   }
   nav ul {
@@ -106,6 +117,20 @@
   .topnav li {
     margin-left: 0.5em;
   }
+  .topnav li.separator {
+    position: relative;
+    margin-left: 1em;
+    padding-left: 1em;
+  }
+  .topnav li.separator:before {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    content: ' ';
+    border-left: 2px solid currentColor;
+    height: 50%;
+  }
   .subnav {
     width: 100%;
     display: flex;
@@ -116,19 +141,33 @@
     border-bottom: 1px solid #888888;
   }
   .subnav li {
+    position: relative;
     border-right: 1px solid #888888;
   }
   .subnav li a {
     display: block;
     padding: 0.35em 1.5em;
     text-decoration: none;
-    color: black;
+    color: inherit;
+  }
+  .subnav li.closeable a {
+    padding: 0.35em 1.7em 0.35em 1em;
   }
   .subnav li:not(.selected) {
     border-bottom: 1px solid #888888;
   }
   .subnav li.selected {
     background-color: white;
+  }
+  .subnav button.reset {
+    position: absolute;
+    top: 50%;
+    right: 0.2em;
+    transform: translateY(-50%);
+    color: var(--dosgato-page-close, #333333);
+  }
+  .subnav button.reset :global(svg) {
+    display: block;
   }
 
   main {

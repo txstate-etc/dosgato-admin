@@ -1,4 +1,4 @@
-<script type="ts" context="module">
+<script lang="ts" context="module">
   import applicationOutline from '@iconify-icons/mdi/application-outline'
   import circleIcon from '@iconify-icons/mdi/circle'
   import pencilIcon from '@iconify-icons/mdi/pencil'
@@ -74,7 +74,7 @@
   }
   const store: TreeStore<PageItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
 </script>
-<script type="ts">
+<script lang="ts">
   import { goto } from '$app/navigation'
   import { DateTime } from 'luxon'
   import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreePage } from '$lib'

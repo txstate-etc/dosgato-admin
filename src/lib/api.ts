@@ -1,6 +1,6 @@
 import { base } from '$app/paths'
 import { keyby, toArray } from 'txstate-utils'
-import { GET_ROOT_PAGES, GET_TREE_PAGES, type TreePage } from './queries'
+import { GET_EDITOR_PAGE, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TREE_PAGES, type GlobalSelf, type PageEditorPage, type TreePage } from './queries'
 
 export class Loader<T> {
   protected ids: Set<string>
@@ -87,6 +87,11 @@ class API {
     return this.savedConfig
   }
 
+  async getSelf () {
+    const { users, access } = await this.query<GlobalSelf>(GET_GLOBAL_SELF)
+    return { me: users[0], access }
+  }
+
   async getRootPages () {
     const { sites } = await this.query<{ sites: { pageroot: TreePage }[] }>(GET_ROOT_PAGES)
     return sites.map(s => s.pageroot)
@@ -100,6 +105,11 @@ class API {
   protected async getSubPagesBatch (pageId: string|string[]) {
     const { pages } = await this.query<{ pages: { id: string, children: TreePage[] }[] }>(GET_TREE_PAGES, { ids: toArray(pageId) })
     return pages
+  }
+
+  async getEditorPage (pageId: string) {
+    const { pages } = await this.query<{ pages: [PageEditorPage|undefined] }>(GET_EDITOR_PAGE, { id: pageId })
+    return pages[0]
   }
 }
 
