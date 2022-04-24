@@ -1,6 +1,15 @@
 import { base } from '$app/paths'
 import { keyby, toArray } from 'txstate-utils'
-import { GET_EDITOR_PAGE, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TREE_PAGES, type GlobalSelf, type PageEditorPage, type TreePage } from './queries'
+import { DISABLE_USERS, ENABLE_USERS, GET_EDITOR_PAGE, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TREE_PAGES, GET_USER_LIST, type GlobalSelf, type PageEditorPage, type TreePage, type UserListUser } from './queries'
+
+export interface MutationResponse {
+  success: boolean
+  messages: {
+    arg: string
+    message: string
+    type: 'error'|'warning'|'success'
+  }[]
+}
 
 export class Loader<T> {
   protected ids: Set<string>
@@ -88,8 +97,12 @@ class API {
   }
 
   async getSelf () {
-    const { users, access } = await this.query<GlobalSelf>(GET_GLOBAL_SELF)
-    return { me: users[0], access }
+    try {
+      const { users, access } = await this.query<GlobalSelf>(GET_GLOBAL_SELF)
+      return { me: users[0], access }
+    } catch (e) {
+      return {}
+    }
   }
 
   async getRootPages () {
@@ -110,6 +123,21 @@ class API {
   async getEditorPage (pageId: string) {
     const { pages } = await this.query<{ pages: [PageEditorPage|undefined] }>(GET_EDITOR_PAGE, { id: pageId })
     return pages[0]
+  }
+
+  async getUserList (enabled?: boolean) {
+    const { users } = await this.query<{ users: UserListUser[] }>(GET_USER_LIST, { enabled })
+    return users
+  }
+
+  async disableUsers (userIds: string[]) {
+    const { disableUsers } = await this.query<{ disableUsers: MutationResponse & { users: UserListUser[] } }>(DISABLE_USERS, { userIds })
+    return disableUsers
+  }
+
+  async enableUsers (userIds: string[]) {
+    const { enableUsers } = await this.query<{ enableUsers: MutationResponse & { users: UserListUser[] } }>(ENABLE_USERS, { userIds })
+    return enableUsers
   }
 }
 

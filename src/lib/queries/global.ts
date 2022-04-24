@@ -1,6 +1,6 @@
 export const GET_GLOBAL_SELF = `
   query getSelf {
-    users (filter:{ ids: ["self"] }) {
+    users (filter:{ ids: ["self"], enabled: true }) {
       name
     }
     access {
@@ -27,3 +27,12 @@ export interface GlobalSelf {
     viewSiteManager: boolean
   }
 }
+
+export const mutationResponse = `
+  success
+  messages {
+    arg
+    message
+    type
+  }
+`

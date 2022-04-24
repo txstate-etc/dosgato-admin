@@ -7,10 +7,11 @@
 
   export let header: TreeHeader<T>
   export let item: TypedTreeItem<T>
+  $: icon = typeof header.icon === 'function' ? header.icon(item) : header.icon
 </script>
 
 {#if header.icon}
-  <span class="icon"><Icon icon={header.icon(item)} inline /></span>
+  <span class="icon"><Icon {icon} inline /></span>
 {/if}
 {#if header.component}
   <svelte:component this={header.component} {item} {header} />

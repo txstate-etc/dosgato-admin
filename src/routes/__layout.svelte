@@ -23,6 +23,7 @@
       api.token = sessionStorage.getItem('token') ?? undefined
     }
     const { me, access } = await api.getSelf()
+    if (!me) return { status: 403, error: 'You are not authorized to use this system.' }
     globalStore.update(v => ({ ...v, me, access }))
     return {}
   }
@@ -66,7 +67,7 @@
       {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={accountMultiple} label="Roles" /></li>{/if}
     </ul>
     <button bind:this={buttonelement} class="login-status reset">
-      {$globalStore.me.name}
+      {$globalStore.me.name || 'Unauthorized User'}
       <Icon icon={menuDown} inline />
     </button>
   </div>

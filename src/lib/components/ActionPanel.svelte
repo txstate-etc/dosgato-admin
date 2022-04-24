@@ -1,11 +1,11 @@
 <script lang="ts">
   import { Icon } from '@dosgato/dialog'
   import { eq, offset, OffsetStore, ScreenReaderOnly } from '@txstate-mws/svelte-components'
-  import type { IconifyIcon } from '@iconify/svelte'
   import { onMount } from 'svelte'
+  import type { ActionPanelAction } from './actionpanel'
 
   export let actionsTitle: string|undefined = undefined
-  export let actions: { label: string, icon?: IconifyIcon, disabled?: boolean, onClick: () => void|Promise<void> }[]
+  export let actions: ActionPanelAction[]
 
   $: enabled = actions.filter(a => !a.disabled)
   $: disabledCount = actions.length - enabled.length

@@ -45,7 +45,7 @@ export interface TreeHeader<T extends TreeItemFromDB> {
   id: string
   label: string
   defaultWidth: string
-  icon?: (item: TypedTreeItem<T>) => IconifyIcon
+  icon?: IconifyIcon|((item: TypedTreeItem<T>) => IconifyIcon)
   get?: string
   render?: (item: TypedTreeItem<T>) => string
   component?: SvelteComponent
@@ -78,7 +78,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
       dropEligible?: DropEligibleFn<T>
       dropEffect?: DropEffectFn<T>
       singleSelect?: boolean
-    }
+    } = {}
   ) {
     super({ itemsById: {}, viewItems: [], viewDepth: Infinity, selected: new Map(), selectedItems: [], dragging: false, draggable: !!dropHandler })
     this.dropHandler = dropHandler
