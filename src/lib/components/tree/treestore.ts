@@ -45,7 +45,7 @@ export interface TreeHeader<T extends TreeItemFromDB> {
   id: string
   label: string
   defaultWidth: string
-  icon?: IconifyIcon|((item: TypedTreeItem<T>) => IconifyIcon)
+  icon?: IconifyIcon|((item: TypedTreeItem<T>) => IconifyIcon|undefined)
   get?: string
   render?: (item: TypedTreeItem<T>) => string
   component?: SvelteComponent
