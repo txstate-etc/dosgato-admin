@@ -1,6 +1,12 @@
 import { base } from '$app/paths'
 import { keyby, toArray } from 'txstate-utils'
-import { DISABLE_USERS, ENABLE_USERS, GET_EDITOR_PAGE, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TREE_PAGES, GET_USER_LIST, type GlobalSelf, type PageEditorPage, type TreePage, type UserListUser } from './queries'
+import {
+  DISABLE_USERS, ENABLE_USERS, GET_EDITOR_PAGE, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TREE_PAGES, GET_USER_LIST,
+  GET_DATA_TEMPLATE_LIST, GET_DATA_ENTRIES_BY_TEMPLATE_KEY, GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY,
+  GET_GLOBAL_DATA_BY_TEMPLATE_KEY, GET_SITES_AND_DATA, GET_DATA_BY_DATAFOLDER_ID, GET_DATAFOLDERS_BY_SITE_ID,
+  GET_DATA_BY_SITE_ID, GET_TEMPLATE_INFO, type GlobalSelf, type PageEditorPage, type TreePage, type UserListUser, type TemplateListTemplate,
+  type DataFolderData, type TreeDataItem, type SiteWithData
+} from './queries'
 
 export interface MutationResponse {
   success: boolean
@@ -138,6 +144,46 @@ class API {
   async enableUsers (userIds: string[]) {
     const { enableUsers } = await this.query<{ enableUsers: MutationResponse & { users: UserListUser[] } }>(ENABLE_USERS, { userIds })
     return enableUsers
+  }
+
+  async getDataTemplates () {
+    const { templates } = await this.query<{ templates: TemplateListTemplate[] }>(GET_DATA_TEMPLATE_LIST)
+    return templates.map((template) => ({ id: template.key, name: template.name, key: template.key }))
+  }
+
+  async getTemplateInfo (key: string) {
+    const { templates } = await this.query<{ templates: TemplateListTemplate[] }>(GET_TEMPLATE_INFO, { key })
+    return templates[0]
+  }
+
+  async getGlobalDataFoldersByTemplateKey (key: string) {
+    const { datafolders } = await this.query<{ datafolders: DataFolderData[] }>(GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY, { key })
+    return datafolders
+  }
+
+  async getGlobalDataByTemplateKey (key: string) {
+    const { data } = await this.query<{ data: TreeDataItem[] }>(GET_GLOBAL_DATA_BY_TEMPLATE_KEY, { key })
+    return data
+  }
+
+  async getSitesAndData (key: string) {
+    const { sites } = await this.query<{ sites: SiteWithData[] }>(GET_SITES_AND_DATA, { key })
+    return sites
+  }
+
+  async getDataByFolderId (id: string) {
+    const { data } = await this.query<{ data: TreeDataItem[] }>(GET_DATA_BY_DATAFOLDER_ID, { id })
+    return data
+  }
+
+  async getDataFoldersBySiteId (id: string, key: string) {
+    const { datafolders } = await this.query<{ datafolders: DataFolderData[]}>(GET_DATAFOLDERS_BY_SITE_ID, { id, key })
+    return datafolders
+  }
+
+  async getDataBySiteId (id: string, key: string) {
+    const { data } = await this.query<{ data: TreeDataItem[] }>(GET_DATA_BY_SITE_ID, { id, key })
+    return data
   }
 }
 

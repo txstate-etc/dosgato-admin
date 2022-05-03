@@ -37,7 +37,7 @@
     { value: 'Logout' }
   ]
 
-  $: showsubnav = $subnav.length > 0 && ['auth', 'pages'].some(section => $page.url.pathname.startsWith(base + '/' + section))
+  $: showsubnav = $subnav.length > 0 && ['auth', 'data', 'pages'].some(section => $page.url.pathname.startsWith(base + '/' + section))
 
   function onProfileChange (e: any) {
     if (e.detail.value === 'Logout') {
