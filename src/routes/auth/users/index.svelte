@@ -38,8 +38,8 @@
     const actions: ActionPanelAction[] = [
       { label: 'Edit', icon: pencilIcon, disabled: !user.permissions.update, onClick: () => { modal = 'edit' } }
     ]
-    if (user.disabled) actions.push({ label: 'Enable', icon: accountCheck, disabled: !user.permissions.disable, onClick: () => { modal = 'enable' } })
-    else actions.push({ label: 'Disable', icon: accountCancel, disabled: !user.permissions.disable, onClick: () => { modal = 'disable' } })
+    if (user.disabled) actions.push({ id: 'enabledisable', label: 'Enable', icon: accountCheck, disabled: !user.permissions.disable, onClick: () => { modal = 'enable' } })
+    else actions.push({ id: 'enabledisable', label: 'Disable', icon: accountCancel, disabled: !user.permissions.disable, onClick: () => { modal = 'disable' } })
     return actions
   }
 

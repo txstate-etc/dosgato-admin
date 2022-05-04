@@ -1,12 +1,8 @@
 import { base } from '$app/paths'
+import type { PageLink } from '@dosgato/templating'
 import { keyby, toArray } from 'txstate-utils'
-import {
-  DISABLE_USERS, ENABLE_USERS, GET_EDITOR_PAGE, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TREE_PAGES, GET_USER_LIST,
-  GET_DATA_TEMPLATE_LIST, GET_DATA_ENTRIES_BY_TEMPLATE_KEY, GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY,
-  GET_GLOBAL_DATA_BY_TEMPLATE_KEY, GET_SITES_AND_DATA, GET_DATA_BY_DATAFOLDER_ID, GET_DATAFOLDERS_BY_SITE_ID,
-  GET_DATA_BY_SITE_ID, GET_TEMPLATE_INFO, type GlobalSelf, type PageEditorPage, type TreePage, type UserListUser, type TemplateListTemplate,
-  type DataFolderData, type TreeDataItem, type SiteWithData
-} from './queries'
+import { DISABLE_USERS, ENABLE_USERS, GET_DATAFOLDERS_BY_SITE_ID, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_BY_SITE_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY, GET_GLOBAL_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_SITES_AND_DATA, GET_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, type DataFolderData, type GlobalSelf, type PageEditorPage, type SiteWithData, type TemplateListTemplate, type TreeDataItem, type TreePage, type UserListUser } from './queries'
+import { type GetSubPagesByPath, GET_SUBPAGES_BY_PATH, type GetSubFoldersAndAssetsByPath, GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, type GetPageByLink } from './queries/chooser'
 
 export interface MutationResponse {
   success: boolean
@@ -124,6 +120,21 @@ class API {
   protected async getSubPagesBatch (pageId: string|string[]) {
     const { pages } = await this.query<{ pages: { id: string, children: TreePage[] }[] }>(GET_TREE_PAGES, { ids: toArray(pageId) })
     return pages
+  }
+
+  async getSubPagesByPath (path: string) {
+    const { pages } = await this.query<GetSubPagesByPath>(GET_SUBPAGES_BY_PATH, { path })
+    return pages
+  }
+
+  async getSubFoldersAndAssetsByPath (path: string) {
+    const { assets, folders } = await this.query<GetSubFoldersAndAssetsByPath>(GET_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
+    return [...assets.map(a => ({ ...a, type: 'asset' as 'asset', bytes: a.size })), ...folders.map(f => ({ ...f, type: 'folder' as 'folder', acceptsUpload: f.permissions.create, permissions: undefined }))]
+  }
+
+  async chooserPageByLink (link: PageLink) {
+    const { pages } = await this.query<GetPageByLink>(GET_PAGE_BY_LINK, { linkId: link.linkId, siteId: link.siteId, path: link.path })
+    return pages[0]
   }
 
   async getEditorPage (pageId: string) {

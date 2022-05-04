@@ -14,9 +14,11 @@
     "lint": "eslint --ignore-path .gitignore ."
   },
   "dependencies": {
-    "@dosgato/dialog": "^0.0.3",
+    "@dosgato/dialog": "^0.0.5",
+    "@dosgato/templating": "0.0.5",
     "@iconify-icons/mdi": "^1.2.8",
     "@txstate-mws/svelte-components": "^1.2.9",
+    "@txstate-mws/svelte-forms": "^0.0.15",
     "@txstate-mws/svelte-store": "^1.0.6",
     "luxon": "^2.3.1",
     "txstate-utils": "^1.6.13"
