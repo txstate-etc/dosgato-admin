@@ -33,36 +33,29 @@
     unpublished: squareIcon
   }
 
-  enum DataTreeNodeType {
-    DATA,
-    FOLDER,
-    SITE
-  }
-
-  interface DataItem {
-    id: string
-    name: string
-    type: DataTreeNodeType
+  interface TreeDataItem extends Omit<Omit<DataItem, 'modifiedAt'>, 'publishedAt'> {
+    type: DataTreeNodeType.DATA
     hasChildren: boolean
-    modifiedAt?: DateTime
-    published?: boolean
-    publishedAt?: DateTime
-    status?: string
-    children: any [] | undefined // ???
-    permissions?: {
-      create?: boolean
-      update?: boolean
-      delete?: boolean
-      undelete?: boolean
-      publish?: boolean
-      unpublish?: boolean
-      move?: boolean
-    }
+    modifiedAt: DateTime
+    publishedAt: DateTime
+    status: string
   }
 
-  type TypedDataItem = TypedTreeItem<DataItem>
+  interface TreeDataFolder extends Omit<DataFolder, 'data'> {
+    type: DataTreeNodeType.FOLDER
+    hasChildren: boolean
+  }
 
-  async function fetchChildren (item?: TypedDataItem) {
+  interface TreeDataSite extends Omit<Omit<DataSite, 'data'>, 'datafolders'> {
+    type: DataTreeNodeType.SITE
+    hasChildren: boolean
+  }
+
+  type AnyDataTreeItem = TreeDataItem | TreeDataFolder | TreeDataSite
+
+  type TypedDataTreeItem = TypedTreeItem<AnyDataTreeItem>
+
+  async function fetchChildren (item?: TypedDataTreeItem) {
     if (item) {
       if (item.type === DataTreeNodeType.DATA) return []
       if (item.type === DataTreeNodeType.FOLDER) {
@@ -74,11 +67,10 @@
             ...d,
             type: DataTreeNodeType.DATA,
             hasChildren: false,
-            children: undefined,
             modifiedAt,
             publishedAt,
             status: d.published ? (publishedAt >= modifiedAt ? 'published' : 'modified') : 'unpublished'
-          }
+          } as AnyDataTreeItem
         })
       }
       if (item.type === DataTreeNodeType.SITE) {
@@ -86,14 +78,12 @@
           api.getDataFoldersBySiteId(item.id, templateKey),
           api.getDataBySiteId(item.id, templateKey)
         ])
-        const ret: DataItem[] = []
+        const ret: AnyDataTreeItem[] = []
         for (const f of sitefolders) {
           ret.push({
-            id: f.id,
-            name: f.name,
+            ...f,
             type: DataTreeNodeType.FOLDER,
-            hasChildren: !!f.data.length,
-            children: undefined
+            hasChildren: !!f.data.length
           })
         }
         for (const d of sitedata.filter(data => isNull(data.folder))) {
@@ -103,7 +93,6 @@
             ...d,
             type: DataTreeNodeType.DATA,
             hasChildren: false,
-            children: undefined,
             modifiedAt,
             publishedAt,
             status: d.published ? (publishedAt >= modifiedAt ? 'published' : 'modified') : 'unpublished'
@@ -117,14 +106,12 @@
         api.getGlobalDataFoldersByTemplateKey(templateKey),
         api.getSitesAndData(templateKey)
       ])
-      const ret: DataItem[] = []
+      const ret: AnyDataTreeItem[] = []
       for (const f of globalFolders) {
         ret.push({
-          id: f.id,
-          name: f.name,
+          ...f,
           type: DataTreeNodeType.FOLDER,
-          hasChildren: !!f.data.length,
-          children: undefined
+          hasChildren: !!f.data.length
         })
       }
       for (const d of globalData.filter(d => isNull(d.folder))) {
@@ -134,7 +121,6 @@
           ...d,
           type: DataTreeNodeType.DATA,
           hasChildren: false,
-          children: undefined,
           modifiedAt,
           publishedAt,
           status: d.published ? (publishedAt >= modifiedAt ? 'published' : 'modified') : 'unpublished'
@@ -142,11 +128,9 @@
       }
       for (const s of sites) {
         ret.push({
-          id: s.id,
-          name: s.name,
+          ...s,
           type: DataTreeNodeType.SITE,
-          hasChildren: !!s.data.length || !!s.datafolders.length,
-          children: undefined
+          hasChildren: !!s.data.length || !!s.datafolders.length
         })
       }
       return ret
@@ -162,7 +146,7 @@
     ]
   }
 
-  function singleActions(item: TypedDataItem) {
+  function singleActions (item: TypedDataTreeItem) {
     if (item.type === DataTreeNodeType.DATA) {
       return [
         { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => {} },
@@ -189,7 +173,7 @@
     }
   }
 
-  function multipleActions (items: TypedDataItem[]) {
+  function multipleActions (items: TypedDataTreeItem[]) {
     // the only data/datafolder actions available for sites are Adding data and datafolders
     // and that doesn't make sense in the context of multiple selections
     if (items.some((item) => item.type === DataTreeNodeType.SITE)) return []
@@ -210,7 +194,7 @@
     }
   }
 
-  function getActions (selectedItems: TypedDataItem[]) {
+  function getActions (selectedItems: TypedDataTreeItem[]) {
     if (selectedItems.length === 0) return zeroactions()
     if (selectedItems.length === 1) return singleActions(selectedItems[0])
     if (selectedItems.length > 1) return multipleActions(selectedItems)
@@ -223,18 +207,18 @@
     else return applicationOutline
   }
 
-  const store: TreeStore<DataItem> = new TreeStore(fetchChildren)
+  const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren)
 </script>
 <script lang="ts">
-  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, dataListStore } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, type TypedTreeItem, dataListStore, type DataItem, type DataFolder, type DataSite } from '$lib'
   import './index.css'
 </script>
 
 <ActionPanel actions={getActions($store.selectedItems)}>
   <Tree {store} headers={[
     { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => getPathIcon(item.type), get: 'name' },
-    { label: 'Status', id: 'status', defaultWidth: '5em', icon: item => item.status ? statusIcon[item.status] : undefined, class: item => item.status || '' },
-    { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => `<span>${item.modifiedAt ? item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : ''}</span>` },
+    { label: 'Status', id: 'status', defaultWidth: '5em', icon: item => item.type === DataTreeNodeType.DATA ? statusIcon[item.status] : undefined, class: item => item.type === DataTreeNodeType.DATA ? item.status : '' },
+    { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
     { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
   ]}></Tree>
 </ActionPanel>

@@ -1,6 +1,6 @@
 const templateDetails = `
-name
-key
+  name
+  key
 `
 export interface TemplateListTemplate {
   id: string
@@ -48,7 +48,13 @@ const dataFolderDetails = `
   }
 `
 
-export interface TreeDataItem {
+export enum DataTreeNodeType {
+  DATA,
+  FOLDER,
+  SITE
+}
+
+export interface DataItem {
   id: string
   name: string
   site?: {
@@ -66,30 +72,17 @@ export interface TreeDataItem {
   published: boolean
   publishedAt: string
   permissions: {
-    create
-    update
-    delete
-    publish
-    move
+    create: boolean
+    update: boolean
+    delete: boolean
+    undelete: boolean
+    publish: boolean
+    unpublish: boolean
+    move: boolean
   }
 }
 
-export const GET_DATA_TEMPLATE_LIST = `
-  query getDataTemplateList {
-    templates (filter: { types: [DATA] }) {
-      ${templateDetails}
-    }
-  }
-`
-
-export const GET_DATA_ENTRIES_BY_TEMPLATE_KEY = `
-  query getDataEntrysByTemplateKey ($key: String) {
-    data (filter:{ templateKeys: [$key] }) {
-      ${dataDetails}
-    }
-  }
-`
-export interface DataFolderData {
+export interface DataFolder {
   id: string
   name: string
   data: {
@@ -103,6 +96,35 @@ export interface DataFolderData {
     undelete: boolean
   }
 }
+
+export interface DataSite {
+  id: string
+  name: string
+  data: {
+    id: string
+    name: string
+  }[]
+  datafolders: {
+    id: string
+    name: string
+  }[]
+}
+
+export const GET_DATA_TEMPLATE_LIST = `
+  query getDataTemplateList {
+    templates (filter: { types: [DATA] }) {
+      ${templateDetails}
+    }
+  }
+`
+
+export const GET_TEMPLATE_INFO = `
+  query getTemplateInfo ($key: String) {
+    templates (filter:{ keys: [$key] }) {
+      ${templateDetails}
+    }
+  }
+`
 
 export const GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY = `
   query getGlobalDataFolders ($key: String) {
@@ -119,19 +141,6 @@ export const GET_GLOBAL_DATA_BY_TEMPLATE_KEY = `
     }
   }
 `
-
-export interface SiteWithData {
-  id: string
-  name: string
-  data: {
-    id: string
-    name: string
-  }[]
-  datafolders: {
-    id: string
-    name: string
-  }[]
-}
 
 export const GET_SITES_AND_DATA = `
   query getSitesAndData ($key: String) {
@@ -175,13 +184,6 @@ export const GET_DATA_BY_SITE_ID = `
   query getDataBySiteId ($id: String, $key: String) {
     data (filter: { templateKeys:[$key], siteIds: [$id]}) {
       ${dataDetails}
-    }
-  }
-`
-export const GET_TEMPLATE_INFO = `
-  query getTemplateInfo ($key: String) {
-    templates (filter:{ keys: [$key] }) {
-      ${templateDetails}
     }
   }
 `

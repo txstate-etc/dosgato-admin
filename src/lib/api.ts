@@ -1,7 +1,7 @@
 import { base } from '$app/paths'
 import type { PageLink } from '@dosgato/templating'
 import { keyby, toArray } from 'txstate-utils'
-import { DISABLE_USERS, ENABLE_USERS, GET_DATAFOLDERS_BY_SITE_ID, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_BY_SITE_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY, GET_GLOBAL_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_SITES_AND_DATA, GET_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, type DataFolderData, type GlobalSelf, type PageEditorPage, type SiteWithData, type TemplateListTemplate, type TreeDataItem, type TreePage, type UserListUser } from './queries'
+import { DISABLE_USERS, ENABLE_USERS, GET_DATAFOLDERS_BY_SITE_ID, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_BY_SITE_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY, GET_GLOBAL_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_SITES_AND_DATA, GET_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, type DataFolder, type GlobalSelf, type PageEditorPage, type DataSite, type TemplateListTemplate, type DataItem, type TreePage, type UserListUser } from './queries'
 import { type GetSubPagesByPath, GET_SUBPAGES_BY_PATH, type GetSubFoldersAndAssetsByPath, GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, type GetPageByLink } from './queries/chooser'
 
 export interface MutationResponse {
@@ -168,32 +168,32 @@ class API {
   }
 
   async getGlobalDataFoldersByTemplateKey (key: string) {
-    const { datafolders } = await this.query<{ datafolders: DataFolderData[] }>(GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY, { key })
+    const { datafolders } = await this.query<{ datafolders: DataFolder[] }>(GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY, { key })
     return datafolders
   }
 
   async getGlobalDataByTemplateKey (key: string) {
-    const { data } = await this.query<{ data: TreeDataItem[] }>(GET_GLOBAL_DATA_BY_TEMPLATE_KEY, { key })
+    const { data } = await this.query<{ data: DataItem[] }>(GET_GLOBAL_DATA_BY_TEMPLATE_KEY, { key })
     return data
   }
 
   async getSitesAndData (key: string) {
-    const { sites } = await this.query<{ sites: SiteWithData[] }>(GET_SITES_AND_DATA, { key })
+    const { sites } = await this.query<{ sites: DataSite[] }>(GET_SITES_AND_DATA, { key })
     return sites
   }
 
   async getDataByFolderId (id: string) {
-    const { data } = await this.query<{ data: TreeDataItem[] }>(GET_DATA_BY_DATAFOLDER_ID, { id })
+    const { data } = await this.query<{ data: DataItem[] }>(GET_DATA_BY_DATAFOLDER_ID, { id })
     return data
   }
 
   async getDataFoldersBySiteId (id: string, key: string) {
-    const { datafolders } = await this.query<{ datafolders: DataFolderData[]}>(GET_DATAFOLDERS_BY_SITE_ID, { id, key })
+    const { datafolders } = await this.query<{ datafolders: DataFolder[]}>(GET_DATAFOLDERS_BY_SITE_ID, { id, key })
     return datafolders
   }
 
   async getDataBySiteId (id: string, key: string) {
-    const { data } = await this.query<{ data: TreeDataItem[] }>(GET_DATA_BY_SITE_ID, { id, key })
+    const { data } = await this.query<{ data: DataItem[] }>(GET_DATA_BY_SITE_ID, { id, key })
     return data
   }
 }
