@@ -78,4 +78,7 @@
   .actions li button {
     display: block;
   }
+  .actions li button:disabled {
+    cursor: not-allowed;
+  }
 </style>

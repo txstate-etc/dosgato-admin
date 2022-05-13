@@ -1,3 +1,5 @@
+import { mutationResponse } from './global'
+
 const templateDetails = `
   name
   key
@@ -170,12 +172,7 @@ export const GET_DATA_BY_DATAFOLDER_ID = `
 export const GET_DATAFOLDERS_BY_SITE_ID = `
   query getDataFoldersBySiteId ($id: String, $key: String) {
     datafolders (filter: { templateKeys:[$key], siteIds: [$id]}) {
-      id
-      name
-      data {
-        id
-        name
-      }
+      ${dataFolderDetails}
     }
   }
 `
@@ -184,6 +181,28 @@ export const GET_DATA_BY_SITE_ID = `
   query getDataBySiteId ($id: String, $key: String) {
     data (filter: { templateKeys:[$key], siteIds: [$id]}) {
       ${dataDetails}
+    }
+  }
+`
+
+export const CREATE_DATA_FOLDER = `
+  mutation createDataFolder ($args: CreateDataFolderInput!) {
+    createDataFolder (args: $args) {
+      ${mutationResponse}
+      dataFolder {
+        ${dataFolderDetails}
+      }
+    }
+  }
+`
+
+export const DELETE_DATA_FOLDERS = `
+  mutation deleteDataFolders ($folderIds: [ID]!) {
+    deleteDataFolders (folderIds: $folderIds) {
+      ${mutationResponse}
+      dataFolders {
+        ${dataFolderDetails}
+      }
     }
   }
 `

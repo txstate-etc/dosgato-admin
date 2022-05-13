@@ -80,6 +80,7 @@
         ])
         const ret: AnyDataTreeItem[] = []
         for (const f of sitefolders) {
+          console.log(f)
           ret.push({
             ...f,
             type: DataTreeNodeType.FOLDER,
@@ -138,11 +139,29 @@
     return []
   }
 
+  function getPathIcon (type: DataTreeNodeType) {
+    if (type === DataTreeNodeType.DATA) return databaseOutline
+    else if (type === DataTreeNodeType.FOLDER) return folderOutline
+    else return applicationOutline
+  }
+
+  const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren)
+</script>
+<script lang="ts">
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, type TypedTreeItem, dataListStore, type DataItem, type DataFolder, type DataSite } from '$lib'
+  import './index.css'
+  import { FieldText } from '@dosgato/dialog'
+  import Dialog from '$lib/components/Dialog.svelte'
+  import FormDialog from '$lib/components/FormDialog.svelte'
+  import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
+
+  let modal: 'addfolder'|'adddata'|'deletefolder'|undefined
+
   function zeroactions () {
     // TODO: permissions here? Need to get the manageGlobalData permission from somewhere
     return [
-      { label: 'Add Data', icon: plusIcon, disabled: false, onClick: () => {} },
-      { label: 'Add Data Folder', icon: folderPlusOutline, disabled: false, onClick: () => {} }
+      { label: 'Add Data', icon: plusIcon, disabled: false, onClick: () => { modal = 'adddata' } },
+      { label: 'Add Data Folder', icon: folderPlusOutline, disabled: false, onClick: () => { modal = 'addfolder' } }
     ]
   }
 
@@ -161,14 +180,14 @@
       return [
         { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => {} },
         { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => {} },
-        { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => {} },
+        { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => { modal = 'deletefolder' } },
         { label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} }
       ]
     } else {
       // TODO: permissions here? The item is a site, which doesn't have permissions related to data.
       return [
         { label: 'Add Data', icon: plusIcon, disabled: false, onClick: () => {} },
-        { label: 'Add Data Folder', icon: folderPlusOutline, disabled: false, onClick: () => {} }
+        { label: 'Add Data Folder', icon: folderPlusOutline, disabled: false, onClick: () => { modal = 'addfolder' } }
       ]
     }
   }
@@ -177,13 +196,13 @@
     // the only data/datafolder actions available for sites are Adding data and datafolders
     // and that doesn't make sense in the context of multiple selections
     if (items.some((item) => item.type === DataTreeNodeType.SITE)) return []
-    if (items.some((item) => item.type === DataTreeNodeType.FOLDER)) {
-      // at least one folder is selected
+    if (items.every((item) => item.type === DataTreeNodeType.FOLDER)) {
       return [
         { label: 'Delete', icon: deleteOutline, disabled: false, onClick: () => {} },
         { label: 'Undelete', icon: deleteRestore, disabled: false, onClick: () => {} }
       ]
-    } else {
+    }
+    if (items.every((item) => item.type === DataTreeNodeType.DATA)) {
       return [
         { label: 'Move', icon: cursorMove, disabled: false, onClick: () => {} },
         { label: 'Publish', icon: publishIcon, disabled: false, onClick: () => {} },
@@ -192,6 +211,7 @@
         { label: 'Undelete', icon: deleteRestore, disabled: false, onClick: () => {} }
       ]
     }
+    return []
   }
 
   function getActions (selectedItems: TypedDataTreeItem[]) {
@@ -201,17 +221,30 @@
     return []
   }
 
-  function getPathIcon (type: DataTreeNodeType) {
-    if (type === DataTreeNodeType.DATA) return databaseOutline
-    else if (type === DataTreeNodeType.FOLDER) return folderOutline
-    else return applicationOutline
+  async function onAddFolder (state) {
+    let siteId: string|undefined
+    if ($store.selectedItems.length === 1 && $store.selectedItems[0].type === DataTreeNodeType.SITE) {
+      siteId = $store.selectedItems[0].id
+    }
+    const resp = await api.addDataFolder(state.name, templateKey, siteId)
+    if (resp.success) store.refresh()
+    modal = undefined
+    return { success: resp.success, messages: resp.messages, data: resp.dataFolder }
   }
 
-  const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren)
-</script>
-<script lang="ts">
-  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, type TypedTreeItem, dataListStore, type DataItem, type DataFolder, type DataSite } from '$lib'
-  import './index.css'
+  async function validateFolder (state) {
+    const feedback: Feedback[] = []
+    if (isNull(state.name)) {
+      feedback.push({ type: MessageType.ERROR, message: 'Name is required', path: 'name' })
+    }
+    return feedback
+  }
+
+  async function onDeleteFolder () {
+    const resp = await api.deleteDataFolders($store.selectedItems.map(f => f.id))
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={getActions($store.selectedItems)}>
@@ -222,3 +255,23 @@
     { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
   ]}></Tree>
 </ActionPanel>
+{modal}
+{#if modal === 'addfolder'}
+  <FormDialog
+    submit={onAddFolder}
+    validate={validateFolder}
+    name="addfolder"
+    title= "Add Data Folder"
+    on:dismiss={() => { modal = undefined }}>
+    <FieldText path="name" label="Name" required></FieldText>
+  </FormDialog>
+{:else if modal === 'deletefolder'}
+  <Dialog
+    title={`Delete Data Folder${$store.selectedItems.length > 1 ? 's' : ''}`}
+    continueText="Delete Folder{$store.selectedItems.length > 1 ? 's' : ''}"
+    cancelText="Cancel"
+    on:continue={onDeleteFolder}
+    on:dismiss={() => { modal = undefined }}>
+    {$store.selectedItems.length > 1 ? `Delete ${$store.selectedItems.length} data folders?` : `Delete data folder ${$store.selectedItems[0].name}?`}
+  </Dialog>
+{/if}

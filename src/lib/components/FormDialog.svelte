@@ -17,19 +17,21 @@
   export let chooserClient = dgChooserClient
   export let autocomplete: string|undefined = undefined
   export let name: string|undefined = undefined
+  export let title: string = ''
   export let preload = undefined
 
   const dispatch = createEventDispatcher()
 
   async function onSubmit () {
     const resp = await store!.submit()
+
     if (resp.success) dispatch('saved', resp.data)
   }
 
   setContext(CHOOSER_API_CONTEXT, chooserClient)
 </script>
 
-<Dialog continueText="Save" cancelText="Cancel" on:dismiss on:continue={onSubmit}>
+<Dialog continueText="Save" cancelText="Cancel" on:dismiss on:continue={onSubmit} {title}>
   <Form bind:store {submit} {validate} {chooserClient} {autocomplete} {name} {preload} on:saved let:messages let:saved let:valid let:invalid let:validating let:submitting>
     <slot {messages} {saved} {validating} {submitting} {valid} {invalid} />
   </Form>

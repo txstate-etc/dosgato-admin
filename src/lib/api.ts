@@ -1,7 +1,7 @@
 import { base } from '$app/paths'
 import type { PageLink } from '@dosgato/templating'
 import { keyby, toArray } from 'txstate-utils'
-import { DISABLE_USERS, ENABLE_USERS, GET_DATAFOLDERS_BY_SITE_ID, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_BY_SITE_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY, GET_GLOBAL_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_SITES_AND_DATA, GET_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, type DataFolder, type GlobalSelf, type PageEditorPage, type DataSite, type TemplateListTemplate, type DataItem, type TreePage, type UserListUser } from './queries'
+import { DISABLE_USERS, ENABLE_USERS, CREATE_DATA_FOLDER, DELETE_DATA_FOLDERS, GET_DATAFOLDERS_BY_SITE_ID, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_BY_SITE_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY, GET_GLOBAL_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_SITES_AND_DATA, GET_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, type DataFolder, type GlobalSelf, type PageEditorPage, type DataSite, type TemplateListTemplate, type DataItem, type TreePage, type UserListUser } from './queries'
 import { type GetSubPagesByPath, GET_SUBPAGES_BY_PATH, type GetSubFoldersAndAssetsByPath, GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, type GetPageByLink } from './queries/chooser'
 
 export interface MutationResponse {
@@ -195,6 +195,16 @@ class API {
   async getDataBySiteId (id: string, key: string) {
     const { data } = await this.query<{ data: DataItem[] }>(GET_DATA_BY_SITE_ID, { id, key })
     return data
+  }
+
+  async addDataFolder (name: string, templateKey: string, siteId?: string) {
+    const { createDataFolder } = await this.query<{ createDataFolder: MutationResponse & { dataFolder: DataFolder } }>(CREATE_DATA_FOLDER, { args: { name, templateKey, siteId } })
+    return createDataFolder
+  }
+
+  async deleteDataFolders (folderIds: string[]) {
+    const { deleteDataFolders } = await this.query<{ deleteDataFolders: MutationResponse & { dataFolders: DataFolder[] } }>(DELETE_DATA_FOLDERS, { folderIds })
+    return deleteDataFolders
   }
 }
 
