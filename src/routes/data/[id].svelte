@@ -82,7 +82,6 @@
         ])
         const ret: AnyDataTreeItem[] = []
         for (const f of sitefolders) {
-          console.log(f)
           ret.push({
             ...f,
             type: DataTreeNodeType.FOLDER,
@@ -219,7 +218,7 @@
   import FormDialog from '$lib/components/FormDialog.svelte'
   import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
 
-  let modal: 'addfolder'|'adddata'|'deletefolder'|'renamefolder'|undefined
+  let modal: 'addfolder'|'adddata'|'deletefolder'|'renamefolder'|'publishdata'|'unpublishdata'|undefined
 
   function zeroactions () {
     if (!mayManageGlobalData) return []
@@ -231,15 +230,22 @@
 
   function singleActions (item: TypedDataTreeItem) {
     if (item.type === DataTreeNodeType.DATA) {
-      return [
+      const actions = [
         { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => {} },
         { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => {} },
-        { label: 'Move', icon: cursorMove, disabled: !item.permissions?.move, onClick: () => {} },
-        { label: 'Publish', icon: publishIcon, disabled: !item.permissions?.publish, onClick: () => {} },
-        { label: 'Unpublish', icon: publishOffIcon, disabled: !item.permissions?.unpublish, onClick: () => {} },
-        { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => {} },
-        { label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} }
+        { label: 'Move', icon: cursorMove, disabled: !item.permissions?.move, onClick: () => {} }
       ]
+      if (item.published) {
+        actions.push({ label: 'Unpublish', icon: publishOffIcon, disabled: !item.permissions?.unpublish, onClick: () => { modal = 'unpublishdata' } })
+      } else {
+        actions.push({ label: 'Publish', icon: publishIcon, disabled: !item.permissions?.publish, onClick: () => { modal = 'publishdata' } })
+      }
+      if (item.deleted) {
+        actions.push({ label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} })
+      } else {
+        actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => {} })
+      }
+      return actions
     } else if (item.type === DataTreeNodeType.FOLDER) {
       return [
         { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamefolder' } },
@@ -262,7 +268,7 @@
     if (items.some((item) => item.type === DataTreeNodeType.SITE)) return []
     if (items.every((item) => item.type === DataTreeNodeType.FOLDER)) {
       return [
-        { label: 'Delete', icon: deleteOutline, disabled: false, onClick: () => {} },
+        { label: 'Delete', icon: deleteOutline, disabled: false, onClick: () => { modal = 'deletefolder' } },
         { label: 'Undelete', icon: deleteRestore, disabled: false, onClick: () => {} }
       ]
     }
@@ -316,6 +322,18 @@
     modal = undefined
     return { success: resp.success, messages: resp.messages, data: resp.dataFolder }
   }
+
+  async function onPublishData () {
+    const resp = await api.publishDataEntries($store.selectedItems.map(d => d.id))
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
+
+  async function onUnpublishData () {
+    const resp = await api.unpublishDataEntries($store.selectedItems.map(d => d.id))
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={getActions($store.selectedItems)}>
@@ -330,16 +348,16 @@
   <FormDialog
     submit={onAddFolder}
     validate={validateFolder}
-    name="addfolder"
-    title= "Add Data Folder"
+    name='addfolder'
+    title= 'Add Data Folder'
     on:dismiss={() => { modal = undefined }}>
-    <FieldText path="name" label="Name" required></FieldText>
+    <FieldText path='name' label='Name' required></FieldText>
   </FormDialog>
 {:else if modal === 'deletefolder'}
   <Dialog
     title={`Delete Data Folder${$store.selectedItems.length > 1 ? 's' : ''}`}
-    continueText="Delete Folder{$store.selectedItems.length > 1 ? 's' : ''}"
-    cancelText="Cancel"
+    continueText='Delete Folder{$store.selectedItems.length > 1 ? 's' : ''}'
+    cancelText='Cancel'
     on:continue={onDeleteFolder}
     on:dismiss={() => { modal = undefined }}>
     {$store.selectedItems.length > 1 ? `Delete ${$store.selectedItems.length} data folders?` : `Delete data folder ${$store.selectedItems[0].name}?`}
@@ -348,10 +366,28 @@
   <FormDialog
     submit={onRenameFolder}
     validate={validateFolder}
-    name="renamefolder"
-    title="Rename Data Folder"
+    name='renamefolder'
+    title='Rename Data Folder'
     preload={{ name: $store.selectedItems[0].name }}
     on:dismiss={() => { modal = undefined }}>
-    <FieldText path="name" label="Name" required></FieldText>
+    <FieldText path='name' label='Name' required></FieldText>
   </FormDialog>
+{:else if modal === 'publishdata'}
+  <Dialog
+    title='Publish Data'
+    continueText='Publish'
+    cancelText='Cancel'
+    on:continue={onPublishData}
+    on:dismiss={() => { modal = undefined }}>
+    {$store.selectedItems.length > 1 ? `Publish ${$store.selectedItems.length} data entries?` : `Publish data ${$store.selectedItems[0].name}?`}
+  </Dialog>
+{:else if modal === 'unpublishdata'}
+  <Dialog
+    title='Unpublish Data'
+    continueText='Unpublish'
+    cancelText='Cancel'
+    on:continue={onUnpublishData}
+    on:dismiss={() => { modal = undefined }}>
+    {$store.selectedItems.length > 1 ? `Unpublish ${$store.selectedItems.length} data entries?` : `Unpublish data ${$store.selectedItems[0].name}?`}
+  </Dialog>
 {/if}

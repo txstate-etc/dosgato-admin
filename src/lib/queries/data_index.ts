@@ -25,12 +25,15 @@ const dataDetails = `
   modifiedBy {
     id
   }
+  deleted
   published
+  publishedAt
   permissions {
-    create
     update
     delete
+    undelete
     publish
+    unpublish
     move
   }
 `
@@ -42,6 +45,7 @@ const dataFolderDetails = `
     id
     name
   }
+  deleted
   permissions {
     create
     update
@@ -72,10 +76,10 @@ export interface DataItem {
   modifiedBy: {
     id: string
   }
+  deleted: boolean
   published: boolean
   publishedAt: string
   permissions: {
-    create: boolean
     update: boolean
     delete: boolean
     undelete: boolean
@@ -88,6 +92,7 @@ export interface DataItem {
 export interface DataFolder {
   id: string
   name: string
+  deleted: boolean
   data: {
     id: string
     name: string
@@ -224,6 +229,22 @@ export const RENAME_DATA_FOLDER = `
       dataFolder {
         ${dataFolderDetails}
       }
+    }
+  }
+`
+
+export const PUBLISH_DATA_ENTRIES = `
+  mutation publishDataEntries ($dataIds: [ID]!) {
+    publishDataEntries (dataIds: $dataIds) {
+      ${mutationResponse}
+    }
+  }
+`
+
+export const UNPUBLISH_DATA_ENTRIES = `
+  mutation unpublishDataEntries ($dataIds: [ID]!) {
+    unpublishDataEntries (dataIds: $dataIds) {
+      ${mutationResponse}
     }
   }
 `
