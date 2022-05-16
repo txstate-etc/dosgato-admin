@@ -18,12 +18,14 @@
   import { DateTime } from 'luxon'
 
   let templateKey
+  let mayManageGlobalData: boolean = false
 
   export const load: Load = async ({ params }) => {
     const template = await api.getTemplateInfo(params.id)
     if (!template) return { status: 404 }
     templateKey = template.key
     dataListStore.open({ id: params.id, name: template.name })
+    mayManageGlobalData = await api.getGlobalDataAccessByTemplateKey(templateKey)
     return {}
   }
 
@@ -155,10 +157,10 @@
   import FormDialog from '$lib/components/FormDialog.svelte'
   import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
 
-  let modal: 'addfolder'|'adddata'|'deletefolder'|undefined
+  let modal: 'addfolder'|'adddata'|'deletefolder'|'renamefolder'|undefined
 
   function zeroactions () {
-    // TODO: permissions here? Need to get the manageGlobalData permission from somewhere
+    if (!mayManageGlobalData) return []
     return [
       { label: 'Add Data', icon: plusIcon, disabled: false, onClick: () => { modal = 'adddata' } },
       { label: 'Add Data Folder', icon: folderPlusOutline, disabled: false, onClick: () => { modal = 'addfolder' } }
@@ -178,7 +180,7 @@
       ]
     } else if (item.type === DataTreeNodeType.FOLDER) {
       return [
-        { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => {} },
+        { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamefolder' } },
         { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => {} },
         { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => { modal = 'deletefolder' } },
         { label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} }
@@ -245,6 +247,13 @@
     if (resp.success) store.refresh()
     modal = undefined
   }
+
+  async function onRenameFolder (state) {
+    const resp = await api.renameDataFolder($store.selectedItems[0].id, state.name)
+    if (resp.success) store.refresh()
+    modal = undefined
+    return { success: resp.success, messages: resp.messages, data: resp.dataFolder }
+  }
 </script>
 
 <ActionPanel actions={getActions($store.selectedItems)}>
@@ -255,7 +264,6 @@
     { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
   ]}></Tree>
 </ActionPanel>
-{modal}
 {#if modal === 'addfolder'}
   <FormDialog
     submit={onAddFolder}
@@ -274,4 +282,14 @@
     on:dismiss={() => { modal = undefined }}>
     {$store.selectedItems.length > 1 ? `Delete ${$store.selectedItems.length} data folders?` : `Delete data folder ${$store.selectedItems[0].name}?`}
   </Dialog>
+{:else if modal === 'renamefolder'}
+  <FormDialog
+    submit={onRenameFolder}
+    validate={validateFolder}
+    name="renamefolder"
+    title="Rename Data Folder"
+    preload={{ name: $store.selectedItems[0].name }}
+    on:dismiss={() => { modal = undefined }}>
+    <FieldText path="name" label="Name" required></FieldText>
+  </FormDialog>
 {/if}

@@ -18,7 +18,7 @@
   export let autocomplete: string|undefined = undefined
   export let name: string|undefined = undefined
   export let title: string = ''
-  export let preload = undefined
+  export let preload: T|undefined = undefined
 
   const dispatch = createEventDispatcher()
 

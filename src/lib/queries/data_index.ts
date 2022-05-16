@@ -185,6 +185,14 @@ export const GET_DATA_BY_SITE_ID = `
   }
 `
 
+export const GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY = `
+  query getGlobalDataAccessByTemplateKey ($key: String) {
+    access {
+      createGlobalData(type: $key)
+    }
+  }
+`
+
 export const CREATE_DATA_FOLDER = `
   mutation createDataFolder ($args: CreateDataFolderInput!) {
     createDataFolder (args: $args) {
@@ -201,6 +209,17 @@ export const DELETE_DATA_FOLDERS = `
     deleteDataFolders (folderIds: $folderIds) {
       ${mutationResponse}
       dataFolders {
+        ${dataFolderDetails}
+      }
+    }
+  }
+`
+
+export const RENAME_DATA_FOLDER = `
+  mutation renameDataFolder ($folderId: ID!, $name: String!) {
+    renameDataFolder (folderId: $folderId, name: $name) {
+      ${mutationResponse}
+      dataFolder {
         ${dataFolderDetails}
       }
     }
