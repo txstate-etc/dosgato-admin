@@ -47,6 +47,7 @@ const dataFolderDetails = `
     update
     delete
     undelete
+    move
   }
 `
 
@@ -96,6 +97,7 @@ export interface DataFolder {
     update: boolean
     delete: boolean
     undelete: boolean
+    move: boolean
   }
 }
 

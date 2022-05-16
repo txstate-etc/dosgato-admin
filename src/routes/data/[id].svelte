@@ -14,7 +14,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import type { Load } from '@sveltejs/kit'
-  import { isNull } from 'txstate-utils'
+  import { isNull, unique } from 'txstate-utils'
   import { DateTime } from 'luxon'
 
   let templateKey
@@ -147,7 +147,69 @@
     else return applicationOutline
   }
 
-  const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren)
+  async function dropHandler (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
+    // TODO: call move mutation here
+    return true
+  }
+
+  function dragEligible (item: TypedDataTreeItem) {
+    if (item.type === DataTreeNodeType.SITE) return false
+    return item.permissions.move
+  }
+
+  function dropEligible (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
+    // only want to drop items if they are the same type of item
+    if (unique(selectedItems.map(i => i.type)).length > 1) return false
+    if (selectedItems[0].type === DataTreeNodeType.FOLDER) {
+      if (dropTarget.type !== DataTreeNodeType.SITE) return false
+      if (above) {
+        return mayManageGlobalData
+      } else {
+        // TODO: Can they create data or datafolders in a site?
+        return true
+      }
+    } else {
+      // Data item(s) moving
+      if (above) {
+        if (dropTarget.type === DataTreeNodeType.SITE) return mayManageGlobalData
+        else if (dropTarget.type === DataTreeNodeType.FOLDER) {
+          // this could be global data or data in a site, not in a folder
+          if (dropTarget.level === 1) return mayManageGlobalData
+          else {
+            // TODO: Can they create data or datafolders in the site?
+            return true
+          }
+        } else {
+          // moving data above another data item
+          if (dropTarget.level === 1) return mayManageGlobalData
+          else {
+            if (dropTarget.folder) {
+              // moving data items above data item in folder
+              return dropTarget.parent?.permissions.create
+            } else {
+              // moving data items above site-level data
+              // TODO: Can they create data or datafolders in the site?
+              return true
+            }
+          }
+        }
+      } else {
+        if (dropTarget.type === DataTreeNodeType.SITE) {
+          // moving data in site, not in folder
+          // TODO: Can they create data or datafolders in the site?
+          return true
+        } else if (dropTarget.type === DataTreeNodeType.FOLDER) {
+          // moving data inside a folder
+          return dropTarget.permissions.create
+        } else {
+          // data items can't contain other data items
+          return false
+        }
+      }
+    }
+  }
+
+  const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible })
 </script>
 <script lang="ts">
   import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, type TypedTreeItem, dataListStore, type DataItem, type DataFolder, type DataSite } from '$lib'
