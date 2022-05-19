@@ -211,7 +211,7 @@
   const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible })
 </script>
 <script lang="ts">
-  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, type TypedTreeItem, dataListStore, type DataItem, type DataFolder, type DataSite } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, type TypedTreeItem, dataListStore, templateStore, type DataItem, type DataFolder, type DataSite } from '$lib'
   import './index.css'
   import { FieldText } from '@dosgato/dialog'
   import Dialog from '$lib/components/Dialog.svelte'
@@ -219,6 +219,10 @@
   import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
 
   let modal: 'addfolder'|'adddata'|'deletefolder'|'renamefolder'|'publishdata'|'unpublishdata'|undefined
+
+  $: if ($templateStore?.id) {
+    store.refresh()
+  }
 
   function zeroactions () {
     if (!mayManageGlobalData) return []

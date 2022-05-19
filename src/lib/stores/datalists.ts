@@ -1,4 +1,4 @@
-import { Store } from '@txstate-mws/svelte-store'
+import { derivedStore, Store } from '@txstate-mws/svelte-store'
 import { splice } from 'txstate-utils'
 
 export interface IDataListStore {
@@ -34,3 +34,4 @@ class DataListStore extends Store<IDataListStore> {
 }
 
 export const dataListStore = new DataListStore()
+export const templateStore = derivedStore(dataListStore, v => v.templates[v.active])
