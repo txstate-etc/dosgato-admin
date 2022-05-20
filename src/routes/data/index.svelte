@@ -1,31 +1,75 @@
 <script lang="ts" context="module">
-  import pencilIcon from '@iconify-icons/mdi/pencil'
+  import type { Load } from '@sveltejs/kit'
+  import cubeOutline from '@iconify-icons/mdi/cube-outline'
+  import { Icon } from '@dosgato/dialog'
+  import { templateRegistry } from '$lib/registry'
 
-  type TypedDataTemplateItem = TypedTreeItem<TemplateListTemplate>
-
-  async function fetchChildren (template?: TypedDataTemplateItem) {
-  if (template) return []
-    return await api.getDataTemplates()
+  let templates: TemplateListTemplate[] = []
+  export const load: Load = async (input) => {
+    templates = await api.getDataTemplates()
+    return {}
   }
 
-  function actions (template: TypedDataTemplateItem) {
-    return [
-      { label: 'Edit', icon: pencilIcon, disabled: false, onClick: () => goto(base + '/data/' + template.id) }
-    ]
-  }
-
-  const store: TreeStore<TemplateListTemplate> = new TreeStore(fetchChildren)
 </script>
 <script lang="ts">
-  import { ActionPanel, TreeStore, Tree, api, type TypedTreeItem, type TemplateListTemplate } from '$lib'
-  import { goto } from '$app/navigation'
+  import { ActionPanel, api, type TemplateListTemplate } from '$lib'
   import { base } from '$app/paths'
 </script>
 
 
-<ActionPanel actions={actions($store.selectedItems[0])}>
-  <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/data/' + detail.id)} headers={[
-    { label: 'Name', id: 'name', defaultWidth: 'calc(25%)', get: 'name' },
-    { label: 'Key', id: 'key', defaultWidth: 'calc(25%)', get: 'key' }
-  ]}/>
+<ActionPanel actions={[]}>
+  <div class="grid-wrapper">
+    <div class="template-grid">
+      {#each templates as template (template.key)}
+        <!-- TODO: What if the API returns the template but it is not in the registry here? -->
+        {#if templateRegistry.getTemplate(template.key)}
+          <a href={`${base}/data/${template.key}`}>
+            <Icon icon={(templateRegistry.getTemplate(template.key))?.icon ?? cubeOutline} width="6em"/>
+            <div class="template-name">{template.name}</div>
+          </a>
+        {/if}
+      {/each}
+    </div>
+  </div>
 </ActionPanel>
+
+<style>
+  .grid-wrapper {
+    padding: 1em;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .template-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-gap: 3em 3em;
+    place-content: center center;
+    grid-auto-rows: 1fr;
+  }
+  :global([data-eq~="800px"]) .template-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  :global([data-eq~="600px"]) .template-grid {
+    grid-template-columns: 1fr;
+  }
+  .template-grid a {
+    background-color: transparent;
+    border: 3px solid #6a5638;
+    border-radius: 5px;
+    color: #363534;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2em 0;
+    text-decoration: none;
+  }
+  .template-grid a:hover {
+    background-color: #f4f1ed;
+  }
+  .template-grid a:focus {
+    border-color: #3dbbdb;
+  }
+  .template-name {
+    padding: 0.8em;
+  }
+</style>
