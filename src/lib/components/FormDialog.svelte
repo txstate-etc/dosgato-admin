@@ -9,6 +9,7 @@
 
   interface $$Events {
     saved: CustomEvent<T>
+    dismiss: CustomEvent<undefined>
   }
 
   export let submit: (state: T) => Promise<SubmitResponse<T>>
