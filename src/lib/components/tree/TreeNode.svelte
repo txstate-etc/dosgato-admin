@@ -32,7 +32,7 @@
   $: leftLevel = ($viewUnderStore?.level ?? 0) + 1
   $: showChildren = !!item.open && !!item.children?.length && item.level - leftLevel < $viewDepth - 1
   $: hashedId = hashid(item.id)
-  $: isDraggable = $draggable && store.dragEligible(item) && (!isSelected || !$selectedUndraggable)
+  $: isDraggable = $draggable && ((isSelected && !$selectedUndraggable) || store.dragEligible([item]))
   $: dropZone = $dragging && store.dropEligible(item, false)
   $: dropDisabled = $dragging && !dropZone
   $: dropAbove = $dragging && store.dropEligible(item, true)
