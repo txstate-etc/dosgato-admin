@@ -36,7 +36,7 @@ export interface ITreeStore<T extends TreeItemFromDB> {
 }
 
 export type FetchChildrenFn<T extends TreeItemFromDB> = (item?: TypedTreeItem<T>) => Promise<T[]>
-export type DragEligibleFn<T extends TreeItemFromDB> = (item: TypedTreeItem<T>) => boolean
+export type DragEligibleFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[]) => boolean
 export type DropEligibleFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => boolean
 export type DropEffectFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => 'move'|'copy'
 export type DropHandlerFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => boolean|Promise<boolean>
@@ -117,7 +117,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
 
   determineDraggable () {
     this.value.selectedItems = Array.from(this.value.selected.values())
-    this.value.selectedUndraggable = this.value.selectedItems.some(itm => !this.dragEligible(itm))
+    this.value.selectedUndraggable = !this.dragEligible(this.value.selectedItems)
   }
 
   set (state: ITreeStore<T>) {
@@ -290,8 +290,8 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     return ancestors[idx]
   }
 
-  dragEligible (item: TypedTreeItem<T>) {
-    return !this.dragEligibleHandler || this.dragEligibleHandler(item)
+  dragEligible (selectedItems: TypedTreeItem<T>[]) {
+    return !this.dragEligibleHandler || this.dragEligibleHandler(selectedItems)
   }
 
   dropEligible (item: TypedTreeItem<T>, above: boolean) {

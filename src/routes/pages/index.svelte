@@ -50,9 +50,9 @@
   async function dropHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
     return true
   }
-  function dragEligible (item: TypedPageItem) {
+  function dragEligible (items: TypedPageItem[]) {
     // sites cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites
-    return !!item.parent
+    return items.every(item => !!item.parent)
   }
   function dropEligible (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
     // cannot place an item at the root: instead create a new site in the site management UI

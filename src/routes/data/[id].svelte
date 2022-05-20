@@ -151,9 +151,8 @@
     return true
   }
 
-  function dragEligible (item: TypedDataTreeItem) {
-    if (item.type === DataTreeNodeType.SITE) return false
-    return item.permissions.move
+  function dragEligible (items: TypedDataTreeItem[]) {
+    return items.every(itm => itm.type !== DataTreeNodeType.SITE && itm.permissions.move)
   }
 
   function dropEligible (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
