@@ -26,7 +26,7 @@ services:
       MYSQL_PASS: password
       MYSQL_DATABASE: dosgatodev
       MYSQL_HOST: mysql
-      RESET_DB_ON_STARTUP: 'false'
+      RESET_DB_ON_STARTUP: 'true'
       JWT_TRUSTED_ISSUERS: '{ "iss": "unified-auth", "url": "http://fakeauth/jwks" }'
     volumes:
       - ../dosgato/src:/usr/app/src

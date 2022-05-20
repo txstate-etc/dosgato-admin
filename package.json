@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@dosgato/dialog": "^0.0.5",
-    "@dosgato/templating": "0.0.5",
+    "@dosgato/templating": "^0.0.15",
     "@iconify-icons/mdi": "^1.2.8",
     "@txstate-mws/svelte-components": "^1.2.9",
     "@txstate-mws/svelte-forms": "^0.0.15",
