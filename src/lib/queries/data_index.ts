@@ -135,6 +135,14 @@ export const GET_TEMPLATE_INFO = `
   }
 `
 
+export const GET_AVAILABLE_TEMPLATE_INFO = `
+  query getAvailableTemplateInfo ($keys: [String]) {
+    templates (filter: { keys: $keys }) {
+      ${templateDetails}
+    }
+  }
+`
+
 export const GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY = `
   query getGlobalDataFolders ($key: String) {
     datafolders (filter: { global: true, templateKeys: [$key] }) {
