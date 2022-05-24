@@ -119,6 +119,15 @@ export interface DataSite {
   }[]
 }
 
+export interface DataRoot {
+  datafolders: DataFolder[]
+  data: DataItem[]
+  site?: DataSite
+  permissions: {
+    create: boolean
+  }
+}
+
 export const GET_DATA_TEMPLATE_LIST = `
   query getDataTemplateList {
     templates (filter: { types: [DATA] }) {
@@ -143,18 +152,40 @@ export const GET_AVAILABLE_TEMPLATE_INFO = `
   }
 `
 
-export const GET_GLOBAL_DATAFOLDERS_BY_TEMPLATE_KEY = `
-  query getGlobalDataFolders ($key: String) {
-    datafolders (filter: { global: true, templateKeys: [$key] }) {
-      ${dataFolderDetails}
+export const GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY = `
+  query getGlobalDataRootByTemplateKey ($key: String) {
+    dataroots(filter: {global:true, templateKeys: [$key]}) {
+      datafolders {
+        ${dataFolderDetails}
+      }
+      data(filter: {root: true}) {
+        ${dataDetails}
+      }
+      permissions {
+        create
+      }
     }
   }
 `
 
-export const GET_GLOBAL_DATA_BY_TEMPLATE_KEY = `
-  query getGlobaDataByTemplateKey ($key: String) {
-    data (filter: { global: true, templateKeys: [$key] }) {
-      ${dataDetails}
+export const GET_SITE_DATAROOTS_BY_TEMPLATE_KEY = `
+  query getSiteDataRootsByTemplateKey ($key: String) {
+    dataroots(filter: {templateKeys: [$key]}) {
+      site {
+        id
+        name
+      }
+      datafolders {
+        id
+        name
+      }
+      data {
+        id
+        name
+      }
+      permissions {
+        create
+      }
     }
   }
 `

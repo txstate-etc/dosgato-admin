@@ -103,20 +103,19 @@
         return ret
       }
     } else {
-      const [globalData, globalFolders, sites] = await Promise.all([
-        api.getGlobalDataByTemplateKey(templateKey),
-        api.getGlobalDataFoldersByTemplateKey(templateKey),
-        api.getSitesAndData(templateKey)
+      const [globaldataroot, sitedataroots] = await Promise.all([
+        api.getGlobalDataRootByTemplateKey(templateKey),
+        api.getSiteDataRootsByTemplateKey(templateKey)
       ])
       const ret: AnyDataTreeItem[] = []
-      for (const f of globalFolders) {
+      for (const f of globaldataroot.datafolders) {
         ret.push({
           ...f,
           type: DataTreeNodeType.FOLDER,
           hasChildren: !!f.data.length
         })
       }
-      for (const d of globalData.filter(d => isNull(d.folder))) {
+      for (const d of globaldataroot.data) {
         const modifiedAt = DateTime.fromISO(d.modifiedAt)
         const publishedAt = DateTime.fromISO(d.publishedAt)
         ret.push({
@@ -128,11 +127,12 @@
           status: d.published ? (publishedAt >= modifiedAt ? 'published' : 'modified') : 'unpublished'
         })
       }
-      for (const s of sites) {
+      for (const dr of sitedataroots) {
         ret.push({
-          ...s,
+          id: dr.site!.id,
+          name: dr.site!.name,
           type: DataTreeNodeType.SITE,
-          hasChildren: !!s.data.length || !!s.datafolders.length
+          hasChildren: !!dr.data.length || !!dr.datafolders.length
         })
       }
       return ret
