@@ -59,7 +59,7 @@ export const GET_ROOT_PAGES = `
 `
 
 export const GET_TREE_PAGES = `
-  query getTreePages ($ids: [ID]) {
+  query getTreePages ($ids: [ID!]) {
     pages (filter:{ ids: $ids }) {
       id
       children {
