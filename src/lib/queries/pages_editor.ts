@@ -26,7 +26,7 @@ export interface PageEditorPage {
 }
 
 export const GET_EDITOR_PAGE = `
-  query getEditorPage ($id: ID) {
+  query getEditorPage ($id: ID!) {
     pages (filter:{ ids: [$id] }) {
       ${pageDetails}
     }
