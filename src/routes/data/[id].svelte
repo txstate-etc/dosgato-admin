@@ -16,6 +16,7 @@
   import type { Load } from '@sveltejs/kit'
   import { isNull, unique } from 'txstate-utils'
   import { DateTime } from 'luxon'
+  import { templateRegistry } from '$lib/registry'
 
   let templateKey
   let mayManageGlobalData: boolean = false
@@ -51,6 +52,9 @@
   interface TreeDataSite extends Omit<Omit<DataSite, 'data'>, 'datafolders'> {
     type: DataTreeNodeType.SITE
     hasChildren: boolean
+    permissions: {
+      create: boolean
+    }
   }
 
   type AnyDataTreeItem = TreeDataItem | TreeDataFolder | TreeDataSite
@@ -132,7 +136,8 @@
           id: dr.site!.id,
           name: dr.site!.name,
           type: DataTreeNodeType.SITE,
-          hasChildren: !!dr.data.length || !!dr.datafolders.length
+          hasChildren: !!dr.data.length || !!dr.datafolders.length,
+          permissions: { create: dr.permissions.create }
         })
       }
       return ret
@@ -163,8 +168,7 @@
       if (above) {
         return mayManageGlobalData
       } else {
-        // TODO: Can they create data or datafolders in a site?
-        return true
+        return dropTarget.permissions.create
       }
     } else {
       // Data item(s) moving
@@ -174,34 +178,23 @@
           // this could be global data or data in a site, not in a folder
           if (dropTarget.level === 1) return mayManageGlobalData
           else {
-            // TODO: Can they create data or datafolders in the site?
-            return true
+            return dropTarget.permissions.create
           }
         } else {
           // moving data above another data item
-          if (dropTarget.level === 1) return mayManageGlobalData
+          if (!dropTarget.parent) return mayManageGlobalData
           else {
-            if (dropTarget.folder) {
-              // moving data items above data item in folder
-              return dropTarget.parent?.permissions.create
-            } else {
-              // moving data items above site-level data
-              // TODO: Can they create data or datafolders in the site?
-              return true
-            }
+            // dropTarget is in a folder or site-level
+            // TODO: TypeScript thinks the parent is a DataItem but it's a Site or Folder. WHY
+            return dropTarget.parent.permissions.create
           }
         }
       } else {
-        if (dropTarget.type === DataTreeNodeType.SITE) {
-          // moving data in site, not in folder
-          // TODO: Can they create data or datafolders in the site?
-          return true
-        } else if (dropTarget.type === DataTreeNodeType.FOLDER) {
-          // moving data inside a folder
-          return dropTarget.permissions.create
-        } else {
+        if (dropTarget.type === DataTreeNodeType.DATA) {
           // data items can't contain other data items
           return false
+        } else {
+          return dropTarget.permissions.create
         }
       }
     }
@@ -226,8 +219,8 @@
   function zeroactions () {
     if (!mayManageGlobalData) return []
     return [
-      { label: 'Add Data', icon: plusIcon, disabled: false, onClick: () => { modal = 'adddata' } },
-      { label: 'Add Data Folder', icon: folderPlusOutline, disabled: false, onClick: () => { modal = 'addfolder' } }
+      { label: 'Add Data', icon: plusIcon, disabled: !mayManageGlobalData, onClick: () => { modal = 'adddata' } },
+      { label: 'Add Data Folder', icon: folderPlusOutline, disabled: !mayManageGlobalData, onClick: () => { modal = 'addfolder' } }
     ]
   }
 
@@ -252,15 +245,14 @@
     } else if (item.type === DataTreeNodeType.FOLDER) {
       return [
         { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamefolder' } },
-        { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => {} },
+        { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => { modal = 'adddata' } },
         { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => { modal = 'deletefolder' } },
         { label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} }
       ]
     } else {
-      // TODO: permissions here? The item is a site, which doesn't have permissions related to data.
       return [
-        { label: 'Add Data', icon: plusIcon, disabled: false, onClick: () => {} },
-        { label: 'Add Data Folder', icon: folderPlusOutline, disabled: false, onClick: () => { modal = 'addfolder' } }
+        { label: 'Add Data', icon: plusIcon, disabled: !item.permissions.create, onClick: () => { modal = 'adddata' } },
+        { label: 'Add Data Folder', icon: folderPlusOutline, disabled: !item.permissions.create, onClick: () => { modal = 'addfolder' } }
       ]
     }
   }
@@ -337,6 +329,33 @@
     if (resp.success) store.refresh()
     modal = undefined
   }
+
+  let validateData
+  function onValidateData (state) {
+    return validateData(state)
+  }
+
+  async function onAddData (state) {
+    let siteId: string|undefined
+    let folderId: string|undefined
+    if ($store.selectedItems.length === 1) {
+      const selected = $store.selectedItems[0]
+      if (selected.type === DataTreeNodeType.SITE) {
+        siteId = selected.id
+      } else if (selected.type === DataTreeNodeType.FOLDER) {
+        folderId = selected.id
+        if (selected.parent) {
+          siteId = selected.parent.id
+        }
+      }
+    }
+    // TODO: Save the data. The mutation needs a name, schemaVersion, templateKey,
+    // the actual data from the form, optional siteId, optional folderId
+    // Where does the name come from? Does that need to be a field in every dialog?
+    // How do I get the schema version?
+    modal = undefined
+    return { success: true, messages: [], data: [] }
+  }
 </script>
 
 <ActionPanel actions={getActions($store.selectedItems)}>
@@ -393,4 +412,12 @@
     on:dismiss={() => { modal = undefined }}>
     {$store.selectedItems.length > 1 ? `Unpublish ${$store.selectedItems.length} data entries?` : `Unpublish data ${$store.selectedItems[0].name}?`}
   </Dialog>
+{:else if modal === 'adddata'}
+  <FormDialog
+    submit={onAddData}
+    validate={onValidateData}
+    title='Add Data'
+    on:dismiss={() => { modal = undefined }}>
+    <svelte:component this={templateRegistry.getTemplate(templateKey)?.dialog} bind:validate={validateData}></svelte:component>
+  </FormDialog>
 {/if}

@@ -137,7 +137,7 @@ export const GET_DATA_TEMPLATE_LIST = `
 `
 
 export const GET_TEMPLATE_INFO = `
-  query getTemplateInfo ($key: String) {
+  query getTemplateInfo ($key: ID!) {
     templates (filter:{ keys: [$key] }) {
       ${templateDetails}
     }
@@ -153,7 +153,7 @@ export const GET_AVAILABLE_TEMPLATE_INFO = `
 `
 
 export const GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY = `
-  query getGlobalDataRootByTemplateKey ($key: String) {
+  query getGlobalDataRootByTemplateKey ($key: ID!) {
     dataroots(filter: {global:true, templateKeys: [$key]}) {
       datafolders {
         ${dataFolderDetails}
@@ -169,7 +169,7 @@ export const GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY = `
 `
 
 export const GET_SITE_DATAROOTS_BY_TEMPLATE_KEY = `
-  query getSiteDataRootsByTemplateKey ($key: String) {
+  query getSiteDataRootsByTemplateKey ($key: ID!) {
     dataroots(filter: {templateKeys: [$key]}) {
       site {
         id
@@ -190,25 +190,8 @@ export const GET_SITE_DATAROOTS_BY_TEMPLATE_KEY = `
   }
 `
 
-export const GET_SITES_AND_DATA = `
-  query getSitesAndData ($key: String) {
-    sites {
-      id
-      name
-      data(filter: {templateKeys:[$key]}) {
-        id
-        name
-      }
-      datafolders(filter: {templateKeys:[$key]}) {
-        id
-        name
-      }
-    }
-  }
-`
-
 export const GET_DATA_BY_DATAFOLDER_ID = `
-  query getDataByDatafolderId ($id: String) {
+  query getDataByDatafolderId ($id: String!) {
     data (filter: { folderIds: [$id]}) {
       ${dataDetails}
     }
@@ -216,7 +199,7 @@ export const GET_DATA_BY_DATAFOLDER_ID = `
 `
 
 export const GET_DATAFOLDERS_BY_SITE_ID = `
-  query getDataFoldersBySiteId ($id: String, $key: String) {
+  query getDataFoldersBySiteId ($id: ID!, $key: ID!) {
     datafolders (filter: { templateKeys:[$key], siteIds: [$id]}) {
       ${dataFolderDetails}
     }
@@ -224,7 +207,7 @@ export const GET_DATAFOLDERS_BY_SITE_ID = `
 `
 
 export const GET_DATA_BY_SITE_ID = `
-  query getDataBySiteId ($id: String, $key: String) {
+  query getDataBySiteId ($id: ID!, $key: ID!) {
     data (filter: { templateKeys:[$key], siteIds: [$id]}) {
       ${dataDetails}
     }
@@ -232,7 +215,7 @@ export const GET_DATA_BY_SITE_ID = `
 `
 
 export const GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY = `
-  query getGlobalDataAccessByTemplateKey ($key: String) {
+  query getGlobalDataAccessByTemplateKey ($key: UrlSafeString!) {
     access {
       createGlobalData(type: $key)
     }
