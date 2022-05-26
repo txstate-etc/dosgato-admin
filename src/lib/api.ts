@@ -1,7 +1,7 @@
 import { base } from '$app/paths'
 import type { PageLink } from '@dosgato/templating'
 import { keyby, toArray } from 'txstate-utils'
-import { DISABLE_USERS, ENABLE_USERS, CREATE_DATA_FOLDER, DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES, GET_DATAFOLDERS_BY_SITE_ID, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_BY_SITE_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, type DataFolder, type GlobalSelf, type PageEditorPage, type DataSite, type TemplateListTemplate, type DataItem, type DataRoot, type TreePage, type UserListUser } from './queries'
+import { DISABLE_USERS, ENABLE_USERS, CREATE_DATA_FOLDER, DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES, CREATE_DATA_ITEM,  GET_DATA_BY_DATAFOLDER_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, type DataFolder, type GlobalSelf, type PageEditorPage, type DataSite, type TemplateListTemplate, type DataItem, type DataRoot, type TreePage, type UserListUser } from './queries'
 import { type GetSubPagesByPath, GET_SUBPAGES_BY_PATH, type GetSubFoldersAndAssetsByPath, GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, type GetPageByLink } from './queries/chooser'
 
 export interface MutationResponse {
@@ -197,14 +197,9 @@ class API {
     return data
   }
 
-  async getDataFoldersBySiteId (id: string, key: string) {
-    const { datafolders } = await this.query<{ datafolders: DataFolder[]}>(GET_DATAFOLDERS_BY_SITE_ID, { id, key })
-    return datafolders
-  }
-
-  async getDataBySiteId (id: string, key: string) {
-    const { data } = await this.query<{ data: DataItem[] }>(GET_DATA_BY_SITE_ID, { id, key })
-    return data
+  async getSiteDataByTemplateKey (siteId: string, key: string) {
+    const { dataroots } = await this.query<{ dataroots: DataRoot[] }>(GET_SITE_DATA_BY_TEMPLATE_KEY, { siteId, key })
+    return dataroots[0]
   }
 
   async addDataFolder (name: string, templateKey: string, siteId?: string) {

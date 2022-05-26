@@ -80,19 +80,16 @@
         })
       }
       if (item.type === DataTreeNodeType.SITE) {
-        const [sitefolders, sitedata] = await Promise.all([
-          api.getDataFoldersBySiteId(item.id, templateKey),
-          api.getDataBySiteId(item.id, templateKey)
-        ])
+        const dataroot = (item.id === `${templateKey}global`) ? await api.getGlobalDataRootByTemplateKey(templateKey) : await api.getSiteDataByTemplateKey(item.id, templateKey)
         const ret: AnyDataTreeItem[] = []
-        for (const f of sitefolders) {
+        for (const f of dataroot.datafolders) {
           ret.push({
             ...f,
             type: DataTreeNodeType.FOLDER,
             hasChildren: !!f.data.length
           })
         }
-        for (const d of sitedata.filter(data => isNull(data.folder))) {
+        for (const d of dataroot.data) {
           const modifiedAt = DateTime.fromISO(d.modifiedAt)
           const publishedAt = DateTime.fromISO(d.publishedAt)
           ret.push({
@@ -112,25 +109,15 @@
         api.getSiteDataRootsByTemplateKey(templateKey)
       ])
       const ret: AnyDataTreeItem[] = []
-      for (const f of globaldataroot.datafolders) {
-        ret.push({
-          ...f,
-          type: DataTreeNodeType.FOLDER,
-          hasChildren: !!f.data.length
-        })
-      }
-      for (const d of globaldataroot.data) {
-        const modifiedAt = DateTime.fromISO(d.modifiedAt)
-        const publishedAt = DateTime.fromISO(d.publishedAt)
-        ret.push({
-          ...d,
-          type: DataTreeNodeType.DATA,
-          hasChildren: false,
-          modifiedAt,
-          publishedAt,
-          status: d.published ? (publishedAt >= modifiedAt ? 'published' : 'modified') : 'unpublished'
-        })
-      }
+      ret.push({
+        type: DataTreeNodeType.SITE,
+        id: `${templateKey}global`,
+        hasChildren: !!globaldataroot.datafolders.length || !!globaldataroot.data.length,
+        name: 'Global Data',
+        permissions: {
+          create: mayManageGlobalData
+        }
+      })
       for (const dr of sitedataroots) {
         ret.push({
           id: dr.site!.id,
@@ -212,9 +199,7 @@
 
   let modal: 'addfolder'|'adddata'|'deletefolder'|'renamefolder'|'publishdata'|'unpublishdata'|undefined
 
-  $: if ($templateStore?.id) {
-    store.refresh()
-  }
+  // $: if ($templateStore?.id) store.refresh()
 
   function zeroactions () {
     if (!mayManageGlobalData) return []

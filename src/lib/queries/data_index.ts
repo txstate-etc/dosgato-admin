@@ -198,18 +198,22 @@ export const GET_DATA_BY_DATAFOLDER_ID = `
   }
 `
 
-export const GET_DATAFOLDERS_BY_SITE_ID = `
-  query getDataFoldersBySiteId ($id: ID!, $key: ID!) {
-    datafolders (filter: { templateKeys:[$key], siteIds: [$id]}) {
-      ${dataFolderDetails}
-    }
-  }
-`
-
-export const GET_DATA_BY_SITE_ID = `
-  query getDataBySiteId ($id: ID!, $key: ID!) {
-    data (filter: { templateKeys:[$key], siteIds: [$id]}) {
-      ${dataDetails}
+export const GET_SITE_DATA_BY_TEMPLATE_KEY = `
+  query getSiteDataByTemplateKey ($siteId: ID!, $key: ID!) {
+    dataroots (filter: { siteIds: [$siteId], templateKeys: [$key] }) {
+      site {
+        id
+        name
+      }
+      datafolders {
+        ${dataFolderDetails}
+      }
+      data(filter: { root: true }) {
+        ${dataDetails}
+      }
+      permissions {
+        create
+      }
     }
   }
 `
@@ -267,6 +271,17 @@ export const UNPUBLISH_DATA_ENTRIES = `
   mutation unpublishDataEntries ($dataIds: [ID]!) {
     unpublishDataEntries (dataIds: $dataIds) {
       ${mutationResponse}
+    }
+  }
+`
+
+export const CREATE_DATA_ITEM = `
+  mutation createDataEntry ($args: CreateDataInput!) {
+    createDataEntry (args: $args) {
+      ${mutationResponse}
+      data {
+        ${dataDetails}
+      }
     }
   }
 `
