@@ -111,7 +111,7 @@
       const ret: AnyDataTreeItem[] = []
       ret.push({
         type: DataTreeNodeType.SITE,
-        id: `${templateKey}global`,
+        id: globaldataroot.id,
         hasChildren: !!globaldataroot.datafolders.length || !!globaldataroot.data.length,
         name: 'Global Data',
         permissions: {
@@ -120,7 +120,7 @@
       })
       for (const dr of sitedataroots) {
         ret.push({
-          id: dr.site!.id,
+          id: dr.id,
           name: dr.site!.name,
           type: DataTreeNodeType.SITE,
           hasChildren: !!dr.data.length || !!dr.datafolders.length,
@@ -173,7 +173,7 @@
           else {
             // dropTarget is in a folder or site-level
             // TODO: TypeScript thinks the parent is a DataItem but it's a Site or Folder. WHY
-            return dropTarget.parent.permissions.create
+            return (dropTarget.parent as TreeDataFolder|TreeDataSite).permissions.create
           }
         }
       } else {
@@ -199,7 +199,8 @@
 
   let modal: 'addfolder'|'adddata'|'deletefolder'|'renamefolder'|'publishdata'|'unpublishdata'|undefined
 
-  // $: if ($templateStore?.id) store.refresh()
+  $: templateKey = $templateStore?.id
+  $: if ($templateStore) store.refresh()
 
   function zeroactions () {
     if (!mayManageGlobalData) return []
@@ -403,6 +404,6 @@
     validate={onValidateData}
     title='Add Data'
     on:dismiss={() => { modal = undefined }}>
-    <svelte:component this={templateRegistry.getTemplate(templateKey)?.dialog} bind:validate={validateData}></svelte:component>
+    <svelte:component this={templateRegistry.getTemplate($templateStore.id)?.dialog} bind:validate={validateData}></svelte:component>
   </FormDialog>
 {/if}

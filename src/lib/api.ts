@@ -1,7 +1,7 @@
 import { base } from '$app/paths'
 import type { PageLink } from '@dosgato/templating'
 import { keyby, toArray } from 'txstate-utils'
-import { DISABLE_USERS, ENABLE_USERS, CREATE_DATA_FOLDER, DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES, CREATE_DATA_ITEM,  GET_DATA_BY_DATAFOLDER_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, type DataFolder, type GlobalSelf, type PageEditorPage, type DataSite, type TemplateListTemplate, type DataItem, type DataRoot, type TreePage, type UserListUser } from './queries'
+import { DISABLE_USERS, ENABLE_USERS, CREATE_DATA_FOLDER, DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, type DataFolder, type GlobalSelf, type PageEditorPage, type DataSite, type TemplateListTemplate, type DataItem, type DataRoot, type TreePage, type UserListUser } from './queries'
 import { type GetSubPagesByPath, GET_SUBPAGES_BY_PATH, type GetSubFoldersAndAssetsByPath, GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, type GetPageByLink } from './queries/chooser'
 
 export interface MutationResponse {
@@ -133,7 +133,7 @@ class API {
   }
 
   async chooserPageByLink (link: PageLink) {
-    const { pages } = await this.query<GetPageByLink>(GET_PAGE_BY_LINK, { linkId: link.linkId, siteId: link.siteId, path: link.path })
+    const { pages } = await this.query<GetPageByLink>(GET_PAGE_BY_LINK, { linkId: link.linkId, path: link.path })
     return pages[0]
   }
 
@@ -185,11 +185,6 @@ class API {
   async getGlobalDataAccessByTemplateKey (key: string) {
     const { access } = await this.query<{ access: { createGlobalData: boolean} }>(GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, { key })
     return access.createGlobalData
-  }
-
-  async getSitesAndData (key: string) {
-    const { sites } = await this.query<{ sites: DataSite[] }>(GET_SITES_AND_DATA, { key })
-    return sites
   }
 
   async getDataByFolderId (id: string) {

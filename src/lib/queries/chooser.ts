@@ -63,8 +63,8 @@ export interface GetSubFoldersAndAssetsByPath {
 }
 
 export const GET_PAGE_BY_LINK = `
-  query getPageByLink ($linkId: String!, $siteId: ID!, $path: String!) {
-    pages (filter: { links: [{ linkId: $linkId, siteId: $siteId, path: $path }] }) {
+  query getPageByLink ($linkId: String!, $path: String!) {
+    pages (filter: { links: [{ linkId: $linkId, path: $path }] }) {
       ${chooserPageDetails}
     }
   }

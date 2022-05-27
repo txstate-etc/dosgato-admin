@@ -10,15 +10,15 @@ export interface TreeItemFromDB {
   hasChildren?: boolean
 }
 
-export interface TreeItem extends TreeItemFromDB {
+export interface TreeItem<T extends TreeItemFromDB> extends TreeItemFromDB {
   level: number
-  parent?: this
+  parent?: TypedTreeItem<T>
   loading?: boolean
   open?: boolean
-  children?: this[]
+  children?: TypedTreeItem<T>[]
 }
 
-export type TypedTreeItem<T extends TreeItemFromDB> = TreeItem & T
+export type TypedTreeItem<T extends TreeItemFromDB> = TreeItem<T> & T
 
 export interface ITreeStore<T extends TreeItemFromDB> {
   loading?: boolean
@@ -69,6 +69,8 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
   public dropEligibleHandler?: DropEligibleFn<T>
   public dropEffectHandler?: DropEffectFn<T>
   public singleSelect?: boolean
+
+  private refreshPromise: Promise<void>
 
   constructor (
     public fetchChildren: FetchChildrenFn<T>,
@@ -138,7 +140,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     return children
   }
 
-  async refresh (item?: TypedTreeItem<T>, notify = true) {
+  async #refresh (item?: TypedTreeItem<T>, skipNotify = false) {
     if (item) item.loading = true
     else this.value.loading = true
     this.trigger()
@@ -166,7 +168,14 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     this.addLookup(children)
     if (item) item.loading = false
     this.value.loading = false
-    if (notify) this.trigger()
+    if (!skipNotify) this.trigger()
+  }
+
+  async refresh (item?: TypedTreeItem<T>, skipNotify = false) {
+    if (item || !this.value.loading) {
+      this.refreshPromise = this.#refresh(item, skipNotify)
+    }
+    return await this.refreshPromise
   }
 
   focus (item: TypedTreeItem<T>, notify = true) {
@@ -213,7 +222,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
 
   async open (item: TypedTreeItem<T>) {
     if (item.open === true || item.hasChildren === false) return
-    await this.refresh(item, false)
+    await this.refresh(item, true)
     item.open = !!item.children?.length
     this.trigger()
   }

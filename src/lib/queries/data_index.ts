@@ -120,6 +120,7 @@ export interface DataSite {
 }
 
 export interface DataRoot {
+  id: string
   datafolders: DataFolder[]
   data: DataItem[]
   site?: DataSite
@@ -155,6 +156,7 @@ export const GET_AVAILABLE_TEMPLATE_INFO = `
 export const GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY = `
   query getGlobalDataRootByTemplateKey ($key: ID!) {
     dataroots(filter: {global:true, templateKeys: [$key]}) {
+      id
       datafolders {
         ${dataFolderDetails}
       }
@@ -170,7 +172,8 @@ export const GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY = `
 
 export const GET_SITE_DATAROOTS_BY_TEMPLATE_KEY = `
   query getSiteDataRootsByTemplateKey ($key: ID!) {
-    dataroots(filter: {templateKeys: [$key]}) {
+    dataroots(filter: {templateKeys: [$key], global: false}) {
+      id
       site {
         id
         name
@@ -201,6 +204,7 @@ export const GET_DATA_BY_DATAFOLDER_ID = `
 export const GET_SITE_DATA_BY_TEMPLATE_KEY = `
   query getSiteDataByTemplateKey ($siteId: ID!, $key: ID!) {
     dataroots (filter: { siteIds: [$siteId], templateKeys: [$key] }) {
+      id
       site {
         id
         name
