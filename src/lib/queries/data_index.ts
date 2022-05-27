@@ -203,7 +203,7 @@ export const GET_DATA_BY_DATAFOLDER_ID = `
 
 export const GET_SITE_DATA_BY_TEMPLATE_KEY = `
   query getSiteDataByTemplateKey ($siteId: ID!, $key: ID!) {
-    dataroots (filter: { siteIds: [$siteId], templateKeys: [$key] }) {
+    dataroots (filter: { global: false, siteIds: [$siteId], templateKeys: [$key] }) {
       id
       site {
         id
@@ -242,7 +242,7 @@ export const CREATE_DATA_FOLDER = `
 `
 
 export const DELETE_DATA_FOLDERS = `
-  mutation deleteDataFolders ($folderIds: [ID]!) {
+  mutation deleteDataFolders ($folderIds: [ID!]!) {
     deleteDataFolders (folderIds: $folderIds) {
       ${mutationResponse}
       dataFolders {
@@ -264,7 +264,7 @@ export const RENAME_DATA_FOLDER = `
 `
 
 export const PUBLISH_DATA_ENTRIES = `
-  mutation publishDataEntries ($dataIds: [ID]!) {
+  mutation publishDataEntries ($dataIds: [ID!]!) {
     publishDataEntries (dataIds: $dataIds) {
       ${mutationResponse}
     }
@@ -272,7 +272,7 @@ export const PUBLISH_DATA_ENTRIES = `
 `
 
 export const UNPUBLISH_DATA_ENTRIES = `
-  mutation unpublishDataEntries ($dataIds: [ID]!) {
+  mutation unpublishDataEntries ($dataIds: [ID!]!) {
     unpublishDataEntries (dataIds: $dataIds) {
       ${mutationResponse}
     }

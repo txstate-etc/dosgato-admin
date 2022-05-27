@@ -52,6 +52,7 @@
   interface TreeDataSite extends Omit<Omit<DataSite, 'data'>, 'datafolders'> {
     type: DataTreeNodeType.SITE
     hasChildren: boolean
+    siteId?: string
     permissions: {
       create: boolean
     }
@@ -80,7 +81,7 @@
         })
       }
       if (item.type === DataTreeNodeType.SITE) {
-        const dataroot = (item.id === `${templateKey}global`) ? await api.getGlobalDataRootByTemplateKey(templateKey) : await api.getSiteDataByTemplateKey(item.id, templateKey)
+        const dataroot = item.siteId ? await api.getSiteDataByTemplateKey(item.siteId, templateKey) : await api.getGlobalDataRootByTemplateKey(templateKey)
         const ret: AnyDataTreeItem[] = []
         for (const f of dataroot.datafolders) {
           ret.push({
@@ -122,6 +123,7 @@
         ret.push({
           id: dr.id,
           name: dr.site!.name,
+          siteId: dr.site!.id,
           type: DataTreeNodeType.SITE,
           hasChildren: !!dr.data.length || !!dr.datafolders.length,
           permissions: { create: dr.permissions.create }
@@ -202,14 +204,6 @@
   $: templateKey = $templateStore?.id
   $: if ($templateStore) store.refresh()
 
-  function zeroactions () {
-    if (!mayManageGlobalData) return []
-    return [
-      { label: 'Add Data', icon: plusIcon, disabled: !mayManageGlobalData, onClick: () => { modal = 'adddata' } },
-      { label: 'Add Data Folder', icon: folderPlusOutline, disabled: !mayManageGlobalData, onClick: () => { modal = 'addfolder' } }
-    ]
-  }
-
   function singleActions (item: TypedDataTreeItem) {
     if (item.type === DataTreeNodeType.DATA) {
       const actions = [
@@ -266,17 +260,13 @@
   }
 
   function getActions (selectedItems: TypedDataTreeItem[]) {
-    if (selectedItems.length === 0) return zeroactions()
     if (selectedItems.length === 1) return singleActions(selectedItems[0])
     if (selectedItems.length > 1) return multipleActions(selectedItems)
     return []
   }
 
   async function onAddFolder (state) {
-    let siteId: string|undefined
-    if ($store.selectedItems.length === 1 && $store.selectedItems[0].type === DataTreeNodeType.SITE) {
-      siteId = $store.selectedItems[0].id
-    }
+    const siteId: string|undefined = ($store.selectedItems[0] as TreeDataSite).siteId
     const resp = await api.addDataFolder(state.name, templateKey, siteId)
     if (resp.success) store.refresh()
     modal = undefined
