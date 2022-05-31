@@ -1,6 +1,14 @@
 const groupDetails = `
   id
   name
+  roles(direct: true) {
+    id
+    name
+  }
+  managers {
+    id
+    name
+  }
   permissions {
     manageUsers
     manageGroups
@@ -10,6 +18,14 @@ const groupDetails = `
 export interface GroupListGroup {
   id: string
   name: string
+  roles: {
+    id: string
+    name: string
+  }[]
+  managers: {
+    id: string
+    name: string
+  }[]
   permissions: {
     manageUsers: boolean
     manageGroups: boolean
