@@ -31,7 +31,8 @@
 </script>
 <script lang="ts">
   import Dialog from '$lib/components/Dialog.svelte'
-
+  import { goto } from '$app/navigation'
+  import { base } from '$app/paths'
   let modal: 'disable'|'enable'|'edit'|undefined
 
   function singleactions (user: TypedUserItem) {
@@ -68,7 +69,7 @@
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : multiactions($store.selectedItems)}>
-  <Tree singleSelect {store} headers={[
+  <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/users/' + detail.id)} headers={[
     { id: 'username', label: 'Username', get: 'id', defaultWidth: '25%', icon: u => u.disabled ? accountOff : accountIcon },
     { id: 'fullname', label: 'Full Name', get: 'name', defaultWidth: '25%' },
     { id: 'roles', label: 'Roles', render: renderRoles, defaultWidth: 'calc(50% - 1.3em)' }
