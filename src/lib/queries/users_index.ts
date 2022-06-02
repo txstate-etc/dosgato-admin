@@ -20,17 +20,29 @@ const fullUserDetails = `
   name
   email
   disabled
-  roles(direct: true) {
+  directRoles: roles(direct: true) {
     id
     name
   }
-  groups {
+  indirectRoles: roles(direct: false) {
     id
     name
-    roles(direct: true) {
+    groups(direct: true) {
       id
       name
     }
+  }
+  directGroups: groups(direct: true) {
+    id
+    name
+    parents {
+      id
+      name
+    }
+  }
+  indirectGroups: groups(direct: false) {
+    id
+    name
   }
 `
 
@@ -50,13 +62,29 @@ export interface UserListUser {
 }
 
 export interface FullUser extends UserListUser {
-  groups: {
+  directRoles: {
     id: string
     name: string
-    roles: {
+  }[]
+  indirectRoles: {
+    id: string
+    name: string
+    groups: {
       id: string
       name: string
     }[]
+  }[]
+  directGroups: {
+    id: string
+    name: string
+    parents: {
+      id: string
+      name: string
+    }[]
+  }[]
+  indirectGroups: {
+    id: string
+    name: string
   }[]
 }
 

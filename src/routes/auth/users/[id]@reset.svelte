@@ -1,12 +1,17 @@
 <script lang="ts" context="module">
   import type { Load } from '@sveltejs/kit'
   import pencilIcon from '@iconify-icons/mdi/pencil'
+  import plusIcon from '@iconify-icons/mdi/plus'
   import arrowLeft from '@iconify-icons/mdi/arrow-left'
+  import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { Icon, FieldText, FieldDualListbox } from '@dosgato/dialog'
   import FormDialog from '$lib/components/FormDialog.svelte'
   let user: FullUser
+  let allUserGroups
   export const load: Load = async ({ params }) => {
     user = await api.getUserById(params.id)
+    allUserGroups = [...user.directGroups.map(g => ({ id: g.id, name: g.name })), ...user.indirectGroups.map(g => ({ id: g.id, name: g.name }))]
+    console.log(user)
     if (!user) return { status: 404 }
     return {}
   }
@@ -18,6 +23,23 @@
   import { base } from '$app/paths'
   let modal: 'editbasic'|'editgroups'|'editroles'|undefined
   let allGroups: GroupListGroup[] = []
+
+  function getGroupParents (group) {
+    const parents: string[] = []
+    for (const g of user.directGroups) {
+      if (g.parents.find(p => p.id === group.id)) {
+        parents.push(g.name)
+      }
+    }
+    return parents.join(', ')
+  }
+
+  function getIndirectRoleGroup (role) {
+    const relevantGroups = role.groups.filter(g => {
+      return allUserGroups.find(ug => ug.id === g.id)
+    })
+    return relevantGroups.map(g => g.name).join(', ')
+  }
 
   async function onEditBasic (state) {
     // TODO
@@ -67,16 +89,22 @@
 
 <div class="panel">
   <div class="header">
-    <div>Group Memberships (with group roles)</div>
-    <button class="edit" on:click={onclickgroups}><Icon icon={pencilIcon}/></button>
+    <div>Group Memberships</div>
+    <button class="edit" on:click={onclickgroups}><Icon icon={plusIcon}/></button>
   </div>
   <div class="body">
-    {#if user.groups.length}
+    {#if user.directGroups.length || user.indirectGroups.length}
       <ul class="groups">
-        {#each user.groups as group (group.id)}
-          <li class="group-info">
+        {#each user.directGroups as group (group.id)}
+          <li class="group-row">
             <div>{group.name}</div>
-            <div>{(group.roles.map(r => r.name)).join(', ')}</div>
+            <button class="leave-group"><Icon icon={deleteOutline} width="1.5em"/></button>
+          </li>
+        {/each}
+        {#each user.indirectGroups as group (group.id)}
+          <li class="group-row">
+            <div>{group.name}</div>
+            <div>{`Membership through ${getGroupParents(group)}`}</div>
           </li>
         {/each}
       </ul>
@@ -88,14 +116,23 @@
 
 <div class="panel">
   <div class="header">
-    <div>Direct Roles</div>
-    <button class="edit"><Icon icon={pencilIcon}/></button>
+    <div>Roles</div>
+    <button class="edit"><Icon icon={plusIcon}/></button>
   </div>
   <div class="body">
-    {#if user.roles.length}
-      <ul class="groups">
-        {#each user.roles as role (role.id)}
-          <li>{role.name}</li>
+    {#if user.directRoles.length || user.indirectRoles.length}
+      <ul class="roles">
+        {#each user.directRoles as role (role.id)}
+          <li class="role-row">
+            {role.name}
+            <button class="remove-role"><Icon icon={deleteOutline} width="1.5em"/></button>
+          </li>
+        {/each}
+        {#each user.indirectRoles as role (role.id)}
+          <li class="role-row">
+            {role.name}
+            <div>{`Assigned through ${getIndirectRoleGroup(role)}`}</div>
+          </li>
         {/each}
       </ul>
     {:else}
@@ -177,8 +214,13 @@
   li:first-child {
     padding-top: 0;
   }
-  li.group-info {
+  li.group-row, li.role-row {
     display: flex;
     justify-content: space-between;
+  }
+  .leave-group, .remove-role {
+    border: 0;
+    padding: 0;
+    background-color: transparent;
   }
 </style>
