@@ -20,6 +20,8 @@ const fullUserDetails = `
   name
   email
   disabled
+  disabledAt
+  lastlogin
   directRoles: roles(direct: true) {
     id
     name
@@ -62,6 +64,8 @@ export interface UserListUser {
 }
 
 export interface FullUser extends UserListUser {
+  disabledAt?: string
+  lastlogin?: string
   directRoles: {
     id: string
     name: string

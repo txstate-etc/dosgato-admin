@@ -21,6 +21,7 @@
 <script lang="ts">
   import { api, type FullUser, type GroupListGroup } from '$lib'
   import { base } from '$app/paths'
+  import { DateTime } from 'luxon'
   let modal: 'editbasic'|'editgroups'|'editroles'|undefined
   let allGroups: GroupListGroup[] = []
 
@@ -84,6 +85,18 @@
       <div class="label">Email:</div>
       <div class="value">{user.email}</div>
     </div>
+    <div class="row">
+      <div class="label">Last Login:</div>
+      <div class="value">
+        {user.lastlogin ? DateTime.fromISO(user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never'}
+      </div>
+    </div>
+    {#if user.disabledAt}
+      <div class="row">
+        <div class="label">Inactive Since:</div>
+        <div class="value">{DateTime.fromISO(user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</div>
+      </div>
+    {/if}
   </div>
 </div>
 
