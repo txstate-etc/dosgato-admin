@@ -4,30 +4,38 @@
   import plusIcon from '@iconify-icons/mdi/plus'
   import arrowLeft from '@iconify-icons/mdi/arrow-left'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
-  import { Icon, FieldText, FieldDualListbox } from '@dosgato/dialog'
+  import { Icon, FieldText, FieldMultiselect } from '@dosgato/dialog'
   import FormDialog from '$lib/components/FormDialog.svelte'
-  let user: FullUser
-  let allUserGroups
+  import Dialog from '$lib/components/Dialog.svelte'
+
+  let allGroups: GroupListGroup[] = []
   export const load: Load = async ({ params }) => {
-    user = await api.getUserById(params.id)
-    allUserGroups = [...user.directGroups.map(g => ({ id: g.id, name: g.name })), ...user.indirectGroups.map(g => ({ id: g.id, name: g.name }))]
-    console.log(user)
-    if (!user) return { status: 404 }
+    await store.refresh(params.id)
+    if (!store.userFetched()) return { status: 404 }
+    allGroups = await api.getGroupList()
     return {}
   }
 
+  async function getUser (id: string) {
+    const user = await api.getUserById(id)
+    return user
+  }
+
+  const store = new UserDetailStore(getUser)
 </script>
 
 <script lang="ts">
-  import { api, type FullUser, type GroupListGroup } from '$lib'
+  import { api, UserDetailStore, type GroupWithParents, type GroupListGroup } from '$lib'
   import { base } from '$app/paths'
   import { DateTime } from 'luxon'
-  let modal: 'editbasic'|'editgroups'|'editroles'|undefined
-  let allGroups: GroupListGroup[] = []
+  let modal: 'editbasic'|'editgroups'|'editroles'|'removefromgroup'|undefined
+  let groupLeaving: GroupWithParents|undefined = undefined
+
+  $: allUserGroups = [...$store.user.directGroups, ...$store.user.indirectGroups]
 
   function getGroupParents (group) {
     const parents: string[] = []
-    for (const g of user.directGroups) {
+    for (const g of allUserGroups) {
       if (g.parents.find(p => p.id === group.id)) {
         parents.push(g.name)
       }
@@ -48,16 +56,32 @@
     return { success: true, messages: [], data: [] }
   }
 
-  async function onclickgroups () {
-    allGroups = await api.getGroupList()
-    modal = 'editgroups'
+  async function searchGroups (term: string) {
+    const directGroupIds = $store.user.directGroups.map(g => g.id)
+    return allGroups.filter(g => !directGroupIds.includes(g.id) && g.name.indexOf(term) > -1).map(g => ({ label: g.name, value: g.id }))
   }
 
-  async function onUpdateGroups (state) {
-    // TODO
-    modal = undefined
-    return { success: true, messages: [], data: [] }
+  async function onAddGroups (state) {
+    const resp = await api.addUserToGroups($store.user.id, state.groups)
+    if (resp.success) {
+      store.refresh($store.user.id)
+      modal = undefined
+    }
+    // TODO: What should be returned in data?
+    return { success: resp.success, messages: resp.messages, data: {} }
   }
+
+  async function onRemoveFromGroup () {
+    if (!groupLeaving) return
+    const resp = await api.removeUserFromGroup($store.user.id, groupLeaving.id)
+    if (resp.success) {
+      store.refresh($store.user.id)
+    }
+    groupLeaving = undefined
+    modal = undefined
+  }
+
+
 </script>
 
 <div class="back-link">
@@ -75,26 +99,26 @@
   <div class="body">
     <div class="row">
       <div class="label">Login:</div>
-      <div class="value">{user.id}</div>
+      <div class="value">{$store.user.id}</div>
     </div>
     <div class="row">
       <div class="label">Name:</div>
-      <div class="value">{user.name}</div>
+      <div class="value">{$store.user.name}</div>
     </div>
     <div class="row">
       <div class="label">Email:</div>
-      <div class="value">{user.email}</div>
+      <div class="value">{$store.user.email}</div>
     </div>
     <div class="row">
       <div class="label">Last Login:</div>
       <div class="value">
-        {user.lastlogin ? DateTime.fromISO(user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never'}
+        {$store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never'}
       </div>
     </div>
-    {#if user.disabledAt}
+    {#if $store.user.disabledAt}
       <div class="row">
         <div class="label">Inactive Since:</div>
-        <div class="value">{DateTime.fromISO(user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</div>
+        <div class="value">{DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</div>
       </div>
     {/if}
   </div>
@@ -103,26 +127,26 @@
 <div class="panel">
   <div class="header">
     <div>Group Memberships</div>
-    <button class="edit" on:click={onclickgroups}><Icon icon={plusIcon}/></button>
+    <button class="edit" on:click={() => { modal = 'editgroups' }}><Icon icon={plusIcon}/></button>
   </div>
   <div class="body">
-    {#if user.directGroups.length || user.indirectGroups.length}
+    {#if $store.user.directGroups.length || $store.user.indirectGroups.length}
       <ul class="groups">
-        {#each user.directGroups as group (group.id)}
+        {#each $store.user.directGroups as group (group.id)}
           <li class="group-row">
             <div>{group.name}</div>
-            <button class="leave-group"><Icon icon={deleteOutline} width="1.5em"/></button>
+            <button class="leave-group" on:click={() => { groupLeaving = group; modal = 'removefromgroup' }}><Icon icon={deleteOutline} width="1.5em"/></button>
           </li>
         {/each}
-        {#each user.indirectGroups as group (group.id)}
+        {#each $store.user.indirectGroups as group (group.id)}
           <li class="group-row">
             <div>{group.name}</div>
-            <div>{`Membership through ${getGroupParents(group)}`}</div>
+            <div>{`Via ${getGroupParents(group)}`}</div>
           </li>
         {/each}
       </ul>
     {:else}
-      <div>User {user.id} is not a member of any groups.</div>
+      <div>User {$store.user.id} is not a member of any groups.</div>
     {/if}
   </div>
 </div>
@@ -133,23 +157,23 @@
     <button class="edit"><Icon icon={plusIcon}/></button>
   </div>
   <div class="body">
-    {#if user.directRoles.length || user.indirectRoles.length}
+    {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
       <ul class="roles">
-        {#each user.directRoles as role (role.id)}
+        {#each $store.user.directRoles as role (role.id)}
           <li class="role-row">
             {role.name}
             <button class="remove-role"><Icon icon={deleteOutline} width="1.5em"/></button>
           </li>
         {/each}
-        {#each user.indirectRoles as role (role.id)}
+        {#each $store.user.indirectRoles as role (role.id)}
           <li class="role-row">
             {role.name}
-            <div>{`Assigned through ${getIndirectRoleGroup(role)}`}</div>
+            <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
           </li>
         {/each}
       </ul>
     {:else}
-    <div>User {user.id} has no roles assigned.</div>
+    <div>User {$store.user.id} has no roles assigned.</div>
     {/if}
   </div>
 </div>
@@ -157,27 +181,33 @@
   <FormDialog
     submit={onEditBasic}
     name='editbasicinfo'
-    title= {`Edit ${user.id}`}
-    preload={{ name: user.name, email: user.email }}
+    title= {`Edit ${$store.user.id}`}
+    preload={{ name: $store.user.name, email: $store.user.email }}
     on:dismiss={() => { modal = undefined }}>
     <FieldText path='name' label='Full Name'></FieldText>
     <FieldText path='email' label='Email'></FieldText>
   </FormDialog>
 {:else if modal === 'editgroups'}
   <FormDialog
-    submit={onUpdateGroups}
+    submit={onAddGroups}
     name='editgroups'
-    title={`Edit groups for ${user.id}`}
-    preload={{ groups: user.groups.map(g => g.id) }}
+    title={`Edit groups for ${$store.user.id}`}
     on:dismiss={() => { modal = undefined }}>
-    <FieldDualListbox
-      path="groups"
-      choices={allGroups.map(g => ({ label: g.name, value: g.id }))}
-      selectedLabel={`${user.id} is a member of`}
-      sourceLabel='Other available groups'
-      multiselect={true}
+    <FieldMultiselect
+      path='groups'
+      label='Add Groups'
+      getOptions={searchGroups}
     />
   </FormDialog>
+{:else if modal === 'removefromgroup'}
+  <Dialog
+    title='Remove from Group'
+    continueText='Remove'
+    cancelText='Cancel'
+    on:continue={onRemoveFromGroup}
+    on:dismiss={() => { modal = undefined; groupLeaving = undefined }}>
+    Remove user {$store.user.id} from group {groupLeaving ? groupLeaving.name : ''}?
+  </Dialog>
 {/if}
 
 <style>

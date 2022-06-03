@@ -45,6 +45,10 @@ const fullUserDetails = `
   indirectGroups: groups(direct: false) {
     id
     name
+    parents {
+      id
+      name
+    }
   }
 `
 
@@ -63,7 +67,20 @@ export interface UserListUser {
   }
 }
 
-export interface FullUser extends UserListUser {
+export interface GroupWithParents {
+  id: string
+  name: string
+  parents: {
+    id: string
+    name: string
+  }[]
+}
+
+export interface FullUser {
+  id: string
+  name: string
+  email: string
+  disabled: boolean
   disabledAt?: string
   lastlogin?: string
   directRoles: {
@@ -78,18 +95,8 @@ export interface FullUser extends UserListUser {
       name: string
     }[]
   }[]
-  directGroups: {
-    id: string
-    name: string
-    parents: {
-      id: string
-      name: string
-    }[]
-  }[]
-  indirectGroups: {
-    id: string
-    name: string
-  }[]
+  directGroups: GroupWithParents[]
+  indirectGroups: GroupWithParents[]
 }
 
 export const GET_USER_LIST = `
@@ -125,6 +132,22 @@ export const ENABLE_USERS = `
       users {
         ${userDetails}
       }
+    }
+  }
+`
+
+export const REMOVE_USER_FROM_GROUP = `
+  mutation removeUserFromGroups ($groupIds: [ID!]!, $userId: ID!) {
+    removeUserFromGroups (groupIds: $groupIds, userId: $userId) {
+      ${mutationResponse}
+    }
+  }
+`
+
+export const ADD_USER_TO_GROUPS = `
+  mutation addUserToGroups ($groupIds: [ID!]!, $userId: ID!) {
+    addUserToGroups (groupIds: $groupIds, userId: $userId) {
+      ${mutationResponse}
     }
   }
 `
