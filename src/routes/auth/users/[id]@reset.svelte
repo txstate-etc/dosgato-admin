@@ -12,7 +12,7 @@
   export const load: Load = async ({ params }) => {
     await store.refresh(params.id)
     if (!store.userFetched()) return { status: 404 }
-    allGroups = await api.getGroupList()
+    allGroups = await api.getAllGroups()
     return {}
   }
 

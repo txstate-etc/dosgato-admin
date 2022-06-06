@@ -7,8 +7,8 @@
   type TypedGroupItem = TypedTreeItem<GroupListGroup>
 
   async function fetchChildren (group?: TypedGroupItem) {
-    if (group) return []
-    return await api.getGroupList()
+    const children = group ? await api.getSubgroups(group.id) : await api.getRootGroups()
+    return children.map(g => ({ ...g, hasChildren: !!g.subgroups.length }))
   }
 
   const store: TreeStore<GroupListGroup> = new TreeStore(fetchChildren)
