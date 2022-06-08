@@ -50,6 +50,14 @@ const fullUserDetails = `
       name
     }
   }
+  sitesOwned {
+    id
+    name
+  }
+  sitesManaged {
+    id
+    name
+  }
 `
 
 export interface UserListUser {
@@ -97,6 +105,14 @@ export interface FullUser {
   }[]
   directGroups: GroupWithParents[]
   indirectGroups: GroupWithParents[]
+  sitesOwned: {
+    id: string
+    name: string
+  }[]
+  sitesManaged: {
+    id: string
+    name: string
+  }[]
 }
 
 export const GET_USER_LIST = `

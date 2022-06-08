@@ -33,6 +33,7 @@
 
   $: allUserGroups = [...$store.user.directGroups, ...$store.user.indirectGroups]
 
+
   function getGroupParents (group) {
     const parents: string[] = []
     for (const g of allUserGroups) {
@@ -133,13 +134,13 @@
     {#if $store.user.directGroups.length || $store.user.indirectGroups.length}
       <ul class="groups">
         {#each $store.user.directGroups as group (group.id)}
-          <li class="group-row">
+          <li class="flex-row">
             <div>{group.name}</div>
             <button class="leave-group" on:click={() => { groupLeaving = group; modal = 'removefromgroup' }}><Icon icon={deleteOutline} width="1.5em"/></button>
           </li>
         {/each}
         {#each $store.user.indirectGroups as group (group.id)}
-          <li class="group-row">
+          <li class="flex-row">
             <div>{group.name}</div>
             <div>{`Via ${getGroupParents(group)}`}</div>
           </li>
@@ -160,13 +161,13 @@
     {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
       <ul class="roles">
         {#each $store.user.directRoles as role (role.id)}
-          <li class="role-row">
+          <li class="flex-row">
             {role.name}
             <button class="remove-role"><Icon icon={deleteOutline} width="1.5em"/></button>
           </li>
         {/each}
         {#each $store.user.indirectRoles as role (role.id)}
-          <li class="role-row">
+          <li class="flex-row">
             {role.name}
             <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
           </li>
@@ -175,6 +176,33 @@
     {:else}
     <div>User {$store.user.id} has no roles assigned.</div>
     {/if}
+  </div>
+</div>
+
+{#if Object.keys($store.sites).length}
+  <div class="panel">
+    <div class="header">
+      <div>Sites</div>
+    </div>
+    <div class="body">
+      <ul class="sites">
+        {#each Object.keys($store.sites) as site (site)}
+          <li class="flex-row">
+            {site}
+            <div>{$store.sites[site].join(', ')}</div>
+          </li>
+        {/each}
+      </ul>
+    </div>
+  </div>
+{/if}
+
+<div class="panel">
+  <div class="header">
+    <div>Global Data</div>
+  </div>
+  <div class="body">
+
   </div>
 </div>
 {#if modal === 'editbasic'}
@@ -257,7 +285,7 @@
   li:first-child {
     padding-top: 0;
   }
-  li.group-row, li.role-row {
+  li.flex-row {
     display: flex;
     justify-content: space-between;
   }
