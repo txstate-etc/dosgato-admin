@@ -186,6 +186,12 @@
     </div>
     <div class="body">
       <ul class="sites">
+        {#if $store.permittedOnAllSites.length}
+          <li class="flex-row">
+            All Sites
+            <div>{$store.permittedOnAllSites.join(', ')}</div>
+          </li>
+        {/if}
         {#each Object.keys($store.sites) as site (site)}
           <li class="flex-row">
             {site}

@@ -15,6 +15,38 @@ permissions {
 }
 `
 
+const userDetailRules = `
+  siteRules {
+    site {
+      id
+      name
+    }
+    type
+    grants {
+      viewForEdit
+    }
+  }
+  pageRules {
+    site {
+      id
+      name
+    }
+    pagetree {
+      id
+      name
+      site {
+        id
+        name
+      }
+    }
+    grants {
+      viewlatest
+      viewForEdit
+      publish
+    }
+  }
+`
+
 const fullUserDetails = `
   id
   name
@@ -25,6 +57,7 @@ const fullUserDetails = `
   directRoles: roles(direct: true) {
     id
     name
+    ${userDetailRules}
   }
   indirectRoles: roles(direct: false) {
     id
@@ -33,6 +66,7 @@ const fullUserDetails = `
       id
       name
     }
+    ${userDetailRules}
   }
   directGroups: groups(direct: true) {
     id
@@ -84,6 +118,36 @@ export interface GroupWithParents {
   }[]
 }
 
+export interface UserDetailSiteRule {
+  site: {
+    id: string
+    name: string
+  }
+  grants: {
+    viewForEdit: boolean
+  }
+}
+
+export interface UserDetailPageRule {
+  site: {
+    id: string
+    name: string
+  }
+  pagetree: {
+    id: string
+    name: string
+    site: {
+      id: string
+      name: string
+    }
+  }
+  grants: {
+    viewlatest: boolean
+    viewForEdit: boolean
+    publish: boolean
+  }
+}
+
 export interface FullUser {
   id: string
   name: string
@@ -94,6 +158,8 @@ export interface FullUser {
   directRoles: {
     id: string
     name: string
+    siteRules: UserDetailSiteRule[]
+    pageRules: UserDetailPageRule[]
   }[]
   indirectRoles: {
     id: string
@@ -102,6 +168,8 @@ export interface FullUser {
       id: string
       name: string
     }[]
+    siteRules: UserDetailSiteRule[]
+    pageRules: UserDetailPageRule[]
   }[]
   directGroups: GroupWithParents[]
   indirectGroups: GroupWithParents[]
