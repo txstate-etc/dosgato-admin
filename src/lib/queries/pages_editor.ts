@@ -4,6 +4,9 @@ path
 name
 data
 title
+pagetree {
+  id
+}
 template {
   name
 }
@@ -17,6 +20,9 @@ export interface PageEditorPage {
   path: string
   name: string
   title?: string
+  pagetree: {
+    id: string
+  }
   template?: {
     name: string
   }

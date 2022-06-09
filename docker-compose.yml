@@ -8,6 +8,7 @@ services:
       - 3000:3000
     environment:
       API_BASE: http://localhost
+      RENDER_BASE: http://localhost:3002
       AUTH_REDIRECT: http://localhost:3001/login?clientId=dosgato-admin&returnUrl=http%3A%2F%2Flocalhost%3A3000%2Fadmin
     volumes:
       - ./src:/usr/app/src
@@ -22,6 +23,7 @@ services:
       - 9229:9229
     environment:
       NODE_ENV: development
+      DOS_GATO_ANON_TOKEN: rendertoken
       MYSQL_USER: dosgato
       MYSQL_PASS: password
       MYSQL_DATABASE: dosgatodev
@@ -32,6 +34,18 @@ services:
       - ../dosgato/src:/usr/app/src
     depends_on:
       - mysql
+  dosgato-render:
+    build:
+      context: ../dosgato-render
+    ports:
+      - 3002:80
+    environment:
+      DOS_GATO_ANON_TOKEN: rendertoken
+    volumes:
+      - ../dosgato-render/src:/usr/app/src
+      - ../dosgato-render/test:/usr/app/test
+    depends_on:
+      - dosgato-api
   fakeauth:
     image: registry.its.txstate.edu/unified-auth-stub:dev
     ports:

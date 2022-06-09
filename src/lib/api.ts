@@ -4,6 +4,7 @@ import type { DateTime } from 'luxon'
 import { keyby, toArray } from 'txstate-utils'
 import { DISABLE_USERS, ENABLE_USERS, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER, DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, GET_USER_BY_ID, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS, GET_SUBGROUPS, type DataFolder, type GlobalSelf, type PageEditorPage, type DataSite, type TemplateListTemplate, type DataItem, type DataRoot, type TreePage, type UserListUser, type FullUser, type GroupListGroup, type RoleListRole } from './queries'
 import { type GetSubPagesByPath, GET_SUBPAGES_BY_PATH, type GetSubFoldersAndAssetsByPath, GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, type GetPageByLink } from './queries/chooser'
+import { environmentConfig } from './stores'
 
 export interface MutationResponse {
   success: boolean
@@ -67,8 +68,7 @@ class API {
   protected pageChildrenLoader = new Loader(async ids => await this.getSubPagesBatch(ids), page => page.id)
 
   async query <ReturnType = any> (query: string, variables?: any, querySignature?: string): Promise<ReturnType> {
-    const { apiBase, authRedirect } = await this.config()
-    const response = await this.fetch(apiBase + '/graphql', {
+    const response = await this.fetch(environmentConfig.apiBase + '/graphql', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.token ?? ''}`,
@@ -85,7 +85,7 @@ class API {
     })
     if (!response.ok) {
       if (response.status === 401) {
-        return location.assign(authRedirect) as any
+        return location.assign(environmentConfig.authRedirect) as any
       }
       throw new Error(`${response.status} ${response.statusText}`)
     }
@@ -95,8 +95,7 @@ class API {
   }
 
   async config () {
-    this.savedConfig ??= await (await this.fetch(base + '/config')).json()
-    return this.savedConfig
+    return await (await this.fetch(base + '/config')).json()
   }
 
   async getSelf () {

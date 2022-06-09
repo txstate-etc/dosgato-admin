@@ -15,6 +15,12 @@ export interface SubNavLink {
   onClose?: (idx: number) => void|Promise<void>
 }
 
+export interface EnvironmentConfig {
+  apiBase: string
+  authRedirect: string
+  renderBase: string
+}
+
 class GlobalStore extends Store<IGlobalStore> {
   constructor () {
     super({ subnav: [], access: {}, me: { name: '' } })
@@ -23,3 +29,4 @@ class GlobalStore extends Store<IGlobalStore> {
 
 export const globalStore = new GlobalStore()
 export const subnav = subStore(globalStore, 'subnav')
+export const environmentConfig: EnvironmentConfig = { apiBase: '', authRedirect: '', renderBase: '' }

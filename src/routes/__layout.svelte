@@ -11,7 +11,7 @@
   import type { Load } from '@sveltejs/kit'
   import { PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
   import { base } from '$app/paths'
-  import { api, globalStore, subnav, type SubNavLink } from '$lib'
+  import { api, environmentConfig, globalStore, subnav, type SubNavLink } from '$lib'
   import { getToken } from '../local'
 
   export const load: Load = async (input) => {
@@ -22,6 +22,7 @@
     } else {
       api.token = sessionStorage.getItem('token') ?? undefined
     }
+    Object.assign(environmentConfig, await api.config())
     const { me, access } = await api.getSelf()
     if (!me) return { status: 403, error: 'You are not authorized to use this system.' }
     globalStore.update(v => ({ ...v, me, access }))
