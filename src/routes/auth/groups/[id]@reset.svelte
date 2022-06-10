@@ -3,6 +3,7 @@
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import FormDialog from '$lib/components/FormDialog.svelte'
+  import Dialog from '$lib/components/Dialog.svelte'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { FieldText, FieldMultiselect, Icon } from '@dosgato/dialog'
 
@@ -23,11 +24,13 @@
 <script lang="ts">
   import { base } from '$app/paths'
   import { api, GroupDetailStore, DetailPanel, type UserListUser } from '$lib'
-  let modal: 'editbasic'|'addmembers'|undefined
+  let modal: 'editbasic'|'addmembers'|'addmanagers'|'maynotaddmanagers'|undefined
   let allUsers: UserListUser[]
 
   $: directMemberIds = $store.group.directMembers.map(m => m.id)
   $: subgroupIds = $store.group.subgroups.map(g => g.id)
+  $: siteIds = $store.group.sites.map(s => s.id)
+  $: directManagerIds = $store.group.directManagers.map(m => m.id)
 
   async function onEditBasic (state) {
     // TODO
@@ -35,14 +38,18 @@
     return { success: true, messages: [], data: [] }
   }
 
-  async function searchUsers (term: string) {
+  async function searchUsersForMembers (term: string) {
     // TODO: If there's a "trained" flag, do we want to filter out users that don't have that set? Should they be trained before
     // they can be added to a group?
     return allUsers.filter(u => !u.disabled && !directMemberIds.includes(u.id) && (u.name.indexOf(term) > -1 || u.id.indexOf(term) > -1)).map(u => ({ label: `${u.name} (${u.id})`, value: u.id }))
   }
 
+  async function searchUsersForManagers (term: string) {
+    return allUsers.filter(u => !u.disabled && !directManagerIds.includes(u.id) && (u.name.indexOf(term) > -1 || u.id.indexOf(term) > -1)).map(u => ({ label: `${u.name} (${u.id})`, value: u.id }))
+  }
+
   async function openAddUsersDialog () {
-    allUsers = await api.getUserList()
+    allUsers ??= await api.getUserList()
     modal = 'addmembers'
   }
 
@@ -52,9 +59,43 @@
     return { success: true, messages: [], data: [] }
   }
 
+  async function onAddManagers (state) {
+    // TODO
+    modal = undefined
+    return { success: true, messages: [], data: [] }
+  }
+
   // Takes the indirect member's direct groups and returns those that are subgroups of the group we are inspecting
   function getMemberDirectGroup (groups) {
     return groups.filter(g => subgroupIds.includes(g.id)).map(g => g.name).join(', ')
+  }
+
+  function getSitesManaged (managerSites) {
+    const relevantSites = managerSites.filter(s => siteIds.includes(s.id))
+    return relevantSites.map(s => `${s.name} Manager`).join(', ')
+  }
+
+  async function openAddManagersDialog () {
+    if (siteIds.length) {
+      modal = 'maynotaddmanagers'
+    } else {
+      allUsers ??= await api.getUserList()
+      modal = 'addmanagers'
+    }
+  }
+
+  function getPrettySiteList () {
+    if ($store.group.sites.length === 1) return $store.group.sites[0].name
+    if ($store.group.sites.length === 2) return `${$store.group.sites[0].name} and ${$store.group.sites[1].name}`
+    else {
+      let list: string = ''
+      for (let i = 0; i < $store.group.sites.length; i++) {
+        list += $store.group.sites[i].name
+        if (i < $store.group.sites.length - 1) list += ', '
+        if (i === $store.group.sites.length - 1) list += ', and '
+      }
+      return list
+    }
   }
 </script>
 
@@ -88,6 +129,7 @@
 </ul>
 </DetailPanel>
 
+{#if $store.group.subgroups.length}
 <DetailPanel header='Subgroups'>
   <ul>
     {#each $store.group.subgroups as group (group.id)}
@@ -100,19 +142,37 @@
     {/each}
   </ul>
 </DetailPanel>
+{/if}
 
-<DetailPanel header='Sites'>
-  <ul>
-    {#each $store.group.sites as site (site.id)}
-      <li class="flex-row">
-        {site.name}
-      </li>
-    {/each}
-  </ul>
-</DetailPanel>
+{#if $store.group.sites.length}
+  <DetailPanel header='Sites'>
+    <ul>
+      {#each $store.group.sites as site (site.id)}
+        <li class="flex-row">
+          {site.name}
+        </li>
+      {/each}
+    </ul>
+  </DetailPanel>
+{/if}
 
-<DetailPanel header='Managers'>
-
+<DetailPanel header='Managers' button={{ icon: plusIcon, onClick: () => openAddManagersDialog() }}>
+ {#if $store.group.directManagers.length || $store.group.managersThroughSite.length }
+  {#each $store.group.directManagers as manager (manager.id)}
+    <li class="flex-row">
+      {manager.name} ({manager.id})
+      <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+    </li>
+  {/each}
+  {#each $store.group.managersThroughSite as manager (manager.id)}
+    <li class="flex-row">
+      {manager.name} ({manager.id})
+      <div>{getSitesManaged(manager.sitesManaged)}</div>
+    </li>
+  {/each}
+ {:else}
+  <div>{$store.group.name} has no managers.</div>
+ {/if}
 </DetailPanel>
 
 <DetailPanel header='Roles'></DetailPanel>
@@ -135,9 +195,26 @@
     <FieldMultiselect
       path='users'
       label='Add Members'
-      getOptions={searchUsers}
-    />
+      getOptions={searchUsersForMembers}/>
   </FormDialog>
+{:else if modal === 'addmanagers'}
+  <FormDialog
+    submit={onAddManagers}
+    name="addmanagers"
+    title={`Add Managers to Group ${$store.group.name}`}
+    on:dismiss={() => { modal = undefined }}>
+    <FieldMultiselect
+      path='users'
+      label='Add Managers'
+      getOptions={searchUsersForManagers}/>
+  </FormDialog>
+{:else if modal === 'maynotaddmanagers'}
+  <Dialog
+    on:continue={() => { modal = undefined }}>
+    <div>
+      {`Managers can not be added to a group linked to a site. This group is maintained by the manager(s) of the ${getPrettySiteList()} site${siteIds.length > 1 ? 's' : ''}.` }
+    </div>
+  </Dialog>
 {/if}
 <style>
   .back-link {

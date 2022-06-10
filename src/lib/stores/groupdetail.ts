@@ -5,7 +5,7 @@ interface IGroupDetailStore {
   group: FullGroup
 }
 
-const initialValue: FullGroup = { id: '', name: '', sites: [], directMembers: [], indirectMembers: [], subgroups: [] }
+const initialValue: FullGroup = { id: '', name: '', sites: [], directMembers: [], indirectMembers: [], subgroups: [], directManagers: [], managersThroughSite: [] }
 
 export class GroupDetailStore extends Store<IGroupDetailStore> {
   constructor (public fetchGroup: (id: string) => Promise<FullGroup>) {

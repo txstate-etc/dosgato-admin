@@ -68,6 +68,18 @@ const fullGroupDetails = `
       name
     }
   }
+  directManagers: managers (direct: true) {
+    id
+    name
+  }
+  managersThroughSite: managers (direct: false) {
+    id
+    name
+    sitesManaged {
+      id
+      name
+    }
+  }
 `
 export interface FullGroup {
   id: string
@@ -99,6 +111,18 @@ export interface FullGroup {
       id: string
       name: string
     }[]
+  }[]
+  directManagers: {
+    id: string
+    name: string
+  }[]
+  managersThroughSite: {
+    id: string
+    name: string
+    sitesManaged: {
+      id: string
+      name: string
+    }
   }[]
 }
 
