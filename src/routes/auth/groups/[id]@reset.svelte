@@ -2,6 +2,7 @@
   import type { Load } from '@sveltejs/kit'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
+  import linkVariantOffIcon from '@iconify-icons/mdi/link-variant-off'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
@@ -29,6 +30,7 @@
 
   $: directMemberIds = $store.group.directMembers.map(m => m.id)
   $: subgroupIds = $store.group.subgroups.map(g => g.id)
+  $: supergroupIds = $store.group.supergroups.map(g => g.id)
   $: siteIds = $store.group.sites.map(s => s.id)
   $: directManagerIds = $store.group.directManagers.map(m => m.id)
 
@@ -97,6 +99,12 @@
       return list
     }
   }
+
+  function getIndirectRoleGroup (role) {
+    // This role is an indirect role. It comes from an ancestor group of the group we are inspecting.
+    // Look at the role's direct groups to see which one(s) are in the supergroups list
+    return role.groups.filter(g => supergroupIds.includes(g.id)).map(g => g.name).join(', ')
+  }
 </script>
 
 <div class="back-link">
@@ -135,13 +143,25 @@
     {#each $store.group.subgroups as group (group.id)}
       <li class="flex-row">
         {group.name}
-        {#if !(group.parents.map(g => g.id).includes($store.group.id))}
+        {#if (group.parents.map(g => g.id).includes($store.group.id))}
+          <button on:click={() => { }}><Icon icon={linkVariantOffIcon} width="1.5em"/></button>
+        {:else}
           <div>{`Via ${group.parents.map(g => g.name).join(', ')}`}</div>
         {/if}
       </li>
     {/each}
   </ul>
 </DetailPanel>
+{/if}
+
+{#if $store.group.supergroups.length}
+  <DetailPanel header='Ancestor Groups'>
+    {#each $store.group.supergroups as group (group.id)}
+    <li class="flex-row">
+      {group.name}
+    </li>
+    {/each}
+  </DetailPanel>
 {/if}
 
 {#if $store.group.sites.length}
@@ -175,7 +195,20 @@
  {/if}
 </DetailPanel>
 
-<DetailPanel header='Roles'></DetailPanel>
+<DetailPanel header='Roles' button={{ icon: plusIcon, onClick: () => {} } }>
+  {#each $store.group.directRoles as role (role.id)}
+    <li class="flex-row">
+      {role.name}
+      <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+    </li>
+  {/each}
+  {#each $store.group.rolesThroughParentGroup as role (role.id)}
+    <li class="flex-row">
+      {role.name}
+      <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
+    </li>
+  {/each}
+</DetailPanel>
 
 {#if modal === 'editbasic'}
   <FormDialog

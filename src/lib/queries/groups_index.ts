@@ -43,7 +43,7 @@ const fullGroupDetails = `
   subgroups: subgroups {
     id
     name
-    parents {
+    parents: supergroups(recursive: false) {
       id
       name
     }
@@ -76,6 +76,22 @@ const fullGroupDetails = `
     id
     name
     sitesManaged {
+      id
+      name
+    }
+  }
+  supergroups {
+    id
+    name
+  }
+  directRoles: roles (direct: true) {
+    id
+    name
+  }
+  rolesThroughParentGroup: roles (direct: false) {
+    id
+    name
+    groups(direct: true) {
       id
       name
     }
@@ -123,6 +139,22 @@ export interface FullGroup {
       id: string
       name: string
     }
+  }[]
+  supergroups: {
+    id: string
+    name: string
+  }[]
+  directRoles: {
+    id: string
+    name: string
+  }[]
+  rolesThroughParentGroup: {
+    id: string
+    name: string
+    groups: {
+      id: string
+      name: string
+    }[]
   }[]
 }
 

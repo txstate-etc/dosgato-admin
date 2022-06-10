@@ -71,7 +71,7 @@ const fullUserDetails = `
   directGroups: groups(direct: true) {
     id
     name
-    parents {
+    parents: supergroups(recursive: false) {
       id
       name
     }
@@ -79,7 +79,7 @@ const fullUserDetails = `
   indirectGroups: groups(direct: false) {
     id
     name
-    parents {
+    parents: supergroups(recursive: false) {
       id
       name
     }
