@@ -25,7 +25,7 @@
 </script>
 
 <script lang="ts">
-  import { api, UserDetailStore, type GroupWithParents, type GroupListGroup } from '$lib'
+  import { api, DetailPanel, UserDetailStore, type GroupWithParents, type GroupListGroup } from '$lib'
   import { base } from '$app/paths'
   import { DateTime } from 'luxon'
   let modal: 'editbasic'|'editgroups'|'editroles'|'removefromgroup'|undefined
@@ -92,125 +92,96 @@
   </a>
 </div>
 
-<div class="panel">
-  <div class="header">
-    <div>Basic Information</div>
-    <button class="edit" on:click={() => { modal = 'editbasic' }}><Icon icon={pencilIcon}/></button>
+<DetailPanel header='Basic Information' button={{ icon: pencilIcon, onClick: () => { modal = 'editbasic' } }}>
+  <div class="row">
+    <div class="label">Login:</div>
+    <div class="value">{$store.user.id}</div>
   </div>
-  <div class="body">
-    <div class="row">
-      <div class="label">Login:</div>
-      <div class="value">{$store.user.id}</div>
-    </div>
-    <div class="row">
-      <div class="label">Name:</div>
-      <div class="value">{$store.user.name}</div>
-    </div>
-    <div class="row">
-      <div class="label">Email:</div>
-      <div class="value">{$store.user.email}</div>
-    </div>
-    <div class="row">
-      <div class="label">Last Login:</div>
-      <div class="value">
-        {$store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never'}
-      </div>
-    </div>
-    {#if $store.user.disabledAt}
-      <div class="row">
-        <div class="label">Inactive Since:</div>
-        <div class="value">{DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</div>
-      </div>
-    {/if}
+  <div class="row">
+    <div class="label">Name:</div>
+    <div class="value">{$store.user.name}</div>
   </div>
-</div>
+  <div class="row">
+    <div class="label">Email:</div>
+    <div class="value">{$store.user.email}</div>
+  </div>
+  <div class="row">
+    <div class="label">Last Login:</div>
+    <div class="value">
+      {$store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never'}
+    </div>
+  </div>
+  {#if $store.user.disabledAt}
+    <div class="row">
+      <div class="label">Inactive Since:</div>
+      <div class="value">{DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</div>
+    </div>
+  {/if}
+</DetailPanel>
 
-<div class="panel">
-  <div class="header">
-    <div>Group Memberships</div>
-    <button class="edit" on:click={() => { modal = 'editgroups' }}><Icon icon={plusIcon}/></button>
-  </div>
-  <div class="body">
-    {#if $store.user.directGroups.length || $store.user.indirectGroups.length}
-      <ul class="groups">
-        {#each $store.user.directGroups as group (group.id)}
-          <li class="flex-row">
-            <div>{group.name}</div>
-            <button class="leave-group" on:click={() => { groupLeaving = group; modal = 'removefromgroup' }}><Icon icon={deleteOutline} width="1.5em"/></button>
-          </li>
-        {/each}
-        {#each $store.user.indirectGroups as group (group.id)}
-          <li class="flex-row">
-            <div>{group.name}</div>
-            <div>{`Via ${getGroupParents(group)}`}</div>
-          </li>
-        {/each}
-      </ul>
-    {:else}
-      <div>User {$store.user.id} is not a member of any groups.</div>
-    {/if}
-  </div>
-</div>
+<DetailPanel header='Group Memberships' button={{ icon: plusIcon, onClick: () => { modal = 'editgroups' } }}>
+  {#if $store.user.directGroups.length || $store.user.indirectGroups.length}
+    <ul class="groups">
+      {#each $store.user.directGroups as group (group.id)}
+        <li class="flex-row">
+          <div>{group.name}</div>
+          <button class="leave-group" on:click={() => { groupLeaving = group; modal = 'removefromgroup' }}><Icon icon={deleteOutline} width="1.5em"/></button>
+        </li>
+      {/each}
+      {#each $store.user.indirectGroups as group (group.id)}
+        <li class="flex-row">
+          <div>{group.name}</div>
+          <div>{`Via ${getGroupParents(group)}`}</div>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <div>User {$store.user.id} is not a member of any groups.</div>
+  {/if}
+</DetailPanel>
 
-<div class="panel">
-  <div class="header">
-    <div>Roles</div>
-    <button class="edit"><Icon icon={plusIcon}/></button>
-  </div>
-  <div class="body">
-    {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
-      <ul class="roles">
-        {#each $store.user.directRoles as role (role.id)}
-          <li class="flex-row">
-            {role.name}
-            <button class="remove-role"><Icon icon={deleteOutline} width="1.5em"/></button>
-          </li>
-        {/each}
-        {#each $store.user.indirectRoles as role (role.id)}
-          <li class="flex-row">
-            {role.name}
-            <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
-          </li>
-        {/each}
-      </ul>
-    {:else}
-    <div>User {$store.user.id} has no roles assigned.</div>
-    {/if}
-  </div>
-</div>
+<DetailPanel header='Roles' button={{ icon: plusIcon, onClick: () => {} }}>
+  {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
+    <ul class="roles">
+      {#each $store.user.directRoles as role (role.id)}
+        <li class="flex-row">
+          {role.name}
+          <button class="remove-role"><Icon icon={deleteOutline} width="1.5em"/></button>
+        </li>
+      {/each}
+      {#each $store.user.indirectRoles as role (role.id)}
+        <li class="flex-row">
+          {role.name}
+          <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+  <div>User {$store.user.id} has no roles assigned.</div>
+  {/if}
+</DetailPanel>
 
 {#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
-  <div class="panel">
-    <div class="header">
-      <div>Sites</div>
-    </div>
-    <div class="body">
-      <ul class="sites">
-        {#if $store.permittedOnAllSites.length}
-          <li class="flex-row">
-            All Sites
-            <div>{$store.permittedOnAllSites.join(', ')}</div>
-          </li>
-        {/if}
-        {#each Object.keys($store.sites) as site (site)}
-          <li class="flex-row">
-            {site}
-            <div>{$store.sites[site].join(', ')}</div>
-          </li>
-        {/each}
-      </ul>
-    </div>
-  </div>
+  <DetailPanel header='Sites'>
+    <ul class="sites">
+      {#if $store.permittedOnAllSites.length}
+        <li class="flex-row">
+          All Sites
+          <div>{$store.permittedOnAllSites.join(', ')}</div>
+        </li>
+      {/if}
+      {#each Object.keys($store.sites) as site (site)}
+        <li class="flex-row">
+          {site}
+          <div>{$store.sites[site].join(', ')}</div>
+        </li>
+      {/each}
+    </ul>
+  </DetailPanel>
 {/if}
 
-<div class="panel">
-  <div class="header">
-    <div>Global Data</div>
-  </div>
-  <div class="body">
+<DetailPanel header='Global Data'></DetailPanel>
 
-  </div>
-</div>
 {#if modal === 'editbasic'}
   <FormDialog
     submit={onEditBasic}
@@ -250,33 +221,11 @@
     justify-content: flex-end;
     font-size: 1.2em;
   }
-  .panel {
-    width: 50%;
-    margin: 0 auto 3em auto;
-  }
-  .header {
-    background-color: #00507A;
-    color: #fff;
-    display: flex;
-    justify-content: space-between;
-    padding: 0.8em 1em;
-    font-weight: bold;
-  }
-  .header button.edit {
-    color: white;
-    background: transparent;
-    border: 0;
-  }
-  .body {
-    border: 1px solid #666;
-    border-top-width: 0;
-    padding: 0.8em 1em;
-  }
-  .body .row {
+  .row {
     display: flex;
     padding: 0.5rem 0;
   }
-  .body .label {
+  .label {
     font-weight: bold;
     width: 25%;
   }
