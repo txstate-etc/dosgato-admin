@@ -179,7 +179,7 @@
   </div>
 </div>
 
-{#if Object.keys($store.sites).length}
+{#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
   <div class="panel">
     <div class="header">
       <div>Sites</div>

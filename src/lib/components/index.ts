@@ -1,5 +1,7 @@
 export { default as ActionPanel } from './ActionPanel.svelte'
 export { default as LabeledIcon } from './LabeledIcon.svelte'
 export { default as LoadIcon } from './LoadIcon.svelte'
+export { default as DetailPanel } from './DetailPanel.svelte'
 export * from './tree/index.js'
 export * from './actionpanel.js'
+export * from './detailpanel.js'
