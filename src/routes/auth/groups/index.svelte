@@ -19,7 +19,6 @@
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import { FieldText } from '@dosgato/dialog'
-import { Field } from '@txstate-mws/svelte-forms'
 
   let modal: 'addgroup'|'deletegroup'|undefined
 
@@ -46,7 +45,13 @@ import { Field } from '@txstate-mws/svelte-forms'
       modal = undefined
     }
     // TODO: What data should be returned?
-    return { success: resp.success, messages: resp.messages, data: {} }
+    return { success: resp.success, messages: resp.messages, data: state }
+  }
+
+  async function onDeleteGroup () {
+    const resp = await api.deleteGroup($store.selectedItems[0].id)
+    if (resp.success) store.refresh()
+    modal = undefined
   }
 
 </script>
@@ -67,5 +72,12 @@ import { Field } from '@txstate-mws/svelte-forms'
     <FieldText path='name' label='Group Name' required></FieldText>
   </FormDialog>
 {:else if modal === 'deletegroup' }
-delete group
+  <Dialog
+    title='Delete Group'
+    continueText='Delete'
+    cancelText='Cancel'
+    on:dismiss={() => { modal = undefined }}
+    on:continue={onDeleteGroup}>
+    Delete {$store.selectedItems[0].name} {$store.selectedItems[0].subgroups.length ? 'and its subgroups?' : '?'}
+  </Dialog>
 {/if}

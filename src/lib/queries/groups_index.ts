@@ -205,3 +205,11 @@ export const CREATE_GROUP = `
     }
   }
 `
+
+export const DELETE_GROUP = `
+  mutation deleteGroup ($groupId: ID!) {
+    deleteGroup (groupId: $groupId) {
+      ${mutationResponse}
+    }
+  }
+`
