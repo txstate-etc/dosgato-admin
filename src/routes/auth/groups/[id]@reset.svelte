@@ -121,20 +121,24 @@
 </DetailPanel>
 
 <DetailPanel header='Members' button={{ icon: plusIcon, onClick: () => openAddUsersDialog() }} >
-  <ul>
-  {#each $store.group.directMembers as member (member.id)}
-    <li class="flex-row">
-      {member.name} ({member.id})
-      <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
-    </li>
-  {/each}
-  {#each $store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id)) as member (member.id)}
-    <li class="flex-row">
-      {member.name} ({member.id})
-      <div>{`Via ${getMemberDirectGroup(member.groups)}`}</div>
-    </li>
-  {/each}
-</ul>
+  {#if $store.group.directMembers.length || $store.group.indirectMembers.length}
+    <ul>
+      {#each $store.group.directMembers as member (member.id)}
+        <li class="flex-row">
+          {member.name} ({member.id})
+          <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+        </li>
+      {/each}
+      {#each $store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id)) as member (member.id)}
+        <li class="flex-row">
+          {member.name} ({member.id})
+          <div>{`Via ${getMemberDirectGroup(member.groups)}`}</div>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <div>{$store.group.name} has no members.</div>
+  {/if}
 </DetailPanel>
 
 {#if $store.group.subgroups.length}
@@ -142,7 +146,7 @@
   <ul>
     {#each $store.group.subgroups as group (group.id)}
       <li class="flex-row">
-        {group.name}
+        <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
         {#if (group.parents.map(g => g.id).includes($store.group.id))}
           <button on:click={() => { }}><Icon icon={linkVariantOffIcon} width="1.5em"/></button>
         {:else}
@@ -158,7 +162,7 @@
   <DetailPanel header='Ancestor Groups'>
     {#each $store.group.supergroups as group (group.id)}
     <li class="flex-row">
-      {group.name}
+      <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
     </li>
     {/each}
   </DetailPanel>

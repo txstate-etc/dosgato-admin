@@ -1,3 +1,5 @@
+import { mutationResponse } from './global'
+
 const groupDetails = `
   id
   name
@@ -191,4 +193,15 @@ query getGroupById ($groupId: ID!) {
     ${fullGroupDetails}
   }
 }
+`
+
+export const CREATE_GROUP = `
+  mutation createGroup ($name: String!, $parentId: ID) {
+    createGroup (name: $name, parentId: $parentId) {
+      ${mutationResponse}
+      group {
+        ${groupDetails}
+      }
+    }
+  }
 `
