@@ -124,13 +124,13 @@
     <ul class="groups">
       {#each $store.user.directGroups as group (group.id)}
         <li class="flex-row">
-          <div>{group.name}</div>
+          <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
           <button class="leave-group" on:click={() => { groupLeaving = group; modal = 'removefromgroup' }}><Icon icon={deleteOutline} width="1.5em"/></button>
         </li>
       {/each}
       {#each $store.user.indirectGroups as group (group.id)}
         <li class="flex-row">
-          <div>{group.name}</div>
+          <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
           <div>{`Via ${getGroupParents(group)}`}</div>
         </li>
       {/each}
