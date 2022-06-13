@@ -1,6 +1,7 @@
-import type { PageEditorPage } from '$lib/queries'
+import type { ComponentData } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
-import { splice } from 'txstate-utils'
+import { get, splice } from 'txstate-utils'
+import type { PageEditorPage } from '$lib/queries'
 
 export interface IPageEditorStore {
   editors: EditorState[]
@@ -9,6 +10,12 @@ export interface IPageEditorStore {
 
 export interface EditorState {
   page: PageEditorPage
+  modal?: 'edit'|'create'|'delete'|'move'
+  editing?: {
+    path: string
+    data: any
+    templateKey: string
+  }
 }
 
 class PageEditorStore extends Store<IPageEditorStore> {
@@ -31,7 +38,16 @@ class PageEditorStore extends Store<IPageEditorStore> {
       return { ...v, editors, active }
     })
   }
+
+  editComponent (path: string) {
+    this.update(v => {
+      const data = get<ComponentData>(v.editors[v.active].page.data, path)
+      const templateKey = data.templateKey
+      return { ...v, modal: 'edit', editing: { path, data, templateKey } }
+    })
+  }
 }
 
 export const pageEditorStore = new PageEditorStore()
 export const editorStore = derivedStore(pageEditorStore, v => v.editors[v.active])
+export const pageStore = derivedStore(editorStore, 'page')

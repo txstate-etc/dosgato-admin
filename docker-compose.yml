@@ -23,13 +23,12 @@ services:
       - 9229:9229
     environment:
       NODE_ENV: development
-      DOS_GATO_ANON_TOKEN: rendertoken
       MYSQL_USER: dosgato
       MYSQL_PASS: password
       MYSQL_DATABASE: dosgatodev
       MYSQL_HOST: mysql
       RESET_DB_ON_STARTUP: 'true'
-      JWT_TRUSTED_ISSUERS: '{ "iss": "unified-auth", "url": "http://fakeauth/jwks" }'
+      JWT_TRUSTED_ISSUERS: '[{ "iss": "unified-auth", "url": "http://fakeauth/jwks" }, { "iss": "dg-render", "key": "rendertoken" }]'
     volumes:
       - ../dosgato/src:/usr/app/src
     depends_on:
@@ -40,7 +39,8 @@ services:
     ports:
       - 3002:80
     environment:
-      DOS_GATO_ANON_TOKEN: rendertoken
+      DOSGATO_RENDER_JWT_SECRET: rendertoken
+      DOSGATO_API_URL: http://dosgato-api/graphql
     volumes:
       - ../dosgato-render/src:/usr/app/src
       - ../dosgato-render/test:/usr/app/test

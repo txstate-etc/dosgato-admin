@@ -1,3 +1,5 @@
+import type { PageData } from '@dosgato/templating'
+
 const pageDetails = `
 id
 path
@@ -19,6 +21,7 @@ export interface PageEditorPage {
   id: string
   path: string
   name: string
+  data: PageData
   title?: string
   pagetree: {
     id: string
