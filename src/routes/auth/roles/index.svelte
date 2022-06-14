@@ -12,6 +12,9 @@
 </script>
 
 <script lang="ts">
+  import { goto } from '$app/navigation'
+  import { base } from '$app/paths'
+
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [
       { label: 'Add Role', disabled: false, onClick: () => {} }
@@ -19,17 +22,16 @@
     return actions
   }
 
-  function singleactions (user: TypedRoleItem) {
+  function singleactions (role: TypedRoleItem) {
     const actions: ActionPanelAction[] = [
-      { label: 'Edit', disabled: false, onClick: () => {} },
-      { label: 'Delete', disabled: false, onClick: () => {} }
+      { label: 'Delete', disabled: !role.permissions.delete, onClick: () => {} }
     ]
     return actions
   }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
-  <Tree singleSelect {store} headers={[
+  <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/roles/' + detail.id)} headers={[
     { id: 'name', label: 'Name', get: 'name', defaultWidth: '30%' }
   ]}>
   </Tree>
