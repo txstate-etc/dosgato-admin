@@ -182,36 +182,40 @@
 
 <DetailPanel header='Managers' button={{ icon: plusIcon, onClick: () => openAddManagersDialog() }}>
  {#if $store.group.directManagers.length || $store.group.managersThroughSite.length }
-  {#each $store.group.directManagers as manager (manager.id)}
-    <li class="flex-row">
-      {manager.name} ({manager.id})
-      <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
-    </li>
-  {/each}
-  {#each $store.group.managersThroughSite as manager (manager.id)}
-    <li class="flex-row">
-      {manager.name} ({manager.id})
-      <div>{getSitesManaged(manager.sitesManaged)}</div>
-    </li>
-  {/each}
+  <ul>
+    {#each $store.group.directManagers as manager (manager.id)}
+      <li class="flex-row">
+        {manager.name} ({manager.id})
+        <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+      </li>
+    {/each}
+    {#each $store.group.managersThroughSite as manager (manager.id)}
+      <li class="flex-row">
+        {manager.name} ({manager.id})
+        <div>{getSitesManaged(manager.sitesManaged)}</div>
+      </li>
+    {/each}
+  </ul>
  {:else}
   <div>{$store.group.name} has no managers.</div>
  {/if}
 </DetailPanel>
 
 <DetailPanel header='Roles' button={{ icon: plusIcon, onClick: () => {} } }>
-  {#each $store.group.directRoles as role (role.id)}
-    <li class="flex-row">
-      {role.name}
-      <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
-    </li>
-  {/each}
-  {#each $store.group.rolesThroughParentGroup as role (role.id)}
-    <li class="flex-row">
-      {role.name}
-      <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
-    </li>
-  {/each}
+  <ul>
+    {#each $store.group.directRoles as role (role.id)}
+      <li class="flex-row">
+        {role.name}
+        <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+      </li>
+    {/each}
+    {#each $store.group.rolesThroughParentGroup as role (role.id)}
+      <li class="flex-row">
+        {role.name}
+        <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
+      </li>
+    {/each}
+  </ul>
 </DetailPanel>
 
 {#if modal === 'editbasic'}

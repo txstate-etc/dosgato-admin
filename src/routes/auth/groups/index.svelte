@@ -48,6 +48,11 @@
     return { success: resp.success, messages: resp.messages, data: state }
   }
 
+  async function validateGroupName (state) {
+    const resp = await api.addGroup(state.name, undefined, true)
+    return resp.messages.map(m => ({ path: m.arg, type: m.type, message: m.message }))
+  }
+
   async function onDeleteGroup () {
     const resp = await api.deleteGroup($store.selectedItems[0].id)
     if (resp.success) store.refresh()
@@ -66,6 +71,7 @@
 {#if modal === 'addgroup'}
   <FormDialog
     submit={onAddGroup}
+    validate={validateGroupName}
     title='Add Group'
     name='addgroup'
     on:dismiss={() => { modal = undefined }}>

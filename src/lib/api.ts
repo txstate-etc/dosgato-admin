@@ -128,8 +128,8 @@ class API {
   }
 
   async getSubFoldersAndAssetsByPath (path: string) {
-    const { assets, folders } = await this.query<GetSubFoldersAndAssetsByPath>(GET_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
-    return [...assets.map(a => ({ ...a, type: 'asset' as 'asset', bytes: a.size })), ...folders.map(f => ({ ...f, type: 'folder' as 'folder', acceptsUpload: f.permissions.create, permissions: undefined }))]
+    const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(GET_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
+    return [...assets.map(a => ({ ...a, type: 'asset' as 'asset', bytes: a.size })), ...assetfolders.map(f => ({ ...f, type: 'folder' as 'folder', acceptsUpload: f.permissions.create, permissions: undefined }))]
   }
 
   async chooserPageByLink (link: PageLink) {
@@ -267,8 +267,8 @@ class API {
     return groups[0]
   }
 
-  async addGroup (name: string, parentId?: string) {
-    const { createGroup } = await this.query<{ createGroup: MutationResponse & { group: GroupListGroup } }>(CREATE_GROUP, { name, parentId })
+  async addGroup (name: string, parentId?: string, validateOnly?: boolean) {
+    const { createGroup } = await this.query<{ createGroup: MutationResponse & { group: GroupListGroup } }>(CREATE_GROUP, { name, parentId, validateOnly })
     return createGroup
   }
 

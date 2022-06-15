@@ -196,8 +196,8 @@ query getGroupById ($groupId: ID!) {
 `
 
 export const CREATE_GROUP = `
-  mutation createGroup ($name: String!, $parentId: ID) {
-    createGroup (name: $name, parentId: $parentId) {
+  mutation createGroup ($name: String!, $parentId: ID, $validateOnly: Boolean) {
+    createGroup (name: $name, parentId: $parentId, validateOnly: $validateOnly) {
       ${mutationResponse}
       group {
         ${groupDetails}

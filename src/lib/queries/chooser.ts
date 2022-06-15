@@ -25,7 +25,7 @@ export interface GetSubPagesByPath {
 }
 
 export const GET_SUBFOLDERS_AND_ASSETS_BY_PATH = `
-  query getPagesByPath ($path: string) {
+  query getPagesByPath ($path: String!) {
     assets (filter: { parentPaths: [$path] }) {
       id
       name
@@ -33,7 +33,7 @@ export const GET_SUBFOLDERS_AND_ASSETS_BY_PATH = `
       size
       mime
     }
-    folders (filter: { parentPaths: [$path] }) {
+    assetfolders (filter: { parentPaths: [$path] }) {
       id
       name
       path
@@ -52,7 +52,7 @@ export interface GetSubFoldersAndAssetsByPath {
     size: number
     mime: string
   }[]
-  folders: {
+  assetfolders: {
     id: string
     name: string
     path: string
