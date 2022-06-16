@@ -2,7 +2,7 @@ import { base } from '$app/paths'
 import type { PageLink } from '@dosgato/templating'
 import type { DateTime } from 'luxon'
 import { keyby, toArray } from 'txstate-utils'
-import { DISABLE_USERS, ENABLE_USERS, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER, DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, GET_USER_BY_ID, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS, GET_SUBGROUPS, GET_GROUP_BY_ID, GET_ROLE_BY_ID, type DataFolder, type GlobalSelf, type PageEditorPage, type TemplateListTemplate, type DataItem, type DataRoot, type TreePage, type UserListUser, type FullUser, type GroupListGroup, type FullGroup, type RoleListRole, type FullRole } from './queries'
+import { DISABLE_USERS, ENABLE_USERS, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER, DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, GET_USER_BY_ID, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS, GET_SUBGROUPS, GET_GROUP_BY_ID, GET_ROLE_BY_ID, GET_SITE_LIST, type DataFolder, type GlobalSelf, type PageEditorPage, type TemplateListTemplate, type DataItem, type DataRoot, type TreePage, type UserListUser, type FullUser, type GroupListGroup, type FullGroup, type RoleListRole, type FullRole, type SiteListSite } from './queries'
 import { type GetSubPagesByPath, GET_SUBPAGES_BY_PATH, type GetSubFoldersAndAssetsByPath, GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, type GetPageByLink } from './queries/chooser'
 import { environmentConfig } from './stores'
 
@@ -285,6 +285,11 @@ class API {
   async getRoleById (roleId: string) {
     const { roles } = await this.query<{ roles: FullRole[]}>(GET_ROLE_BY_ID, { roleId })
     return roles[0]
+  }
+
+  async getSiteList () {
+    const { sites } = await this.query<{ sites: SiteListSite[]}>(GET_SITE_LIST)
+    return sites
   }
 }
 

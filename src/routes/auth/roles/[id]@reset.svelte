@@ -2,12 +2,19 @@
   import type { Load } from '@sveltejs/kit'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
+  import checkIcon from '@iconify-icons/mdi/check'
+  import minusIcon from '@iconify-icons/mdi/minus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
-  import { Icon } from '@dosgato/dialog'
+  import { Icon, FieldSelect, FieldChooserLink, FieldChoices, FieldMultiselect } from '@dosgato/dialog'
+  import FormDialog from '$lib/components/FormDialog.svelte'
+
+  let siteOptions: PopupMenuItem[] = []
 
   export const load: Load = async ({ params }) => {
     await store.refresh(params.id)
     if (!store.roleFetched()) return { status: 404 }
+    const sites = await api.getSiteList()
+    siteOptions = sites.map((s: SiteListSite) => ({ value: s.id, label: s.name }))
     return {}
   }
 
@@ -21,20 +28,29 @@
 
 <script lang="ts">
   import { base } from '$app/paths'
-  import { api, RoleDetailStore, DetailPanel } from '$lib'
-  import { unique } from 'txstate-utils';
+  import { api, RoleDetailStore, DetailPanel, type SiteListSite } from '$lib'
+  import { unique } from 'txstate-utils'
+  import { ScreenReaderOnly, type PopupMenuItem } from '@txstate-mws/svelte-components'
+
+  let modal: 'editbasic'|'addassetrule'|'deleterule'|undefined
 
   $: groupIds = unique([...$store.role.directGroups.map(g => g.id), ...$store.role.indirectGroups.map(g => g.id)])
 
   function getUserGroups (userGroups) {
-    // get the groups through which users have this role. Need to look at the users groups and find the ones that match this role's groups
-    // get only the user's direct groups? Maybe. ed02 is in groups 4 and 3 directly and both those inherit the site 3 editor role from group 1.
-    // both those should be listed, but the intermediate group 2 doesn't need to be listed.
     const relevantGroups = userGroups.filter(g => groupIds.includes(g.id))
     return relevantGroups.map(g => g.id).join(', ')
   }
-</script>
 
+  async function onAddRule (state) {
+    // TODO
+    return { success: true, messages: [], data: [] }
+  }
+
+  async function getSiteOptions (term: string) {
+    return siteOptions.filter((s: PopupMenuItem) => s.label!.indexOf(term) > -1)
+  }
+
+</script>
 
 <div class="back-link">
   <a href={`${base}/auth/roles/`}>
@@ -49,22 +65,24 @@
   </div>
 </DetailPanel>
 
-<DetailPanel header='Groups'>
-  <ul>
-    {#each $store.role.directGroups as group (group.id)}
-      <li class="flex-row">
-        <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-        <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
-      </li>
-    {/each}
-    {#each $store.role.indirectGroups as group (group.id)}
-      <li class="flex-row">
-        <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-        <div>{`Via ${group.parents.map(g => g.name).join(', ')}`}</div>
-      </li>
-    {/each}
-  </ul>
-</DetailPanel>
+{#if $store.role.directGroups.length || $store.role.indirectGroups.length}
+  <DetailPanel header='Groups'>
+    <ul>
+      {#each $store.role.directGroups as group (group.id)}
+        <li class="flex-row">
+          <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
+          <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+        </li>
+      {/each}
+      {#each $store.role.indirectGroups as group (group.id)}
+        <li class="flex-row">
+          <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
+          <div>{`Via ${group.parents.map(g => g.name).join(', ')}`}</div>
+        </li>
+      {/each}
+    </ul>
+  </DetailPanel>
+{/if}
 
 <DetailPanel header='Users'>
   <ul>
@@ -83,13 +101,220 @@
   </ul>
 </DetailPanel>
 
-<DetailPanel header='Asset Rules' button={{ icon: plusIcon, onClick: () => {} }}></DetailPanel>
-<DetailPanel header='Data Rules' button={{ icon: plusIcon, onClick: () => {} }}></DetailPanel>
-<DetailPanel header='Global Rules' button={{ icon: plusIcon, onClick: () => {} }}></DetailPanel>
-<DetailPanel header='Page Rules' button={{ icon: plusIcon, onClick: () => {} }}></DetailPanel>
-<DetailPanel header='Site Rules' button={{ icon: plusIcon, onClick: () => {} }}></DetailPanel>
-<DetailPanel header='Template Rules' button={{ icon: plusIcon, onClick: () => {} }}></DetailPanel>
+<DetailPanel header='Asset Rules' button={{ icon: plusIcon, onClick: () => { modal = 'addassetrule' } }}>
+  {#if $store.role.assetRules.length}
+    <table>
+      <tr class='headers'>
+        <th>Site</th>
+        <th>Path</th>
+        <th>Mode</th>
+        <th>Create</th>
+        <th>Update</th>
+        <th>Move</th>
+        <th>Delete</th>
+        <th>Undelete</th>
+        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
+      </tr>
+      {#each $store.role.assetRules as rule (rule.id)}
+        <tr>
+          <td>{rule.site ? rule.site.name : 'All Sites'}</td>
+          <td>{rule.path}</td>
+          <td>{rule.mode}</td>
+          <td><Icon icon={rule.grants.create ? checkIcon : minusIcon} hiddenLabel={`Create ${rule.grants.create ? '' : 'not'} permitted`}/></td>
+          <td><Icon icon={rule.grants.update ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.move ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.delete ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.undelete ? checkIcon : minusIcon}/></td>
+          <td>
+            <button class="edit"><Icon icon={pencilIcon}/></button>
+            <button class="delete"><Icon icon={deleteOutline}/></button>
+          </td>
+        </tr>
+      {/each}
+    </table>
+  {:else}
+    <div>This role has no asset rules.</div>
+  {/if}
+</DetailPanel>
 
+<DetailPanel header='Data Rules' button={{ icon: plusIcon, onClick: () => {} }}>
+  {#if $store.role.dataRules.length}
+    <table>
+      <tr class='headers'>
+        <th>Site</th>
+        <th>Path</th>
+        <th>Template</th>
+        <th>Create</th>
+        <th>Update</th>
+        <th>Move</th>
+        <th>Publish</th>
+        <th>Unpublish</th>
+        <th>Delete</th>
+        <th>Undelete</th>
+        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
+      </tr>
+      {#each $store.role.dataRules as rule (rule.id)}
+        <tr>
+          <td>{rule.site ? rule.site.name : 'All Sites'}</td>
+          <td>{rule.path}</td>
+          <td>{rule.template ? rule.template.name : 'All Templates'}</td>
+          <td><Icon icon={rule.grants.create ? checkIcon : minusIcon} hiddenLabel={`Create ${rule.grants.create ? '' : 'not'} permitted`}/></td>
+          <td><Icon icon={rule.grants.update ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.move ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.publish ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.unpublish ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.delete ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.undelete ? checkIcon : minusIcon}/></td>
+          <td>
+            <button class="edit"><Icon icon={pencilIcon}/></button>
+            <button class="delete"><Icon icon={deleteOutline}/></button>
+          </td>
+        </tr>
+      {/each}
+    </table>
+  {:else}
+    <div>This role has no data rules.</div>
+  {/if}
+</DetailPanel>
+
+<DetailPanel header='Global Rules' button={{ icon: plusIcon, onClick: () => {} }}>
+  {#if $store.role.globalRules.length}
+    <table>
+      <tr class='headers'>
+        <th>Manage Users</th>
+        <th>Create Sites</th>
+        <th>Manage Global Data</th>
+        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
+      </tr>
+      {#each $store.role.globalRules as rule (rule.id)}
+        <tr>
+          <td><Icon icon={rule.grants.manageUsers ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.createSites ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.manageGlobalData ? checkIcon : minusIcon}/></td>
+          <td>
+            <button class="edit"><Icon icon={pencilIcon}/></button>
+            <button class="delete"><Icon icon={deleteOutline}/></button>
+          </td>
+        </tr>
+      {/each}
+    </table>
+  {:else}
+    <div>This role has no global rules.</div>
+  {/if}
+</DetailPanel>
+
+<DetailPanel header='Page Rules' button={{ icon: plusIcon, onClick: () => {} }}>
+  {#if $store.role.pageRules.length}
+    <table>
+      <tr class='headers'>
+        <th>Site</th>
+        <th>Pagetree</th>
+        <th>Path</th>
+        <th>Mode</th>
+        <th>Create</th>
+        <th>Update</th>
+        <th>Move</th>
+        <th>Publish</th>
+        <th>Unpublish</th>
+        <th>Delete</th>
+        <th>Undelete</th>
+        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
+      </tr>
+      {#each $store.role.pageRules as rule (rule.id)}
+        <tr>
+          <td>{rule.site ? rule.site.name : 'All Sites'}</td>
+          <td>{rule.pagetree ? rule.pagetree.name : (rule.site ? 'All Site Pagetrees' : 'All Pagetrees')}</td>
+          <td>{rule.path}</td>
+          <td>{rule.mode}</td>
+          <td><Icon icon={rule.grants.create ? checkIcon : minusIcon} hiddenLabel={`Create ${rule.grants.create ? '' : 'not'} permitted`}/></td>
+          <td><Icon icon={rule.grants.update ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.move ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.publish ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.unpublish ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.delete ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.undelete ? checkIcon : minusIcon}/></td>
+          <td>
+            <button class="edit"><Icon icon={pencilIcon}/></button>
+            <button class="delete"><Icon icon={deleteOutline}/></button>
+          </td>
+        </tr>
+      {/each}
+    </table>
+  {:else}
+    <div>This role has no page rules</div>
+  {/if}
+</DetailPanel>
+
+<DetailPanel header='Site Rules' button={{ icon: plusIcon, onClick: () => {} }}>
+  {#if $store.role.siteRules.length}
+    <table>
+      <tr class="headers">
+        <th>Site</th>
+        <th>Launch</th>
+        <th>Rename</th>
+        <th>Manage Pagetrees</th>
+        <th>Promote Pagetree</th>
+        <th>Delete</th>
+        <th>Undelete</th>
+        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
+      </tr>
+      {#each $store.role.siteRules as rule (rule.id)}
+        <tr>
+          <td>{rule.site ? rule.site.name : 'All Sites'}</td>
+          <td><Icon icon={rule.grants.launch ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.rename ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.managePagetrees ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.promotePagetree ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.delete ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.undelete ? checkIcon : minusIcon}/></td>
+          <td>
+            <button class="edit"><Icon icon={pencilIcon}/></button>
+            <button class="delete"><Icon icon={deleteOutline}/></button>
+          </td>
+        </tr>
+      {/each}
+    </table>
+  {:else}
+    <div>This role has no site rules.</div>
+  {/if}
+</DetailPanel>
+
+<DetailPanel header='Template Rules' button={{ icon: plusIcon, onClick: () => {} }}>
+  {#if $store.role.templateRules.length}
+    <table>
+      <tr class="headers">
+        <th>Template</th>
+        <th>Use</th>
+        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
+      </tr>
+      {#each $store.role.templateRules as rule (rule.id)}
+        <tr>
+          <td>{rule.template ? rule.template.name : 'All Templates'}</td>
+          <td><Icon icon={rule.grants.use ? checkIcon : minusIcon}/></td>
+          <td>
+            <button class="edit"><Icon icon={pencilIcon}/></button>
+            <button class="delete"><Icon icon={deleteOutline}/></button>
+          </td>
+        </tr>
+      {/each}
+    </table>
+  {:else}
+    <div>This role has no template rules.</div>
+  {/if}
+</DetailPanel>
+
+{#if modal === 'addassetrule'}
+  <FormDialog
+    submit={onAddRule}
+    name='addassetrule'
+    title='Add Asset Rule'
+    on:dismiss={() => { modal = undefined }}>
+    <FieldMultiselect path='site' label='Site' getOptions={getSiteOptions}/>
+    <FieldChooserLink path='path' label='Path'/>
+    <FieldSelect path='mode' label='Mode' choices={[{ value: 'SELF', label: 'This path only' }, { value: 'SELFANDSUB', label: 'This path and its subfolders' }, { value: 'SUB', label: 'Only subfolders of this path' }]}/>
+    <FieldChoices path='grants' label='Grants' choices={[{ value: 'Create' }, { value: 'Update' }, { value: 'Move' }, { value: 'Delete' }, { value: 'Undelete' }]}/>
+  </FormDialog>
+{/if}
 <style>
   .back-link {
     display: flex;
@@ -123,5 +348,24 @@
     border: 0;
     padding: 0;
     background-color: transparent;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  table tr td { text-align: center }
+  table tr.headers {
+    border-bottom: 1px solid #ebebeb;
+  }
+  table tr { border-bottom: 1px dashed #ebebeb }
+  table tr:nth-child(even) { background-color: #f6f7f9 }
+  td button {
+    border: 0;
+    padding: 0;
+    background-color: transparent;
+  }
+  td button.edit {
+    margin-right: 0.5em;
   }
 </style>
