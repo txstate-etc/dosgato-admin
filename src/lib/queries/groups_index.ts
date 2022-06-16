@@ -206,6 +206,17 @@ export const CREATE_GROUP = `
   }
 `
 
+export const UPDATE_GROUP = `
+  mutation updateGroup ($groupId: ID!, $name: String!, $validateOnly: Boolean) {
+    updateGroup (groupId: $groupId, name: $name, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      group {
+        ${groupDetails}
+      }
+    }
+  }
+`
+
 export const DELETE_GROUP = `
   mutation deleteGroup ($groupId: ID!) {
     deleteGroup (groupId: $groupId) {
