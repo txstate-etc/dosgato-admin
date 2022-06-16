@@ -65,7 +65,7 @@
       {#if $globalStore.access.viewDataManager}<li><LabeledIcon href="{base}/data" icon={databaseOutline} label="Data" /></li>{/if}
       {#if $globalStore.access.viewSiteManager}<li class="separator"><LabeledIcon href="{base}/sites" icon={webIcon} label="Sites" /></li>{/if}
       {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings" icon={cogOutline} label="Admin" /></li>{/if}
-      {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={accountMultiple} label="Roles" /></li>{/if}
+      {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={accountMultiple} label="Access" /></li>{/if}
     </ul>
     <button bind:this={buttonelement} class="login-status reset">
       {$globalStore.me.name || 'Unauthorized User'}
