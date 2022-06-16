@@ -1,4 +1,5 @@
 import { mutationResponse } from './global'
+import { accessDetailRules, type AccessDetailPageRule, type AccessDetailSiteRule } from './rules'
 
 const userDetails = `
 id
@@ -15,38 +16,6 @@ permissions {
 }
 `
 
-const userDetailRules = `
-  siteRules {
-    site {
-      id
-      name
-    }
-    type
-    grants {
-      viewForEdit
-    }
-  }
-  pageRules {
-    site {
-      id
-      name
-    }
-    pagetree {
-      id
-      name
-      site {
-        id
-        name
-      }
-    }
-    grants {
-      viewlatest
-      viewForEdit
-      publish
-    }
-  }
-`
-
 const fullUserDetails = `
   id
   name
@@ -57,7 +26,7 @@ const fullUserDetails = `
   directRoles: roles(direct: true) {
     id
     name
-    ${userDetailRules}
+    ${accessDetailRules}
   }
   indirectRoles: roles(direct: false) {
     id
@@ -66,7 +35,7 @@ const fullUserDetails = `
       id
       name
     }
-    ${userDetailRules}
+    ${accessDetailRules}
   }
   directGroups: groups(direct: true) {
     id
@@ -118,36 +87,6 @@ export interface GroupWithParents {
   }[]
 }
 
-export interface UserDetailSiteRule {
-  site: {
-    id: string
-    name: string
-  }
-  grants: {
-    viewForEdit: boolean
-  }
-}
-
-export interface UserDetailPageRule {
-  site: {
-    id: string
-    name: string
-  }
-  pagetree: {
-    id: string
-    name: string
-    site: {
-      id: string
-      name: string
-    }
-  }
-  grants: {
-    viewlatest: boolean
-    viewForEdit: boolean
-    publish: boolean
-  }
-}
-
 export interface FullUser {
   id: string
   name: string
@@ -158,8 +97,8 @@ export interface FullUser {
   directRoles: {
     id: string
     name: string
-    siteRules: UserDetailSiteRule[]
-    pageRules: UserDetailPageRule[]
+    siteRules: AccessDetailSiteRule[]
+    pageRules: AccessDetailPageRule[]
   }[]
   indirectRoles: {
     id: string
@@ -168,8 +107,8 @@ export interface FullUser {
       id: string
       name: string
     }[]
-    siteRules: UserDetailSiteRule[]
-    pageRules: UserDetailPageRule[]
+    siteRules: AccessDetailSiteRule[]
+    pageRules: AccessDetailPageRule[]
   }[]
   directGroups: GroupWithParents[]
   indirectGroups: GroupWithParents[]

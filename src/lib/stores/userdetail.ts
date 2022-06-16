@@ -1,5 +1,5 @@
 import { Store } from '@txstate-mws/svelte-store'
-import type { FullUser, UserDetailSiteRule, UserDetailPageRule } from '$lib/queries'
+import type { FullUser, AccessDetailSiteRule, AccessDetailPageRule } from '$lib/queries'
 import { isNull, unique } from 'txstate-utils'
 
 
@@ -12,8 +12,8 @@ interface IUserDetailStore {
 interface Role {
   id: string
   name: string
-  siteRules: UserDetailSiteRule[]
-  pageRules: UserDetailPageRule[]
+  siteRules: AccessDetailSiteRule[]
+  pageRules: AccessDetailPageRule[]
 }
 
 const initialValue: FullUser = { id: '', name: '', email: '', disabled: false, directGroups: [], indirectGroups: [], directRoles: [], indirectRoles: [], sitesOwned: [], sitesManaged: [] }

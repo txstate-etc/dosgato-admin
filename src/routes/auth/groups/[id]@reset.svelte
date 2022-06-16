@@ -140,18 +140,6 @@
   </DetailPanel>
 {/if}
 
-{#if $store.group.sites.length}
-  <DetailPanel header='Sites'>
-    <ul>
-      {#each $store.group.sites as site (site.id)}
-        <li class="flex-row">
-          {site.name}
-        </li>
-      {/each}
-    </ul>
-  </DetailPanel>
-{/if}
-
 <DetailPanel header='Roles' button={{ icon: plusIcon, onClick: () => {} } }>
   <ul>
     {#each $store.group.directRoles as role (role.id)}
@@ -168,6 +156,25 @@
     {/each}
   </ul>
 </DetailPanel>
+
+{#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
+  <DetailPanel header='Sites'>
+    <ul class="sites">
+      {#if $store.permittedOnAllSites.length}
+        <li class="flex-row">
+          All Sites
+          <div>{$store.permittedOnAllSites.join(', ')}</div>
+        </li>
+      {/if}
+      {#each Object.keys($store.sites) as site (site)}
+        <li class="flex-row">
+          {site}
+          <div>{$store.sites[site].join(', ')}</div>
+        </li>
+      {/each}
+    </ul>
+  </DetailPanel>
+{/if}
 
 {#if modal === 'editbasic'}
   <FormDialog

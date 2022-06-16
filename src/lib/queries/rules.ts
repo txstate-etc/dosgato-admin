@@ -309,3 +309,65 @@ export interface TemplateRule {
     use: boolean
   }
 }
+
+export const accessDetailRules = `
+  siteRules {
+    site {
+      id
+      name
+    }
+    type
+    grants {
+      viewForEdit
+    }
+  }
+  pageRules {
+    site {
+      id
+      name
+    }
+    pagetree {
+      id
+      name
+      site {
+        id
+        name
+      }
+    }
+    grants {
+      viewlatest
+      viewForEdit
+      publish
+    }
+  }
+`
+
+export interface AccessDetailSiteRule {
+  site: {
+    id: string
+    name: string
+  }
+  grants: {
+    viewForEdit: boolean
+  }
+}
+
+export interface AccessDetailPageRule {
+  site: {
+    id: string
+    name: string
+  }
+  pagetree: {
+    id: string
+    name: string
+    site: {
+      id: string
+      name: string
+    }
+  }
+  grants: {
+    viewlatest: boolean
+    viewForEdit: boolean
+    publish: boolean
+  }
+}
