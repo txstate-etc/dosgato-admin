@@ -231,8 +231,8 @@ export const GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY = `
 `
 
 export const CREATE_DATA_FOLDER = `
-  mutation createDataFolder ($args: CreateDataFolderInput!) {
-    createDataFolder (args: $args) {
+  mutation createDataFolder ($args: CreateDataFolderInput!, $validateOnly: Boolean) {
+    createDataFolder (args: $args, validateOnly: $validateOnly) {
       ${mutationResponse}
       dataFolder {
         ${dataFolderDetails}

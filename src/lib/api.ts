@@ -212,8 +212,8 @@ class API {
     return dataroots[0]
   }
 
-  async addDataFolder (name: string, templateKey: string, siteId?: string) {
-    const { createDataFolder } = await this.query<{ createDataFolder: MutationResponse & { dataFolder: DataFolder } }>(CREATE_DATA_FOLDER, { args: { name, templateKey, siteId } })
+  async addDataFolder (name: string, templateKey: string, siteId?: string, validateOnly?: boolean) {
+    const { createDataFolder } = await this.query<{ createDataFolder: MutationResponse & { dataFolder: DataFolder } }>(CREATE_DATA_FOLDER, { args: { name, templateKey, siteId }, validateOnly })
     return createDataFolder
   }
 

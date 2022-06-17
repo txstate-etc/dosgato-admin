@@ -36,3 +36,9 @@ export const mutationResponse = `
     type
   }
 `
+
+export interface MessageFromAPI {
+  arg: string
+  message: string
+  type: 'error'|'warning'|'success'
+}

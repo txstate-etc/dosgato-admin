@@ -14,7 +14,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import type { Load } from '@sveltejs/kit'
-  import { isNull, unique } from 'txstate-utils'
+  import { unique } from 'txstate-utils'
   import { DateTime } from 'luxon'
   import { templateRegistry } from '$lib/registry'
 
@@ -192,12 +192,11 @@
   const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible })
 </script>
 <script lang="ts">
-  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, type TypedTreeItem, dataListStore, templateStore, type DataItem, type DataFolder, type DataSite } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, ensureRequiredNotNull, type TypedTreeItem, dataListStore, templateStore, type DataItem, type DataFolder, type DataSite } from '$lib'
   import './index.css'
   import { FieldText } from '@dosgato/dialog'
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
-  import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
 
   let modal: 'addfolder'|'adddata'|'deletefolder'|'renamefolder'|'publishdata'|'unpublishdata'|undefined
 
@@ -274,11 +273,13 @@
   }
 
   async function validateFolder (state) {
-    const feedback: Feedback[] = []
-    if (isNull(state.name)) {
-      feedback.push({ type: MessageType.ERROR, message: 'Name is required', path: 'name' })
+    const localMessages = ensureRequiredNotNull(state, ['name'])
+    if (!localMessages.length) {
+      const siteId: string|undefined = ($store.selectedItems[0] as TreeDataSite).siteId
+      const resp = await api.addDataFolder(state.name, templateKey, siteId, true)
+      return messageForDialog(resp.messages, 'args')
     }
-    return feedback
+    return localMessages
   }
 
   async function onDeleteFolder () {
@@ -306,31 +307,29 @@
     modal = undefined
   }
 
-  let validateData
-  function onValidateData (state) {
-    return validateData(state)
-  }
-
   async function onAddData (state) {
     let siteId: string|undefined
     let folderId: string|undefined
-    if ($store.selectedItems.length === 1) {
-      const selected = $store.selectedItems[0]
-      if (selected.type === DataTreeNodeType.SITE) {
-        siteId = selected.id
-      } else if (selected.type === DataTreeNodeType.FOLDER) {
-        folderId = selected.id
-        if (selected.parent) {
-          siteId = selected.parent.id
-        }
-      }
+    const selected = $store.selectedItems[0]
+    if (selected.type === DataTreeNodeType.SITE) {
+      siteId = selected.siteId
+    } else if (selected.type === DataTreeNodeType.FOLDER) {
+      folderId = selected.id
+      siteId = (selected.parent as TreeDataSite).siteId
     }
-    // TODO: Save the data. The mutation needs a name, schemaVersion, templateKey,
-    // the actual data from the form, optional siteId, optional folderId
-    // Where does the name come from? Does that need to be a field in every dialog?
-    // How do I get the schema version?
-    modal = undefined
-    return { success: true, messages: [], data: [] }
+    const { dataname, ...data } = state
+    // TODO: Get the actual schema version from somewhere
+    const schemaVersion = DateTime.now()
+    const resp = await api.addDataEntry(dataname, templateKey, schemaVersion, data, siteId, folderId)
+    if (resp.success) {
+      store.refresh()
+      modal = undefined
+      return { success: true, messages: resp.messages, data: resp.data }
+    } else {
+      // display errors
+      console.log('error')
+      return { success: false, messages: resp.messages, data: resp.data }
+    }
   }
 </script>
 
@@ -391,9 +390,10 @@
 {:else if modal === 'adddata'}
   <FormDialog
     submit={onAddData}
-    validate={onValidateData}
     title='Add Data'
     on:dismiss={() => { modal = undefined }}>
-    <svelte:component this={templateRegistry.getTemplate($templateStore.id)?.dialog} bind:validate={validateData}></svelte:component>
+    <!-- TODO: Need some description text explaining this field -->
+    <FieldText path='dataname' label='Data Name' required></FieldText>
+    <svelte:component this={templateRegistry.getTemplate($templateStore.id)?.dialog}></svelte:component>
   </FormDialog>
 {/if}
