@@ -81,6 +81,7 @@
 
 <style>
   iframe {
+    display: block;
     border: 0;
     width: 100%;
     height: 100%;

@@ -14,14 +14,15 @@
 </script>
 <script lang="ts">
   import { goto } from '$app/navigation'
-  function onClose (idx: number) {
+  async function onClose (idx: number) {
     const actual = idx - 1
-    const wasactive = actual === $pageEditorStore.active
-    pageEditorStore.close(actual)
-    if (wasactive) {
-      if ($pageEditorStore.editors.length) goto(base + '/pages/' + $pageEditorStore.editors[$pageEditorStore.active].page.id)
-      else goto(base + '/pages')
+    let newactive = $pageEditorStore.active
+    if (actual === $pageEditorStore.active) {
+      newactive = $pageEditorStore.active > actual || actual === $pageEditorStore.editors.length - 1 ? $pageEditorStore.active - 1 : $pageEditorStore.active
+      if ($pageEditorStore.editors.length > 1) await goto(base + '/pages/' + $pageEditorStore.editors[newactive].page.id)
+      else await goto(base + '/pages')
     }
+    pageEditorStore.close(actual, newactive)
   }
   $: subnav.set([{ label: 'Pages', href: base + '/pages', icon: fileTree }, ...$pageEditorStore.editors.map(e => ({ label: e.page.title ?? e.page.name, href: base + '/pages/' + e.page.id, icon: applicationEditOutline, onClose }))])
 </script>

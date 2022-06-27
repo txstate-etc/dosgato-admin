@@ -23,8 +23,8 @@ class PageEditorStore extends Store<IPageEditorStore> {
     super({ editors: [], active: -1 })
   }
 
-  close (idx: number) {
-    this.update(v => ({ ...v, editors: splice(v.editors, idx, 1), active: v.active > idx || idx === v.editors.length - 1 ? v.active - 1 : v.active }))
+  close (idx: number, newactive: number) {
+    this.update(v => ({ ...v, editors: splice(v.editors, idx, 1), active: newactive }))
   }
 
   open (page: PageEditorPage) {
