@@ -28,8 +28,8 @@
 
 <script lang="ts">
   import { base } from '$app/paths'
-  import { api, RoleDetailStore, DetailPanel, type SiteListSite } from '$lib'
-  import { unique } from 'txstate-utils'
+  import { api, RoleDetailStore, DetailPanel, messageForDialog, type SiteListSite, type CreateAssetRuleInput } from '$lib'
+  import { isNull, unique } from 'txstate-utils'
   import { ScreenReaderOnly, type PopupMenuItem } from '@txstate-mws/svelte-components'
 
   let modal: 'editbasic'|'addassetrule'|'deleterule'|undefined
@@ -41,9 +41,38 @@
     return relevantGroups.map(g => g.id).join(', ')
   }
 
-  async function onAddRule (state) {
-    // TODO
-    return { success: true, messages: [], data: [] }
+  function stateToCreateAssetRuleInput (state) {
+    const input: CreateAssetRuleInput = {
+      roleId: $store.role.id,
+      siteId: state.site[0], // TODO: Change this if/when site becomes a single-select field that returns one value instead of an array
+      path: state.path,
+      mode: state.mode,
+      grants: { // TODO: Probably a better way to do this. Maybe FieldChoices isn't the right field to use here.
+        create: state.grants.includes('Create'),
+        update: state.grants.includes('Update'),
+        move: state.grants.includes('Move'),
+        delete: state.grants.includes('Delete'),
+        undelete: state.grants.includes('Undelete')
+      }
+    }
+    return input
+  }
+
+  async function validateAssetRule (state) {
+    const input = stateToCreateAssetRuleInput(state)
+    const resp = await api.addAssetRule(input, true)
+    return messageForDialog(resp.messages, '')
+  }
+
+  async function onAddAssetRule (state) {
+    const input = stateToCreateAssetRuleInput(state)
+    const resp = await api.addAssetRule(input)
+    if (resp.success) {
+      modal = undefined
+      store.refresh($store.role.id)
+    }
+    const wholeDialogMessages = resp.messages.filter(m => isNull(m.arg))
+    return { success: resp.success, messages: [...messageForDialog(resp.messages, ''), ...wholeDialogMessages], data: state }
   }
 
   async function getSiteOptions (term: string) {
@@ -305,7 +334,8 @@
 
 {#if modal === 'addassetrule'}
   <FormDialog
-    submit={onAddRule}
+    submit={onAddAssetRule}
+    validate={validateAssetRule}
     name='addassetrule'
     title='Add Asset Rule'
     on:dismiss={() => { modal = undefined }}>

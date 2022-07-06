@@ -34,6 +34,21 @@
 
 <Dialog continueText="Save" cancelText="Cancel" on:dismiss on:continue={onSubmit} {title}>
   <Form bind:store {submit} {validate} {chooserClient} {autocomplete} {name} {preload} on:saved let:messages let:saved let:valid let:invalid let:validating let:submitting>
+    <div class="form-errors" aria-live='assertive'>
+      {#if messages.length}
+        <ul>
+          {#each messages as message}
+            <li>{message.message}</li>
+          {/each}
+        </ul>
+      {/if}
+    </div>
     <slot {messages} {saved} {validating} {submitting} {valid} {invalid} />
   </Form>
 </Dialog>
+
+<style>
+  .form-errors {
+    color: #9a3332;
+  }
+</style>

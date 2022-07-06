@@ -371,3 +371,17 @@ export interface AccessDetailPageRule {
     publish: boolean
   }
 }
+
+export interface CreateAssetRuleInput {
+  roleId: string
+  siteId?: string
+  path?: string
+  mode?: 'self'|'sub'|'selfsub'|undefined
+  grants?: {
+    create: boolean
+    update: boolean
+    move: boolean
+    delete: boolean
+    undelete: boolean
+  }
+}

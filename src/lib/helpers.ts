@@ -3,8 +3,12 @@ import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
 import { isNull } from 'txstate-utils'
 
 export function messageForDialog (messages: MessageFromAPI[], prefix: string) {
-  return messages.filter(m => m.arg.startsWith(`${prefix}.`))
-    .map(m => ({ path: m.arg.replace(`${prefix}.`, ''), type: m.type, message: m.message }))
+  return messages.filter(m => {
+    if (m.arg) {
+      return m.arg.startsWith(`${prefix}`)
+    }
+    return false
+  }).map(m => ({ path: m.arg.replace(`${prefix}.`, ''), type: m.type, message: m.message }))
 }
 
 export function ensureRequiredNotNull (data: any, requiredFields: string[]) {

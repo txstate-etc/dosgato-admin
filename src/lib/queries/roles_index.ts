@@ -1,4 +1,5 @@
 import { assetRuleDetails, dataRuleDetails, globalRuleDetails, pageRuleDetails, siteRuleDetails, templateRuleDetails, type AssetRule, type DataRule, type GlobalRule, type PageRule, type SiteRule, type TemplateRule } from '$lib'
+import { mutationResponse } from './global'
 
 const roleDetails = `
   id
@@ -121,9 +122,20 @@ export const GET_ROLE_LIST = `
 `
 
 export const GET_ROLE_BY_ID = `
-query getRoleById ($roleId: ID!) {
-  roles (filter: { ids: [$roleId]}) {
-    ${fullRoleDetails}
+  query getRoleById ($roleId: ID!) {
+    roles (filter: { ids: [$roleId]}) {
+      ${fullRoleDetails}
+    }
   }
-}
+`
+
+export const ADD_ASSET_RULE = `
+  mutation createAssetRule ($args: CreateAssetRuleInput!, $validateOnly: Boolean) {
+    createAssetRule (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      assetRule {
+        ${assetRuleDetails}
+      }
+    }
+  }
 `
