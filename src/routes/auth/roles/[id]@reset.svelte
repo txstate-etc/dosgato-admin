@@ -87,7 +87,7 @@
   </a>
 </div>
 
-<DetailPanel header='Basic Information' button={{ icon: pencilIcon, onClick: () => {} }}>
+<DetailPanel header='Basic Information' button={{ icon: pencilIcon, onClick: () => {}, hiddenLabel: 'Edit Basic Information' }}>
   <div class="row">
     <div class="label">Name:</div>
     <div class="value">{$store.role.name}</div>
@@ -130,7 +130,7 @@
   </ul>
 </DetailPanel>
 
-<DetailPanel header='Asset Rules' button={{ icon: plusIcon, onClick: () => { modal = 'addassetrule' } }}>
+<DetailPanel header='Asset Rules' button={{ icon: plusIcon, onClick: () => { modal = 'addassetrule' }, hiddenLabel: 'Add Asset Rule' }}>
   {#if $store.role.assetRules.length}
     <table>
       <tr class='headers'>
@@ -166,7 +166,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Data Rules' button={{ icon: plusIcon, onClick: () => {} }}>
+<DetailPanel header='Data Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Data Rule' }}>
   {#if $store.role.dataRules.length}
     <table>
       <tr class='headers'>
@@ -206,7 +206,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Global Rules' button={{ icon: plusIcon, onClick: () => {} }}>
+<DetailPanel header='Global Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Global Rule' }}>
   {#if $store.role.globalRules.length}
     <table>
       <tr class='headers'>
@@ -232,7 +232,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Page Rules' button={{ icon: plusIcon, onClick: () => {} }}>
+<DetailPanel header='Page Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Page Rule' }}>
   {#if $store.role.pageRules.length}
     <table>
       <tr class='headers'>
@@ -274,7 +274,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Site Rules' button={{ icon: plusIcon, onClick: () => {} }}>
+<DetailPanel header='Site Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Site Rule' }}>
   {#if $store.role.siteRules.length}
     <table>
       <tr class="headers">
@@ -308,7 +308,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Template Rules' button={{ icon: plusIcon, onClick: () => {} }}>
+<DetailPanel header='Template Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Template Rule' }}>
   {#if $store.role.templateRules.length}
     <table>
       <tr class="headers">

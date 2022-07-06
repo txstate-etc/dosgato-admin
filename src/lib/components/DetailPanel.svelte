@@ -10,7 +10,7 @@
   <div class="header">
     <div>{header}</div>
     {#if button}
-      <button class="edit" on:click={button.onClick}><Icon icon={button.icon}/></button>
+      <button class="edit" on:click={button.onClick}><Icon icon={button.icon} hiddenLabel={button.hiddenLabel}/></button>
     {/if}
   </div>
   <div class="body">
