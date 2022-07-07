@@ -155,10 +155,7 @@ export interface GlobalRule {
 export const pageRuleDetails = `
   id
   mode
-  pagetree {
-    id
-    name
-  }
+  pagetreeType
   path
   permissions {
     write
@@ -189,10 +186,7 @@ export const pageRuleDetails = `
 export interface PageRule {
   id: string
   mode: string
-  pagetree: {
-    id: string
-    name: string
-  }
+  pagetreeType: string
   path: string
   permissions: {
     write: boolean

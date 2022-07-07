@@ -139,3 +139,11 @@ export const ADD_ASSET_RULE = `
     }
   }
 `
+
+export const REMOVE_RULE = `
+  mutation removeRule  ($ruleId: ID!, $type: RuleType!) {
+    removeRule (ruleId: $ruleId, type: $type) {
+      ${mutationResponse}
+    }
+  }
+`
