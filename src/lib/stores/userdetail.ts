@@ -41,12 +41,12 @@ export class UserDetailStore extends Store<IUserDetailStore> {
     // If they have some page rule with a null site and pagetree with a viewForEdit grant, they can edit all sites?
     globalSiteEditor = userRoles.some(role => {
       if (role.siteRules.some(sr => isNull(sr.site) && sr.grants.viewForEdit)) return true
-      if (role.pageRules.some(pr => isNull(pr.pagetree) && isNull(pr.site) && pr.grants.viewForEdit)) return true
+      if (role.pageRules.some(pr => isNull(pr.site) && pr.grants.viewForEdit)) return true
       return false
     })
     if (globalSiteEditor) permittedOnAllSites.push('editor')
     globalPublisher = userRoles.some(role => {
-      if (role.pageRules.some(pr => isNull(pr.pagetree) && isNull(pr.site) && pr.grants.publish)) return true
+      if (role.pageRules.some(pr => isNull(pr.site) && pr.grants.publish)) return true
       return false
     })
     if (globalPublisher) permittedOnAllSites.push('publisher')
@@ -62,11 +62,9 @@ export class UserDetailStore extends Store<IUserDetailStore> {
         for (const pr of role.pageRules) {
           if (!globalSiteEditor) {
             if (pr.site && pr.grants.viewForEdit) editSites.push(pr.site.name)
-            else if (pr.pagetree && pr.grants.viewForEdit) editSites.push(pr.pagetree.site.name)
           }
           if (!globalPublisher) {
             if (pr.site && pr.grants.publish) publishSites.push(pr.site.name)
-            else if (pr.pagetree && pr.grants.publish) publishSites.push(pr.pagetree.site.name)
           }
         }
       }

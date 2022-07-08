@@ -22,6 +22,7 @@ const fullUserDetails = `
   email
   disabled
   disabledAt
+  trained
   lastlogin
   directRoles: roles(direct: true) {
     id
@@ -93,6 +94,7 @@ export interface FullUser {
   email: string
   disabled: boolean
   disabledAt?: string
+  trained: boolean
   lastlogin?: string
   directRoles: {
     id: string

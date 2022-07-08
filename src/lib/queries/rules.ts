@@ -320,14 +320,7 @@ export const accessDetailRules = `
       id
       name
     }
-    pagetree {
-      id
-      name
-      site {
-        id
-        name
-      }
-    }
+    pagetreeType
     grants {
       viewlatest
       viewForEdit
@@ -351,14 +344,7 @@ export interface AccessDetailPageRule {
     id: string
     name: string
   }
-  pagetree: {
-    id: string
-    name: string
-    site: {
-      id: string
-      name: string
-    }
-  }
+  pagetreeType: boolean
   grants: {
     viewlatest: boolean
     viewForEdit: boolean

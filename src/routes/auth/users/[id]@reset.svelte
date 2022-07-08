@@ -4,7 +4,7 @@
   import plusIcon from '@iconify-icons/mdi/plus'
   import arrowLeft from '@iconify-icons/mdi/arrow-left'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
-  import { Icon, FieldText, FieldMultiselect } from '@dosgato/dialog'
+  import { Icon, FieldText, FieldMultiselect, FieldCheckbox } from '@dosgato/dialog'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
 
@@ -106,6 +106,10 @@
     <div class="value">{$store.user.email}</div>
   </div>
   <div class="row">
+    <div class="label">Trained:</div>
+    <div class="value">{$store.user.trained ? 'Yes' : 'No'}</div>
+  </div>
+  <div class="row">
     <div class="label">Last Login:</div>
     <div class="value">
       {$store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never'}
@@ -187,10 +191,11 @@
     submit={onEditBasic}
     name='editbasicinfo'
     title= {`Edit ${$store.user.id}`}
-    preload={{ name: $store.user.name, email: $store.user.email }}
+    preload={{ name: $store.user.name, email: $store.user.email, trained: $store.user.trained }}
     on:dismiss={() => { modal = undefined }}>
     <FieldText path='name' label='Full Name'></FieldText>
     <FieldText path='email' label='Email'></FieldText>
+    <FieldCheckbox path='trained' label='Trained' boxLabel='User has received training'/>
   </FormDialog>
 {:else if modal === 'editgroups'}
   <FormDialog
