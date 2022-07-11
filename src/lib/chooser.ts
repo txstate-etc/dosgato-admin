@@ -18,7 +18,7 @@ export const chooserClient: Client = {
   },
   getChildren: async function (source: string, path: string): Promise<AnyItem[]> {
     if (source === 'pages') {
-      const pages = await api.getSubPagesByPath(path)
+      const pages = path === '/' ? await api.getRootPages() : await api.getSubPagesByPath(path)
       return pages.map(processPage)
     } else {
       const assetsFolders = await api.getSubFoldersAndAssetsByPath(path)
