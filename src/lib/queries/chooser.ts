@@ -6,7 +6,7 @@ title
 `
 
 export const GET_SUBPAGES_BY_PATH = `
-  query getPagesByPath ($path: string) {
+  query getPagesByPath ($path: String!) {
     pages (filter: { parentPaths: [$path] }) {
       ${chooserPageDetails}
     }
