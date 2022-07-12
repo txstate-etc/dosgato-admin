@@ -365,3 +365,18 @@ export interface CreateAssetRuleInput {
     undelete: boolean
   }
 }
+
+export interface CreateDataRuleInput {
+  roleId: string
+  siteId?: string
+  templateId?: string
+  path?: string
+  grants?: {
+    create: boolean
+    update: boolean
+    publish: boolean
+    unpublish: boolean
+    delete: boolean
+    undelete: boolean
+  }
+}
