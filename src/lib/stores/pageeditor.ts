@@ -1,7 +1,8 @@
-import type { ComponentData } from '@dosgato/templating'
+import type { ComponentData, UITemplate } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
-import { get, splice } from 'txstate-utils'
+import { get, isNotBlank, set, splice } from 'txstate-utils'
 import type { PageEditorPage } from '$lib/queries'
+import { api } from '$lib/api'
 
 export interface IPageEditorStore {
   editors: EditorState[]
@@ -15,6 +16,12 @@ export interface EditorState {
     path: string
     data: any
     templateKey: string
+  }
+  creating?: {
+    path: string
+    data: any
+    availableComponents: (UITemplate & { name: string })[]
+    templateKey?: string
   }
 }
 
@@ -39,11 +46,55 @@ class PageEditorStore extends Store<IPageEditorStore> {
     })
   }
 
-  editComponent (path: string) {
+  async addComponentShowModal (path: string) {
+    const editorState = this.value.editors[this.value.active]
+    const m = path.match(/(.*)\.?areas\.(\w+)$/)
+    if (!m) return
+    const [full, componentPath, area] = Array.from(m)
+    const templateKey = get(editorState.page.data, [componentPath, 'templateKey'].filter(isNotBlank).join('.'))
+    const availableComponents = await api.getAvailableComponents(templateKey, area, editorState.page.id)
+    this.update(v => set(v, `editors[${v.active}]`, { ...editorState, modal: 'create', editing: undefined, creating: { path, data: undefined, availableComponents } }))
+  }
+
+  async addComponentChooseTemplate (templateKey: string) {
     this.update(v => {
-      const data = get<ComponentData>(v.editors[v.active].page.data, path)
+      const editorState = v.editors[v.active]
+      const newEditorState = set(editorState, 'creating.templateKey', templateKey)
+      return set(v, `editors[${v.active}]`, newEditorState)
+    })
+  }
+
+  async addComponentSubmit (data: any, validate?: boolean) {
+    const editorState = this.value.editors[this.value.active]
+    if (!editorState.creating) return
+    const resp = await api.createComponent(editorState.page.id, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey }, { validate })
+    if (!validate && resp.success) this.cancelModal()
+    return resp
+  }
+
+  editComponentShowModal (path: string) {
+    this.update(v => {
+      const editorState = v.editors[v.active]
+      const data = get<ComponentData>(editorState.page.data, path)
       const templateKey = data.templateKey
-      return { ...v, modal: 'edit', editing: { path, data, templateKey } }
+      const newEditorState: EditorState = { ...editorState, modal: 'edit', editing: { path, data, templateKey }, creating: undefined }
+      return set(v, `editors[${v.active}]`, newEditorState)
+    })
+  }
+
+  async editComponentSubmit (data: any, validate?: boolean) {
+    this.cancelModal()
+    return {
+      success: true,
+      messages: [],
+      data
+    }
+  }
+
+  cancelModal () {
+    this.update(v => {
+      const editorState = v.editors[v.active]
+      return set(v, `editors[${v.active}]`, { ...editorState, modal: undefined, new: undefined })
     })
   }
 }

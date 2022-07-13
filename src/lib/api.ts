@@ -1,9 +1,22 @@
 import { base } from '$app/paths'
-import type { PageLink } from '@dosgato/templating'
+import type { ComponentData, PageData, PageLink } from '@dosgato/templating'
 import type { DateTime } from 'luxon'
-import { keyby, toArray } from 'txstate-utils'
-import { DISABLE_USERS, ENABLE_USERS, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER, DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE, GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY, GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST, GET_USER_BY_ID, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS, GET_SUBGROUPS, GET_GROUP_BY_ID, GET_ROLE_BY_ID, GET_SITE_LIST, type DataFolder, type GlobalSelf, type PageEditorPage, type TemplateListTemplate, type DataItem, type DataRoot, type TreePage, type UserListUser, type FullUser, type GroupListGroup, type FullGroup, type RoleListRole, type FullRole, type SiteListSite, type CreateAssetRuleInput, type AssetRule, type CreateDataRuleInput, type DataRule } from './queries'
-import { type GetSubPagesByPath, GET_SUBPAGES_BY_PATH, type GetSubFoldersAndAssetsByPath, GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, type GetPageByLink } from './queries/chooser'
+import { get, keyby, set, toArray } from 'txstate-utils'
+import {
+  DISABLE_USERS, ENABLE_USERS, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
+  DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
+  CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE,
+  GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY,
+  GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST,
+  GET_USER_BY_ID, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS,
+  GET_SUBGROUPS, GET_GROUP_BY_ID, GET_ROLE_BY_ID, GET_SITE_LIST, GET_SUBPAGES_BY_PATH,
+  GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, GET_AVAILABLE_COMPONENTS,
+  type DataFolder, type GlobalSelf, type PageEditorPage, type TemplateListTemplate, type DataItem, type DataRoot,
+  type TreePage, type UserListUser, type FullUser, type GroupListGroup, type FullGroup, type RoleListRole,
+  type FullRole, type SiteListSite, type GetAvailableComponents, type GetSubPagesByPath,
+  type GetSubFoldersAndAssetsByPath, type GetPageByLink, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule, type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule
+} from './queries'
+import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
 
 export interface MutationResponse {
@@ -187,6 +200,11 @@ class API {
     return templates
   }
 
+  async getAvailableComponents (templateKey: string, area: string, pageId: string) {
+    const { templates } = await this.query<GetAvailableComponents>(GET_AVAILABLE_COMPONENTS, { templateKey, pageId })
+    return templates[0]?.areas.find(a => a.name === area)?.availableComponents.filter(ac => ac.permissions.useOnPage).map(ac => ({ name: ac.name, ...templateRegistry.getTemplate(ac.key) })) ?? []
+  }
+
   async getGlobalDataRootByTemplateKey (key: string) {
     const { dataroots } = await this.query<{ dataroots: DataRoot[] }>(GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, { key })
     return dataroots[0]
@@ -305,6 +323,26 @@ class API {
   async removeRule (ruleId: string, type: 'GLOBAL'|'SITE'|'PAGE'|'TEMPLATE'|'ASSET'|'DATA') {
     const { removeRule } = await this.query<{ removeRule: MutationResponse }>(REMOVE_RULE, { ruleId, type })
     return removeRule
+  }
+
+  async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validate?: boolean, comment?: string }) {
+    const { validate, comment } = opts ?? {}
+    const area = get(page, path) ?? []
+    const resp = await this.query<{ updatePage: MutationResponse & { data: PageData } }>(`
+      mutation updatePage ($pageId: ID!, $dataVersion: Int!, $data: JsonData!, $validate: Boolean, $comment: String) {
+        updatePage (pageId: $pageId, dataVersion: $dataVersion, data: $data, validate: $validate, comment: $comment) {
+          success
+          page {
+            id
+          }
+          messages {
+            type
+            message
+          }
+        }
+      }
+    `, { pageId, data: set(page, path, [...area, data]), dataVersion, validate, comment })
+    return resp.updatePage
   }
 }
 

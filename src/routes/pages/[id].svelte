@@ -1,18 +1,22 @@
 <script lang="ts" context="module">
   import type { Load } from '@sveltejs/kit'
-  import { api, pageStore, editorStore, environmentConfig, pageEditorStore, templateRegistry, type ActionPanelAction } from '$lib'
+  import { api, pageStore, editorStore, environmentConfig, pageEditorStore, templateRegistry, type ActionPanelAction, type PageEditorPage } from '$lib'
   import ActionPanel from '$lib/components/ActionPanel.svelte'
 
-  export const load: Load = async ({ params, fetch }) => {
-    const page = await api.getEditorPage(params.id)
-    if (!page) return { status: 404 }
-    const resp = await fetch(environmentConfig.renderBase + '/token' + page.path, {
+  async function getTempToken (page: PageEditorPage, skfetch = fetch) {
+    const resp = await skfetch(environmentConfig.renderBase + '/token' + page.path, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${api.token ?? ''}`
       }
     })
-    const temptoken = await resp.text()
+    return await resp.text()
+  }
+
+  export const load: Load = async ({ params, fetch }) => {
+    const page = await api.getEditorPage(params.id)
+    if (!page) return { status: 404 }
+    const temptoken = await getTempToken(page, fetch)
     pageEditorStore.open(page)
     return { props: { temptoken } }
   }
@@ -20,7 +24,7 @@
 <script lang="ts">
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
-  import type { ComponentData } from '@dosgato/templating'
+  import { Icon } from '@dosgato/dialog'
 
   export let temptoken: string
 
@@ -37,18 +41,39 @@
     if (message.action === 'drag') {
       iframe.contentWindow?.postMessage({ validdrops: new Set(message.allpaths!.filter(p => p !== message.path)) }, '*')
     } else if (message.action === 'edit') {
-      pageEditorStore.editComponent(message.path)
+      pageEditorStore.editComponentShowModal(message.path)
+    } else if (message.action === 'create') {
+      pageEditorStore.addComponentShowModal(message.path)
     }
   }
 
-  function onEditSubmit (path: string) {
-    return async (data: ComponentData) => {
-      return {
-        success: true,
-        messages: [],
-        data
-      }
+  function cancelModal () {
+    pageEditorStore.cancelModal()
+  }
+
+  async function refreshIframe () {
+    const newTempToken = await getTempToken($editorStore.page)
+    if (newTempToken === temptoken) {
+      iframe.src = iframe.src // force refresh the iframe
+    } else {
+      temptoken = newTempToken // if there's a new token, setting it will alter the iframe src and therefore refresh it
     }
+  }
+
+  function onAddComponentChooseTemplate (templateKey: string) {
+    return () => pageEditorStore.addComponentChooseTemplate(templateKey)
+  }
+
+  async function onAddComponentSubmit (data: any) {
+    const resp = await pageEditorStore.addComponentSubmit(data)
+    if (resp?.success) await refreshIframe()
+    return resp!
+  }
+
+  async function onEditComponentSubmit (data: any) {
+    const resp = await pageEditorStore.editComponentSubmit(data)
+    if (resp?.success) await refreshIframe()
+    return resp!
   }
 
   function messages (el: HTMLIFrameElement) {
@@ -71,11 +96,32 @@
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
   {#if template && template.dialog}
-    <FormDialog preload={$editorStore.editing.data} submit={onEditSubmit($editorStore.editing.path)}>
+    <FormDialog preload={$editorStore.editing.data} submit={onEditComponentSubmit} on:dismiss={cancelModal}>
       <svelte:component this={template.dialog} />
     </FormDialog>
   {:else}
     <Dialog title="Unrecognized Template">This content uses an unrecognized template. Please contact support for assistance.</Dialog>
+  {/if}
+{:else if $editorStore.modal === 'create' && $editorStore.creating }
+  {#if $editorStore.creating.templateKey}
+    {@const template = templateRegistry.getTemplate($editorStore.creating.templateKey)}
+    {#if template && template.dialog}
+      <FormDialog preload={$editorStore.creating.data} submit={onAddComponentSubmit} on:dismiss={cancelModal}>
+        <svelte:component this={template.dialog} />
+      </FormDialog>
+    {:else}
+      <Dialog title="Unrecognized Template">This content uses an unrecognized template. Please contact support for assistance.</Dialog>
+    {/if}
+  {:else}
+    <Dialog title="What would you like to add?" cancelText="Cancel" size="large" on:dismiss={cancelModal}>
+      <div class="component-chooser">
+        {#each $editorStore.creating.availableComponents as availableComponent}
+          <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
+            <Icon icon={availableComponent.icon} width="60%" /><br>{availableComponent.name}
+          </button>
+        {/each}
+      </div>
+    </Dialog>
   {/if}
 {/if}
 
@@ -85,5 +131,17 @@
     border: 0;
     width: 100%;
     height: 100%;
+  }
+
+  .component-chooser {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-gap: 1em;
+    place-content: center center;
+    grid-auto-rows: 1fr;
+  }
+  .component-chooser button {
+    aspect-ratio: 1;
+    cursor: pointer;
   }
 </style>
