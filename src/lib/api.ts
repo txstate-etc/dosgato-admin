@@ -3,7 +3,7 @@ import type { ComponentData, PageData, PageLink } from '@dosgato/templating'
 import type { DateTime } from 'luxon'
 import { get, keyby, set, toArray } from 'txstate-utils'
 import {
-  DISABLE_USERS, ENABLE_USERS, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
+  DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
   CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP, GET_DATA_BY_DATAFOLDER_ID, GET_DATA_TEMPLATE_LIST, GET_EDITOR_PAGE,
   GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY,
@@ -173,6 +173,11 @@ class API {
   async enableUsers (userIds: string[]) {
     const { enableUsers } = await this.query<{ enableUsers: MutationResponse & { users: UserListUser[] } }>(ENABLE_USERS, { userIds })
     return enableUsers
+  }
+
+  async updateUserInfo (userId: string, args: any, validateOnly?: boolean) {
+    const { updateUser } = await this.query<{ updateUser: MutationResponse & { user: UserListUser } }>(UPDATE_USER, { userId, args, validateOnly })
+    return updateUser
   }
 
   async addUserToGroups (userId: string, groupIds: string[]) {

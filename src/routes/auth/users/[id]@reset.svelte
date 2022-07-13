@@ -25,7 +25,7 @@
 </script>
 
 <script lang="ts">
-  import { api, DetailPanel, UserDetailStore, type GroupWithParents, type GroupListGroup } from '$lib'
+  import { api, DetailPanel, UserDetailStore, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup } from '$lib'
   import { base } from '$app/paths'
   import { DateTime } from 'luxon'
   let modal: 'editbasic'|'editgroups'|'editroles'|'removefromgroup'|undefined
@@ -52,9 +52,18 @@
   }
 
   async function onEditBasic (state) {
-    // TODO
+    const resp = await api.updateUserInfo($store.user.id, state)
+    if (resp.success) store.refresh($store.user.id)
     modal = undefined
-    return { success: true, messages: [], data: [] }
+  }
+
+  async function validateBasicInfo (state) {
+    const localMessages = ensureRequiredNotNull(state, ['name', 'email'])
+    if (!localMessages.length) {
+      const resp = await api.updateUserInfo($store.user.id, state, true)
+      return messageForDialog(resp.messages, 'args')
+    }
+    return localMessages
   }
 
   async function searchGroups (term: string) {
@@ -189,13 +198,14 @@
 {#if modal === 'editbasic'}
   <FormDialog
     submit={onEditBasic}
+    validate={validateBasicInfo}
     name='editbasicinfo'
     title= {`Edit ${$store.user.id}`}
     preload={{ name: $store.user.name, email: $store.user.email, trained: $store.user.trained }}
     on:dismiss={() => { modal = undefined }}>
-    <FieldText path='name' label='Full Name'></FieldText>
-    <FieldText path='email' label='Email'></FieldText>
-    <FieldCheckbox path='trained' label='Trained' boxLabel='User has received training'/>
+    <FieldText path='name' label='Full Name' required={true}></FieldText>
+    <FieldText path='email' label='Email' required={true}></FieldText>
+    <FieldCheckbox path='trained' label='Trained' defaultValue={false} boxLabel='User has received training'/>
   </FormDialog>
 {:else if modal === 'editgroups'}
   <FormDialog

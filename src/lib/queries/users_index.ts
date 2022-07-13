@@ -161,6 +161,17 @@ export const ENABLE_USERS = `
   }
 `
 
+export const UPDATE_USER = `
+  mutation updateUser ($userId: ID!, $args: UpdateUserInput!, $validateOnly: Boolean) {
+    updateUser (userId: $userId, args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      user {
+        ${userDetails}
+      }
+    }
+  }
+`
+
 export const REMOVE_USER_FROM_GROUP = `
   mutation removeUserFromGroups ($groupIds: [ID!]!, $userId: ID!) {
     removeUserFromGroups (groupIds: $groupIds, userId: $userId) {
