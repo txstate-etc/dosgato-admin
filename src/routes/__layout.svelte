@@ -2,7 +2,7 @@
   import { Icon } from '@dosgato/dialog'
   import accountMultiple from '@iconify-icons/mdi/account-multiple'
   import closeThick from '@iconify-icons/mdi/close-thick'
-  import cogOutline from '@iconify-icons/mdi/cog-outline'
+  import dotsHorizontal from '@iconify-icons/mdi/dots-horizontal'
   import databaseOutline from '@iconify-icons/mdi/database-outline'
   import fileCodeOutline from '@iconify-icons/mdi/file-code-outline'
   import imageMultipleOutline from '@iconify-icons/mdi/image-multiple-outline'
@@ -64,8 +64,8 @@
       {#if $globalStore.access.viewAssetManager}<li><LabeledIcon href="{base}/assets" icon={imageMultipleOutline} label="Assets" /></li>{/if}
       {#if $globalStore.access.viewDataManager}<li><LabeledIcon href="{base}/data" icon={databaseOutline} label="Data" /></li>{/if}
       {#if $globalStore.access.viewSiteManager}<li class="separator"><LabeledIcon href="{base}/sites" icon={webIcon} label="Sites" /></li>{/if}
-      {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings" icon={cogOutline} label="Admin" /></li>{/if}
       {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={accountMultiple} label="Access" /></li>{/if}
+      {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings" icon={dotsHorizontal} label="More" /></li>{/if}
     </ul>
     <button bind:this={buttonelement} class="login-status reset">
       {$globalStore.me.name || 'Unauthorized User'}
