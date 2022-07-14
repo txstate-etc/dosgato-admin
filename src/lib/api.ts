@@ -1,7 +1,7 @@
 import { base } from '$app/paths'
 import type { ComponentData, PageData, PageLink } from '@dosgato/templating'
 import type { DateTime } from 'luxon'
-import { get, keyby, set, toArray } from 'txstate-utils'
+import { get, keyby, set, splice, toArray } from 'txstate-utils'
 import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
@@ -332,13 +332,38 @@ class API {
 
   async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validate?: boolean, comment?: string }) {
     const { validate, comment } = opts ?? {}
-    const area = get(page, path) ?? []
+    const area = get<any[]>(page, path) ?? []
     const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: set(page, path, [...area, data]), dataVersion, validate, comment })
-    const msgPrefix = `data.${path}`
+    const msgPrefix = `data.${path}.${area.length}`
     return {
       ...updatePage,
       messages: updatePage.messages.map(m => ({ type: m.type, message: m.message, path: m.arg.startsWith(msgPrefix) ? m.arg.substring(msgPrefix.length) : '' })),
       data: get(updatePage.page.data, path).slice(-1)[0]
+    }
+  }
+
+  async editComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validate?: boolean, comment?: string }) {
+    const { validate, comment } = opts ?? {}
+    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: set(page, path, data), dataVersion, validate, comment })
+    const msgPrefix = `data.${path}`
+    return {
+      ...updatePage,
+      messages: updatePage.messages.map(m => ({ type: m.type, message: m.message, path: m.arg.startsWith(msgPrefix) ? m.arg.substring(msgPrefix.length) : '' })),
+      data: get(updatePage.page.data, path)
+    }
+  }
+
+  async removeComponent (pageId: string, dataVersion: number, page: PageData, path: string, opts?: { comment?: string }) {
+    const { comment } = opts ?? {}
+    const m = path.match(/^(.*)\.(\d+)$/)
+    if (!m) return { success: false, page: undefined }
+    const [_, areaPath, index] = m
+    const components = get(page, areaPath) ?? []
+    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: set(page, areaPath, splice(components, Number(index), 1)), dataVersion, comment })
+    return {
+      ...updatePage,
+      messages: [],
+      data: get(updatePage.page.data, path)
     }
   }
 }

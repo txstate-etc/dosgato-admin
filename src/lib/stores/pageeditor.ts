@@ -89,12 +89,43 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   async editComponentSubmit (data: any, validate?: boolean) {
-    this.cancelModal()
-    return {
-      success: true,
-      messages: [],
-      data
+    const editorState = this.value.editors[this.value.active]
+    if (!editorState.editing) return
+    const resp = await api.editComponent(editorState.page.id, editorState.page.version.version, editorState.page.data, editorState.editing.path, data, { validate })
+    if (!validate && resp.success) {
+      this.update(v => {
+        const editorState = v.editors[v.active]
+        const newEditorState = { ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }
+        return set(v, `editors[${v.active}]`, newEditorState)
+      })
     }
+    return resp
+  }
+
+  removeComponentShowModal (path: string) {
+    this.update(v => {
+      const editorState = v.editors[v.active]
+      const data = get<ComponentData>(editorState.page.data, path)
+      const templateKey = data.templateKey
+      const newEditorState: EditorState = { ...editorState, modal: 'delete', editing: { path, data, templateKey }, creating: undefined }
+      return set(v, `editors[${v.active}]`, newEditorState)
+    })
+  }
+
+  async removeComponentSubmit () {
+    const editorState = this.value.editors[this.value.active]
+    if (!editorState.editing) return
+    const resp = await api.removeComponent(editorState.page.id, editorState.page.version.version, editorState.page.data, editorState.editing.path)
+    if (resp.success) {
+      this.update(v => {
+        const editorState = v.editors[v.active]
+        const newEditorState = { ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }
+        return set(v, `editors[${v.active}]`, newEditorState)
+      })
+    } else {
+      this.cancelModal()
+    }
+    return resp
   }
 
   cancelModal () {

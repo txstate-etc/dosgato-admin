@@ -44,6 +44,8 @@
       pageEditorStore.editComponentShowModal(message.path)
     } else if (message.action === 'create') {
       pageEditorStore.addComponentShowModal(message.path)
+    } else if (message.action === 'del') {
+      pageEditorStore.removeComponentShowModal(message.path)
     }
   }
 
@@ -74,6 +76,11 @@
     const resp = await pageEditorStore.editComponentSubmit(data)
     if (resp?.success) await refreshIframe()
     return resp!
+  }
+
+  async function onDeleteComponentSubmit () {
+    const resp = await pageEditorStore.removeComponentSubmit()
+    if (resp?.success) await refreshIframe()
   }
 
   function messages (el: HTMLIFrameElement) {
@@ -123,6 +130,11 @@
       </div>
     </Dialog>
   {/if}
+{:else if $editorStore.modal === 'delete' && $editorStore.editing}
+  {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
+  <Dialog title="Delete Content" cancelText="Cancel" continueText="Delete" on:dismiss={cancelModal} on:continue={onDeleteComponentSubmit}>
+    Are you sure you want to delete the {template?.templateKey} content?
+  </Dialog>
 {/if}
 
 <style>
