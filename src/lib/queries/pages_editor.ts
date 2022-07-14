@@ -1,25 +1,30 @@
+import type { MutationResponse } from '$lib/api'
 import type { PageData } from '@dosgato/templating'
+
+export const EDITOR_PAGE_DETAILS = `
+id
+path
+name
+data
+title
+pagetree {
+  id
+}
+template {
+  name
+}
+permissions {
+  update
+}
+version {
+  version
+}
+`
 
 export const GET_EDITOR_PAGE = `
   query getEditorPage ($id: ID!) {
     pages (filter:{ ids: [$id] }) {
-      id
-      path
-      name
-      data
-      title
-      pagetree {
-        id
-      }
-      template {
-        name
-      }
-      permissions {
-        update
-      }
-      version {
-        version
-      }
+      ${EDITOR_PAGE_DETAILS}
     }
   }
 `
@@ -73,4 +78,23 @@ export interface GetAvailableComponents {
   templates: [{
     areas: TemplateArea[]
   }]
+}
+
+export const UPDATE_PAGE = `
+  mutation updatePage ($pageId: ID!, $dataVersion: Int!, $data: JsonData!, $validate: Boolean, $comment: String) {
+    updatePage (pageId: $pageId, dataVersion: $dataVersion, data: $data, validate: $validate, comment: $comment) {
+      success
+      page {
+        ${EDITOR_PAGE_DETAILS}
+      }
+      messages {
+        arg
+        type
+        message
+      }
+    }
+  }
+`
+export interface UpdatePageResponse {
+  updatePage: MutationResponse & { page: PageEditorPage }
 }

@@ -14,7 +14,7 @@ import {
   type DataFolder, type GlobalSelf, type PageEditorPage, type TemplateListTemplate, type DataItem, type DataRoot,
   type TreePage, type UserListUser, type FullUser, type GroupListGroup, type FullGroup, type RoleListRole,
   type FullRole, type SiteListSite, type GetAvailableComponents, type GetSubPagesByPath,
-  type GetSubFoldersAndAssetsByPath, type GetPageByLink, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule, type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule
+  type GetSubFoldersAndAssetsByPath, type GetPageByLink, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule, type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -333,21 +333,13 @@ class API {
   async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validate?: boolean, comment?: string }) {
     const { validate, comment } = opts ?? {}
     const area = get(page, path) ?? []
-    const resp = await this.query<{ updatePage: MutationResponse & { data: PageData } }>(`
-      mutation updatePage ($pageId: ID!, $dataVersion: Int!, $data: JsonData!, $validate: Boolean, $comment: String) {
-        updatePage (pageId: $pageId, dataVersion: $dataVersion, data: $data, validate: $validate, comment: $comment) {
-          success
-          page {
-            id
-          }
-          messages {
-            type
-            message
-          }
-        }
-      }
-    `, { pageId, data: set(page, path, [...area, data]), dataVersion, validate, comment })
-    return resp.updatePage
+    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: set(page, path, [...area, data]), dataVersion, validate, comment })
+    const msgPrefix = `data.${path}`
+    return {
+      ...updatePage,
+      messages: updatePage.messages.map(m => ({ type: m.type, message: m.message, path: m.arg.startsWith(msgPrefix) ? m.arg.substring(msgPrefix.length) : '' })),
+      data: get(updatePage.page.data, path).slice(-1)[0]
+    }
   }
 }
 

@@ -68,7 +68,13 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const editorState = this.value.editors[this.value.active]
     if (!editorState.creating) return
     const resp = await api.createComponent(editorState.page.id, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey }, { validate })
-    if (!validate && resp.success) this.cancelModal()
+    if (!validate && resp.success) {
+      this.update(v => {
+        const editorState = v.editors[v.active]
+        const newEditorState = { ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }
+        return set(v, `editors[${v.active}]`, newEditorState)
+      })
+    }
     return resp
   }
 
@@ -94,7 +100,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
   cancelModal () {
     this.update(v => {
       const editorState = v.editors[v.active]
-      return set(v, `editors[${v.active}]`, { ...editorState, modal: undefined, new: undefined })
+      return set(v, `editors[${v.active}]`, { ...editorState, modal: undefined, editing: undefined, creating: undefined })
     })
   }
 }
