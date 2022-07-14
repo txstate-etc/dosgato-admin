@@ -250,8 +250,8 @@ class API {
     return renameDataFolder
   }
 
-  async addDataEntry (name: string, templateKey: string, schemaVersion: DateTime, data: any, siteId?: string, folderId?: string) {
-    const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem }}>(CREATE_DATA_ITEM, { args: { name, templateKey, schemaVersion, data, siteId, folderId } })
+  async addDataEntry (name: string, data: any, siteId?: string, folderId?: string) {
+    const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem }}>(CREATE_DATA_ITEM, { args: { name, data, siteId, folderId } })
     return createDataEntry
   }
 

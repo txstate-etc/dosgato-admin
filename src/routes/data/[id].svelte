@@ -317,10 +317,12 @@
       folderId = selected.id
       siteId = (selected.parent as TreeDataSite).siteId
     }
+
     const { dataname, ...data } = state
     // TODO: Get the actual schema version from somewhere
-    const schemaVersion = DateTime.now()
-    const resp = await api.addDataEntry(dataname, templateKey, schemaVersion, data, siteId, folderId)
+    data.savedAtVersion = DateTime.now().toFormat('yLLddHHmmss')
+    data.templateKey = templateKey
+    const resp = await api.addDataEntry(dataname, data, siteId, folderId)
     if (resp.success) {
       store.refresh()
       modal = undefined
