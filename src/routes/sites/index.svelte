@@ -18,6 +18,8 @@
 
 <script lang="ts">
 import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type SiteListSite, type ActionPanelAction } from '$lib'
+import { goto } from '$app/navigation'
+import { base } from '$app/paths'
 
 function noneSelectedActions () {
   return [
@@ -42,7 +44,7 @@ function getActions (selectedItems: TypedSiteItem[]) {
 </script>
 
 <ActionPanel  actions={getActions($store.selectedItems)}>
-  <Tree singleSelect {store} headers={[
+  <Tree singleSelect {store}  on:choose={({ detail }) => goto(base + '/sites/' + detail.id)} headers={[
      { id: 'name', label: 'Site Name', get: 'name', defaultWidth: '20%', icon: applicationOutline },
      { id: 'url', label: 'URL', get: 'url.prefix', defaultWidth: '20%' },
      { id: 'organization', label: 'Organization', get: 'organization.name', defaultWidth: '20%' },

@@ -14,7 +14,9 @@ import {
   type DataFolder, type GlobalSelf, type PageEditorPage, type TemplateListTemplate, type DataItem, type DataRoot,
   type TreePage, type UserListUser, type FullUser, type GroupListGroup, type FullGroup, type RoleListRole,
   type FullRole, type SiteListSite, type GetAvailableComponents, type GetSubPagesByPath,
-  type GetSubFoldersAndAssetsByPath, type GetPageByLink, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule, type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE
+  type GetSubFoldersAndAssetsByPath, type GetPageByLink, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule,
+  type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE, type FullSite,
+  GET_SITE_BY_ID
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -313,6 +315,11 @@ class API {
   async getSiteList () {
     const { sites } = await this.query<{ sites: SiteListSite[]}>(GET_SITE_LIST)
     return sites
+  }
+
+  async getSiteById (siteId: string) {
+    const { sites } = await this.query<{ sites: FullSite[]}>(GET_SITE_BY_ID, { siteId })
+    return sites[0]
   }
 
   async addAssetRule (args: CreateAssetRuleInput, validateOnly?: boolean) {

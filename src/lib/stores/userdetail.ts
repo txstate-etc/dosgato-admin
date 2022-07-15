@@ -16,7 +16,7 @@ interface Role {
   pageRules: AccessDetailPageRule[]
 }
 
-const initialValue: FullUser = { id: '', name: '', email: '', disabled: false, directGroups: [], indirectGroups: [], directRoles: [], indirectRoles: [], sitesOwned: [], sitesManaged: [] }
+const initialValue: FullUser = { id: '', name: '', email: '', disabled: false, trained: false, directGroups: [], indirectGroups: [], directRoles: [], indirectRoles: [], sitesOwned: [], sitesManaged: [] }
 
 export class UserDetailStore extends Store<IUserDetailStore> {
   constructor (public fetchUser: (id: string) => Promise<FullUser>) {
