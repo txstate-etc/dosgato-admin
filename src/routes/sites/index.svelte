@@ -32,7 +32,6 @@ function noneSelectedActions () {
   ]
 }
 function singleActions (item: TypedSiteItem) {
-  console.log(item)
   const actions: ActionPanelAction[] = []
   if (item.deleted) {
     actions.push({ label: 'Undelete', icon: deleteRestore, disabled: false, onClick: () => { modal = 'restoresite' } })

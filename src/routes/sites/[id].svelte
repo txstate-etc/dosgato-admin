@@ -1,5 +1,13 @@
 <script lang="ts" context="module">
   import type { Load } from '@sveltejs/kit'
+  import pencilIcon from '@iconify-icons/mdi/pencil'
+  import arrowLeft from '@iconify-icons/mdi/arrow-left'
+  import plusIcon from '@iconify-icons/mdi/plus'
+  import deleteOutline from '@iconify-icons/mdi/delete-outline'
+  import archiveOutline from '@iconify-icons/mdi/archive-outline'
+  import applicationExport from '@iconify-icons/mdi/application-export'
+  import { Icon } from '@dosgato/dialog'
+  import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
 
   export const load: Load = async ({ params }) => {
     const site = await store.refresh(params.id)
@@ -16,7 +24,163 @@
 </script>
 
 <script lang="ts">
-  import { api, SiteDetailStore, siteListStore } from '$lib'
+  import { api, SiteDetailStore, siteListStore, DetailPanel } from '$lib'
+  import { base } from '$app/paths'
+  let modal: 'editbasic'|'editsitegovernance'|undefined = undefined
 </script>
 
-<div>Site Details for {$store.site.name}</div>
+<div class="back-link">
+  <a href={`${base}/auth/users/`}>
+    <Icon icon={arrowLeft}/>
+    Back to Site List
+  </a>
+</div>
+
+<DetailPanel header='Basic Information' button={{ icon: pencilIcon, hiddenLabel: 'edit basic information', onClick: () => { modal = 'editbasic' } }}>
+  <div class="row">
+    <div class="label">Name:</div>
+    <div class="value">{$store.site.name}</div>
+  </div>
+</DetailPanel>
+
+<DetailPanel header='Launch Information' button={{ icon: pencilIcon, hiddenLabel: 'edit launch URL', onClick: () => {} }}>
+  {#if $store.site.url}
+  <div class="row">
+    <div class="label">URL:</div>
+    <div class="value">{$store.site.url.prefix}</div>
+  </div>
+  {:else}
+    <span>This site is not launched.</span>
+  {/if}
+</DetailPanel>
+
+<DetailPanel header='Page Trees' button={{ icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => {} }}>
+  <table>
+    <tr class='headers'>
+      <th>Name</th>
+      <th>Stage</th>
+      <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
+    </tr>
+    {#each $store.site.pagetrees as pagetree (pagetree.id)}
+      <tr>
+        <td>{pagetree.name}</td>
+        <td>{pagetree.type}</td>
+        <td class="pagetree-buttons">
+          <button title="Edit"><Icon icon={pencilIcon}/><ScreenReaderOnly>rename page tree</ScreenReaderOnly></button>
+          {#if pagetree.type === 'SANDBOX'}
+            <button title="Promote to Primary"><Icon icon={applicationExport}/><ScreenReaderOnly>promote page tree</ScreenReaderOnly></button>
+          {/if}
+          {#if pagetree.type === 'SANDBOX'}
+            <button title="Archive"><Icon icon={archiveOutline}/><ScreenReaderOnly>archive page tree</ScreenReaderOnly></button>
+          {/if}
+          {#if pagetree.type !== 'PRIMARY'}
+            <button title="Delete"><Icon icon={deleteOutline}/><ScreenReaderOnly>delete page tree</ScreenReaderOnly></button>
+          {/if}
+        </td>
+      </tr>
+    {/each}
+  </table>
+</DetailPanel>
+
+<DetailPanel header='Site Management' button={{ icon: pencilIcon, hiddenLabel: 'edit site management', onClick: () => {} }}>
+  <div class="row">
+    <div class="label">Organization:</div>
+    <div class="value">{$store.site.organization.name}</div>
+  </div>
+  <div class="row">
+    <div class="label">Owner:</div>
+    <div class="value">{$store.site.owner.name} ({$store.site.owner.id})</div>
+  </div>
+  <div class="row">
+    <div class="label">Manager(s):</div>
+    <div class="value">
+      <ul class='manager-list'>
+        {#each $store.site.managers as manager (manager.id)}
+        <li>{manager.name} ({manager.id})</li>
+        {/each}
+      </ul>
+    </div>
+  </div>
+</DetailPanel>
+
+<DetailPanel header="Users"></DetailPanel>
+<DetailPanel header="Groups"></DetailPanel>
+<DetailPanel header="Roles"></DetailPanel>
+<DetailPanel header="Available Templates"  button={{ icon: plusIcon, hiddenLabel: 'add template', onClick: () => {} }}>
+  <!-- TODO: Group by template type? -->
+  <ul>
+    {#each $store.site.templates as template (template.key)}
+      <li class="flex-row">
+        <div>{template.name}</div>
+        {#if template.universal}
+           <div>Universal</div>
+        {:else}
+          <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+        {/if}
+      </li>
+    {/each}
+  </ul>
+</DetailPanel>
+
+<style>
+  .back-link {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 1.2em;
+  }
+  .row {
+    display: flex;
+    padding: 0.5rem 0;
+  }
+  .label {
+    font-weight: bold;
+    width: 25%;
+  }
+  .manager-list {
+    padding-left: 0;
+    margin: 0;
+    list-style: none;
+  }
+  ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  li {
+    border-bottom: 1px dashed #aaa;
+    padding: 0.6em 0.3em;
+  }
+  li:first-child {
+    padding-top: 0;
+  }
+  li.flex-row {
+    display: flex;
+    justify-content: space-between;
+  }
+  li.flex-row button {
+    border: 0;
+    padding: 0;
+    background-color: transparent;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  table tr td, table tr th { text-align: left }
+  table tr.headers {
+    border-bottom: 1px solid #ebebeb;
+  }
+  table tr { border-bottom: 1px dashed #ebebeb }
+  table tr:nth-child(even) { background-color: #f6f7f9 }
+  .pagetree-buttons {
+    text-align: right;
+  }
+  td button {
+    border: 0;
+    padding: 0;
+    background-color: transparent;
+  }
+  td button:not(:last-child) {
+    margin-right: 0.5em;
+  }
+</style>
