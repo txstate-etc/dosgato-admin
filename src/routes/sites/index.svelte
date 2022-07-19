@@ -27,6 +27,7 @@ import { base } from '$app/paths'
 let modal: 'addsite'|'deletesite'|'restoresite'|undefined
 
 function noneSelectedActions () {
+  // TODO: Get the Create Site global permission
   return [
     { label: 'Add Site', icon: plusIcon, disabled: false, onClick: () => { modal = 'addsite' } }
   ]
@@ -34,9 +35,9 @@ function noneSelectedActions () {
 function singleActions (item: TypedSiteItem) {
   const actions: ActionPanelAction[] = []
   if (item.deleted) {
-    actions.push({ label: 'Undelete', icon: deleteRestore, disabled: false, onClick: () => { modal = 'restoresite' } })
+    actions.push({ label: 'Undelete', icon: deleteRestore, disabled: !item.permissions.undelete, onClick: () => { modal = 'restoresite' } })
   } else {
-    actions.push({ label: 'Delete', icon: deleteOutline, disabled: false, onClick: () => { modal = 'deletesite' } })
+    actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => { modal = 'deletesite' } })
   }
   return actions
 }

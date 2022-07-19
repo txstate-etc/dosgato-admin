@@ -14,6 +14,10 @@ export const siteDetails = `
     name
   }
   deleted
+  permissions {
+    delete
+    undelete
+  }
 `
 
 export interface SiteListSite {
@@ -32,6 +36,10 @@ export interface SiteListSite {
     name: string
   }
   deleted: boolean
+  permissions: {
+    delete: boolean
+    undelete: boolean
+  }
 }
 
 export const fullSiteDetails = `
