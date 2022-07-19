@@ -293,10 +293,9 @@
         <th>Site</th>
         <th>Launch</th>
         <th>Rename</th>
-        <th>Manage Pagetrees</th>
-        <th>Promote Pagetree</th>
-        <th>Delete</th>
-        <th>Undelete</th>
+        <th>Governance</th>
+        <th>Manage State</th>
+        <th>Delete/Undelete</th>
         <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
       </tr>
       {#each $store.role.siteRules as rule (rule.id)}
@@ -304,10 +303,9 @@
           <td>{rule.site ? rule.site.name : 'All Sites'}</td>
           <td><Icon icon={rule.grants.launch ? checkIcon : minusIcon}/></td>
           <td><Icon icon={rule.grants.rename ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.managePagetrees ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.promotePagetree ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.governance ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.manageState ? checkIcon : minusIcon}/></td>
           <td><Icon icon={rule.grants.delete ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.undelete ? checkIcon : minusIcon}/></td>
           <td>
             <button class="edit"><Icon icon={pencilIcon}/></button>
             <button class="delete"><Icon icon={deleteOutline}/></button>

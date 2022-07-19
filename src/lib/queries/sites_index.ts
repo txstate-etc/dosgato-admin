@@ -65,6 +65,14 @@ export const fullSiteDetails = `
     type
     universal
   }
+  permissions {
+    rename
+    launch
+    manageGovernance
+    delete
+    undelete
+    manageState
+  }
 `
 
 export interface FullSite {
@@ -97,6 +105,14 @@ export interface FullSite {
     type: string
     universal: boolean
   }[]
+  permissions: {
+    rename: boolean
+    launch: boolean
+    manageGovernance: boolean
+    delete: boolean
+    undelete: boolean
+    manageState: boolean
+  }
 }
 
 export const GET_SITE_LIST = `

@@ -231,11 +231,9 @@ export const siteRuleDetails = `
   grants {
     delete
     launch
-    manageOwners
-    managePagetrees
-    promotePagetree
+    governance
+    manageState
     rename
-    undelete
     viewForEdit
   }
 `
@@ -257,11 +255,9 @@ export interface SiteRule {
   grants: {
     delete: boolean
     launch: boolean
-    manageOwners: boolean
-    managePagetrees: boolean
-    promotePagetree: boolean
+    governance: boolean
+    manageState: boolean
     rename: boolean
-    undelete: boolean
     viewForEdit: boolean
   }
 }

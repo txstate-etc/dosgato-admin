@@ -36,14 +36,14 @@
   </a>
 </div>
 
-<DetailPanel header='Basic Information' button={{ icon: pencilIcon, hiddenLabel: 'edit basic information', onClick: () => { modal = 'editbasic' } }}>
+<DetailPanel header='Basic Information' button={$store.site.permissions.rename ? { icon: pencilIcon, hiddenLabel: 'edit basic information', onClick: () => { modal = 'editbasic' } } : undefined}>
   <div class="row">
     <div class="label">Name:</div>
     <div class="value">{$store.site.name}</div>
   </div>
 </DetailPanel>
 
-<DetailPanel header='Launch Information' button={{ icon: pencilIcon, hiddenLabel: 'edit launch URL', onClick: () => {} }}>
+<DetailPanel header='Launch Information' button={$store.site.permissions.launch ? { icon: pencilIcon, hiddenLabel: 'edit launch URL', onClick: () => {} } : undefined}>
   {#if $store.site.url}
   <div class="row">
     <div class="label">URL:</div>
@@ -54,7 +54,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Page Trees' button={{ icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => {} }}>
+<DetailPanel header='Page Trees' button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => {} } : undefined}>
   <table>
     <tr class='headers'>
       <th>Name</th>
@@ -82,7 +82,7 @@
   </table>
 </DetailPanel>
 
-<DetailPanel header='Site Management' button={{ icon: pencilIcon, hiddenLabel: 'edit site management', onClick: () => {} }}>
+<DetailPanel header='Site Management' button={$store.site.permissions.manageGovernance ? { icon: pencilIcon, hiddenLabel: 'edit site management', onClick: () => {} } : undefined}>
   <div class="row">
     <div class="label">Organization:</div>
     <div class="value">{$store.site.organization.name}</div>
