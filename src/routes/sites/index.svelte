@@ -17,7 +17,7 @@
 </script>
 
 <script lang="ts">
-import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type SiteListSite, type ActionPanelAction } from '$lib'
+import { api, ActionPanel, Tree, TreeStore, globalStore, type TypedTreeItem, type SiteListSite, type ActionPanelAction } from '$lib'
 import Dialog from '$lib/components/Dialog.svelte'
 import FormDialog from '$lib/components/FormDialog.svelte'
 import { FieldText } from '@dosgato/dialog'
@@ -27,9 +27,8 @@ import { base } from '$app/paths'
 let modal: 'addsite'|'deletesite'|'restoresite'|undefined
 
 function noneSelectedActions () {
-  // TODO: Get the Create Site global permission
   return [
-    { label: 'Add Site', icon: plusIcon, disabled: false, onClick: () => { modal = 'addsite' } }
+    { label: 'Add Site', icon: plusIcon, disabled: !$globalStore.access.createSites, onClick: () => { modal = 'addsite' } }
   ]
 }
 function singleActions (item: TypedSiteItem) {

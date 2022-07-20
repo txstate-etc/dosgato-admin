@@ -10,6 +10,7 @@ export const GET_GLOBAL_SELF = `
       viewPageManager
       viewRoleManager
       viewSiteManager
+      createSites
     }
   }
 `
@@ -25,6 +26,7 @@ export interface GlobalSelf {
     viewPageManager: boolean
     viewRoleManager: boolean
     viewSiteManager: boolean
+    createSites: boolean
   }
 }
 
