@@ -6,6 +6,8 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import archiveOutline from '@iconify-icons/mdi/archive-outline'
   import applicationExport from '@iconify-icons/mdi/application-export'
+  import checkIcon from '@iconify-icons/mdi/check'
+  import minusIcon from '@iconify-icons/mdi/minus'
   import { Icon } from '@dosgato/dialog'
   import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
 
@@ -104,39 +106,61 @@
 </DetailPanel>
 
 <DetailPanel header="Roles">
-  <ul>
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Read-Only</th>
+      <th>Universal</th>
+    </tr>
     {#each $store.siteRoles as role (role.id)}
-     <li class="flex-row">
-      <a href={`${base}/auth/roles/${role.id}`}>{role.name}</a>
-     </li>
+      <tr>
+        <td><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
+        <td><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+        <td><Icon icon={minusIcon} hiddenLabel={`${role.name} is a site-specific role`}/></td>
+      </tr>
     {/each}
     {#each $store.globalRoles as role (role.id)}
-    <li class="flex-row">
-     <a href={`${base}/auth/roles/${role.id}`}>{role.name}</a>
-     <span>Affects all sites</span>
-    </li>
-   {/each}
-  </ul>
+      <tr>
+        <td><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
+        <td><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+        <td><Icon icon={checkIcon} hiddenLabel={`${role.name} applies to all sites`}/></td>
+      </tr>
+    {/each}
+  </table>
 </DetailPanel>
 
 <DetailPanel header="Users">
-  {#each $store.users as user (user.id)}
-    <li class="flex-row">
-      <a href={`${base}/auth/users/${user.id}`}>{user.name}</a>
-      <span>Via {user.roles}</span>
-    </li>
-  {/each}
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Read-Only</th>
+      <th>Source Role(s)</th>
+    </tr>
+    {#each $store.users as user (user.id)}
+      <tr>
+        <td><a href={`${base}/auth/users/${user.id}`}>{user.name}</a></td>
+        <td><Icon icon={user.readonly ? checkIcon : minusIcon} hiddenLabel={`${user.name} has ${user.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+        <td>{user.roles}</td>
+      </tr>
+    {/each}
+  </table>
 </DetailPanel>
 
 <DetailPanel header="Groups">
-  <ul>
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Read-Only</th>
+      <th>Source Role(s)</th>
+    </tr>
     {#each $store.groups as group (group.id)}
-      <li class="flex-row">
-        <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-        <span>Via {group.roles}</span>
-      </li>
+      <tr>
+        <td><a href={`${base}/auth/groups/${group.id}`}>{group.name}</a></td>
+        <td><Icon icon={group.readonly ? checkIcon : minusIcon} hiddenLabel={`${group.name} has ${group.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+        <td>{group.roles}</td>
+      </tr>
     {/each}
-  </ul>
+  </table>
 </DetailPanel>
 
 <DetailPanel header="Available Templates"  button={{ icon: plusIcon, hiddenLabel: 'add template', onClick: () => {} }}>
@@ -199,7 +223,10 @@
     border-collapse: collapse;
   }
 
-  table tr td, table tr th { text-align: left }
+  table tr td, table tr th {
+    text-align: left;
+    padding: 0.4em 0;
+  }
   table tr.headers {
     border-bottom: 1px solid #ebebeb;
   }

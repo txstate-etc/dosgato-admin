@@ -88,20 +88,32 @@ export const fullSiteDetails = `
       site {
         id
       }
+      grants{
+        viewForEdit
+      }
     }
     dataRules {
       site {
         id
+      }
+      grants{
+        viewForEdit
       }
     }
     pageRules {
       site {
         id
       }
+      grants{
+        viewForEdit
+      }
     }
     siteRules {
       site {
         id
+      }
+      grants{
+        viewForEdit
       }
     }
   }
@@ -160,20 +172,32 @@ export interface FullSite {
       site: {
         id: string
       }
+      grants: {
+        viewForEdit: boolean
+      }
     }[]
     dataRules: {
       site: {
         id: string
+      }
+      grants: {
+        viewForEdit: boolean
       }
     }[]
     pageRules: {
       site: {
         id: string
       }
+      grants: {
+        viewForEdit: boolean
+      }
     }[]
     siteRules: {
       site: {
         id: string
+      }
+      grants: {
+        viewForEdit: boolean
       }
     }[]
   }[]

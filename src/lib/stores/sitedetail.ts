@@ -13,18 +13,21 @@ interface ISiteDetailStore {
 interface SiteRole {
   id: string
   name: string
+  readonly: boolean
 }
 
 interface SiteGroup {
   id: string
   name: string
   roles: string
+  readonly: boolean
 }
 
 interface SiteUser {
   id: string
   name: string
   roles: string
+  readonly: boolean
 }
 
 const initialValue: FullSite = {
@@ -51,14 +54,21 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
     const siteRoles: SiteRole[] = []
     const groupRoles = {}
     const userRoles = {}
+    const readOnlyHash: Record<string, boolean> = {}
     for (const role of site.roles) {
       const hasGlobalRule =
         role.assetRules.some(r => isNull(r.site)) ||
         role.dataRules.some(r => isNull(r.site)) ||
         role.pageRules.some(r => isNull(r.site)) ||
         role.siteRules.some(r => isNull(r.site))
-      if (hasGlobalRule) globalRoles.push({ id: role.id, name: role.name })
-      else siteRoles.push({ id: role.id, name: role.name })
+      const canWrite =
+        role.assetRules.some(r => r.grants.viewForEdit) ||
+        role.dataRules.some(r => r.grants.viewForEdit) ||
+        role.pageRules.some(r => r.grants.viewForEdit) ||
+        role.siteRules.some(r => r.grants.viewForEdit)
+      readOnlyHash[role.name] = !canWrite
+      if (hasGlobalRule) globalRoles.push({ id: role.id, name: role.name, readonly: !canWrite })
+      else siteRoles.push({ id: role.id, name: role.name, readonly: !canWrite })
       for (const group of role.groups) {
         groupRoles[group.id] ||= { name: group.name, roles: [] }
         groupRoles[group.id].roles.push(role.name)
@@ -69,10 +79,12 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
       }
     }
     const groups = Object.keys(groupRoles).map(k => {
-      return { id: k, name: groupRoles[k].name, roles: groupRoles[k].roles.join(', ') }
+      const readonly = groupRoles[k].roles.some(r => readOnlyHash[r])
+      return { id: k, name: groupRoles[k].name, roles: groupRoles[k].roles.join(', '), readonly }
     })
     const users = Object.keys(userRoles).map(k => {
-      return { id: k, name: userRoles[k].name, roles: userRoles[k].roles.join(', ') }
+      const readonly = userRoles[k].roles.some(r => readOnlyHash[r])
+      return { id: k, name: userRoles[k].name, roles: userRoles[k].roles.join(', '), readonly }
     })
     this.set({ site, globalRoles: sortby(globalRoles, 'name'), siteRoles: sortby(siteRoles, 'name'), groups, users })
     return site // TODO: Is there a better way to get the site name in the site detail page load function?
