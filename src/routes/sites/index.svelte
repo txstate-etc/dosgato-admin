@@ -1,9 +1,18 @@
 <script lang="ts" context="module">
+  import type { Load } from '@sveltejs/kit'
   import applicationOutline from '@iconify-icons/mdi/application-outline'
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   type TypedSiteItem = TypedTreeItem<SiteListSite>
+
+  let pageTemplateChoices: PopupMenuItem[] = []
+
+  export const load: Load = async (input) => {
+    const pageTemplates = await api.getTemplatesByType('PAGE')
+    pageTemplateChoices = pageTemplates.map(t => ({ label: t.name, value: t.id }))
+    return {}
+  }
 
   async function fetchChildren (site?: TypedSiteItem) {
     if (site) return []
@@ -17,10 +26,11 @@
 </script>
 
 <script lang="ts">
-import { api, ActionPanel, Tree, TreeStore, globalStore, type TypedTreeItem, type SiteListSite, type ActionPanelAction } from '$lib'
+import { api, ActionPanel, Tree, TreeStore, globalStore, type TypedTreeItem, type SiteListSite, type ActionPanelAction, type TemplateListTemplate } from '$lib'
 import Dialog from '$lib/components/Dialog.svelte'
 import FormDialog from '$lib/components/FormDialog.svelte'
-import { FieldText } from '@dosgato/dialog'
+import { FieldText, FieldSelect } from '@dosgato/dialog'
+import type { PopupMenuItem } from '@txstate-mws/svelte-components'
 import { goto } from '$app/navigation'
 import { base } from '$app/paths'
 
@@ -77,7 +87,7 @@ async function onRestoreSite () {
     name='createsite'
     on:dismiss={() => { modal = undefined }}>
     <FieldText path='name' label='Site Name'/>
-    <FieldText path='template' label='Root Page Template'/>
+    <FieldSelect path='template' label='Root Page Template' choices={pageTemplateChoices} placeholder='Select'/>
   </FormDialog>
 {:else if modal === 'deletesite'}
   <Dialog
