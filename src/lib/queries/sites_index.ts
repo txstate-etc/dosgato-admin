@@ -73,6 +73,38 @@ export const fullSiteDetails = `
     type
     universal
   }
+  roles {
+    id
+    name
+    groups {
+      id
+      name
+    }
+    users {
+      id
+      name
+    }
+    assetRules {
+      site {
+        id
+      }
+    }
+    dataRules {
+      site {
+        id
+      }
+    }
+    pageRules {
+      site {
+        id
+      }
+    }
+    siteRules {
+      site {
+        id
+      }
+    }
+  }
   permissions {
     rename
     launch
@@ -112,6 +144,38 @@ export interface FullSite {
     name: string
     type: string
     universal: boolean
+  }[]
+  roles: {
+    id: string
+    name: string
+    groups: {
+      id
+      name
+    }[]
+    users: {
+      id
+      name
+    }[]
+    assetRules: {
+      site: {
+        id: string
+      }
+    }[]
+    dataRules: {
+      site: {
+        id: string
+      }
+    }[]
+    pageRules: {
+      site: {
+        id: string
+      }
+    }[]
+    siteRules: {
+      site: {
+        id: string
+      }
+    }[]
   }[]
   permissions: {
     rename: boolean

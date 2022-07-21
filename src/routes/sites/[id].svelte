@@ -103,9 +103,42 @@
   </div>
 </DetailPanel>
 
-<DetailPanel header="Users"></DetailPanel>
-<DetailPanel header="Groups"></DetailPanel>
-<DetailPanel header="Roles"></DetailPanel>
+<DetailPanel header="Roles">
+  <ul>
+    {#each $store.siteRoles as role (role.id)}
+     <li class="flex-row">
+      <a href={`${base}/auth/roles/${role.id}`}>{role.name}</a>
+     </li>
+    {/each}
+    {#each $store.globalRoles as role (role.id)}
+    <li class="flex-row">
+     <a href={`${base}/auth/roles/${role.id}`}>{role.name}</a>
+     <span>Affects all sites</span>
+    </li>
+   {/each}
+  </ul>
+</DetailPanel>
+
+<DetailPanel header="Users">
+  {#each $store.users as user (user.id)}
+    <li class="flex-row">
+      <a href={`${base}/auth/users/${user.id}`}>{user.name}</a>
+      <span>Via {user.roles}</span>
+    </li>
+  {/each}
+</DetailPanel>
+
+<DetailPanel header="Groups">
+  <ul>
+    {#each $store.groups as group (group.id)}
+      <li class="flex-row">
+        <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
+        <span>Via {group.roles}</span>
+      </li>
+    {/each}
+  </ul>
+</DetailPanel>
+
 <DetailPanel header="Available Templates"  button={{ icon: plusIcon, hiddenLabel: 'add template', onClick: () => {} }}>
   <!-- TODO: Group by template type? -->
   <ul>
