@@ -129,9 +129,9 @@ export interface DataRoot {
   }
 }
 
-export const GET_DATA_TEMPLATE_LIST = `
-  query getDataTemplateList {
-    templates (filter: { types: [DATA] }) {
+export const GET_TEMPLATES_BY_TYPE = `
+  query getTemplatesByType ($type: TemplateType!) {
+    templates (filter: { types: [$type]}) {
       ${templateDetails}
     }
   }

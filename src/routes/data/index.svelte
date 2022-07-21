@@ -6,7 +6,7 @@
 
   let templates: TemplateListTemplate[] = []
   export const load: Load = async (input) => {
-    templates = await api.getDataTemplates()
+    templates = await api.getTemplatesByType('DATA')
     return {}
   }
 
