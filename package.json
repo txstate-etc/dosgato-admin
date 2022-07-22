@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "prepublishOnly": "echo \"Do not publish this project.",
-    "dev": "vite dev --host 0.0.0.0",
+    "dev": "vite dev --host 0.0.0.0 --port 3000",
     "build": "vite build",
     "package": "svelte-kit package",
     "preview": "vite preview",
@@ -37,7 +37,7 @@
     "svelte2tsx": "^0.5.5",
     "tslib": "^2.3.1",
     "typescript": "~4.6.2",
-    "vite": "^2.9.14"
+    "vite": "^3.0.2"
   },
   "type": "module"
 }

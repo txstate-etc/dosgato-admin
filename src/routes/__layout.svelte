@@ -95,6 +95,8 @@
 </main>
 
 <style>
+  @import url(../normalize.css);
+  @import url(../app.css);
   .topbar {
     display: flex;
     flex-wrap: wrap;
