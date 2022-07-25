@@ -6,7 +6,6 @@ COPY package.json ./
 COPY package-lock.json ./
 COPY svelte.config.js ./
 COPY tsconfig.json ./
-COPY static static
 COPY src src
 
 RUN npm --quiet install
