@@ -131,7 +131,10 @@ export const globalRuleDetails = `
   grants {
     createSites
     manageGlobalData
-    manageUsers
+    manageAccess
+    manageParentRoles
+    viewSiteList
+    manageTemplates
   }
 `
 
@@ -148,7 +151,10 @@ export interface GlobalRule {
   grants: {
     createSites: boolean
     manageGlobalData: boolean
-    manageUsers: boolean
+    manageAccess: boolean
+    manageParentRoles: boolean
+    viewSiteList: boolean
+    manageTemplate: boolean
   }
 }
 

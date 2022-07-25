@@ -222,16 +222,22 @@
   {#if $store.role.globalRules.length}
     <table>
       <tr class='headers'>
-        <th>Manage Users</th>
+        <th>Manage Access</th>
+        <th>Manage Parent Roles</th>
         <th>Create Sites</th>
         <th>Manage Global Data</th>
+        <th>View Site List</th>
+        <th>Manage Templates</th>
         <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
       </tr>
       {#each $store.role.globalRules as rule (rule.id)}
         <tr>
-          <td><Icon icon={rule.grants.manageUsers ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.manageAccess ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.manageParentRoles ? checkIcon : minusIcon}/></td>
           <td><Icon icon={rule.grants.createSites ? checkIcon : minusIcon}/></td>
           <td><Icon icon={rule.grants.manageGlobalData ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.viewSiteList ? checkIcon : minusIcon}/></td>
+          <td><Icon icon={rule.grants.manageTemplates ? checkIcon : minusIcon}/></td>
           <td>
             <button class="edit"><Icon icon={pencilIcon}/></button>
             <button class="delete"><Icon icon={deleteOutline}/></button>
