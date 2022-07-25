@@ -67,7 +67,13 @@ export const fullSiteDetails = `
     name
     type
   }
-  templates {
+  pageTemplates: templates(filter: {types: [PAGE]}) {
+    key
+    name
+    type
+    universal
+  }
+  componentTemplates: templates(filter: {types: [COMPONENT]}) {
     key
     name
     type
@@ -151,7 +157,13 @@ export interface FullSite {
     name: string
     type: string
   }[]
-  templates: {
+  pageTemplates: {
+    key: string
+    name: string
+    type: string
+    universal: boolean
+  }[]
+  componentTemplates: {
     key: string
     name: string
     type: string

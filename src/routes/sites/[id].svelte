@@ -163,10 +163,24 @@
   </table>
 </DetailPanel>
 
-<DetailPanel header="Available Templates"  button={{ icon: plusIcon, hiddenLabel: 'add template', onClick: () => {} }}>
-  <!-- TODO: Group by template type? -->
+<DetailPanel header="Available Page Templates"  button={{ icon: plusIcon, hiddenLabel: 'add page template', onClick: () => {} }}>
   <ul>
-    {#each $store.site.templates as template (template.key)}
+    {#each $store.site.pageTemplates as template (template.key)}
+      <li class="flex-row">
+        <div>{template.name}</div>
+        {#if template.universal}
+           <div>Universal</div>
+        {:else}
+          <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+        {/if}
+      </li>
+    {/each}
+  </ul>
+</DetailPanel>
+
+<DetailPanel header="Available Component Templates" button={{ icon: plusIcon, hiddenLabel: 'add component template', onClick: () => {} }}>
+  <ul>
+    {#each $store.site.componentTemplates as template (template.key)}
       <li class="flex-row">
         <div>{template.name}</div>
         {#if template.universal}
