@@ -79,6 +79,14 @@ export const fullSiteDetails = `
     type
     universal
   }
+  comments {
+    id
+    comment
+    createdBy {
+      id
+    }
+    createdAt
+  }
   roles {
     id
     name
@@ -168,6 +176,14 @@ export interface FullSite {
     name: string
     type: string
     universal: boolean
+  }[]
+  comments: {
+    id: string
+    comment: string
+    createdBy: {
+      id: string
+    }
+    createdAt: string
   }[]
   roles: {
     id: string

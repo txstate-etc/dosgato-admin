@@ -38,7 +38,9 @@ const initialValue: FullSite = {
   owner: { id: '', name: '' },
   managers: [],
   pagetrees: [],
-  templates: [],
+  pageTemplates: [],
+  componentTemplates: [],
+  comments: [],
   roles: [],
   permissions: { rename: false, launch: false, manageGovernance: false, delete: false, undelete: false, manageState: false }
 }

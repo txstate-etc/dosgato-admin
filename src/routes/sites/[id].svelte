@@ -8,8 +8,10 @@
   import applicationExport from '@iconify-icons/mdi/application-export'
   import checkIcon from '@iconify-icons/mdi/check'
   import minusIcon from '@iconify-icons/mdi/minus'
-  import { Icon } from '@dosgato/dialog'
+  import { Icon, FieldText } from '@dosgato/dialog'
+  import FormDialog from '$lib/components/FormDialog.svelte'
   import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
+  import { DateTime } from 'luxon'
 
   export const load: Load = async ({ params }) => {
     const site = await store.refresh(params.id)
@@ -28,15 +30,13 @@
 <script lang="ts">
   import { api, SiteDetailStore, siteListStore, DetailPanel } from '$lib'
   import { base } from '$app/paths'
-  let modal: 'editbasic'|'editsitegovernance'|undefined = undefined
-</script>
+  let modal: 'editbasic'|'editsitegovernance'|'addcomment'|undefined = undefined
 
-<div class="back-link">
-  <a href={`${base}/auth/users/`}>
-    <Icon icon={arrowLeft}/>
-    Back to Site List
-  </a>
-</div>
+  async function addComment (state) {
+    // TODO
+    return { success: true, messages: [], data: {} }
+  }
+</script>
 
 <DetailPanel header='Basic Information' button={$store.site.permissions.rename ? { icon: pencilIcon, hiddenLabel: 'edit basic information', onClick: () => { modal = 'editbasic' } } : undefined}>
   <div class="row">
@@ -193,12 +193,30 @@
   </ul>
 </DetailPanel>
 
+<DetailPanel header="Audit" button={{ icon: plusIcon, hiddenLabel: 'add comment', onClick: () => { modal = 'addcomment' } }}>
+  {#if $store.site.comments.length}
+    <ul>
+      {#each $store.site.comments as comment (comment.id)}
+        <li>
+          <div>{comment.comment}</div>
+          <div>{comment.createdBy.id} - {DateTime.fromISO(comment.createdAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</div>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    No comments found.
+  {/if}
+</DetailPanel>
+{#if modal === 'addcomment'}
+  <FormDialog
+    submit={addComment}
+    name='addcomment'
+    title='Add Comment'
+    on:dismiss={() => { modal = undefined }}>
+    <FieldText path='comment' label='Comment'/>
+  </FormDialog>
+{/if}
 <style>
-  .back-link {
-    display: flex;
-    justify-content: flex-end;
-    font-size: 1.2em;
-  }
   .row {
     display: flex;
     padding: 0.5rem 0;
