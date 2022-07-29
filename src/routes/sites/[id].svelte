@@ -28,13 +28,31 @@
 </script>
 
 <script lang="ts">
-  import { api, SiteDetailStore, siteListStore, DetailPanel } from '$lib'
+  import { api, SiteDetailStore, siteListStore, DetailPanel, ensureRequiredNotNull, messageForDialog } from '$lib'
   import { base } from '$app/paths'
   let modal: 'editbasic'|'editsitegovernance'|'addcomment'|undefined = undefined
 
   async function addComment (state) {
     // TODO
     return { success: true, messages: [], data: {} }
+  }
+
+  async function validateBasicInfo (state) {
+    const localMessages = ensureRequiredNotNull(state, ['name'])
+    if (!localMessages.length) {
+      const resp = await api.renameSite($store.site.id, state.name, true)
+      return messageForDialog(resp.messages, '')
+    }
+    return localMessages
+  }
+
+  async function renameSite (state) {
+    const resp = await api.renameSite($store.site.id, state.name, false)
+    if (resp.success) {
+      store.refresh($store.site.id)
+      modal = undefined
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 </script>
 
@@ -196,7 +214,7 @@
 <DetailPanel header="Audit" button={{ icon: plusIcon, hiddenLabel: 'add comment', onClick: () => { modal = 'addcomment' } }}>
   {#if $store.site.comments.length}
     <ul>
-      {#each $store.site.comments as comment (comment.id)}
+      {#each $store.site.comments.reverse() as comment (comment.id)}
         <li>
           <div>{comment.comment}</div>
           <div>{comment.createdBy.id} - {DateTime.fromISO(comment.createdAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</div>
@@ -214,6 +232,16 @@
     title='Add Comment'
     on:dismiss={() => { modal = undefined }}>
     <FieldText path='comment' label='Comment'/>
+  </FormDialog>
+{:else if modal === 'editbasic'}
+  <FormDialog
+    submit={renameSite}
+    validate={validateBasicInfo}
+    name='editbasic'
+    title='Rename Site'
+    preload={{ name: $store.site.name }}
+    on:dismiss={() => { modal = undefined }}>
+    <FieldText path='name' label='Name' required/>
   </FormDialog>
 {/if}
 <style>

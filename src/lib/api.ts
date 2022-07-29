@@ -10,7 +10,7 @@ import {
   GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST,
   GET_USER_BY_ID, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS,
   GET_SUBGROUPS, GET_GROUP_BY_ID, GET_ROLE_BY_ID, GET_SITE_LIST, GET_SUBPAGES_BY_PATH,
-  GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, GET_AVAILABLE_COMPONENTS, GET_TEMPLATES_BY_TYPE,
+  GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, GET_AVAILABLE_COMPONENTS, GET_TEMPLATES_BY_TYPE, RENAME_SITE,
   type DataFolder, type GlobalSelf, type PageEditorPage, type TemplateListTemplate, type DataItem, type DataRoot,
   type TreePage, type UserListUser, type FullUser, type GroupListGroup, type FullGroup, type RoleListRole,
   type FullRole, type SiteListSite, type GetAvailableComponents, type GetSubPagesByPath,
@@ -320,6 +320,11 @@ class API {
   async getSiteById (siteId: string) {
     const { sites } = await this.query<{ sites: FullSite[]}>(GET_SITE_BY_ID, { siteId })
     return sites[0]
+  }
+
+  async renameSite (siteId: string, name: string, validateOnly?: boolean) {
+    const { renameSite } = await this.query<{ renameSite: MutationResponse & { site: SiteListSite } }>(RENAME_SITE, { siteId, name, validateOnly })
+    return renameSite
   }
 
   async addAssetRule (args: CreateAssetRuleInput, validateOnly?: boolean) {

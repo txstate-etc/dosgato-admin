@@ -1,3 +1,5 @@
+import { mutationResponse } from './global'
+
 export const siteDetails = `
   id
   name
@@ -251,6 +253,17 @@ export const GET_SITE_BY_ID = `
   query getSiteById ($siteId: ID!) {
     sites (filter: { ids: [$siteId]}) {
       ${fullSiteDetails}
+    }
+  }
+`
+
+export const RENAME_SITE = `
+  mutation renameSite ($siteId: ID!, $name: String!, $validateOnly: Boolean) {
+    renameSite (siteId: $siteId, name: $name, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      site {
+        ${siteDetails}
+      }
     }
   }
 `
