@@ -39,7 +39,7 @@
 <script lang="ts">
   import { api, SiteDetailStore, siteListStore, DetailPanel, ensureRequiredNotNull, messageForDialog, type Organization, type UserListUser, userListStore } from '$lib'
   import { base } from '$app/paths'
-  let modal: 'editbasic'|'editsitemanagement'|'addcomment'|undefined = undefined
+  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|undefined = undefined
 
   async function searchUsers (search) {
     const query = search.toLowerCase()
@@ -79,6 +79,15 @@
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
   }
+
+  async function setLaunchURL (state) {
+    const resp = await api.setLaunchURL($store.site.id, state.host, state.path)
+    if (resp.success) {
+      store.refresh($store.site.id)
+      modal = undefined
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+  }
 </script>
 
 <DetailPanel header='Basic Information' button={$store.site.permissions.rename ? { icon: pencilIcon, hiddenLabel: 'edit basic information', onClick: () => { modal = 'editbasic' } } : undefined}>
@@ -88,7 +97,7 @@
   </div>
 </DetailPanel>
 
-<DetailPanel header='Launch Information' button={$store.site.permissions.launch ? { icon: pencilIcon, hiddenLabel: 'edit launch URL', onClick: () => {} } : undefined}>
+<DetailPanel header='Launch Information' button={$store.site.permissions.launch ? { icon: pencilIcon, hiddenLabel: 'edit launch URL', onClick: () => { modal = 'editlaunch' } } : undefined}>
   {#if $store.site.url}
   <div class="row">
     <div class="label">URL:</div>
@@ -278,6 +287,16 @@
     <FieldSelect path='organization' label='Organization' choices={organizations.map(o => ({ label: o.name, value: o.id }))}/>
     <FieldSelect path='owner' label='Site Owner' choices={users.map(u => ({ label: u.name, value: u.id }))} />
     <FieldMultiselect path='managers' label='Site Managers' getOptions={searchUsers}/>
+  </FormDialog>
+{:else if modal === 'editlaunch'}
+  <FormDialog
+    submit={setLaunchURL}
+    name='editlaunch'
+    title='Set Public URL'
+    preload={{ host: $store.site.url?.host ?? '', path: $store.site.url?.path ?? '' }}
+    on:dismiss={() => { modal = undefined }}>
+    <FieldText path='host' label='Host'/>
+    <FieldText path='path' label='Path'/>
   </FormDialog>
 {/if}
 <style>

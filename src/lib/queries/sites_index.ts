@@ -280,3 +280,14 @@ export const UPDATE_SITE_MANAGEMENT = `
     }
   }
 `
+
+export const SET_LAUNCH_URL = `
+  mutation setLaunchURL ($siteId: ID!, $host: UrlSafeString, $path: UrlSafeString, $validateOnly: Boolean) {
+    setLaunchURL (siteId: $siteId, host: $host, path: $path, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      site {
+        ${siteDetails}
+      }
+    }
+  }
+`
