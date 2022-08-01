@@ -21,11 +21,11 @@
   }
 
   button {
-    background-color: var(--dosgato-btn-bg, #1676CA);
+    background-color: var(--dosgato-btn-bg, #501214);
     color: var(--dosgato-btn-text, white);
   }
   button:hover {
-    background-color: var(--dosgato-btn-hover-bg, #115997);
+    background-color: var(--dosgato-btn-hover-bg, #622a2c);
     color: var(--dosgato-btn-hover-text, white);
   }
 

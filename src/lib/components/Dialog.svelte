@@ -38,7 +38,7 @@
 <style>
   section {
     position: relative;
-    background-color: white;
+    background-color: #f4f4f4;
     border-radius: 0.5em;
     padding: 1em;
     overflow: hidden;
@@ -68,8 +68,8 @@
     font-weight: bold;
     margin: -1em;
     padding: 1em;
-    background-color: var(--dosgato-dialog-header-bg, #595959);
-    color: var(--dosgato-dialog-header-text, white);
+    background-color: var(--dosgato-dialog-header-bg, #DDDDDD);
+    color: var(--dosgato-dialog-header-text, black);
   }
 
   header, .content {
@@ -79,6 +79,7 @@
   .content {
     min-height: 5em;
     overflow: auto;
+    background-color: var(--dosgato-dialog-content-bg, #f4f4f4);
   }
 
   footer {
@@ -86,9 +87,17 @@
     align-items: center;
     justify-content: flex-end;
     flex-wrap: wrap;
+    background-color: var(--dosgato-dialog-footer-bg, #DDDDDD);
+    margin: -1em;
+    padding: 0.5em 1em;
   }
 
   footer > :global(*:not(:last-child)) {
     margin-right: 0.5em;
+  }
+
+  :global(.dialog-field-container) {
+    background-color: transparent !important;
+    border-bottom: 0px !important;
   }
 </style>
