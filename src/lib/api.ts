@@ -11,12 +11,13 @@ import {
   GET_USER_BY_ID, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS,
   GET_SUBGROUPS, GET_GROUP_BY_ID, GET_ROLE_BY_ID, GET_SITE_LIST, GET_SUBPAGES_BY_PATH,
   GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, GET_AVAILABLE_COMPONENTS, GET_TEMPLATES_BY_TYPE, RENAME_SITE,
+  GET_SITE_BY_ID, GET_ORGANIZATION_LIST, UPDATE_SITE_MANAGEMENT,
   type DataFolder, type GlobalSelf, type PageEditorPage, type TemplateListTemplate, type DataItem, type DataRoot,
   type TreePage, type UserListUser, type FullUser, type GroupListGroup, type FullGroup, type RoleListRole,
   type FullRole, type SiteListSite, type GetAvailableComponents, type GetSubPagesByPath,
   type GetSubFoldersAndAssetsByPath, type GetPageByLink, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule,
   type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE, type FullSite,
-  GET_SITE_BY_ID
+  type Organization
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -327,6 +328,11 @@ class API {
     return renameSite
   }
 
+  async updateSiteManagement (siteId: string, organizationId?: string, ownerId?: string, managerIds?: string[]) {
+    const { updateSiteManagement } = await this.query<{ updateSiteManagement: MutationResponse & { site: FullSite } }>(UPDATE_SITE_MANAGEMENT, { siteId, args: { organizationId, ownerId, managerIds } })
+    return updateSiteManagement
+  }
+
   async addAssetRule (args: CreateAssetRuleInput, validateOnly?: boolean) {
     const { createAssetRule } = await this.query<{ createAssetRule: MutationResponse & { assetRule: AssetRule }}>(ADD_ASSET_RULE, { args, validateOnly })
     return createAssetRule
@@ -340,6 +346,11 @@ class API {
   async removeRule (ruleId: string, type: 'GLOBAL'|'SITE'|'PAGE'|'TEMPLATE'|'ASSET'|'DATA') {
     const { removeRule } = await this.query<{ removeRule: MutationResponse }>(REMOVE_RULE, { ruleId, type })
     return removeRule
+  }
+
+  async getOrganizationList () {
+    const { organizations } = await this.query<{ organizations: Organization[]}>(GET_ORGANIZATION_LIST)
+    return organizations
   }
 
   async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validate?: boolean, comment?: string }) {

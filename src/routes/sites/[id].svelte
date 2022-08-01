@@ -8,14 +8,23 @@
   import applicationExport from '@iconify-icons/mdi/application-export'
   import checkIcon from '@iconify-icons/mdi/check'
   import minusIcon from '@iconify-icons/mdi/minus'
-  import { Icon, FieldText } from '@dosgato/dialog'
+  import { Icon, FieldText, FieldSelect, FieldMultiselect } from '@dosgato/dialog'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { DateTime } from 'luxon'
 
+  let organizations: Organization[] = []
+  let users: UserListUser[] = []
+
   export const load: Load = async ({ params }) => {
     const site = await store.refresh(params.id)
-    if (!store.siteFetched()) return { status: 404 }
+    if (!store.siteFetched()) {
+      return { status: 404 }
+    }
+    [organizations, users] = await Promise.all([
+      api.getOrganizationList(),
+      api.getUserList()
+    ])
     siteListStore.open({ id: params.id, name: site.name })
     return {}
   }
@@ -28,9 +37,16 @@
 </script>
 
 <script lang="ts">
-  import { api, SiteDetailStore, siteListStore, DetailPanel, ensureRequiredNotNull, messageForDialog } from '$lib'
+  import { api, SiteDetailStore, siteListStore, DetailPanel, ensureRequiredNotNull, messageForDialog, type Organization, type UserListUser, userListStore } from '$lib'
   import { base } from '$app/paths'
-  let modal: 'editbasic'|'editsitegovernance'|'addcomment'|undefined = undefined
+  let modal: 'editbasic'|'editsitemanagement'|'addcomment'|undefined = undefined
+
+  async function searchUsers (search) {
+    const query = search.toLowerCase()
+    return users.filter(u => {
+      return u.name.toLowerCase().includes(query) || u.id.includes(query)
+    }).map(u => ({ label: u.name, value: u.id }))
+  }
 
   async function addComment (state) {
     // TODO
@@ -53,6 +69,15 @@
       modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+  }
+
+  async function editSiteManagement (state) {
+    const resp = await api.updateSiteManagement($store.site.id, state.organization, state.owner, state.managers)
+    if (resp.success) {
+      store.refresh($store.site.id)
+      modal = undefined
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
   }
 </script>
 
@@ -102,7 +127,7 @@
   </table>
 </DetailPanel>
 
-<DetailPanel header='Site Management' button={$store.site.permissions.manageGovernance ? { icon: pencilIcon, hiddenLabel: 'edit site management', onClick: () => {} } : undefined}>
+<DetailPanel header='Site Management' button={$store.site.permissions.manageGovernance ? { icon: pencilIcon, hiddenLabel: 'edit site management', onClick: () => { modal = 'editsitemanagement' } } : undefined}>
   <div class="row">
     <div class="label">Organization:</div>
     <div class="value">{$store.site.organization.name}</div>
@@ -242,6 +267,17 @@
     preload={{ name: $store.site.name }}
     on:dismiss={() => { modal = undefined }}>
     <FieldText path='name' label='Name' required/>
+  </FormDialog>
+{:else if modal === 'editsitemanagement'}
+  <FormDialog
+    submit={editSiteManagement}
+    name='editsitemanagement'
+    title="Edit Site Management"
+    preload={{ organization: $store.site.organization.id, owner: $store.site.owner.id, managers: $store.site.managers.map(m => m.id) }}
+    on:dismiss={() => { modal = undefined }}>
+    <FieldSelect path='organization' label='Organization' choices={organizations.map(o => ({ label: o.name, value: o.id }))}/>
+    <FieldSelect path='owner' label='Site Owner' choices={users.map(u => ({ label: u.name, value: u.id }))} />
+    <FieldMultiselect path='managers' label='Site Managers' getOptions={searchUsers}/>
   </FormDialog>
 {/if}
 <style>

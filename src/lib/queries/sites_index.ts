@@ -10,6 +10,7 @@ export const siteDetails = `
   }
   organization {
     name
+    id
   }
   owner {
     id
@@ -153,6 +154,7 @@ export interface FullSite {
   }
   organization: {
     name: string
+    id: string
   }
   owner: {
     id: string
@@ -260,6 +262,17 @@ export const GET_SITE_BY_ID = `
 export const RENAME_SITE = `
   mutation renameSite ($siteId: ID!, $name: String!, $validateOnly: Boolean) {
     renameSite (siteId: $siteId, name: $name, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      site {
+        ${siteDetails}
+      }
+    }
+  }
+`
+
+export const UPDATE_SITE_MANAGEMENT = `
+  mutation updateSiteManagement ($siteId: ID!, $args: UpdateSiteManagementInput!, $validateOnly: Boolean) {
+    updateSiteManagement (siteId: $siteId, args: $args, validateOnly: $validateOnly) {
       ${mutationResponse}
       site {
         ${siteDetails}

@@ -34,7 +34,7 @@ const initialValue: FullSite = {
   id: '',
   name: '',
   url: { host: '', path: '', prefix: '' },
-  organization: { name: '' },
+  organization: { name: '', id: '' },
   owner: { id: '', name: '' },
   managers: [],
   pagetrees: [],
