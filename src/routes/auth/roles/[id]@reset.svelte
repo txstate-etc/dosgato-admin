@@ -33,8 +33,7 @@
   import { isNull, unique } from 'txstate-utils'
   import { ScreenReaderOnly, type PopupMenuItem } from '@txstate-mws/svelte-components'
 
-  let modal: 'editbasic'|'addassetrule'|'deleteassetrule'|undefined
-  let ruleToRemove: { id: string, type: 'GLOBAL'|'SITE'|'PAGE'|'TEMPLATE'|'ASSET'|'DATA'}|undefined = undefined
+  let modal: 'editbasic'|'addassetrule'|'deleterule'|undefined
 
   $: groupIds = unique([...$store.role.directGroups.map(g => g.id), ...$store.role.indirectGroups.map(g => g.id)])
 
@@ -82,13 +81,20 @@
   }
 
   async function onDeleteRule () {
-    if (!ruleToRemove) return
-    const resp = await api.removeRule(ruleToRemove.id, ruleToRemove.type)
+    if (!$store.editing) return
+    const resp = await api.removeRule($store.editing.id, $store.editing.type.toLocaleUpperCase() as 'GLOBAL'|'SITE'|'PAGE'|'TEMPLATE'|'ASSET'|'DATA')
     if (resp.success) {
       store.refresh($store.role.id)
     }
-    ruleToRemove = undefined
+    store.resetRuleEditing()
     modal = undefined
+  }
+
+  function onClickDelete (ruleId, ruleType) {
+    return () => {
+      store.setRuleEditing(ruleId, ruleType)
+      modal = 'deleterule'
+    }
   }
 
 </script>
@@ -156,7 +162,7 @@
         <th>Undelete</th>
         <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
       </tr>
-      {#each $store.role.assetRules as rule (rule.id)}
+      {#each $store.role.assetRules as rule, idx (rule.id)}
         <tr>
           <td>{rule.site ? rule.site.name : 'All Sites'}</td>
           <td>{rule.path}</td>
@@ -168,7 +174,7 @@
           <td><Icon icon={rule.grants.undelete ? checkIcon : minusIcon}/></td>
           <td>
             <button class="edit"><Icon icon={pencilIcon} hiddenLabel='Edit Asset Rule'/></button>
-            <button class="delete"  on:click={() => { ruleToRemove = { id: rule.id, type: 'ASSET' }; modal = 'deleteassetrule' }}><Icon icon={deleteOutline} hiddenLabel='Delete Asset Rule'/></button>
+            <button class="delete" on:click={onClickDelete(rule.id, 'asset')}><Icon icon={deleteOutline} hiddenLabel='Delete Asset Rule'/></button>
           </td>
         </tr>
       {/each}
@@ -208,7 +214,7 @@
           <td><Icon icon={rule.grants.undelete ? checkIcon : minusIcon}/></td>
           <td>
             <button class="edit"><Icon icon={pencilIcon} hiddenLabel='Edit Data Rule'/></button>
-            <button class="delete"><Icon icon={deleteOutline} hiddenLabel='Delete Data Rule'/></button>
+            <button class="delete" on:click={onClickDelete(rule.id, 'data')}><Icon icon={deleteOutline} hiddenLabel='Delete Data Rule'/></button>
           </td>
         </tr>
       {/each}
@@ -240,7 +246,7 @@
           <td><Icon icon={rule.grants.manageTemplates ? checkIcon : minusIcon}/></td>
           <td>
             <button class="edit"><Icon icon={pencilIcon}/></button>
-            <button class="delete"><Icon icon={deleteOutline}/></button>
+            <button class="delete" on:click={onClickDelete(rule.id, 'global')}><Icon icon={deleteOutline}/></button>
           </td>
         </tr>
       {/each}
@@ -282,7 +288,7 @@
           <td><Icon icon={rule.grants.undelete ? checkIcon : minusIcon}/></td>
           <td>
             <button class="edit"><Icon icon={pencilIcon}/></button>
-            <button class="delete"><Icon icon={deleteOutline}/></button>
+            <button class="delete" on:click={onClickDelete(rule.id, 'page')}><Icon icon={deleteOutline}/></button>
           </td>
         </tr>
       {/each}
@@ -314,7 +320,7 @@
           <td><Icon icon={rule.grants.delete ? checkIcon : minusIcon}/></td>
           <td>
             <button class="edit"><Icon icon={pencilIcon}/></button>
-            <button class="delete"><Icon icon={deleteOutline}/></button>
+            <button class="delete" on:click={onClickDelete(rule.id, 'site')}><Icon icon={deleteOutline}/></button>
           </td>
         </tr>
       {/each}
@@ -338,7 +344,7 @@
           <td><Icon icon={rule.grants.use ? checkIcon : minusIcon}/></td>
           <td>
             <button class="edit"><Icon icon={pencilIcon}/></button>
-            <button class="delete"><Icon icon={deleteOutline}/></button>
+            <button class="delete" on:click={onClickDelete(rule.id, 'template')}><Icon icon={deleteOutline}/></button>
           </td>
         </tr>
       {/each}
@@ -360,14 +366,14 @@
     <FieldSelect path='mode' label='Mode' choices={[{ value: 'SELF', label: 'This path only' }, { value: 'SELFANDSUB', label: 'This path and its subfolders' }, { value: 'SUB', label: 'Only subfolders of this path' }]}/>
     <FieldChoices path='grants' label='Grants' choices={[{ value: 'Create' }, { value: 'Update' }, { value: 'Move' }, { value: 'Delete' }, { value: 'Undelete' }]}/>
   </FormDialog>
-{:else if modal === 'deleteassetrule'}
+{:else if modal === 'deleterule'}
   <Dialog
-  title={'Delete Asset Rule'}
+  title={'Delete Rule'}
   continueText='Delete'
   cancelText='Cancel'
   on:continue={onDeleteRule}
   on:dismiss={() => { modal = undefined }}>
-  Are you sure you want to delete this asset rule?
+  {`Are you sure you want to delete this ${$store.editing?.type} rule?`}
   </Dialog>
 {/if}
 <style>

@@ -154,7 +154,7 @@ export interface GlobalRule {
     manageAccess: boolean
     manageParentRoles: boolean
     viewSiteList: boolean
-    manageTemplate: boolean
+    manageTemplates: boolean
   }
 }
 
