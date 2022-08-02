@@ -135,13 +135,13 @@
   <ul>
     {#each $store.role.directUsers as user (user.id)}
       <li class="flex-row">
-        <a href={`${base}/auth/user/${user.id}`}>{user.name} ({user.id})</a>
+        <a href={`${base}/auth/users/${user.id}`}>{user.name} ({user.id})</a>
         <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
       </li>
     {/each}
     {#each $store.role.usersThroughGroups as user (user.id)}
       <li class="flex-row">
-        <a href={`${base}/auth/user/${user.id}`}>{user.name} ({user.id})</a>
+        <a href={`${base}/auth/users/${user.id}`}>{user.name} ({user.id})</a>
         {`Via group ${getUserGroups(user.groups)}`}
       </li>
     {/each}
