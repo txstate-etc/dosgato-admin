@@ -1,5 +1,23 @@
 import { mutationResponse } from './global'
 
+export const commentDetails = `
+  id
+  comment
+  createdBy {
+    id
+  }
+  createdAt
+`
+
+export interface SiteComment {
+  id: string
+  comment: string
+  createdBy: {
+    id: string
+  }
+  createdAt: string
+}
+
 export const siteDetails = `
   id
   name
@@ -83,12 +101,7 @@ export const fullSiteDetails = `
     universal
   }
   comments {
-    id
-    comment
-    createdBy {
-      id
-    }
-    createdAt
+    ${commentDetails}
   }
   roles {
     id
@@ -181,14 +194,7 @@ export interface FullSite {
     type: string
     universal: boolean
   }[]
-  comments: {
-    id: string
-    comment: string
-    createdBy: {
-      id: string
-    }
-    createdAt: string
-  }[]
+  comments: SiteComment[]
   roles: {
     id: string
     name: string
@@ -287,6 +293,17 @@ export const SET_LAUNCH_URL = `
       ${mutationResponse}
       site {
         ${siteDetails}
+      }
+    }
+  }
+`
+
+export const ADD_SITE_COMMENT = `
+  mutation createSiteComment ($siteId: ID!, $comment: String!) {
+    createSiteComment (siteId: $siteId, comment: $comment) {
+      ${mutationResponse}
+      comment: siteComment {
+        ${commentDetails}
       }
     }
   }

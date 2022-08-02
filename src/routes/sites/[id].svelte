@@ -49,8 +49,12 @@
   }
 
   async function addComment (state) {
-    // TODO
-    return { success: true, messages: [], data: {} }
+    const resp = await api.addSiteComment($store.site.id, state.comment)
+    if (resp.success) {
+      store.refresh($store.site.id)
+      modal = undefined
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
   async function validateBasicInfo (state) {
@@ -247,14 +251,20 @@
 
 <DetailPanel header="Audit" button={{ icon: plusIcon, hiddenLabel: 'add comment', onClick: () => { modal = 'addcomment' } }}>
   {#if $store.site.comments.length}
-    <ul>
+    <table>
+      <tr>
+        <th>Timestamp</th>
+        <th>Updated By</th>
+        <th>Description</th>
+      </tr>
       {#each $store.site.comments.reverse() as comment (comment.id)}
-        <li>
-          <div>{comment.comment}</div>
-          <div>{comment.createdBy.id} - {DateTime.fromISO(comment.createdAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</div>
-        </li>
+        <tr>
+          <td>{DateTime.fromISO(comment.createdAt).toFormat('LLL d, yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</td>
+          <td>{comment.createdBy.id}</td>
+          <td>{comment.comment}</td>
+        </tr>
       {/each}
-    </ul>
+    </table>
   {:else}
     No comments found.
   {/if}
