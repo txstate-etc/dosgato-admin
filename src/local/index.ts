@@ -5,6 +5,7 @@ import { colorDataTemplate } from './colordata.js'
 import { linkTestComponentTemplate } from './linkcomponent.js'
 import { panelTemplate } from './panel.js'
 import { quoteTemplate } from './quote.js'
+import { pageTemplate1 } from './pagetemplate1.js'
 
 export * from './login.js'
 
@@ -14,5 +15,6 @@ templateRegistry.addTemplates([
   colorDataTemplate,
   linkTestComponentTemplate,
   quoteTemplate,
-  panelTemplate
+  panelTemplate,
+  pageTemplate1
 ])
