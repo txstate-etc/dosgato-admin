@@ -1,3 +1,4 @@
+export * from './assets_index.js'
 export * from './chooser.js'
 export * from './global.js'
 export * from './pages_editor.js'

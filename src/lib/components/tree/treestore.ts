@@ -266,6 +266,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     if (result === false || result === true) return result
     result
       .then(async result => {
+        this.update(v => ({ ...v, loading: false }))
         await this.refresh(commonparent)
       })
       .catch(console.error)

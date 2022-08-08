@@ -1,6 +1,5 @@
 import { base } from '$app/paths'
 import type { ComponentData, PageData, PageLink } from '@dosgato/templating'
-import type { DateTime } from 'luxon'
 import { get, keyby, set, splice, toArray } from 'txstate-utils'
 import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
@@ -17,7 +16,7 @@ import {
   type FullRole, type SiteListSite, type GetAvailableComponents, type GetSubPagesByPath,
   type GetSubFoldersAndAssetsByPath, type GetPageByLink, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule,
   type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE, type FullSite,
-  type Organization, type SiteComment
+  type Organization, type SiteComment, type TreeAssetFolder, type TreeAsset, GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -82,6 +81,7 @@ class API {
   public fetch: (info: RequestInfo, init?: RequestInit) => Promise<Response>
   protected savedConfig: Record<string, string>
   protected pageChildrenLoader = new Loader(async ids => await this.getSubPagesBatch(ids), page => page.id)
+  protected assetFolderChildrenLoader = new Loader(async ids => await this.getSubFoldersAndAssetsBatch(ids), folder => folder.id)
 
   async query <ReturnType = any> (query: string, variables?: any, querySignature?: string): Promise<ReturnType> {
     const response = await this.fetch(environmentConfig.apiBase + '/graphql', {
@@ -151,6 +151,20 @@ class API {
   async chooserPageByLink (link: PageLink) {
     const { pages } = await this.query<GetPageByLink>(GET_PAGE_BY_LINK, { linkId: link.linkId, path: link.path })
     return pages[0]
+  }
+
+  async getSubFoldersAndAssets (folderId: string) {
+    return await this.assetFolderChildrenLoader.get(folderId)
+  }
+
+  protected async getSubFoldersAndAssetsBatch (folderIds: string|string[]) {
+    const { assetfolders } = await this.query<{ assetfolders: { id: string, folders: TreeAssetFolder[], assets: TreeAsset[] }[]}>(GET_ASSETFOLDER_CHILDREN, { ids: toArray(folderIds) })
+    return assetfolders
+  }
+
+  async getRootAssetFolders () {
+    const { sites } = await this.query<{ sites: { assetroot: TreeAssetFolder }[] }>(GET_ASSET_ROOTS)
+    return sites.map(s => s.assetroot)
   }
 
   async getEditorPage (pageId: string) {
