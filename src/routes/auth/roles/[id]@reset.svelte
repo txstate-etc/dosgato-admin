@@ -29,7 +29,7 @@
 
 <script lang="ts">
   import { base } from '$app/paths'
-  import { api, RoleDetailStore, DetailPanel, messageForDialog, type SiteListSite, type CreateAssetRuleInput } from '$lib'
+  import { api, RoleDetailStore, DetailPanel, messageForDialog, type SiteListSite, type CreateAssetRuleInput, ResponsiveTable } from '$lib'
   import { isNull, unique } from 'txstate-utils'
   import { ScreenReaderOnly, type PopupMenuItem } from '@txstate-mws/svelte-components'
 
@@ -91,10 +91,8 @@
   }
 
   function onClickDelete (ruleId, ruleType) {
-    return () => {
-      store.setRuleEditing(ruleId, ruleType)
-      modal = 'deleterule'
-    }
+    store.setRuleEditing(ruleId, ruleType)
+    modal = 'deleterule'
   }
 
 </script>
@@ -150,35 +148,19 @@
 
 <DetailPanel header='Asset Rules' button={{ icon: plusIcon, onClick: () => { modal = 'addassetrule' }, hiddenLabel: 'Add Asset Rule' }}>
   {#if $store.role.assetRules.length}
-    <table>
-      <tr class='headers'>
-        <th>Site</th>
-        <th>Path</th>
-        <th>Mode</th>
-        <th>Create</th>
-        <th>Update</th>
-        <th>Move</th>
-        <th>Delete</th>
-        <th>Undelete</th>
-        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
-      </tr>
-      {#each $store.role.assetRules as rule, idx (rule.id)}
-        <tr>
-          <td>{rule.site ? rule.site.name : 'All Sites'}</td>
-          <td>{rule.path}</td>
-          <td>{rule.mode}</td>
-          <td><Icon icon={rule.grants.create ? checkIcon : minusIcon} hiddenLabel={`Create ${rule.grants.create ? '' : 'not'} permitted`}/></td>
-          <td><Icon icon={rule.grants.update ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.move ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.delete ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.undelete ? checkIcon : minusIcon}/></td>
-          <td>
-            <button class="edit"><Icon icon={pencilIcon} hiddenLabel='Edit Asset Rule'/></button>
-            <button class="delete" on:click={onClickDelete(rule.id, 'asset')}><Icon icon={deleteOutline} hiddenLabel='Delete Asset Rule'/></button>
-          </td>
-        </tr>
-      {/each}
-    </table>
+  <ResponsiveTable items={$store.role.assetRules} headers={[
+      { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
+      { id: 'path', label: 'Path', get: 'path' },
+      { id: 'mode', label: 'Mode', get: 'mode' },
+      { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create permitted' } : { icon: minusIcon, hiddenLabel: 'Create not permitted' } } },
+      { id: 'update', label: 'Update', icon: (item) => { return item.grants.update ? { icon: checkIcon, hiddenLabel: 'Update permitted' } : { icon: minusIcon, hiddenLabel: 'Update not permitted' } } },
+      { id: 'move', label: 'Move', icon: (item) => { return item.grants.move ? { icon: checkIcon, hiddenLabel: 'Move permitted' } : { icon: minusIcon, hiddenLabel: 'Move not permitted' } } },
+      { id: 'delete', label: 'Delete', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'Delete permitted' } : { icon: minusIcon, hiddenLabel: 'Delete not permitted' } } },
+      { id: 'undelete', label: 'Undelete', icon: (item) => { return item.grants.undelete ? { icon: checkIcon, hiddenLabel: 'Undelete permitted' } : { icon: minusIcon, hiddenLabel: 'Undelete not permitted' } } }
+    ]} rowActions={[
+      { icon: pencilIcon, hiddenLabel: 'Edit Asset Rule', label: 'Edit', onClick: () => { console.log('clicked edit') } },
+      { icon: deleteOutline, hiddenLabel: 'Delete Asset Rule', label: 'Delete', onClick: (item) => { onClickDelete(item.id, 'asset') } }
+    ]}/>
   {:else}
     <div>This role has no asset rules.</div>
   {/if}
@@ -414,13 +396,12 @@
     width: 100%;
     border-collapse: collapse;
   }
-
-  table tr td { text-align: center }
+  table tr { border-bottom: 1px dashed #ebebeb }
+  table tr:nth-child(even) { background-color: #f6f7f9 }
   table tr.headers {
     border-bottom: 1px solid #ebebeb;
   }
-  table tr { border-bottom: 1px dashed #ebebeb }
-  table tr:nth-child(even) { background-color: #f6f7f9 }
+  table tr td { text-align: center }
   td button {
     border: 0;
     padding: 0;

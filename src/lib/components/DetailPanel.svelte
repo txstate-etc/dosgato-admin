@@ -1,12 +1,13 @@
 <script lang="ts">
   import type { DetailPanelButton } from './detailpanel'
   import { Icon } from '@dosgato/dialog'
+  import { eq } from '@txstate-mws/svelte-components'
   export let header: string
   export let button: DetailPanelButton|undefined = undefined
 </script>
 
 
-<div class="panel">
+<div class="panel" use:eq>
   <div class="header">
     <div>{header}</div>
     {#if button}
