@@ -8,9 +8,8 @@ const groupDetails = `
     id
     name
   }
-  managers {
+  users {
     id
-    name
   }
   subgroups(recursive: false) {
     id
@@ -27,9 +26,8 @@ export interface GroupListGroup {
     id: string
     name: string
   }[]
-  managers: {
+  users: {
     id: string
-    name: string
   }[]
   subgroups: {
     id: string
@@ -67,18 +65,6 @@ const fullGroupDetails = `
     id
     name
     groups(direct: true) {
-      id
-      name
-    }
-  }
-  directManagers: managers (direct: true) {
-    id
-    name
-  }
-  managersThroughSite: managers (direct: false) {
-    id
-    name
-    sitesManaged {
       id
       name
     }
@@ -132,18 +118,6 @@ export interface FullGroup {
       id: string
       name: string
     }[]
-  }[]
-  directManagers: {
-    id: string
-    name: string
-  }[]
-  managersThroughSite: {
-    id: string
-    name: string
-    sitesManaged: {
-      id: string
-      name: string
-    }
   }[]
   supergroups: {
     id: string

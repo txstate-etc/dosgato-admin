@@ -63,9 +63,9 @@
 
 <ActionPanel actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/groups/' + detail.id)} headers ={[
-    { id: 'name', label: 'Name', get: 'name', defaultWidth: '30%' },
-    { id: 'managers', label: 'Managers', render: item => (item.managers.map(m => m.name)).join(', '), defaultWidth: '30%' },
-    { id: 'roles', label: 'Roles', render: item => (item.roles.map(r => r.name)).join(', '), defaultWidth: '30%' }
+    { id: 'name', label: 'Name', get: 'name', defaultWidth: '45%' },
+    { id: 'members', label: 'Members', render: item => String(item.users.length), defaultWidth: '15%' },
+    { id: 'roles', label: 'Roles', render: item => (item.roles.map(r => r.name)).join(', '), defaultWidth: '40%' }
   ]}/>
 </ActionPanel>
 {#if modal === 'addgroup'}
