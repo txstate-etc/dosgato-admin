@@ -1,4 +1,5 @@
 import type { UITemplate } from '@dosgato/templating'
+import { templates } from '../local/index.js'
 
 class TemplateRegistry {
   protected templateMap = new Map<string, UITemplate>()
@@ -17,3 +18,4 @@ class TemplateRegistry {
 }
 
 export const templateRegistry = new TemplateRegistry()
+templateRegistry.addTemplates(templates)

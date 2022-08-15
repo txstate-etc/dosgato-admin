@@ -1,4 +1,3 @@
-import { templateRegistry } from '$lib/registry.js'
 import { articleTemplate } from './article.js'
 import { buildingDataTemplate } from './building.js'
 import { colorDataTemplate } from './colordata.js'
@@ -9,7 +8,7 @@ import { pageTemplate1 } from './pagetemplate1.js'
 
 export * from './login.js'
 
-templateRegistry.addTemplates([
+export const templates = [
   articleTemplate,
   buildingDataTemplate,
   colorDataTemplate,
@@ -17,4 +16,4 @@ templateRegistry.addTemplates([
   quoteTemplate,
   panelTemplate,
   pageTemplate1
-])
+]
