@@ -33,7 +33,7 @@
 </script>
 
 <Dialog continueText="Save" cancelText="Cancel" on:dismiss on:continue={onSubmit} {title}>
-  <Form bind:store {submit} {validate} {chooserClient} {autocomplete} {name} {preload} on:saved let:messages let:saved let:valid let:invalid let:validating let:submitting>
+  <Form bind:store {submit} {validate} {chooserClient} {autocomplete} {name} {preload} on:saved let:messages let:saved let:valid let:invalid let:validating let:submitting let:data>
     <div class="form-errors" aria-live='assertive'>
       {#if messages.length}
         <ul>
@@ -43,7 +43,7 @@
         </ul>
       {/if}
     </div>
-    <slot {messages} {saved} {validating} {submitting} {valid} {invalid} />
+    <slot {messages} {saved} {validating} {submitting} {valid} {invalid} {data} />
   </Form>
 </Dialog>
 

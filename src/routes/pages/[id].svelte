@@ -103,8 +103,8 @@
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
   {#if template && template.dialog}
-    <FormDialog preload={$editorStore.editing.data} submit={onEditComponentSubmit} on:dismiss={cancelModal}>
-      <svelte:component this={template.dialog} />
+    <FormDialog preload={$editorStore.editing.data} submit={onEditComponentSubmit} on:dismiss={cancelModal} let:data>
+      <svelte:component this={template.dialog} {data} {environmentConfig} />
     </FormDialog>
   {:else}
     <Dialog title="Unrecognized Template">This content uses an unrecognized template. Please contact support for assistance.</Dialog>
