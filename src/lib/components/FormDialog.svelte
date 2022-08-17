@@ -21,6 +21,8 @@
   export let title: string = ''
   export let preload: T|undefined = undefined
 
+  $: data = ($store as any)?.data
+
   const dispatch = createEventDispatcher()
 
   async function onSubmit () {
@@ -33,7 +35,7 @@
 </script>
 
 <Dialog continueText="Save" cancelText="Cancel" on:dismiss on:continue={onSubmit} {title}>
-  <Form bind:store {submit} {validate} {chooserClient} {autocomplete} {name} {preload} on:saved let:messages let:saved let:valid let:invalid let:validating let:submitting let:data>
+  <Form bind:store {submit} {validate} {chooserClient} {autocomplete} {name} {preload} on:saved let:messages let:saved let:valid let:invalid let:validating let:submitting>
     <div class="form-errors" aria-live='assertive'>
       {#if messages.length}
         <ul>
