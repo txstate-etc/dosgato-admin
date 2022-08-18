@@ -82,8 +82,28 @@ class API {
   protected savedConfig: Record<string, string>
   protected pageChildrenLoader = new Loader(async ids => await this.getSubPagesBatch(ids), page => page.id)
   protected assetFolderChildrenLoader = new Loader(async ids => await this.getSubFoldersAndAssetsBatch(ids), folder => folder.id)
+  protected ready!: () => void
+  protected readyPromise: Promise<void>
+
+  constructor () {
+    this.readyPromise = new Promise(resolve => {
+      this.ready = resolve
+    })
+  }
+
+  async init (token: string | undefined) {
+    this.token = token
+    if (this.token) {
+      sessionStorage.setItem('token', this.token)
+    } else {
+      this.token = sessionStorage.getItem('token') ?? undefined
+    }
+    Object.assign(environmentConfig, await this.config())
+    this.ready()
+  }
 
   async query <ReturnType = any> (query: string, variables?: any, querySignature?: string): Promise<ReturnType> {
+    await this.readyPromise
     const response = await this.fetch(environmentConfig.apiBase + '/graphql', {
       method: 'POST',
       headers: {
