@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts">
   import { iconForMime } from '@dosgato/dialog'
   import arrowsOutCardinalLight from '@iconify-icons/ph/arrows-out-cardinal-light'
   import downloadLight from '@iconify-icons/ph/download-light'
@@ -6,6 +6,10 @@
   import folderNotchOpenLight from '@iconify-icons/ph/folder-notch-open-light'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import uploadLight from '@iconify-icons/ph/upload-light'
+  import { goto } from '$app/navigation'
+  import { DateTime } from 'luxon'
+  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreePage, type TreeAsset, type TreeAssetFolder } from '$lib'
+  import { base } from '$app/paths'
 
   interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
     kind: 'asset'
@@ -35,6 +39,7 @@
     } as AssetItem))
     return [...typedfolders, ...typedassets]
   }
+
   function singlepageactions (item: TypedAnyAssetItem) {
     return item.kind === 'asset'
       ? [
@@ -46,6 +51,7 @@
           { label: 'Upload', icon: uploadLight, disabled: !item.permissions.create, onClick: () => { /* TODO */ } }
         ]
   }
+
   function multipageactions (pages: TypedAnyAssetItem[]) {
     if (!pages?.length) return []
     return [
@@ -53,19 +59,23 @@
       // { label: 'Publish', disabled: pages.some(p => !p.permissions.publish), onClick: () => {} }
     ]
   }
+
   async function dropHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean) {
     return true
   }
+
   function dragEligible (items: (TypedAssetFolderItem|TypedAssetItem)[]) {
     // sites cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites
     return items.every(item => !!item.parent)
   }
+
   function dropEligible (selectedItems: (TypedAssetFolderItem|TypedAssetItem)[], dropTarget: TypedAnyAssetItem, above: boolean) {
     // cannot place an item at the root: instead create a new site in the site management UI
     if (!dropTarget.parent && above) return false
     if (dropTarget.kind === 'asset' && !above) return false
     return above ? (dropTarget.parent! as TypedAssetFolderItem).permissions.create : (dropTarget as TypedAssetFolderItem).permissions.create
   }
+
   function dropEffect (selectedItems: (TypedAssetFolderItem|TypedAssetItem)[], dropTarget: TypedAnyAssetItem, above: boolean) {
     const selectedSites = new Set<string>()
     let noMovePerm = false
@@ -79,13 +89,8 @@
     const targetSite = (anc[anc.length - 1] ?? dropTarget).id
     return selectedSites.has(targetSite) ? 'move' : 'copy'
   }
+
   const store: TreeStore<AssetItem | AssetFolderItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
-</script>
-<script lang="ts">
-  import { goto } from '$app/navigation'
-  import { DateTime } from 'luxon'
-  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreePage, type TreeAsset, type TreeAssetFolder } from '$lib'
-  import { base } from '$app/paths'
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>

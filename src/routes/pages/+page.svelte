@@ -1,10 +1,15 @@
-<script lang="ts" context="module">
+<script lang="ts">
   import applicationOutline from '@iconify-icons/mdi/application-outline'
   import circleIcon from '@iconify-icons/mdi/circle'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import publishIcon from '@iconify-icons/mdi/publish'
   import squareIcon from '@iconify-icons/mdi/square'
   import triangleIcon from '@iconify-icons/mdi/triangle'
+  import { DateTime } from 'luxon'
+  import { goto } from '$app/navigation'
+  import { base } from '$app/paths'
+  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreePage } from '$lib'
+  import './index.css'
 
   const statusIcon = {
     published: triangleIcon,
@@ -73,13 +78,6 @@
     return selectedSites.has(targetSite) ? 'move' : 'copy'
   }
   const store: TreeStore<PageItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
-</script>
-<script lang="ts">
-  import { goto } from '$app/navigation'
-  import { DateTime } from 'luxon'
-  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreePage } from '$lib'
-  import { base } from '$app/paths'
-  import './index.css'
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>

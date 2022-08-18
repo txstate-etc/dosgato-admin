@@ -1,33 +1,18 @@
-<script lang="ts" context="module">
-  import type { Load } from '@sveltejs/kit'
+<script lang="ts">
+  import { Icon, FieldText, FieldMultiselect, FieldCheckbox } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import arrowLeft from '@iconify-icons/mdi/arrow-left'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
-  import { Icon, FieldText, FieldMultiselect, FieldCheckbox } from '@dosgato/dialog'
+  import { DateTime } from 'luxon'
+  import { base } from '$app/paths'
+  import { api, DetailPanel, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup } from '$lib'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
+  import { store } from './+page'
 
-  let allGroups: GroupListGroup[] = []
-  export const load: Load = async ({ params }) => {
-    await store.refresh(params.id)
-    if (!store.userFetched()) return { status: 404 }
-    allGroups = await api.getAllGroups()
-    return {}
-  }
+  export let data: { allGroups: GroupListGroup[] }
 
-  async function getUser (id: string) {
-    const user = await api.getUserById(id)
-    return user
-  }
-
-  const store = new UserDetailStore(getUser)
-</script>
-
-<script lang="ts">
-  import { api, DetailPanel, UserDetailStore, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup } from '$lib'
-  import { base } from '$app/paths'
-  import { DateTime } from 'luxon'
   let modal: 'editbasic'|'editgroups'|'editroles'|'removefromgroup'|undefined
   let groupLeaving: GroupWithParents|undefined = undefined
 
@@ -55,6 +40,7 @@
     const resp = await api.updateUserInfo($store.user.id, state)
     if (resp.success) store.refresh($store.user.id)
     modal = undefined
+    return { ...resp, data: resp.user }
   }
 
   async function validateBasicInfo (state) {
@@ -68,7 +54,7 @@
 
   async function searchGroups (term: string) {
     const directGroupIds = $store.user.directGroups.map(g => g.id)
-    return allGroups.filter(g => !directGroupIds.includes(g.id) && g.name.indexOf(term) > -1).map(g => ({ label: g.name, value: g.id }))
+    return data.allGroups.filter(g => !directGroupIds.includes(g.id) && g.name.indexOf(term) > -1).map(g => ({ label: g.name, value: g.id }))
   }
 
   async function onAddGroups (state) {

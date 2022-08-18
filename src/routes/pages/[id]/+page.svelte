@@ -1,32 +1,12 @@
-<script lang="ts" context="module">
-  import type { Load } from '@sveltejs/kit'
-  import { api, pageStore, editorStore, environmentConfig, pageEditorStore, templateRegistry, type ActionPanelAction, type PageEditorPage } from '$lib'
-  import ActionPanel from '$lib/components/ActionPanel.svelte'
-
-  async function getTempToken (page: PageEditorPage, skfetch = fetch) {
-    const resp = await skfetch(environmentConfig.renderBase + '/token' + page.path, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${api.token ?? ''}`
-      }
-    })
-    return await resp.text()
-  }
-
-  export const load: Load = async ({ params, fetch }) => {
-    const page = await api.getEditorPage(params.id)
-    if (!page) return { status: 404 }
-    const temptoken = await getTempToken(page, fetch)
-    pageEditorStore.open(page)
-    return { props: { temptoken } }
-  }
-</script>
 <script lang="ts">
+  import { editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry } from '$lib'
+  import { getTempToken } from './+page'
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import { Icon } from '@dosgato/dialog'
+  import ActionPanel from '$lib/components/ActionPanel.svelte'
 
-  export let temptoken: string
+  export let data: { temptoken: string }
 
   let iframe: HTMLIFrameElement
 
@@ -55,10 +35,10 @@
 
   async function refreshIframe () {
     const newTempToken = await getTempToken($editorStore.page)
-    if (newTempToken === temptoken) {
+    if (newTempToken === data.temptoken) {
       iframe.src = iframe.src // force refresh the iframe
     } else {
-      temptoken = newTempToken // if there's a new token, setting it will alter the iframe src and therefore refresh it
+      data.temptoken = newTempToken // if there's a new token, setting it will alter the iframe src and therefore refresh it
     }
   }
 
@@ -97,7 +77,7 @@
 <ActionPanel actions={getActions()}>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
   to steal credentials from other editors! -->
-  <iframe use:messages sandbox="allow-scripts" src="{environmentConfig.renderBase}/.edit/{$pageStore.pagetree.id}{$pageStore.path}?token={temptoken}" title="page preview for editing"></iframe>
+  <iframe use:messages sandbox="allow-scripts" src="{environmentConfig.renderBase}/.edit/{$pageStore.pagetree.id}{$pageStore.path}?token={data.temptoken}" title="page preview for editing"></iframe>
 </ActionPanel>
 
 {#if $editorStore.modal === 'edit' && $editorStore.editing}

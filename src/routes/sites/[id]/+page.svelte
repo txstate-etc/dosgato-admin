@@ -1,5 +1,4 @@
-<script lang="ts" context="module">
-  import type { Load } from '@sveltejs/kit'
+<script lang="ts">
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import arrowLeft from '@iconify-icons/mdi/arrow-left'
   import plusIcon from '@iconify-icons/mdi/plus'
@@ -12,38 +11,18 @@
   import FormDialog from '$lib/components/FormDialog.svelte'
   import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { DateTime } from 'luxon'
-
-  let organizations: Organization[] = []
-  let users: UserListUser[] = []
-
-  export const load: Load = async ({ params }) => {
-    const site = await store.refresh(params.id)
-    if (!store.siteFetched()) {
-      return { status: 404 }
-    }
-    [organizations, users] = await Promise.all([
-      api.getOrganizationList(),
-      api.getUserList()
-    ])
-    siteListStore.open({ id: params.id, name: site.name })
-    return {}
-  }
-
-  async function getSite (id: string) {
-    return await api.getSiteById(id)
-  }
-
-  const store = new SiteDetailStore(getSite)
-</script>
-
-<script lang="ts">
-  import { api, SiteDetailStore, siteListStore, DetailPanel, ensureRequiredNotNull, messageForDialog, type Organization, type UserListUser, userListStore } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type Organization, type UserListUser } from '$lib'
   import { base } from '$app/paths'
+  import { store } from './+page'
+  import type { PageData } from './$types'
+
+  export let data: { organizations: Organization[], users: UserListUser[] }
+
   let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|undefined = undefined
 
   async function searchUsers (search) {
     const query = search.toLowerCase()
-    return users.filter(u => {
+    return data.users.filter(u => {
       return u.name.toLowerCase().includes(query) || u.id.includes(query)
     }).map(u => ({ label: u.name, value: u.id }))
   }
@@ -294,8 +273,8 @@
     title="Edit Site Management"
     preload={{ organization: $store.site.organization.id, owner: $store.site.owner.id, managers: $store.site.managers.map(m => m.id) }}
     on:dismiss={() => { modal = undefined }}>
-    <FieldSelect path='organization' label='Organization' choices={organizations.map(o => ({ label: o.name, value: o.id }))}/>
-    <FieldSelect path='owner' label='Site Owner' choices={users.map(u => ({ label: u.name, value: u.id }))} />
+    <FieldSelect path='organization' label='Organization' choices={data.organizations.map(o => ({ label: o.name, value: o.id }))}/>
+    <FieldSelect path='owner' label='Site Owner' choices={data.users.map(u => ({ label: u.name, value: u.id }))} />
     <FieldMultiselect path='managers' label='Site Managers' getOptions={searchUsers}/>
   </FormDialog>
 {:else if modal === 'editlaunch'}

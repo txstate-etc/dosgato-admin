@@ -1,37 +1,20 @@
-<script lang="ts" context="module">
-  import type { Load } from '@sveltejs/kit'
+<script lang="ts">
+  import { Icon, FieldSelect, FieldChooserLink, FieldChoices, FieldMultiselect } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import checkIcon from '@iconify-icons/mdi/check'
   import minusIcon from '@iconify-icons/mdi/minus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
-  import { Icon, FieldSelect, FieldChooserLink, FieldChoices, FieldMultiselect } from '@dosgato/dialog'
+  import { ScreenReaderOnly, type PopupMenuItem } from '@txstate-mws/svelte-components'
+  import { isNull, unique } from 'txstate-utils'
+  import { base } from '$app/paths'
+  import { api, DetailPanel, messageForDialog, type CreateAssetRuleInput, ResponsiveTable } from '$lib'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
+  import { store } from './+page'
 
-  let siteOptions: PopupMenuItem[] = []
-
-  export const load: Load = async ({ params }) => {
-    await store.refresh(params.id)
-    if (!store.roleFetched()) return { status: 404 }
-    const sites = await api.getSiteList()
-    siteOptions = sites.map((s: SiteListSite) => ({ value: s.id, label: s.name }))
-    return {}
-  }
-
-  async function getRole (id: string) {
-    const role = await api.getRoleById(id)
-    return role
-  }
-
-  const store = new RoleDetailStore(getRole)
-</script>
-
-<script lang="ts">
-  import { base } from '$app/paths'
-  import { api, RoleDetailStore, DetailPanel, messageForDialog, type SiteListSite, type CreateAssetRuleInput, ResponsiveTable } from '$lib'
-  import { isNull, unique } from 'txstate-utils'
-  import { ScreenReaderOnly, type PopupMenuItem } from '@txstate-mws/svelte-components'
+  export let data: { siteOptions: { value: string, label: string }[] }
+  $: ({ siteOptions } = data)
 
   let modal: 'editbasic'|'addassetrule'|'deleterule'|undefined
 
@@ -91,8 +74,10 @@
   }
 
   function onClickDelete (ruleId, ruleType) {
-    store.setRuleEditing(ruleId, ruleType)
-    modal = 'deleterule'
+    return () => {
+      store.setRuleEditing(ruleId, ruleType)
+      modal = 'deleterule'
+    }
   }
 
 </script>

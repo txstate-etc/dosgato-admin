@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts">
   import folderOutline from '@iconify-icons/mdi/folder-outline'
   import applicationOutline from '@iconify-icons/mdi/application-outline'
   import databaseOutline from '@iconify-icons/mdi/database-outline'
@@ -13,22 +13,20 @@
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
-  import type { Load } from '@sveltejs/kit'
-  import { unique } from 'txstate-utils'
+  import { FieldText } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
-  import { templateRegistry } from '$lib/registry'
+  import { unique } from 'txstate-utils'
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, ensureRequiredNotNull, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry } from '$lib'
+  import Dialog from '$lib/components/Dialog.svelte'
+  import FormDialog from '$lib/components/FormDialog.svelte'
+  import '../index.css'
 
-  let templateKey
-  let mayManageGlobalData: boolean = false
+  export let data: { mayManageGlobalData: boolean }
 
-  export const load: Load = async ({ params }) => {
-    const template = await api.getTemplateInfo(params.id)
-    if (!template) return { status: 404 }
-    templateKey = template.key
-    dataListStore.open({ id: params.id, name: template.name })
-    mayManageGlobalData = await api.getGlobalDataAccessByTemplateKey(templateKey)
-    return {}
-  }
+  let modal: 'addfolder'|'adddata'|'deletefolder'|'renamefolder'|'publishdata'|'unpublishdata'|undefined
+
+  $: templateKey = $templateStore?.id
+  $: if ($templateStore) store.refresh()
 
   const statusIcon = {
     published: triangleIcon,
@@ -116,7 +114,7 @@
         hasChildren: !!globaldataroot.datafolders.length || !!globaldataroot.data.length,
         name: 'Global Data',
         permissions: {
-          create: mayManageGlobalData
+          create: data.mayManageGlobalData
         }
       })
       for (const dr of sitedataroots) {
@@ -155,23 +153,23 @@
     if (selectedItems[0].type === DataTreeNodeType.FOLDER) {
       if (dropTarget.type !== DataTreeNodeType.SITE) return false
       if (above) {
-        return mayManageGlobalData
+        return data.mayManageGlobalData
       } else {
         return dropTarget.permissions.create
       }
     } else {
       // Data item(s) moving
       if (above) {
-        if (dropTarget.type === DataTreeNodeType.SITE) return mayManageGlobalData
+        if (dropTarget.type === DataTreeNodeType.SITE) return data.mayManageGlobalData
         else if (dropTarget.type === DataTreeNodeType.FOLDER) {
           // this could be global data or data in a site, not in a folder
-          if (dropTarget.level === 1) return mayManageGlobalData
+          if (dropTarget.level === 1) return data.mayManageGlobalData
           else {
             return dropTarget.permissions.create
           }
         } else {
           // moving data above another data item
-          if (!dropTarget.parent) return mayManageGlobalData
+          if (!dropTarget.parent) return data.mayManageGlobalData
           else {
             // dropTarget is in a folder or site-level
             // TODO: TypeScript thinks the parent is a DataItem but it's a Site or Folder. WHY
@@ -190,18 +188,6 @@
   }
 
   const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible })
-</script>
-<script lang="ts">
-  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, ensureRequiredNotNull, type TypedTreeItem, dataListStore, templateStore, type DataItem, type DataFolder, type DataSite } from '$lib'
-  import './index.css'
-  import { FieldText } from '@dosgato/dialog'
-  import Dialog from '$lib/components/Dialog.svelte'
-  import FormDialog from '$lib/components/FormDialog.svelte'
-
-  let modal: 'addfolder'|'adddata'|'deletefolder'|'renamefolder'|'publishdata'|'unpublishdata'|undefined
-
-  $: templateKey = $templateStore?.id
-  $: if ($templateStore) store.refresh()
 
   function singleActions (item: TypedDataTreeItem) {
     if (item.type === DataTreeNodeType.DATA) {

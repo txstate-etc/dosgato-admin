@@ -26,7 +26,7 @@ export interface MutationResponse {
   messages: {
     arg: string
     message: string
-    type: 'error'|'warning'|'success'
+    type: 'error' | 'warning' | 'success'
   }[]
 }
 
@@ -42,7 +42,7 @@ export class Loader<T> {
     this.rejects = {}
   }
 
-  async get (id: string): Promise<T|undefined> {
+  async get (id: string): Promise<T | undefined> {
     return await new Promise((resolve, reject) => {
       this.ids.add(id)
       this.resolves[id] ??= []
@@ -133,7 +133,7 @@ class API {
     return page?.children ?? []
   }
 
-  protected async getSubPagesBatch (pageId: string|string[]) {
+  protected async getSubPagesBatch (pageId: string | string[]) {
     const { pages } = await this.query<{ pages: { id: string, children: TreePage[] }[] }>(GET_TREE_PAGES, { ids: toArray(pageId) })
     return pages
   }
@@ -157,7 +157,7 @@ class API {
     return await this.assetFolderChildrenLoader.get(folderId)
   }
 
-  protected async getSubFoldersAndAssetsBatch (folderIds: string|string[]) {
+  protected async getSubFoldersAndAssetsBatch (folderIds: string | string[]) {
     const { assetfolders } = await this.query<{ assetfolders: { id: string, folders: TreeAssetFolder[], assets: TreeAsset[] }[]}>(GET_ASSETFOLDER_CHILDREN, { ids: toArray(folderIds) })
     return assetfolders
   }
@@ -168,7 +168,7 @@ class API {
   }
 
   async getEditorPage (pageId: string) {
-    const { pages } = await this.query<{ pages: [PageEditorPage|undefined] }>(GET_EDITOR_PAGE, { id: pageId })
+    const { pages } = await this.query<{ pages: [PageEditorPage | undefined] }>(GET_EDITOR_PAGE, { id: pageId })
     return pages[0]
   }
 
@@ -367,7 +367,7 @@ class API {
     return createDataRule
   }
 
-  async removeRule (ruleId: string, type: 'GLOBAL'|'SITE'|'PAGE'|'TEMPLATE'|'ASSET'|'DATA') {
+  async removeRule (ruleId: string, type: 'GLOBAL' | 'SITE' | 'PAGE' | 'TEMPLATE' | 'ASSET' | 'DATA') {
     const { removeRule } = await this.query<{ removeRule: MutationResponse }>(REMOVE_RULE, { ruleId, type })
     return removeRule
   }

@@ -1,4 +1,6 @@
-<script lang="ts" context="module">
+<script lang="ts">
+  import { goto } from '$app/navigation'
+  import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type RoleListRole } from '$lib'
 
   type TypedRoleItem = TypedTreeItem<RoleListRole>
@@ -9,11 +11,6 @@
   }
 
   const store: TreeStore<RoleListRole> = new TreeStore(fetchChildren)
-</script>
-
-<script lang="ts">
-  import { goto } from '$app/navigation'
-  import { base } from '$app/paths'
 
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [

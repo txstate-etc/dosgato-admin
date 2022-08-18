@@ -1,36 +1,19 @@
-<script lang="ts" context="module">
-  import type { Load } from '@sveltejs/kit'
+<script lang="ts">
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import linkVariantOffIcon from '@iconify-icons/mdi/link-variant-off'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { FieldText, FieldMultiselect, Icon } from '@dosgato/dialog'
-
-  export const load: Load = async ({ params }) => {
-    await store.refresh(params.id)
-    if (!store.groupFetched()) return { status: 404 }
-    return {}
-  }
-
-  async function getGroup (id: string) {
-    const group = await api.getGroupById(id)
-    return group
-  }
-
-  const store = new GroupDetailStore(getGroup)
-</script>
-
-<script lang="ts">
   import { base } from '$app/paths'
-  import { api, GroupDetailStore, DetailPanel, type UserListUser } from '$lib'
+  import { api, DetailPanel, type UserListUser } from '$lib'
+  import { store } from './+page'
   let modal: 'editbasic'|'addmembers'|undefined
   let allUsers: UserListUser[]
 
   $: directMemberIds = $store.group.directMembers.map(m => m.id)
   $: subgroupIds = $store.group.subgroups.map(g => g.id)
   $: supergroupIds = $store.group.supergroups.map(g => g.id)
-  $: siteIds = $store.group.sites.map(s => s.id)
 
   async function onEditBasic (state) {
     const resp = await api.editGroup($store.group.id, state.name)

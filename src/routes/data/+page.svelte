@@ -1,26 +1,16 @@
-<script lang="ts" context="module">
-  import type { Load } from '@sveltejs/kit'
+<script lang="ts">
   import cubeOutline from '@iconify-icons/mdi/cube-outline'
   import { Icon } from '@dosgato/dialog'
-  import { templateRegistry } from '$lib/registry'
-
-  let templates: TemplateListTemplate[] = []
-  export const load: Load = async (input) => {
-    templates = await api.getTemplatesByType('DATA')
-    return {}
-  }
-
-</script>
-<script lang="ts">
-  import { ActionPanel, api, type TemplateListTemplate } from '$lib'
   import { base } from '$app/paths'
-</script>
+  import { ActionPanel, templateRegistry, type TemplateListTemplate } from '$lib'
 
+  export let data: { templates: TemplateListTemplate[] }
+</script>
 
 <ActionPanel actions={[]}>
   <div class="grid-wrapper">
     <div class="template-grid">
-      {#each templates as template (template.key)}
+      {#each data.templates as template (template.key)}
         <!-- TODO: What if the API returns the template but it is not in the registry here? -->
         {#if templateRegistry.getTemplate(template.key)}
           <a href={`${base}/data/${template.key}`}>

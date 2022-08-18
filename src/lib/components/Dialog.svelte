@@ -41,7 +41,6 @@
     background-color: #f4f4f4;
     border-radius: 0.5em;
     padding: 1em;
-    overflow: hidden;
   }
   section.tiny {
     width: 30vw;

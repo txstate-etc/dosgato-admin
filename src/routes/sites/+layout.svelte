@@ -1,17 +1,8 @@
-<script lang="ts" context="module">
-  import { base } from '$app/paths'
-  import { siteListStore } from '$lib'
-  import { subnav } from '$lib/stores/global'
-
-  export const load = async () => {
-    subnav.set([
-      { label: 'Sites', href: base + '/sites' }
-    ])
-    return {}
-  }
-</script>
 <script lang="ts">
   import { goto } from '$app/navigation'
+  import { base } from '$app/paths'
+  import { siteListStore, subnav } from '$lib'
+
   function onClose (idx: number) {
     const actual = idx - 1
     const wasactive = actual === $siteListStore.active

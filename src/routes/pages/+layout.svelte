@@ -1,19 +1,9 @@
-<script lang="ts" context="module">
-  import { base } from '$app/paths'
-  import { pageEditorStore } from '$lib'
-  import { subnav } from '$lib/stores/global'
+<script lang="ts">
   import applicationEditOutline from '@iconify-icons/mdi/application-edit-outline'
   import fileTree from '@iconify-icons/mdi/file-tree'
-
-  export const load = async () => {
-    subnav.set([
-      { label: 'Pages', href: base + '/pages', icon: fileTree }
-    ])
-    return {}
-  }
-</script>
-<script lang="ts">
   import { goto } from '$app/navigation'
+  import { base } from '$app/paths'
+  import { pageEditorStore, subnav } from '$lib'
   async function onClose (idx: number) {
     const actual = idx - 1
     let newactive = $pageEditorStore.active

@@ -1,6 +1,11 @@
-<script lang="ts" context="module">
+<script lang="ts">
   import accountMultiplePlusOutline from '@iconify-icons/mdi/account-multiple-plus-outline'
   import accountMultipleRemoveOutline from '@iconify-icons/mdi/account-multiple-remove-outline'
+  import { goto } from '$app/navigation'
+  import { base } from '$app/paths'
+  import Dialog from '$lib/components/Dialog.svelte'
+  import FormDialog from '$lib/components/FormDialog.svelte'
+  import { FieldText } from '@dosgato/dialog'
   import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type GroupListGroup } from '$lib'
 
   type TypedGroupItem = TypedTreeItem<GroupListGroup>
@@ -9,18 +14,6 @@
     const children = group ? await api.getSubgroups(group.id) : await api.getRootGroups()
     return children.map(g => ({ ...g, hasChildren: !!g.subgroups.length }))
   }
-
-  const store: TreeStore<GroupListGroup> = new TreeStore(fetchChildren)
-</script>
-
-<script lang="ts">
-  import { goto } from '$app/navigation'
-  import { base } from '$app/paths'
-  import Dialog from '$lib/components/Dialog.svelte'
-  import FormDialog from '$lib/components/FormDialog.svelte'
-  import { FieldText } from '@dosgato/dialog'
-
-  let modal: 'addgroup'|'deletegroup'|undefined
 
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [
@@ -36,6 +29,10 @@
     ]
     return actions
   }
+
+  const store: TreeStore<GroupListGroup> = new TreeStore(fetchChildren)
+
+  let modal: 'addgroup'|'deletegroup'|undefined
 
   async function onAddGroup (state) {
     const parentId: string|undefined = $store.selectedItems.length ? $store.selectedItems[0].id : undefined

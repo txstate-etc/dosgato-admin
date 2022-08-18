@@ -1,20 +1,18 @@
-<script lang="ts" context="module">
+<script lang="ts">
   import accountIcon from '@iconify-icons/mdi/account'
-  import accountCancel from '@iconify-icons/mdi/account-cancel'
   import accountCheck from '@iconify-icons/mdi/account-check'
+  import accountCancel from '@iconify-icons/mdi/account-cancel'
   import accountOff from '@iconify-icons/mdi/account-off'
   import pencilIcon from '@iconify-icons/mdi/pencil'
-  import type { Load } from '@sveltejs/kit'
   import { sortby } from 'txstate-utils'
-  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, userListStore, type TypedTreeItem, type UserListUser } from '$lib'
+  import { goto } from '$app/navigation'
+  import { base } from '$app/paths'
+  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type UserListUser } from '$lib'
+  import Dialog from '$lib/components/Dialog.svelte'
 
   type TypedUserItem = TypedTreeItem<UserListUser>
 
-  export const load: Load = async (input) => {
-    const users = await api.getUserList()
-    userListStore.update(v => ({ ...v, users }))
-    return {}
-  }
+  let modal: 'disable'|'enable'|'edit'|undefined
 
   async function fetchChildren (user?: TypedUserItem) {
     if (user) return []
@@ -28,12 +26,6 @@
   }
 
   const store: TreeStore<UserListUser> = new TreeStore(fetchChildren)
-</script>
-<script lang="ts">
-  import Dialog from '$lib/components/Dialog.svelte'
-  import { goto } from '$app/navigation'
-  import { base } from '$app/paths'
-  let modal: 'disable'|'enable'|'edit'|undefined
 
   function singleactions (user: TypedUserItem) {
     const actions: ActionPanelAction[] = [

@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts">
   import { Icon } from '@dosgato/dialog'
   import accountMultiple from '@iconify-icons/mdi/account-multiple'
   import closeThick from '@iconify-icons/mdi/close-thick'
@@ -8,29 +8,10 @@
   import imageMultipleOutline from '@iconify-icons/mdi/image-multiple-outline'
   import menuDown from '@iconify-icons/mdi/menu-down'
   import webIcon from '@iconify-icons/mdi/web'
-  import type { Load } from '@sveltejs/kit'
   import { PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
   import { base } from '$app/paths'
-  import { api, environmentConfig, globalStore, subnav, type SubNavLink } from '$lib'
-  import { getToken } from '../local'
-
-  export const load: Load = async (input) => {
-    api.fetch = input.fetch
-    api.token = getToken(input)
-    if (api.token) {
-      sessionStorage.setItem('token', api.token)
-    } else {
-      api.token = sessionStorage.getItem('token') ?? undefined
-    }
-    Object.assign(environmentConfig, await api.config())
-    const { me, access } = await api.getSelf()
-    if (!me) return { status: 403, error: 'You are not authorized to use this system.' }
-    globalStore.update(v => ({ ...v, me, access }))
-    return {}
-  }
-</script>
-<script lang="ts">
   import { page } from '$app/stores'
+  import { globalStore, subnav, type SubNavLink } from '$lib'
   import LabeledIcon from '$lib/components/LabeledIcon.svelte'
   let buttonelement: HTMLElement
 
