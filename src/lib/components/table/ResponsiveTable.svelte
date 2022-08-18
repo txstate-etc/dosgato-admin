@@ -33,7 +33,7 @@
         {#if rowActions.length}
           <td class="actions">
             {#each rowActions as action (action.label)}
-              <button on:click={action.onClick(item)}>
+              <button on:click={() => action.onClick(item)}>
                 <div class="button-content">
                   <span class="button-icon"><Icon icon={action.icon} hiddenLabel={action.hiddenLabel}/></span>
                   <span class="button-label">{action.label}</span>
