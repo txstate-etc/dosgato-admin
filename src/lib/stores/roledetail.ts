@@ -6,7 +6,7 @@ interface IRoleDetailStore {
   role: FullRole
   editing?: {
     id: string
-    type: 'asset'|'data'|'global'|'page'|'site'|'template'
+    type: 'asset' | 'data' | 'global' | 'page' | 'site' | 'template'
   }
 }
 
@@ -40,7 +40,7 @@ export class RoleDetailStore extends Store<IRoleDetailStore> {
     return this.value.role.id.length > 0
   }
 
-  setRuleEditing (id: string, type: 'asset'|'data'|'global'|'page'|'site'|'template') {
+  setRuleEditing (id: string, type: 'asset' | 'data' | 'global' | 'page' | 'site' | 'template') {
     this.update(v => {
       return set(v, 'editing', { id, type })
     })

@@ -12,7 +12,7 @@ export interface SubNavLink {
   label: string
   href: string
   icon?: IconifyIcon
-  onClose?: (idx: number) => void|Promise<void>
+  onClose?: (idx: number) => void | Promise<void>
 }
 
 export interface EnvironmentConfig {

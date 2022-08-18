@@ -11,7 +11,7 @@ export interface IPageEditorStore {
 
 export interface EditorState {
   page: PageEditorPage
-  modal?: 'edit'|'create'|'delete'|'move'
+  modal?: 'edit' | 'create' | 'delete' | 'move'
   editing?: {
     path: string
     data: any

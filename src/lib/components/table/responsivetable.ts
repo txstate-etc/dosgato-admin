@@ -9,7 +9,7 @@ export interface ResponsiveTableIcon {
 export interface ResponsiveTableRowAction {
   icon: IconifyIcon
   label: string
-  onClick: (params) => void|Promise<void>
+  onClick: (params) => void | Promise<void>
   hiddenLabel?: string
 }
 
@@ -18,6 +18,6 @@ export interface ResponsiveTableHeader {
   label: string
   get?: string
   component?: SvelteComponent
-  icon?: ResponsiveTableIcon|((item: any) => ResponsiveTableIcon|undefined)
+  icon?: ResponsiveTableIcon | ((item: any) => ResponsiveTableIcon | undefined)
   render?: (item: any) => string
 }

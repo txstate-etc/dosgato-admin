@@ -22,7 +22,7 @@ export const chooserClient: Client = {
       return pages.map(processPage)
     } else {
       const assetsFolders = await api.getSubFoldersAndAssetsByPath(path)
-      return assetsFolders.map<Folder|Asset>(a => ({ ...a, url: a.path }))
+      return assetsFolders.map<Folder | Asset>(a => ({ ...a, url: a.path }))
     }
   },
   find: async function (source: string, path: string, searchstring: string): Promise<AnyItem[]> {

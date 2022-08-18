@@ -6,5 +6,5 @@ export interface ActionPanelAction {
   label: string
   icon?: IconifyIcon
   disabled?: boolean
-  onClick: () => void|Promise<void>
+  onClick: () => void | Promise<void>
 }
