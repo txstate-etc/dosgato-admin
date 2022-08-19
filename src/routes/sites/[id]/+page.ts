@@ -10,7 +10,7 @@ export const load: PageLoad = async ({ params }) => {
 
   const [organizations, users] = await Promise.all([
     api.getOrganizationList(),
-    api.getUserList()
+    api.getUserList({ system: false })
   ])
   siteListStore.open({ id: params.id, name: site.name })
   return { organizations, users }

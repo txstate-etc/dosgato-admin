@@ -40,7 +40,7 @@
     const resp = await api.updateUserInfo($store.user.id, state)
     if (resp.success) store.refresh($store.user.id)
     modal = undefined
-    return { ...resp, data: resp.user }
+    return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
   }
 
   async function validateBasicInfo (state) {
@@ -189,8 +189,8 @@
     title= {`Edit ${$store.user.id}`}
     preload={{ name: $store.user.name, email: $store.user.email, trained: $store.user.trained }}
     on:dismiss={() => { modal = undefined }}>
-    <FieldText path='name' label='Full Name' required={true}></FieldText>
-    <FieldText path='email' label='Email' required={true}></FieldText>
+    <FieldText path='name' label='Full Name' required={true}/>
+    <FieldText path='email' label='Email' required={true}/>
     <FieldCheckbox path='trained' label='Trained' defaultValue={false} boxLabel='User has received training'/>
   </FormDialog>
 {:else if modal === 'editgroups'}

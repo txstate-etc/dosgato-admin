@@ -16,7 +16,8 @@ import {
   type FullRole, type SiteListSite, type GetAvailableComponents, type GetSubPagesByPath,
   type GetSubFoldersAndAssetsByPath, type GetPageByLink, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule,
   type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE, type FullSite,
-  type Organization, type SiteComment, type TreeAssetFolder, type TreeAsset, GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS
+  type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
+  GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -192,8 +193,8 @@ class API {
     return pages[0]
   }
 
-  async getUserList (enabled?: boolean) {
-    const { users } = await this.query<{ users: UserListUser[] }>(GET_USER_LIST, { enabled })
+  async getUserList (filter: UserFilter) {
+    const { users } = await this.query<{ users: UserListUser[] }>(GET_USER_LIST, { filter })
     return users
   }
 

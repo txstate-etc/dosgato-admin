@@ -124,9 +124,14 @@ export interface FullUser {
   }[]
 }
 
+export interface UserFilter {
+  enabled?: boolean
+  system?: boolean
+}
+
 export const GET_USER_LIST = `
-  query getUserList ($enabled: Boolean) {
-    users (filter: { enabled: $enabled }) {
+  query getUserList ($filter: UserFilter!) {
+    users (filter: $filter) {
       ${userDetails}
     }
   }

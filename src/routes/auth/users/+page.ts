@@ -5,7 +5,7 @@ import type { PageLoad } from './$types'
 import { api, userListStore } from '$lib'
 
 export const load: PageLoad = async () => {
-  const users = await api.getUserList()
+  const users = await api.getUserList({ system: false })
   userListStore.update(v => ({ ...v, users }))
   return {}
 }

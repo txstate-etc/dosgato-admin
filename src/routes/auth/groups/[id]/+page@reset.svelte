@@ -31,7 +31,7 @@
   }
 
   async function openAddUsersDialog () {
-    allUsers ??= await api.getUserList()
+    allUsers ??= await api.getUserList({ enabled: true })
     modal = 'addmembers'
   }
 

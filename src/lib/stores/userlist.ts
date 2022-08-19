@@ -12,3 +12,4 @@ class UserListStore extends Store<IUserListStore> {
 }
 
 export const userListStore = new UserListStore()
+export const systemUserListStore = new UserListStore()

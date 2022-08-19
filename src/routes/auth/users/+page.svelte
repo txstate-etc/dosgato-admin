@@ -16,7 +16,7 @@
 
   async function fetchChildren (user?: TypedUserItem) {
     if (user) return []
-    return await api.getUserList()
+    return await api.getUserList({ system: false })
   }
 
   function renderRoles (user: TypedUserItem) {
