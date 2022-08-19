@@ -14,7 +14,7 @@ interface Role {
   pageRules: AccessDetailPageRule[]
 }
 
-const initialValue: FullGroup = { id: '', name: '', sites: [], directMembers: [], indirectMembers: [], subgroups: [], supergroups: [], directManagers: [], managersThroughSite: [], directRoles: [], rolesThroughParentGroup: [] }
+const initialValue: FullGroup = { id: '', name: '', directMembers: [], indirectMembers: [], subgroups: [], supergroups: [], directRoles: [], rolesThroughParentGroup: [] }
 
 export class GroupDetailStore extends Store<IGroupDetailStore> {
   constructor (public fetchGroup: (id: string) => Promise<FullGroup>) {

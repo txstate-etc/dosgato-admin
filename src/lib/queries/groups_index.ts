@@ -49,14 +49,6 @@ const fullGroupDetails = `
       name
     }
   }
-  sites {
-    id
-    name
-    managers {
-      id
-      name
-    }
-  }
   directMembers: users(direct: true) {
     id
     name
@@ -95,14 +87,6 @@ export interface FullGroup {
     id: string
     name: string
     parents: {
-      id: string
-      name: string
-    }[]
-  }[]
-  sites: {
-    id: string
-    name: string
-    managers: {
       id: string
       name: string
     }[]
