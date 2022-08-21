@@ -5,6 +5,7 @@ import { linkTestComponentTemplate } from './linkcomponent.js'
 import { panelTemplate } from './panel.js'
 import { quoteTemplate } from './quote.js'
 import { pageTemplate1 } from './pagetemplate1.js'
+import { pageTemplate2 } from './pagetemplate2.js'
 
 export * from './login.js'
 
@@ -15,5 +16,6 @@ export const templates = [
   linkTestComponentTemplate,
   quoteTemplate,
   panelTemplate,
-  pageTemplate1
+  pageTemplate1,
+  pageTemplate2
 ]

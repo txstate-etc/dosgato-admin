@@ -10,7 +10,7 @@ import {
   GET_USER_BY_ID, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS,
   GET_SUBGROUPS, GET_GROUP_BY_ID, GET_ROLE_BY_ID, GET_SITE_LIST, GET_SUBPAGES_BY_PATH,
   GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, GET_AVAILABLE_COMPONENTS, GET_TEMPLATES_BY_TYPE, RENAME_SITE,
-  GET_SITE_BY_ID, GET_ORGANIZATION_LIST, UPDATE_SITE_MANAGEMENT, SET_LAUNCH_URL, ADD_SITE_COMMENT,
+  GET_SITE_BY_ID, GET_ORGANIZATION_LIST, UPDATE_SITE_MANAGEMENT, SET_LAUNCH_URL, ADD_SITE_COMMENT, ADD_PAGETREE,
   type DataFolder, type GlobalSelf, type PageEditorPage, type TemplateListTemplate, type DataItem, type DataRoot,
   type TreePage, type UserListUser, type FullUser, type GroupListGroup, type FullGroup, type RoleListRole,
   type FullRole, type SiteListSite, type GetAvailableComponents, type GetSubPagesByPath,
@@ -371,6 +371,11 @@ class API {
   async addSiteComment (siteId: string, comment: string) {
     const { createSiteComment } = await this.query<{ createSiteComment: MutationResponse & { comment: SiteComment } }>(ADD_SITE_COMMENT, { siteId, comment })
     return createSiteComment
+  }
+
+  async addPagetree (siteId: string, name: string, data: PageData, validateOnly?: boolean) {
+    const { createPagetree } = await this.query<{ createPagetree: MutationResponse & { pagetree: SitePagetree }}>(ADD_PAGETREE, { siteId, name, data, validateOnly })
+    return createPagetree
   }
 
   async setLaunchURL (siteId: string, host?: string, path?: string, validateOnly?: boolean) {

@@ -18,6 +18,18 @@ export interface SiteComment {
   createdAt: string
 }
 
+export const sitePagetreeDetails = `
+  id
+  name
+  type
+`
+
+export interface SitePagetree {
+  id: string
+  name: string
+  type: string
+}
+
 export const siteDetails = `
   id
   name
@@ -84,9 +96,7 @@ export const fullSiteDetails = `
     name
   }
   pagetrees {
-    id
-    name
-    type
+    ${sitePagetreeDetails}
   }
   pageTemplates: templates(filter: {types: [PAGE]}) {
     key
@@ -177,11 +187,7 @@ export interface FullSite {
     id: string
     name: string
   }[]
-  pagetrees: {
-    id: string
-    name: string
-    type: string
-  }[]
+  pagetrees: SitePagetree[]
   pageTemplates: {
     key: string
     name: string
@@ -288,7 +294,7 @@ export const UPDATE_SITE_MANAGEMENT = `
 `
 
 export const SET_LAUNCH_URL = `
-  mutation setLaunchURL ($siteId: ID!, $host: UrlSafeString, $path: UrlSafeString, $validateOnly: Boolean) {
+  mutation setLaunchURL ($siteId: ID!, $host: String, $path: String, $validateOnly: Boolean) {
     setLaunchURL (siteId: $siteId, host: $host, path: $path, validateOnly: $validateOnly) {
       ${mutationResponse}
       site {
@@ -304,6 +310,17 @@ export const ADD_SITE_COMMENT = `
       ${mutationResponse}
       comment: siteComment {
         ${commentDetails}
+      }
+    }
+  }
+`
+
+export const ADD_PAGETREE = `
+  mutation createPagetree ($siteId: ID!, $name: String!, $data: JsonData!, $validateOnly: Boolean) {
+    createPagetree (siteId: $siteId, name: $name, data: $data, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      pagetree {
+        ${sitePagetreeDetails}
       }
     }
   }

@@ -1,6 +1,5 @@
 <script lang="ts">
   import pencilIcon from '@iconify-icons/mdi/pencil'
-  import arrowLeft from '@iconify-icons/mdi/arrow-left'
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import archiveOutline from '@iconify-icons/mdi/archive-outline'
@@ -9,16 +8,17 @@
   import minusIcon from '@iconify-icons/mdi/minus'
   import { Icon, FieldText, FieldSelect, FieldMultiselect } from '@dosgato/dialog'
   import FormDialog from '$lib/components/FormDialog.svelte'
-  import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
+  import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
+  import { SubForm, FormStore } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type Organization, type UserListUser } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, templateRegistry, type Organization, type UserListUser, type TemplateListTemplate } from '$lib'
   import { base } from '$app/paths'
   import { store } from './+page'
-  import type { PageData } from './$types'
+  import type { PageData } from '@dosgato/templating'
 
   export let data: { organizations: Organization[], users: UserListUser[] }
 
-  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|undefined = undefined
+  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|undefined = undefined
 
   async function searchUsers (search) {
     const query = search.toLowerCase()
@@ -71,6 +71,44 @@
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
+
+  interface AddPagetreeState {
+    name: string
+    templateKey: string
+    data: PageData
+  }
+
+  const addPagetreeFormStore: FormStore = new FormStore<AddPagetreeState>(onAddPagetree, validateAddPagetree)
+
+  async function validateAddPagetree (state) {
+    const localMessages = ensureRequiredNotNull(state, ['name', 'templateKey'])
+    if (!localMessages.length) {
+      const data = Object.assign({}, state.data, { templateKey: state.templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+      const resp = await api.addPagetree($store.site.id, state.name, data, true)
+      return messageForDialog(resp.messages, 'data')
+    }
+    return localMessages
+  }
+
+  async function onAddPagetree (state: AddPagetreeState) {
+    const localMessages = ensureRequiredNotNull(state, ['name', 'templateKey'])
+    if (!localMessages.length) {
+      // TODO: Get the actual schema version from somewhere
+      const data = Object.assign({}, state.data, { templateKey: state.templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+      const resp = await api.addPagetree($store.site.id, state.name, data)
+      if (resp.success) {
+        store.refresh($store.site.id)
+        modal = undefined
+        // TODO: This should reset the dialog so it opens blank when you try to create another pagetree. Instead, it has the
+        // previously saved values.
+        addPagetreeFormStore.reset()
+      }
+      return { success: resp.success, messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')], data: state }
+    }
+    return { success: false, messages: localMessages, data: state }
+  }
+
+
 </script>
 
 <DetailPanel header='Basic Information' button={$store.site.permissions.rename ? { icon: pencilIcon, hiddenLabel: 'edit basic information', onClick: () => { modal = 'editbasic' } } : undefined}>
@@ -91,7 +129,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Page Trees' button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => {} } : undefined}>
+<DetailPanel header='Page Trees' button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => { modal = 'addpagetree' } } : undefined}>
   <table>
     <tr class='headers'>
       <th>Name</th>
@@ -122,11 +160,15 @@
 <DetailPanel header='Site Management' button={$store.site.permissions.manageGovernance ? { icon: pencilIcon, hiddenLabel: 'edit site management', onClick: () => { modal = 'editsitemanagement' } } : undefined}>
   <div class="row">
     <div class="label">Organization:</div>
-    <div class="value">{$store.site.organization.name}</div>
+    {#if $store.site.organization}
+      <div class="value">{$store.site.organization.name}</div>
+    {/if}
   </div>
   <div class="row">
     <div class="label">Owner:</div>
-    <div class="value">{$store.site.owner.name} ({$store.site.owner.id})</div>
+    {#if $store.site.owner}
+      <div class="value">{$store.site.owner.name} ({$store.site.owner.id})</div>
+    {/if}
   </div>
   <div class="row">
     <div class="label">Manager(s):</div>
@@ -230,20 +272,17 @@
 
 <DetailPanel header="Audit" button={{ icon: plusIcon, hiddenLabel: 'add comment', onClick: () => { modal = 'addcomment' } }}>
   {#if $store.site.comments.length}
-    <table>
-      <tr>
-        <th>Timestamp</th>
-        <th>Updated By</th>
-        <th>Description</th>
-      </tr>
+    <ul use:eq>
       {#each $store.site.comments.reverse() as comment (comment.id)}
-        <tr>
-          <td>{DateTime.fromISO(comment.createdAt).toFormat('LLL d, yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</td>
-          <td>{comment.createdBy.id}</td>
-          <td>{comment.comment}</td>
-        </tr>
+        <li class='comment-card'>
+          <span class="comment-text">{comment.comment}</span>
+          <div>
+            <span class="comment-date">{DateTime.fromISO(comment.createdAt).toFormat('LLL d, yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>
+            <span class="comment-creator">{comment.createdBy.id}</span>
+          </div>
+        </li>
       {/each}
-    </table>
+    </ul>
   {:else}
     No comments found.
   {/if}
@@ -287,6 +326,27 @@
     <FieldText path='host' label='Host'/>
     <FieldText path='path' label='Path'/>
   </FormDialog>
+{:else if modal === 'addpagetree'}
+  <FormDialog
+    name="addpagetree"
+    title="Add Pagetree"
+    store={addPagetreeFormStore}
+    submit={onAddPagetree}
+    validate={validateAddPagetree}
+    on:dismiss={() => { addPagetreeFormStore.reset(); modal = undefined }}>
+    <FieldText path='name' label='Name' required/>
+    <FieldSelect path='templateKey' label='Root Page Template' placeholder='Select' choices={$store.site.pageTemplates.map(t => ({ label: t.name, value: t.key }))}/>
+    {#if $addPagetreeFormStore.data?.templateKey?.length > 0}
+    <SubForm path='data'>
+      {@const template = templateRegistry.getTemplate($addPagetreeFormStore.data.templateKey)}
+      {#if template && template.dialog}
+        <svelte:component this={template.dialog} store={addPagetreeFormStore} />
+      {:else}
+        <span>This content uses an unrecognized template. Please contact support for assistance.</span>
+      {/if}
+    </SubForm>
+    {/if}
+  </FormDialog>
 {/if}
 <style>
   .row {
@@ -321,6 +381,34 @@
     border: 0;
     padding: 0;
     background-color: transparent;
+  }
+  li.comment-card {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5em;
+  }
+  li.comment-card:nth-child(even) {
+    background-color: #f6f7f9;
+  }
+  li.comment-card .comment-text {
+    margin-bottom: 0.5em;
+  }
+  li.comment-card div {
+    display: flex;
+    justify-content: space-between;
+  }
+  li.comment-card div span {
+    width: 50%;
+  }
+  li.comment-card .comment-creator {
+    text-align: right;
+  }
+  [data-eq~="400px"] li.comment-card div {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  [data-eq~="400px"] li.comment-card div span {
+    width: auto;
   }
   table {
     width: 100%;

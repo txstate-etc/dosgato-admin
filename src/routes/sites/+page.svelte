@@ -22,7 +22,7 @@
     return siteList
   }
   function renderOwner (site: TypedSiteItem) {
-    return `${site.owner.name} (${site.owner.id})`
+    return site.owner ? `${site.owner.name} (${site.owner.id})` : ''
   }
   const store: TreeStore<SiteListSite> = new TreeStore(fetchChildren)
 
