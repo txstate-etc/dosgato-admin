@@ -17,7 +17,7 @@ import {
   type GetSubFoldersAndAssetsByPath, type GetPageByLink, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule,
   type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE, type FullSite,
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
-  GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE
+  GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -391,6 +391,11 @@ class API {
   async promotePagetree (pagetreeId: string) {
     const { promotePagetree } = await this.query<{ promotePagetree: MutationResponse & { pagetree: SitePagetree }}>(PROMOTE_PAGETREE, { pagetreeId })
     return promotePagetree
+  }
+
+  async archivePagetree (pagetreeId: string) {
+    const { archivePagetree } = await this.query<{ archivePagetree: MutationResponse & { pagetree: SitePagetree }}>(ARCHIVE_PAGETREE, { pagetreeId })
+    return archivePagetree
   }
 
   async setLaunchURL (siteId: string, host?: string, path?: string, validateOnly?: boolean) {

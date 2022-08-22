@@ -358,3 +358,14 @@ export const PROMOTE_PAGETREE = `
     }
   }
 `
+
+export const ARCHIVE_PAGETREE = `
+  mutation archivePagetree ($pagetreeId: ID!) {
+    archivePagetree (pagetreeId: $pagetreeId) {
+      ${mutationResponse}
+      pagetree {
+        ${sitePagetreeDetails}
+      }
+    }
+  }
+`

@@ -19,7 +19,7 @@
 
   export let data: { organizations: Organization[], users: UserListUser[] }
 
-  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'|'promotepagetree'|undefined = undefined
+  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'|'promotepagetree'|'archivepagetree'|undefined = undefined
 
   async function searchUsers (search) {
     const query = search.toLowerCase()
@@ -157,6 +157,22 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
+  async function onClickArchivePagetree (id, name) {
+    store.setPagetreeEditing(id, name)
+    modal = 'archivepagetree'
+  }
+
+  async function onArchivePagetree () {
+    if (!$store.editingPagetree) return
+    const resp = await api.archivePagetree($store.editingPagetree.id)
+    if (resp.success) {
+      store.refresh($store.site.id)
+      store.cancelEditPagetree()
+      modal = undefined
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
+  }
+
 </script>
 
 <DetailPanel header='Basic Information' button={$store.site.permissions.rename ? { icon: pencilIcon, hiddenLabel: 'edit basic information', onClick: () => { modal = 'editbasic' } } : undefined}>
@@ -194,7 +210,7 @@
             <button title="Promote to Primary" on:click={() => { onClickPromotePagetree(pagetree.id, pagetree.name) }}><Icon icon={applicationExport}/><ScreenReaderOnly>promote page tree</ScreenReaderOnly></button>
           {/if}
           {#if pagetree.type === 'SANDBOX'}
-            <button title="Archive"><Icon icon={archiveOutline}/><ScreenReaderOnly>archive page tree</ScreenReaderOnly></button>
+            <button title="Archive" on:click={() => { onClickArchivePagetree(pagetree.id, pagetree.name) }}><Icon icon={archiveOutline}/><ScreenReaderOnly>archive page tree</ScreenReaderOnly></button>
           {/if}
           {#if pagetree.type !== 'PRIMARY'}
             <button title="Delete" on:click={() => { onClickDeletePagetree(pagetree.id, pagetree.name) }}><Icon icon={deleteOutline}/><ScreenReaderOnly>delete page tree</ScreenReaderOnly></button>
@@ -421,6 +437,15 @@
     title="Promote Pagetree"
     on:continue={onPromotePagetree}>
     Promote this pagetree to primary? The current primary pagetree will be archived.
+  </Dialog>
+{:else if modal === 'archivepagetree'}
+  <Dialog
+    on:dismiss={() => { store.cancelEditPagetree(); modal = undefined }}
+    continueText="Archive"
+    cancelText="Cancel"
+    title="Archive Pagetree"
+    on:continue={onArchivePagetree}>
+    Archive this pagetree?
   </Dialog>
 {/if}
 <style>
