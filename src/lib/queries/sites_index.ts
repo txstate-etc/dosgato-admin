@@ -347,3 +347,14 @@ export const DELETE_PAGETREE = `
     }
   }
 `
+
+export const PROMOTE_PAGETREE = `
+  mutation promotePagetree ($pagetreeId: ID!) {
+    promotePagetree (pagetreeId: $pagetreeId) {
+      ${mutationResponse}
+      pagetree {
+        ${sitePagetreeDetails}
+      }
+    }
+  }
+`
