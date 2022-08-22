@@ -8,6 +8,7 @@
   import minusIcon from '@iconify-icons/mdi/minus'
   import { Icon, FieldText, FieldSelect, FieldMultiselect } from '@dosgato/dialog'
   import FormDialog from '$lib/components/FormDialog.svelte'
+  import Dialog from '$lib/components/Dialog.svelte'
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { SubForm, FormStore } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
@@ -18,7 +19,7 @@
 
   export let data: { organizations: Organization[], users: UserListUser[] }
 
-  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|undefined = undefined
+  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'|undefined = undefined
 
   async function searchUsers (search) {
     const query = search.toLowerCase()
@@ -124,6 +125,22 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
+  async function onClickDeletePagetree (id, name) {
+    store.setPagetreeEditing(id, name)
+    modal = 'deletepagetree'
+  }
+
+  async function onDeletePagetree () {
+    if (!$store.editingPagetree) return
+    const resp = await api.deletePagetree($store.editingPagetree.id)
+    if (resp.success) {
+      store.refresh($store.site.id)
+      store.cancelEditPagetree()
+      modal = undefined
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+  }
+
 </script>
 
 <DetailPanel header='Basic Information' button={$store.site.permissions.rename ? { icon: pencilIcon, hiddenLabel: 'edit basic information', onClick: () => { modal = 'editbasic' } } : undefined}>
@@ -164,7 +181,7 @@
             <button title="Archive"><Icon icon={archiveOutline}/><ScreenReaderOnly>archive page tree</ScreenReaderOnly></button>
           {/if}
           {#if pagetree.type !== 'PRIMARY'}
-            <button title="Delete"><Icon icon={deleteOutline}/><ScreenReaderOnly>delete page tree</ScreenReaderOnly></button>
+            <button title="Delete" on:click={() => { onClickDeletePagetree(pagetree.id, pagetree.name) }}><Icon icon={deleteOutline}/><ScreenReaderOnly>delete page tree</ScreenReaderOnly></button>
           {/if}
         </td>
       </tr>
@@ -371,7 +388,15 @@
     on:dismiss={() => { store.cancelEditPagetree(); modal = undefined }}>
     <FieldText path="name" label="Name" required/>
   </FormDialog>
-
+{:else if modal === 'deletepagetree'}
+  <Dialog
+    on:dismiss={() => { store.cancelEditPagetree(); modal = undefined }}
+    continueText="Delete"
+    cancelText="Cancel"
+    title="Delete Pagetree"
+    on:continue={onDeletePagetree}>
+  Delete this pagetree?
+  </Dialog>
 {/if}
 <style>
   .row {

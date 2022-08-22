@@ -336,3 +336,14 @@ export const UPDATE_PAGETREE = `
     }
   }
 `
+
+export const DELETE_PAGETREE = `
+  mutation deletePagetree ($pagetreeId: ID!) {
+    deletePagetree (pagetreeId: $pagetreeId) {
+      ${mutationResponse}
+      pagetree {
+        ${sitePagetreeDetails}
+      }
+    }
+  }
+`
