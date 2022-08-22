@@ -1,6 +1,6 @@
 import { Store } from '@txstate-mws/svelte-store'
 import type { FullSite } from '$lib/queries'
-import { isNull, sortby } from 'txstate-utils'
+import { isNull, sortby, set } from 'txstate-utils'
 
 interface ISiteDetailStore {
   site: FullSite
@@ -8,6 +8,10 @@ interface ISiteDetailStore {
   siteRoles: SiteRole[]
   groups: SiteGroup[]
   users: SiteUser[]
+  editingPagetree?: {
+    id: string
+    name: string
+  }
 }
 
 interface SiteRole {
@@ -94,5 +98,17 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
 
   siteFetched () {
     return this.value.site.id.length > 0
+  }
+
+  setPagetreeEditing (id: string, name: string) {
+    this.update(v => {
+      return set(v, 'editingPagetree', { id, name })
+    })
+  }
+
+  cancelEditPagetree () {
+    this.update(v => {
+      return set(v, 'editingPagetree', undefined)
+    })
   }
 }

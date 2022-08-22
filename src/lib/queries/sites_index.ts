@@ -325,3 +325,14 @@ export const ADD_PAGETREE = `
     }
   }
 `
+
+export const UPDATE_PAGETREE = `
+  mutation updatePagetree ($pagetreeId: ID!, $name: String!, $validateOnly: Boolean) {
+    updatePagetree (pagetreeId: $pagetreeId, name: $name, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      pagetree {
+        ${sitePagetreeDetails}
+      }
+    }
+  }
+`

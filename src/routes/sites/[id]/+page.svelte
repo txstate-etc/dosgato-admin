@@ -18,7 +18,7 @@
 
   export let data: { organizations: Organization[], users: UserListUser[] }
 
-  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|undefined = undefined
+  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|undefined = undefined
 
   async function searchUsers (search) {
     const query = search.toLowerCase()
@@ -108,6 +108,21 @@
     return { success: false, messages: localMessages, data: state }
   }
 
+  async function onClickEditPagetree (id, name) {
+    store.setPagetreeEditing(id, name)
+    modal = 'editpagetree'
+  }
+
+  async function onRenamePagetree (state) {
+    if (!$store.editingPagetree) return
+    const resp = await api.updatePagetree($store.editingPagetree.id, state.name)
+    if (resp.success) {
+      store.refresh($store.site.id)
+      store.cancelEditPagetree()
+      modal = undefined
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+  }
 
 </script>
 
@@ -141,7 +156,7 @@
         <td>{pagetree.name}</td>
         <td>{pagetree.type}</td>
         <td class="pagetree-buttons">
-          <button title="Edit"><Icon icon={pencilIcon}/><ScreenReaderOnly>rename page tree</ScreenReaderOnly></button>
+          <button title="Edit" on:click={() => { onClickEditPagetree(pagetree.id, pagetree.name) }}><Icon icon={pencilIcon}/><ScreenReaderOnly>rename page tree</ScreenReaderOnly></button>
           {#if pagetree.type === 'SANDBOX'}
             <button title="Promote to Primary"><Icon icon={applicationExport}/><ScreenReaderOnly>promote page tree</ScreenReaderOnly></button>
           {/if}
@@ -347,6 +362,16 @@
     </SubForm>
     {/if}
   </FormDialog>
+{:else if modal === 'editpagetree'}
+  <FormDialog
+    name="editpagetree"
+    title="Rename Pagetree"
+    submit={onRenamePagetree}
+    preload={{ name: $store.editingPagetree?.name }}
+    on:dismiss={() => { store.cancelEditPagetree(); modal = undefined }}>
+    <FieldText path="name" label="Name" required/>
+  </FormDialog>
+
 {/if}
 <style>
   .row {
