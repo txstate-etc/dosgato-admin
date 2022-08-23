@@ -18,7 +18,7 @@ import {
   type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE, type FullSite,
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
   GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
-  SET_SITE_TEMPLATES
+  SET_SITE_TEMPLATES, GET_ALL_TEMPLATES
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -227,6 +227,11 @@ class API {
   async removeUserFromGroup (userId: string, groupId: string) {
     const { removeUserFromGroups } = await this.query<{ removeUserFromGroups: MutationResponse }>(REMOVE_USER_FROM_GROUP, { groupIds: [groupId], userId })
     return removeUserFromGroups
+  }
+
+  async getAllTemplates () {
+    const { templates } = await this.query<{ templates: TemplateListTemplate[] }>(GET_ALL_TEMPLATES)
+    return templates
   }
 
   async getTemplatesByType (type: string, universal?: boolean) {

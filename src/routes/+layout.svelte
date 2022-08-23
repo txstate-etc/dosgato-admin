@@ -19,7 +19,7 @@
     { value: 'Logout' }
   ]
 
-  $: showsubnav = $subnav.length > 0 && ['auth', 'data', 'pages', 'sites'].some(section => $page.url.pathname.startsWith(base + '/' + section))
+  $: showsubnav = $subnav.length > 0 && ['auth', 'data', 'pages', 'sites', 'settings'].some(section => $page.url.pathname.startsWith(base + '/' + section))
 
   function onProfileChange (e: any) {
     if (e.detail.value === 'Logout') {
@@ -46,7 +46,7 @@
       {#if $globalStore.access.viewDataManager}<li><LabeledIcon href="{base}/data" icon={databaseOutline} label="Data" /></li>{/if}
       {#if $globalStore.access.viewSiteManager}<li class="separator"><LabeledIcon href="{base}/sites" icon={webIcon} label="Sites" /></li>{/if}
       {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={accountMultiple} label="Access" /></li>{/if}
-      {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings" icon={dotsHorizontal} label="More" /></li>{/if}
+      {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings/templates" icon={dotsHorizontal} label="More" /></li>{/if}
     </ul>
     <button bind:this={buttonelement} class="login-status reset">
       {$globalStore.me.name || 'Unauthorized User'}

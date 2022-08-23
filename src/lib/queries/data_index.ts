@@ -1,15 +1,5 @@
 import { mutationResponse } from './global'
 
-const templateDetails = `
-  name
-  key
-`
-export interface TemplateListTemplate {
-  id: string
-  name: string
-  key: string
-}
-
 const dataDetails = `
   id
   name
@@ -128,30 +118,6 @@ export interface DataRoot {
     create: boolean
   }
 }
-
-export const GET_TEMPLATES_BY_TYPE = `
-  query getTemplatesByType ($type: TemplateType!, $universal: Boolean) {
-    templates (filter: { types: [$type], universal: $universal }) {
-      ${templateDetails}
-    }
-  }
-`
-
-export const GET_TEMPLATE_INFO = `
-  query getTemplateInfo ($key: ID!) {
-    templates (filter:{ keys: [$key] }) {
-      ${templateDetails}
-    }
-  }
-`
-
-export const GET_AVAILABLE_TEMPLATE_INFO = `
-  query getAvailableTemplateInfo ($keys: [String]) {
-    templates (filter: { keys: $keys }) {
-      ${templateDetails}
-    }
-  }
-`
 
 export const GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY = `
   query getGlobalDataRootByTemplateKey ($key: ID!) {
