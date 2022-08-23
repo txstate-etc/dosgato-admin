@@ -17,15 +17,29 @@
   import { store } from './+page'
   import type { PageData } from '@dosgato/templating'
 
-  export let data: { organizations: Organization[], users: UserListUser[] }
+  export let data: { organizations: Organization[], users: UserListUser[], pageTemplates: TemplateListTemplate[], componentTemplates: TemplateListTemplate[] }
 
-  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'|'promotepagetree'|'archivepagetree'|undefined = undefined
+  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'|'promotepagetree'|'archivepagetree'|'editpagetemplates'|'editcomponenttemplates'|undefined = undefined
 
   async function searchUsers (search) {
     const query = search.toLowerCase()
     return data.users.filter(u => {
       return u.name.toLowerCase().includes(query) || u.id.includes(query)
     }).map(u => ({ label: u.name, value: u.id }))
+  }
+
+  async function searchPageTemplates (search) {
+    const query = search.toLowerCase()
+    return data.pageTemplates.filter(t => {
+      return t.name.toLowerCase().includes(query) || t.key.toLowerCase().includes(query)
+    }).map(t => ({ label: t.name, value: t.key }))
+  }
+
+  async function searchComponentTemplates (search) {
+    const query = search.toLowerCase()
+    return data.componentTemplates.filter(t => {
+      return t.name.toLowerCase().includes(query) || t.key.toLowerCase().includes(query)
+    }).map(t => ({ label: t.name, value: t.key }))
   }
 
   async function addComment (state) {
@@ -173,6 +187,24 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
+  async function updatePageTemplates (state) {
+    const resp = await api.authorizeTemplatesForSite($store.site.id, 'PAGE', state.templates)
+    if (resp.success) {
+      store.refresh($store.site.id)
+      modal = undefined
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+  }
+
+  async function updateComponentTemplates (state) {
+    const resp = await api.authorizeTemplatesForSite($store.site.id, 'COMPONENT', state.templates)
+    if (resp.success) {
+      store.refresh($store.site.id)
+      modal = undefined
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+  }
+
 </script>
 
 <DetailPanel header='Basic Information' button={$store.site.permissions.rename ? { icon: pencilIcon, hiddenLabel: 'edit basic information', onClick: () => { modal = 'editbasic' } } : undefined}>
@@ -304,7 +336,7 @@
   </table>
 </DetailPanel>
 
-<DetailPanel header="Available Page Templates"  button={{ icon: plusIcon, hiddenLabel: 'add page template', onClick: () => {} }}>
+<DetailPanel header="Available Page Templates"  button={{ icon: plusIcon, hiddenLabel: 'add page template', onClick: () => { modal = 'editpagetemplates' } }}>
   <ul>
     {#each $store.site.pageTemplates as template (template.key)}
       <li class="flex-row">
@@ -319,7 +351,7 @@
   </ul>
 </DetailPanel>
 
-<DetailPanel header="Available Component Templates" button={{ icon: plusIcon, hiddenLabel: 'add component template', onClick: () => {} }}>
+<DetailPanel header="Available Component Templates" button={{ icon: plusIcon, hiddenLabel: 'add component template', onClick: () => { modal = 'editcomponenttemplates' } }}>
   <ul>
     {#each $store.site.componentTemplates as template (template.key)}
       <li class="flex-row">
@@ -447,6 +479,24 @@
     on:continue={onArchivePagetree}>
     Archive this pagetree?
   </Dialog>
+{:else if modal === 'editpagetemplates'}
+  <FormDialog
+    name='editpagetemplates'
+    title='Authorize Page Templates'
+    on:dismiss={() => { modal = undefined }}
+    preload={{ templates: $store.site.pageTemplates.filter(t => !t.universal).map(t => t.key) }}
+    submit={updatePageTemplates}>
+    <FieldMultiselect path='templates' label='Authorized Templates' getOptions={searchPageTemplates}/>
+  </FormDialog>
+{:else if modal === 'editcomponenttemplates'}
+<FormDialog
+    name='editcomponenttemplates'
+    title='Authorize Component Templates'
+    on:dismiss={() => { modal = undefined }}
+    preload={{ templates: $store.site.componentTemplates.filter(t => !t.universal).map(t => t.key) }}
+    submit={updateComponentTemplates}>
+    <FieldMultiselect path='templates' label='Authorized Templates' getOptions={searchComponentTemplates}/>
+  </FormDialog>
 {/if}
 <style>
   .row {

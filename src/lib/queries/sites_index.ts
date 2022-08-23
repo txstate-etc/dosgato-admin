@@ -369,3 +369,11 @@ export const ARCHIVE_PAGETREE = `
     }
   }
 `
+
+export const SET_SITE_TEMPLATES = `
+  mutation setSiteTemplates ($siteId: ID!, $type: TemplateType! $templateKeys: [ID!]!) {
+    setSiteTemplates (siteId: $siteId, type: $type, templateKeys: $templateKeys) {
+      ${mutationResponse}
+    }
+  }
+`

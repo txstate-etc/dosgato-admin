@@ -17,7 +17,8 @@ import {
   type GetSubFoldersAndAssetsByPath, type GetPageByLink, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule,
   type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE, type FullSite,
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
-  GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE
+  GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
+  SET_SITE_TEMPLATES
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -228,8 +229,8 @@ class API {
     return removeUserFromGroups
   }
 
-  async getTemplatesByType (type: string) {
-    const { templates } = await this.query<{ templates: TemplateListTemplate[] }>(GET_TEMPLATES_BY_TYPE, { type })
+  async getTemplatesByType (type: string, universal?: boolean) {
+    const { templates } = await this.query<{ templates: TemplateListTemplate[] }>(GET_TEMPLATES_BY_TYPE, { type, universal })
     return templates.map((template) => ({ id: template.key, name: template.name, key: template.key }))
   }
 
@@ -241,6 +242,11 @@ class API {
   async getAvailableTemplateInfo (keys: string[]) {
     const { templates } = await this.query< { templates: TemplateListTemplate[] }>(GET_AVAILABLE_TEMPLATE_INFO, { keys })
     return templates
+  }
+
+  async authorizeTemplatesForSite (siteId: string, type: string, templateKeys: string[]) {
+    const { setSiteTemplates } = await this.query<{ setSiteTemplates: MutationResponse }>(SET_SITE_TEMPLATES, { siteId, type, templateKeys })
+    return setSiteTemplates
   }
 
   async getAvailableComponents (templateKey: string, area: string, pageId: string) {

@@ -130,8 +130,8 @@ export interface DataRoot {
 }
 
 export const GET_TEMPLATES_BY_TYPE = `
-  query getTemplatesByType ($type: TemplateType!) {
-    templates (filter: { types: [$type]}) {
+  query getTemplatesByType ($type: TemplateType!, $universal: Boolean) {
+    templates (filter: { types: [$type], universal: $universal }) {
       ${templateDetails}
     }
   }
