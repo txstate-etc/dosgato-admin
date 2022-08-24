@@ -1,3 +1,5 @@
+import { mutationResponse } from './global'
+
 const templateDetails = `
   name
   key
@@ -8,6 +10,9 @@ export interface TemplateListTemplate {
   name: string
   key: string
   universal: boolean
+  permissions: {
+    setUniversal: boolean
+  }
 }
 
 export const GET_ALL_TEMPLATES = `
@@ -16,6 +21,9 @@ export const GET_ALL_TEMPLATES = `
       name
       key
       universal
+      permissions {
+        setUniversal
+      }
     }
   }
 `
@@ -40,6 +48,14 @@ export const GET_AVAILABLE_TEMPLATE_INFO = `
   query getAvailableTemplateInfo ($keys: [String]) {
     templates (filter: { keys: $keys }) {
       ${templateDetails}
+    }
+  }
+`
+
+export const SET_TEMPLATE_UNIVERSAL = `
+  mutation setTemplateUniversal ($templateKey: ID!, $universal: Boolean!) {
+    setTemplateUniversal (templateId: $templateKey, universal: $universal) {
+      ${mutationResponse}
     }
   }
 `

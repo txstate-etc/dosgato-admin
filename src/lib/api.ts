@@ -18,7 +18,7 @@ import {
   type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE, type FullSite,
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
   GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
-  SET_SITE_TEMPLATES, GET_ALL_TEMPLATES
+  SET_SITE_TEMPLATES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -252,6 +252,11 @@ class API {
   async authorizeTemplatesForSite (siteId: string, type: string, templateKeys: string[]) {
     const { setSiteTemplates } = await this.query<{ setSiteTemplates: MutationResponse }>(SET_SITE_TEMPLATES, { siteId, type, templateKeys })
     return setSiteTemplates
+  }
+
+  async setTemplateUniversal (templateKey: string, universal: boolean) {
+    const { setTemplateUniversal } = await this.query<{ setTemplateUniversal: MutationResponse}>(SET_TEMPLATE_UNIVERSAL, { templateKey, universal })
+    return setTemplateUniversal
   }
 
   async getAvailableComponents (templateKey: string, area: string, pageId: string) {
