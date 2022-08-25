@@ -5,6 +5,7 @@ const roleDetails = `
   id
   name
   permissions {
+    assign
     delete
     rename
     createRules
@@ -15,6 +16,7 @@ export interface RoleListRole {
   id: string
   name: string
   permissions: {
+    assign: boolean
     delete: boolean
     rename: boolean
     createRules: boolean
@@ -25,6 +27,7 @@ const fullRoleDetails = `
   id
   name
   permissions {
+    assign
     delete
     rename
     createRules
@@ -89,6 +92,7 @@ export interface FullRole {
     }
   }[]
   permissions: {
+    assign: boolean
     delete: boolean
     rename: boolean
     createRules: boolean

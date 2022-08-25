@@ -6,12 +6,12 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
-  import { api, DetailPanel, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup } from '$lib'
+  import { api, DetailPanel, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole } from '$lib'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
 
-  export let data: { allGroups: GroupListGroup[] }
+  export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
 
   let modal: 'editbasic'|'editgroups'|'editroles'|'removefromgroup'|undefined
   let groupLeaving: GroupWithParents|undefined = undefined
@@ -63,8 +63,18 @@
       store.refresh($store.user.id)
       modal = undefined
     }
-    // TODO: What should be returned in data?
-    return { success: resp.success, messages: resp.messages, data: {} }
+    return { success: resp.success, messages: resp.messages, data: state }
+  }
+
+  async function searchRoles (term: string) {
+    const filtered = data.allRoles.filter(r => r.permissions.assign && r.name.includes(term))
+    return filtered.map(role => ({ label: role.name, value: role.id }))
+  }
+
+  async function onAddRoles (state) {
+    console.log(state)
+    // TODO
+    return { success: true, messages: [], data: state }
   }
 
   async function onRemoveFromGroup () {
@@ -87,7 +97,7 @@
   </a>
 </div>
 
-<DetailPanel header='Basic Information' button={{ icon: pencilIcon, onClick: () => { modal = 'editbasic' } }}>
+<DetailPanel header='Basic Information' button={$store.user.permissions.update ? { icon: pencilIcon, onClick: () => { modal = 'editbasic' } } : undefined}>
   <div class="row">
     <div class="label">Login:</div>
     <div class="value">{$store.user.id}</div>
@@ -139,7 +149,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Roles' button={{ icon: plusIcon, onClick: () => {} }}>
+<DetailPanel header='Roles' button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modal = 'editroles' } } : undefined}>
   {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
     <ul class="roles">
       {#each $store.user.directRoles as role (role.id)}
@@ -199,6 +209,7 @@
     name='editgroups'
     title={`Edit groups for ${$store.user.id}`}
     on:dismiss={() => { modal = undefined }}>
+    <!-- TODO: This needs a preload but using it breaks the page -->
     <FieldMultiselect
       path='groups'
       label='Add Groups'
@@ -214,6 +225,19 @@
     on:dismiss={() => { modal = undefined; groupLeaving = undefined }}>
     Remove user {$store.user.id} from group {groupLeaving ? groupLeaving.name : ''}?
   </Dialog>
+{:else if modal === 'editroles'}
+<!-- TODO: This needs a preload but using it breaks the page -->
+  <FormDialog
+    submit={onAddRoles}
+    name='editroles'
+    title={`Edit roles for ${$store.user.id}`}
+    validate={async () => { return [] }}
+    on:dismiss={() => { modal = undefined }}>
+    <FieldMultiselect
+      path='roles'
+      label='Add Roles'
+      getOptions={searchRoles}/>
+  </FormDialog>
 {/if}
 
 <style>

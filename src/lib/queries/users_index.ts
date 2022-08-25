@@ -62,6 +62,9 @@ const fullUserDetails = `
     id
     name
   }
+  permissions {
+    update
+  }
 `
 
 export interface UserListUser {
@@ -122,6 +125,9 @@ export interface FullUser {
     id: string
     name: string
   }[]
+  permissions: {
+    update: boolean
+  }
 }
 
 export interface UserFilter {

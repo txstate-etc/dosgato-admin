@@ -7,6 +7,9 @@ export const store = new UserDetailStore(api.getUserById.bind(api))
 export const load: PageLoad = async ({ params }) => {
   await store.refresh(params.id)
   if (!store.userFetched()) throw error(404)
-  const allGroups = await api.getAllGroups()
-  return { allGroups }
+  const [allGroups, allRoles] = await Promise.all([
+    api.getAllGroups(),
+    api.getRoleList()
+  ])
+  return { allGroups, allRoles }
 }
