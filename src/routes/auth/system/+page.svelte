@@ -27,7 +27,7 @@
 </script>
 
 <ActionPanel actions={[]}>
-  <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/system/' + detail.id)} headers={[
+  <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/users/' + detail.id)} headers={[
     { id: 'username', label: 'Username', get: 'id', defaultWidth: '25%', icon: u => u.disabled ? accountOff : accountIcon },
     { id: 'fullname', label: 'Account Name', get: 'name', defaultWidth: '25%' },
     { id: 'roles', label: 'Roles', render: renderRoles, defaultWidth: 'calc(50% - 1.3em)' }

@@ -8,9 +8,9 @@
 
   subnav.set([
     { label: 'Users', href: base + '/auth/users', icon: accountIcon },
+    { label: 'System', href: base + '/auth/system', icon: accountWrenchIcon },
     { label: 'Groups', href: base + '/auth/groups', icon: accountGroup },
-    { label: 'Roles', href: base + '/auth/roles', icon: keyChain },
-    { label: 'System', href: base + '/auth/system', icon: accountWrenchIcon }
+    { label: 'Roles', href: base + '/auth/roles', icon: keyChain }
   ])
 </script>
 
