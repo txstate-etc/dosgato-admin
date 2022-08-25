@@ -414,8 +414,8 @@ class API {
     return archivePagetree
   }
 
-  async setLaunchURL (siteId: string, host?: string, path?: string, validateOnly?: boolean) {
-    const { setLaunchURL } = await this.query<{ setLaunchURL: MutationResponse & {site: FullSite } }>(SET_LAUNCH_URL, { siteId, host, path, validateOnly })
+  async setLaunchURL (siteId: string, host?: string, path?: string, enabled?: boolean, validateOnly?: boolean) {
+    const { setLaunchURL } = await this.query<{ setLaunchURL: MutationResponse & {site: FullSite } }>(SET_LAUNCH_URL, { siteId, host, path, enabled, validateOnly })
     return setLaunchURL
   }
 

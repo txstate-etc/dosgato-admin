@@ -37,6 +37,7 @@ export const siteDetails = `
     host
     path
     prefix
+    enabled
   }
   organization {
     name
@@ -60,6 +61,7 @@ export interface SiteListSite {
     host: string
     path: string
     prefix: string
+    enabled: boolean
   }
   organization: {
     name: string
@@ -82,6 +84,7 @@ export const fullSiteDetails = `
     host
     path
     prefix
+    enabled
   }
   organization {
     id
@@ -174,6 +177,7 @@ export interface FullSite {
     host: string
     path: string
     prefix: string
+    enabled: boolean
   }
   organization: {
     name: string
@@ -294,8 +298,8 @@ export const UPDATE_SITE_MANAGEMENT = `
 `
 
 export const SET_LAUNCH_URL = `
-  mutation setLaunchURL ($siteId: ID!, $host: String, $path: String, $validateOnly: Boolean) {
-    setLaunchURL (siteId: $siteId, host: $host, path: $path, validateOnly: $validateOnly) {
+  mutation setLaunchURL ($siteId: ID!, $host: String, $path: String, $enabled: Boolean, $validateOnly: Boolean) {
+    setLaunchURL (siteId: $siteId, host: $host, path: $path, enabled: $enabled, validateOnly: $validateOnly) {
       ${mutationResponse}
       site {
         ${siteDetails}

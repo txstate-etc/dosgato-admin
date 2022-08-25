@@ -6,7 +6,7 @@
   import applicationExport from '@iconify-icons/mdi/application-export'
   import checkIcon from '@iconify-icons/mdi/check'
   import minusIcon from '@iconify-icons/mdi/minus'
-  import { Icon, FieldText, FieldSelect, FieldMultiselect } from '@dosgato/dialog'
+  import { Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox } from '@dosgato/dialog'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
@@ -79,7 +79,7 @@
   }
 
   async function setLaunchURL (state) {
-    const resp = await api.setLaunchURL($store.site.id, state.host, state.path)
+    const resp = await api.setLaunchURL($store.site.id, state.host, state.path, state.enabled)
     if (resp.success) {
       store.refresh($store.site.id)
       modal = undefined
@@ -417,10 +417,11 @@
     submit={setLaunchURL}
     name='editlaunch'
     title='Set Public URL'
-    preload={{ host: $store.site.url?.host ?? '', path: $store.site.url?.path ?? '' }}
+    preload={{ host: $store.site.url?.host ?? '', path: $store.site.url?.path ?? '', enabled: $store.site.url?.enabled }}
     on:dismiss={() => { modal = undefined }}>
     <FieldText path='host' label='Host'/>
     <FieldText path='path' label='Path'/>
+    <FieldCheckbox path='enabled' label='Site Launched' boxLabel='This site is live.'/>
   </FormDialog>
 {:else if modal === 'addpagetree'}
   <FormDialog
