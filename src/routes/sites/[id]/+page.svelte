@@ -6,7 +6,7 @@
   import applicationExport from '@iconify-icons/mdi/application-export'
   import checkIcon from '@iconify-icons/mdi/check'
   import minusIcon from '@iconify-icons/mdi/minus'
-  import { Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox } from '@dosgato/dialog'
+  import { Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete } from '@dosgato/dialog'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
@@ -409,7 +409,7 @@
     preload={{ organization: $store.site.organization.id, owner: $store.site.owner.id, managers: $store.site.managers.map(m => m.id) }}
     on:dismiss={() => { modal = undefined }}>
     <FieldSelect path='organization' label='Organization' choices={data.organizations.map(o => ({ label: o.name, value: o.id }))}/>
-    <FieldSelect path='owner' label='Site Owner' choices={data.users.map(u => ({ label: u.name, value: u.id }))} />
+    <FieldAutocomplete path='owner' label='Site Owner' placeholder='Please Select' choices={data.users.map(u => ({ label: `${u.name} (${u.id})`, value: u.id }))}/>
     <FieldMultiselect path='managers' label='Site Managers' getOptions={searchUsers}/>
   </FormDialog>
 {:else if modal === 'editlaunch'}
