@@ -6,6 +6,7 @@ import { panelTemplate } from './panel.js'
 import { quoteTemplate } from './quote.js'
 import { pageTemplate1 } from './pagetemplate1.js'
 import { pageTemplate2 } from './pagetemplate2.js'
+import { richText } from './richtext.js'
 
 export * from './login.js'
 
@@ -17,5 +18,6 @@ export const templates = [
   quoteTemplate,
   panelTemplate,
   pageTemplate1,
-  pageTemplate2
+  pageTemplate2,
+  richText
 ]

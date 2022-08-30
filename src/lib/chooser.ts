@@ -21,24 +21,23 @@ export const chooserClient: Client = {
       const pages = path === '/' ? await api.getRootPages() : await api.getSubPagesByPath(path)
       return pages.map(processPage)
     } else {
-      const assetsFolders = await api.getSubFoldersAndAssetsByPath(path)
+      const assetsFolders = await api.chooserSubFoldersAndAssetsByPath(path)
       return assetsFolders.map<Folder | Asset>(a => ({ ...a, url: a.path }))
     }
   },
   find: async function (source: string, path: string, searchstring: string): Promise<AnyItem[]> {
     throw new Error('Function not implemented.')
   },
-  findById: async function (id: string): Promise<AnyItem> {
+  findById: async function (id: string): Promise<AnyItem | undefined> {
     const link = parseLink(id)
     if (link.type === 'asset') {
-      return {} as any // await api.assetByLink(link)
+      return await api.chooserAssetByLink(link)
     } else if (link.type === 'assetfolder') {
       return {} as any // await api.assetFolderByLink(link)
     } else if (link.type === 'page') {
       const page = await api.chooserPageByLink(link)
       return processPage(page)
     }
-    throw new Error('Function not implemented.')
   },
   upload: async function (source: string, path: string, files: FileList): Promise<void> {
     throw new Error('Function not implemented.')

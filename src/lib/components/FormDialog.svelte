@@ -2,7 +2,7 @@
   import { CHOOSER_API_CONTEXT, Form } from '@dosgato/dialog'
   import type { Feedback, FormStore, SubmitResponse } from '@txstate-mws/svelte-forms'
   import { createEventDispatcher, setContext } from 'svelte'
-  import { chooserClient as dgChooserClient } from '$lib/chooser'
+  import { chooserClient as dgChooserClient } from '../chooser'
   import Dialog from './Dialog.svelte'
 
   type T = $$Generic
@@ -36,21 +36,12 @@
 
 <Dialog continueText="Save" cancelText="Cancel" on:dismiss on:continue={onSubmit} {title}>
   <Form bind:store {submit} {validate} {chooserClient} {autocomplete} {name} {preload} on:saved let:messages let:saved let:valid let:invalid let:validating let:submitting>
-    <div class="form-errors" aria-live='assertive'>
-      {#if messages.length}
-        <ul>
-          {#each messages as message}
-            <li>{message.message}</li>
-          {/each}
-        </ul>
-      {/if}
-    </div>
     <slot {messages} {saved} {validating} {submitting} {valid} {invalid} {data} />
   </Form>
 </Dialog>
 
 <style>
-  .form-errors {
-    color: #9a3332;
+  :global(:root) {
+    --ck-z-default: var(--popup-z, 3001);
   }
 </style>

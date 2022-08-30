@@ -1,5 +1,5 @@
 import { base } from '$app/paths'
-import type { ComponentData, PageData, PageLink } from '@dosgato/templating'
+import type { AssetLink, ComponentData, PageData, PageLink } from '@dosgato/templating'
 import { get, keyby, set, splice, toArray } from 'txstate-utils'
 import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
@@ -18,7 +18,8 @@ import {
   type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE, type FullSite,
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
   GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
-  SET_SITE_TEMPLATES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL
+  SET_SITE_TEMPLATES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
+  type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -165,14 +166,29 @@ class API {
     return pages
   }
 
-  async getSubFoldersAndAssetsByPath (path: string) {
-    const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(GET_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
-    return [...assets.map(a => ({ ...a, type: 'asset' as 'asset', bytes: a.size })), ...assetfolders.map(f => ({ ...f, type: 'folder' as 'folder', acceptsUpload: f.permissions.create, permissions: undefined }))]
-  }
-
   async chooserPageByLink (link: PageLink) {
     const { pages } = await this.query<GetPageByLink>(GET_PAGE_BY_LINK, { linkId: link.linkId, path: link.path })
     return pages[0]
+  }
+
+  async chooserSubFoldersAndAssetsByPath (path: string) {
+    const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(GET_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
+    return [...assets.map(a => apiAssetToChooserAsset(a)!), ...assetfolders.map(f => apiAssetFolderToChooserFolder(f))]
+  }
+
+  async chooserAssetByLink (link: AssetLink) {
+    const { assets } = await this.query<GetAssetByLink>(GET_ASSET_BY_LINK, { link })
+    return apiAssetToChooserAsset(assets[0])
+  }
+
+  async chooserSubFoldersAndAssetsByPath (path: string) {
+    const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(GET_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
+    return [...assets.map(a => apiAssetToChooserAsset(a)!), ...assetfolders.map(f => apiAssetFolderToChooserFolder(f))]
+  }
+
+  async chooserAssetByLink (link: AssetLink) {
+    const { assets } = await this.query<GetAssetByLink>(GET_ASSET_BY_LINK, { link })
+    return apiAssetToChooserAsset(assets[0])
   }
 
   async getSubFoldersAndAssets (folderId: string) {

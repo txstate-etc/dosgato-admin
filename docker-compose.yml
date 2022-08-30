@@ -32,6 +32,7 @@ services:
       JWT_TRUSTED_ISSUERS: '[{ "iss": "unified-auth", "url": "http://fakeauth/jwks" }, { "iss": "dg-render", "secret": "rendertoken" }]'
     volumes:
       - ../dosgato/src:/usr/app/src
+      - ../dosgato/testserver:/usr/app/testserver
     depends_on:
       - mysql
   dosgato-render:

@@ -1,10 +1,10 @@
 <script lang="ts">
+  import { Icon } from '@dosgato/dialog'
   import { editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry } from '$lib'
-  import { getTempToken } from './+page'
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
-  import { Icon } from '@dosgato/dialog'
   import ActionPanel from '$lib/components/ActionPanel.svelte'
+  import { getTempToken } from './+page'
 
   export let data: { temptoken: string }
 
