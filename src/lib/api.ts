@@ -181,16 +181,6 @@ class API {
     return apiAssetToChooserAsset(assets[0])
   }
 
-  async chooserSubFoldersAndAssetsByPath (path: string) {
-    const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(GET_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
-    return [...assets.map(a => apiAssetToChooserAsset(a)!), ...assetfolders.map(f => apiAssetFolderToChooserFolder(f))]
-  }
-
-  async chooserAssetByLink (link: AssetLink) {
-    const { assets } = await this.query<GetAssetByLink>(GET_ASSET_BY_LINK, { link })
-    return apiAssetToChooserAsset(assets[0])
-  }
-
   async getSubFoldersAndAssets (folderId: string) {
     return await this.assetFolderChildrenLoader.get(folderId)
   }
