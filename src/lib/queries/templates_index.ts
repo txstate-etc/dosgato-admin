@@ -59,3 +59,19 @@ export const SET_TEMPLATE_UNIVERSAL = `
     }
   }
 `
+
+export const AUTHORIZE_TEMPLATE_SITE = `
+  mutation AuthorizeTemplateForSite ($templateKey:ID!, $siteId: ID!) {
+    authorizeTemplateForSite (templateKey:$templateKey, siteId:$siteId) {
+      ${mutationResponse}
+    }
+  }
+`
+
+export const AUTHORIZE_TEMPLATE_PAGETREES = `
+  mutation AuthorizeTemplateForPagetrees($templateKey:ID!, $pagetreeIds: [ID!]!) {
+    authorizeTemplateForPagetrees (templateKey: $templateKey, pagetreeIds: $pagetreeIds) {
+      ${mutationResponse}
+    }
+  }
+`

@@ -18,7 +18,7 @@ import {
   type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, UPDATE_PAGE, type FullSite,
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
   GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
-  SET_SITE_TEMPLATES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
+  AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
   type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder
 } from './queries'
 import { templateRegistry } from './registry'
@@ -255,9 +255,14 @@ class API {
     return templates
   }
 
-  async authorizeTemplatesForSite (siteId: string, type: string, templateKeys: string[]) {
-    const { setSiteTemplates } = await this.query<{ setSiteTemplates: MutationResponse }>(SET_SITE_TEMPLATES, { siteId, type, templateKeys })
-    return setSiteTemplates
+  async authorizeTemplateForSite (templateKey: string, siteId: string) {
+    const { authorizeTemplateForSite } = await this.query<{ authorizeTemplateForSite: MutationResponse }>(AUTHORIZE_TEMPLATE_SITE, { templateKey, siteId })
+    return authorizeTemplateForSite
+  }
+
+  async authorizeTemplateForPagetrees (templateKey: string, pagetreeIds: string[]) {
+    const { authorizeTemplateForPagetrees } = await this.query<{ authorizeTemplateForPagetrees: MutationResponse }>(AUTHORIZE_TEMPLATE_PAGETREES, { templateKey, pagetreeIds })
+    return authorizeTemplateForPagetrees
   }
 
   async setTemplateUniversal (templateKey: string, universal: boolean) {

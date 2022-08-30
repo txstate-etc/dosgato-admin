@@ -22,12 +22,36 @@ export const sitePagetreeDetails = `
   id
   name
   type
+  pageTemplates: templates(filter: {types: [PAGE]}) {
+    key
+    name
+    type
+    universal
+  }
+  componentTemplates: templates(filter: {types: [COMPONENT]}) {
+    key
+    name
+    type
+    universal
+  }
 `
 
 export interface SitePagetree {
   id: string
   name: string
   type: string
+  pageTemplates: {
+    key: string
+    name: string
+    type: string
+    universal: boolean
+  }[]
+  componentTemplates: {
+    key: string
+    name: string
+    type: string
+    universal: boolean
+  }[]
 }
 
 export const siteDetails = `
@@ -370,14 +394,6 @@ export const ARCHIVE_PAGETREE = `
       pagetree {
         ${sitePagetreeDetails}
       }
-    }
-  }
-`
-
-export const SET_SITE_TEMPLATES = `
-  mutation setSiteTemplates ($siteId: ID!, $type: TemplateType! $templateKeys: [ID!]!) {
-    setSiteTemplates (siteId: $siteId, type: $type, templateKeys: $templateKeys) {
-      ${mutationResponse}
     }
   }
 `

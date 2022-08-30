@@ -28,18 +28,22 @@
     }).map(u => ({ label: u.name, value: u.id }))
   }
 
-  async function searchPageTemplates (search) {
-    const query = search.toLowerCase()
+  function getAvailablePageTemplates () {
+    const assignedPageTemplateKeys = $store.pageTemplates.map(p => p.key)
     return data.pageTemplates.filter(t => {
-      return t.name.toLowerCase().includes(query) || t.key.toLowerCase().includes(query)
+      return !t.universal && !assignedPageTemplateKeys.includes(t.key)
     }).map(t => ({ label: t.name, value: t.key }))
   }
 
-  async function searchComponentTemplates (search) {
-    const query = search.toLowerCase()
+  function getAvailableComponentTemplates () {
+    const assignedComponentTemplateKeys = $store.componentTemplates.map(c => c.key)
     return data.componentTemplates.filter(t => {
-      return t.name.toLowerCase().includes(query) || t.key.toLowerCase().includes(query)
+      return !t.universal && !assignedComponentTemplateKeys.includes(t.key)
     }).map(t => ({ label: t.name, value: t.key }))
+  }
+
+  async function searchPagetrees (term) {
+    return $store.site.pagetrees.filter(p => p.name.includes(term)).map(p => ({ label: p.name, value: p.id }))
   }
 
   async function addComment (state) {
@@ -187,24 +191,28 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
-  async function updatePageTemplates (state) {
-    const resp = await api.authorizeTemplatesForSite($store.site.id, 'PAGE', state.templates)
-    if (resp.success) {
-      store.refresh($store.site.id)
-      modal = undefined
+  async function updateTemplates (state) {
+    const localMessages = ensureRequiredNotNull(state, ['template'])
+    if (!localMessages.length) {
+      if (state.pagetrees.length === 0) {
+        // no pagetrees selected, authorize template at site level
+        const resp = await api.authorizeTemplateForSite(state.template, $store.site.id)
+        if (resp.success) {
+          store.refresh($store.site.id)
+          modal = undefined
+        }
+        return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+      } else {
+        const resp = await api.authorizeTemplateForPagetrees(state.template, state.pagetrees)
+        if (resp.success) {
+          store.refresh($store.site.id)
+          modal = undefined
+        }
+        return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+      }
     }
-    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+    return { success: false, messages: localMessages, data: state }
   }
-
-  async function updateComponentTemplates (state) {
-    const resp = await api.authorizeTemplatesForSite($store.site.id, 'COMPONENT', state.templates)
-    if (resp.success) {
-      store.refresh($store.site.id)
-      modal = undefined
-    }
-    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
-  }
-
 </script>
 
 <DetailPanel header='Basic Information' button={$store.site.permissions.rename ? { icon: pencilIcon, hiddenLabel: 'edit basic information', onClick: () => { modal = 'editbasic' } } : undefined}>
@@ -337,33 +345,59 @@
 </DetailPanel>
 
 <DetailPanel header="Available Page Templates"  button={{ icon: plusIcon, hiddenLabel: 'add page template', onClick: () => { modal = 'editpagetemplates' } }}>
-  <ul>
-    {#each $store.site.pageTemplates as template (template.key)}
-      <li class="flex-row">
-        <div>{template.name}</div>
-        {#if template.universal}
-           <div>Universal</div>
-        {:else}
-          <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
-        {/if}
-      </li>
-    {/each}
-  </ul>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Pagetrees</th>
+        <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
+      </tr>
+    </thead>
+    <tbody>
+      {#each $store.pageTemplates as template (template.key)}
+        <tr>
+          <td>{template.name}</td>
+          <td>{template.pagetrees.join(', ')}</td>
+          <td>
+            {#if template.universal}
+              <div>Universal</div>
+            {:else}
+              <button on:click={() => { }}><Icon icon={pencilIcon} width="1.5em"/></button>
+              <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+            {/if}
+          </td>
+        </tr>
+      {/each}
+    </tbody>
+  </table>
 </DetailPanel>
 
 <DetailPanel header="Available Component Templates" button={{ icon: plusIcon, hiddenLabel: 'add component template', onClick: () => { modal = 'editcomponenttemplates' } }}>
-  <ul>
-    {#each $store.site.componentTemplates as template (template.key)}
-      <li class="flex-row">
-        <div>{template.name}</div>
-        {#if template.universal}
-           <div>Universal</div>
-        {:else}
-          <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
-        {/if}
-      </li>
-    {/each}
-  </ul>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Pagetrees</th>
+        <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
+      </tr>
+    </thead>
+    <tbody>
+      {#each $store.componentTemplates as template (template.key)}
+        <tr>
+          <td>{template.name}</td>
+          <td>{template.pagetrees.join(', ')}</td>
+          <td>
+            {#if template.universal}
+              <div>Universal</div>
+            {:else}
+              <button on:click={() => { }}><Icon icon={pencilIcon} width="1.5em"/></button>
+              <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+            {/if}
+          </td>
+        </tr>
+      {/each}
+    </tbody>
+  </table>
 </DetailPanel>
 
 <DetailPanel header="Audit" button={{ icon: plusIcon, hiddenLabel: 'add comment', onClick: () => { modal = 'addcomment' } }}>
@@ -485,18 +519,18 @@
     name='editpagetemplates'
     title='Authorize Page Templates'
     on:dismiss={() => { modal = undefined }}
-    preload={{ templates: $store.site.pageTemplates.filter(t => !t.universal).map(t => t.key) }}
-    submit={updatePageTemplates}>
-    <FieldMultiselect path='templates' label='Authorized Templates' getOptions={searchPageTemplates}/>
+    submit={updateTemplates}>
+    <FieldAutocomplete path='template' label='Page Template' choices={getAvailablePageTemplates()} required/>
+    <FieldMultiselect path='pagetrees' label='Assigned to' getOptions={searchPagetrees}/>
   </FormDialog>
 {:else if modal === 'editcomponenttemplates'}
 <FormDialog
     name='editcomponenttemplates'
     title='Authorize Component Templates'
     on:dismiss={() => { modal = undefined }}
-    preload={{ templates: $store.site.componentTemplates.filter(t => !t.universal).map(t => t.key) }}
-    submit={updateComponentTemplates}>
-    <FieldMultiselect path='templates' label='Authorized Templates' getOptions={searchComponentTemplates}/>
+    submit={updateTemplates}>
+    <FieldAutocomplete path='template' label='Component Template' choices={getAvailableComponentTemplates()} required/>
+    <FieldMultiselect path='pagetrees' label='Assigned to' getOptions={searchPagetrees}/>
   </FormDialog>
 {/if}
 <style>

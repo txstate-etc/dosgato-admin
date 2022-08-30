@@ -12,6 +12,8 @@ interface ISiteDetailStore {
     id: string
     name: string
   }
+  pageTemplates: SiteTemplate[]
+  componentTemplates: SiteTemplate[]
 }
 
 interface SiteRole {
@@ -34,10 +36,18 @@ interface SiteUser {
   readonly: boolean
 }
 
+interface SiteTemplate {
+  id: string
+  key: string
+  name: string
+  universal: boolean
+  pagetrees: string[]
+}
+
 const initialValue: FullSite = {
   id: '',
   name: '',
-  url: { host: '', path: '', prefix: '' },
+  url: { host: '', path: '', prefix: '', enabled: false },
   organization: { name: '', id: '' },
   owner: { id: '', name: '' },
   managers: [],
@@ -51,7 +61,7 @@ const initialValue: FullSite = {
 
 export class SiteDetailStore extends Store<ISiteDetailStore> {
   constructor (public fetchSite: (id: string) => Promise<FullSite>) {
-    super({ site: initialValue, globalRoles: [], siteRoles: [], groups: [], users: [] })
+    super({ site: initialValue, globalRoles: [], siteRoles: [], groups: [], users: [], pageTemplates: [], componentTemplates: [] })
   }
 
   async refresh (id: string) {
@@ -92,7 +102,33 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
       const readonly = userRoles[k].roles.some(r => readOnlyHash[r])
       return { id: k, name: userRoles[k].name, roles: userRoles[k].roles.join(', '), readonly }
     })
-    this.set({ site, globalRoles: sortby(globalRoles, 'name'), siteRoles: sortby(siteRoles, 'name'), groups, users })
+    const sitePageTemplateKeys = site.pageTemplates.map(t => t.key)
+    const pageTemplates: SiteTemplate[] = site.pageTemplates.map(t => ({ id: t.key, key: t.key, name: t.name, universal: t.universal, pagetrees: ['All pagetrees'] }))
+    const pagetreePageTemplates: Record<string, { name: string, universal: boolean, pagetrees: string[] }> = {}
+    const siteComponentTemplateKeys = site.componentTemplates.map(t => t.key)
+    const componentTemplates: SiteTemplate[] = site.componentTemplates.map(t => ({ id: t.key, key: t.key, name: t.name, universal: t.universal, pagetrees: ['All pagetrees'] }))
+    const pagetreeComponentTemplates: Record<string, { name: string, universal: boolean, pagetrees: string[] }> = {}
+
+    for (const ptree of site.pagetrees) {
+      for (const temp of ptree.pageTemplates) {
+        if (sitePageTemplateKeys.includes(temp.key)) continue
+        pagetreePageTemplates[temp.key] ||= { name: temp.name, universal: temp.universal, pagetrees: [] }
+        pagetreePageTemplates[temp.key].pagetrees.push(ptree.name)
+      }
+      for (const temp of ptree.componentTemplates) {
+        if (siteComponentTemplateKeys.includes(temp.key)) continue
+        pagetreeComponentTemplates[temp.key] ||= { name: temp.name, universal: temp.universal, pagetrees: [] }
+        pagetreeComponentTemplates[temp.key].pagetrees.push(ptree.name)
+      }
+    }
+    for (const key in pagetreePageTemplates) {
+      pageTemplates.push({ id: key, key, name: pagetreePageTemplates[key].name, universal: pagetreePageTemplates[key].universal, pagetrees: pagetreePageTemplates[key].pagetrees })
+    }
+    for (const key in pagetreeComponentTemplates) {
+      componentTemplates.push({ id: key, key, name: pagetreeComponentTemplates[key].name, universal: pagetreeComponentTemplates[key].universal, pagetrees: pagetreeComponentTemplates[key].pagetrees })
+    }
+    this.set({ site, globalRoles: sortby(globalRoles, 'name'), siteRoles: sortby(siteRoles, 'name'), groups, users, pageTemplates: sortby(pageTemplates, 'universal', 'name'), componentTemplates: sortby(componentTemplates, 'universal', 'name') })
+
     return site // TODO: Is there a better way to get the site name in the site detail page load function?
   }
 
