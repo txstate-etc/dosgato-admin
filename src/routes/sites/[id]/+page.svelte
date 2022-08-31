@@ -21,7 +21,7 @@
   export let data: { organizations: Organization[], users: UserListUser[], pageTemplates: TemplateListTemplate[], componentTemplates: TemplateListTemplate[] }
 
   let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'|
-    'promotepagetree'|'archivepagetree'|'edittemplates'|'addpagetemplates'|'addcomponenttemplates'|undefined = undefined
+    'promotepagetree'|'archivepagetree'|'edittemplates'|'addpagetemplates'|'addcomponenttemplates'|'deletetemplateauth'|undefined = undefined
 
   const pagetreesByName = keyby($store.site.pagetrees, 'name')
 
@@ -249,9 +249,29 @@
     }
     if (resp.success) {
       store.refresh($store.site.id)
+      store.cancelEditTemplateAuth()
       modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+  }
+
+  async function onClickDeleteTemplateAuth (key, name, pagetrees) {
+    store.setTemplateAuthEditing(key, name, pagetrees.map((p: string) => pagetreesByName[p].id))
+    modal = 'deletetemplateauth'
+  }
+
+  async function onDeleteTemplateAuthorization () {
+    if (!$store.templateAuthEditing) {
+      const error: Feedback = { message: 'Something went wrong. Please contact support for assistance', type: MessageType.ERROR }
+      return { success: false, messages: [error], data: {} }
+    }
+    const resp = await api.deauthorizeTemplate($store.templateAuthEditing.key, $store.site.id)
+    if (resp.success) {
+      store.refresh($store.site.id)
+      store.cancelEditTemplateAuth()
+      modal = undefined
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 </script>
 
@@ -403,7 +423,7 @@
               <div>Universal</div>
             {:else}
               <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-              <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+              <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
             {/if}
           </td>
         </tr>
@@ -431,7 +451,7 @@
               <div>Universal</div>
             {:else}
               <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-              <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+              <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
             {/if}
           </td>
         </tr>
@@ -577,11 +597,21 @@
   <FormDialog
     name='edittemplates'
     title='Edit Authorized Pagetrees'
-    on:dismiss={() => { modal = undefined }}
+    on:dismiss={() => { store.cancelEditTemplateAuth(); modal = undefined }}
     validate={async () => { return [] }}
     submit={editTemplateAuthorizations}>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
   </FormDialog>
+{:else if modal === 'deletetemplateauth'}
+  <Dialog
+    on:dismiss={() => { store.cancelEditTemplateAuth(); modal = undefined }}
+    continueText="Remove"
+    cancelText="Cancel"
+    title="Remove Template Authorization"
+    on:continue={onDeleteTemplateAuthorization}>
+    Are you sure you want to remove this template from the authorized templates? Existing content will remain
+    but editors will no longer be able to use this template on this site or any pagetrees in this site.
+  </Dialog>
 {/if}
 <style>
   .row {

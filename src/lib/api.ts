@@ -19,7 +19,7 @@ import {
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
   GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
-  type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder
+  type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -263,6 +263,11 @@ class API {
   async authorizeTemplateForPagetrees (templateKey: string, pagetreeIds: string[]) {
     const { authorizeTemplateForPagetrees } = await this.query<{ authorizeTemplateForPagetrees: MutationResponse }>(AUTHORIZE_TEMPLATE_PAGETREES, { templateKey, pagetreeIds })
     return authorizeTemplateForPagetrees
+  }
+
+  async deauthorizeTemplate (templateKey: string, siteId: string) {
+    const { deauthorizeTemplate } = await this.query<{ deauthorizeTemplate: MutationResponse }>(DEAUTHORIZE_TEMPLATE, { templateKey, siteId })
+    return deauthorizeTemplate
   }
 
   async setTemplateUniversal (templateKey: string, universal: boolean) {

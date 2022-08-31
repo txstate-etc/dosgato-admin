@@ -61,16 +61,24 @@ export const SET_TEMPLATE_UNIVERSAL = `
 `
 
 export const AUTHORIZE_TEMPLATE_SITE = `
-  mutation AuthorizeTemplateForSite ($templateKey:ID!, $siteId: ID!) {
-    authorizeTemplateForSite (templateKey:$templateKey, siteId:$siteId) {
+  mutation authorizeTemplateForSite ($templateKey:ID!, $siteId: ID!) {
+    authorizeTemplateForSite (templateKey: $templateKey, siteId: $siteId) {
       ${mutationResponse}
     }
   }
 `
 
 export const AUTHORIZE_TEMPLATE_PAGETREES = `
-  mutation AuthorizeTemplateForPagetrees($templateKey:ID!, $pagetreeIds: [ID!]!) {
+  mutation authorizeTemplateForPagetrees($templateKey:ID!, $pagetreeIds: [ID!]!) {
     authorizeTemplateForPagetrees (templateKey: $templateKey, pagetreeIds: $pagetreeIds) {
+      ${mutationResponse}
+    }
+  }
+`
+
+export const DEAUTHORIZE_TEMPLATE = `
+  mutation deauthorizeTemplate($templateKey:ID!, $siteId: ID!) {
+    deauthorizeTemplate(templateKey: $templateKey, siteId: $siteId ) {
       ${mutationResponse}
     }
   }
