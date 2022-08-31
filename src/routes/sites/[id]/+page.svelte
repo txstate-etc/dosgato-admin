@@ -122,11 +122,9 @@
       if (resp.success) {
         store.refresh($store.site.id)
         modal = undefined
-        // TODO: This should reset the dialog so it opens blank when you try to create another pagetree. Instead, it has the
-        // previously saved values.
         addPagetreeFormStore.reset()
       }
-      return { success: resp.success, messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')], data: state }
+      return { success: resp.success, messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')], data: resp.success ? {} : state }
     }
     return { success: false, messages: localMessages, data: state }
   }
