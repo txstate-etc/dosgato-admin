@@ -1,5 +1,5 @@
 import { Store } from '@txstate-mws/svelte-store'
-import type { FullSite } from '$lib/queries'
+import type { FullSite, SitePagetree } from '$lib/queries'
 import { isNull, sortby, set } from 'txstate-utils'
 
 interface ISiteDetailStore {
@@ -14,6 +14,11 @@ interface ISiteDetailStore {
   }
   pageTemplates: SiteTemplate[]
   componentTemplates: SiteTemplate[]
+  templateAuthEditing?: {
+    key: string
+    name: string
+    pagetrees: SitePagetree[]
+  }
 }
 
 interface SiteRole {
@@ -103,10 +108,10 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
       return { id: k, name: userRoles[k].name, roles: userRoles[k].roles.join(', '), readonly }
     })
     const sitePageTemplateKeys = site.pageTemplates.map(t => t.key)
-    const pageTemplates: SiteTemplate[] = site.pageTemplates.map(t => ({ id: t.key, key: t.key, name: t.name, universal: t.universal, pagetrees: ['All pagetrees'] }))
+    const pageTemplates: SiteTemplate[] = site.pageTemplates.map(t => ({ id: t.key, key: t.key, name: t.name, universal: t.universal, pagetrees: [] }))
     const pagetreePageTemplates: Record<string, { name: string, universal: boolean, pagetrees: string[] }> = {}
     const siteComponentTemplateKeys = site.componentTemplates.map(t => t.key)
-    const componentTemplates: SiteTemplate[] = site.componentTemplates.map(t => ({ id: t.key, key: t.key, name: t.name, universal: t.universal, pagetrees: ['All pagetrees'] }))
+    const componentTemplates: SiteTemplate[] = site.componentTemplates.map(t => ({ id: t.key, key: t.key, name: t.name, universal: t.universal, pagetrees: [] }))
     const pagetreeComponentTemplates: Record<string, { name: string, universal: boolean, pagetrees: string[] }> = {}
 
     for (const ptree of site.pagetrees) {
@@ -145,6 +150,18 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
   cancelEditPagetree () {
     this.update(v => {
       return set(v, 'editingPagetree', undefined)
+    })
+  }
+
+  setTemplateAuthEditing (key: string, name: string, pagetrees: string[]) {
+    this.update(v => {
+      return set(v, 'templateAuthEditing', { key, name, pagetrees })
+    })
+  }
+
+  cancelEditTemplateAuth () {
+    this.update(v => {
+      return set(v, 'templateAuthEditing', undefined)
     })
   }
 }

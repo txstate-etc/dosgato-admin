@@ -10,8 +10,9 @@
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
-  import { SubForm, FormStore } from '@txstate-mws/svelte-forms'
+  import { SubForm, FormStore, type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
+  import { keyby } from 'txstate-utils'
   import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, templateRegistry, type Organization, type UserListUser, type TemplateListTemplate } from '$lib'
   import { base } from '$app/paths'
   import { store } from './+page'
@@ -19,7 +20,10 @@
 
   export let data: { organizations: Organization[], users: UserListUser[], pageTemplates: TemplateListTemplate[], componentTemplates: TemplateListTemplate[] }
 
-  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'|'promotepagetree'|'archivepagetree'|'editpagetemplates'|'editcomponenttemplates'|undefined = undefined
+  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'|
+    'promotepagetree'|'archivepagetree'|'edittemplates'|'addpagetemplates'|'addcomponenttemplates'|undefined = undefined
+
+  const pagetreesByName = keyby($store.site.pagetrees, 'name')
 
   async function searchUsers (search) {
     const query = search.toLowerCase()
@@ -133,7 +137,10 @@
   }
 
   async function onRenamePagetree (state) {
-    if (!$store.editingPagetree) return
+    if (!$store.editingPagetree) {
+      const error: Feedback = { message: 'Something went wrong. Please contact support for assistance', type: MessageType.ERROR }
+      return { success: false, messages: [error], data: state }
+    }
     const resp = await api.updatePagetree($store.editingPagetree.id, state.name)
     if (resp.success) {
       store.refresh($store.site.id)
@@ -149,7 +156,10 @@
   }
 
   async function onDeletePagetree () {
-    if (!$store.editingPagetree) return
+    if (!$store.editingPagetree) {
+      const error: Feedback = { message: 'Something went wrong. Please contact support for assistance', type: MessageType.ERROR }
+      return { success: false, messages: [error], data: {} }
+    }
     const resp = await api.deletePagetree($store.editingPagetree.id)
     if (resp.success) {
       store.refresh($store.site.id)
@@ -165,7 +175,10 @@
   }
 
   async function onPromotePagetree () {
-    if (!$store.editingPagetree) return
+    if (!$store.editingPagetree) {
+      const error: Feedback = { message: 'Something went wrong. Please contact support for assistance', type: MessageType.ERROR }
+      return { success: false, messages: [error], data: {} }
+    }
     const resp = await api.promotePagetree($store.editingPagetree.id)
     if (resp.success) {
       store.refresh($store.site.id)
@@ -181,7 +194,10 @@
   }
 
   async function onArchivePagetree () {
-    if (!$store.editingPagetree) return
+    if (!$store.editingPagetree) {
+      const error: Feedback = { message: 'Something went wrong. Please contact support for assistance', type: MessageType.ERROR }
+      return { success: false, messages: [error], data: {} }
+    }
     const resp = await api.archivePagetree($store.editingPagetree.id)
     if (resp.success) {
       store.refresh($store.site.id)
@@ -212,6 +228,30 @@
       }
     }
     return { success: false, messages: localMessages, data: state }
+  }
+
+
+  async function onClickEditTemplateAuth (key, name, pagetrees) {
+    store.setTemplateAuthEditing(key, name, pagetrees.map((p: string) => pagetreesByName[p].id))
+    modal = 'edittemplates'
+  }
+
+  async function editTemplateAuthorizations (state) {
+    if (!$store.templateAuthEditing) {
+      const error: Feedback = { message: 'Something went wrong. Please contact support for assistance', type: MessageType.ERROR }
+      return { success: false, messages: [error], data: state }
+    }
+    let resp
+    if (state.pagetrees.length === 0) {
+      resp = await api.authorizeTemplateForSite($store.templateAuthEditing.key, $store.site.id)
+    } else {
+      resp = await api.authorizeTemplateForPagetrees($store.templateAuthEditing.key, state.pagetrees)
+    }
+    if (resp.success) {
+      store.refresh($store.site.id)
+      modal = undefined
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 </script>
 
@@ -344,7 +384,7 @@
   </table>
 </DetailPanel>
 
-<DetailPanel header="Available Page Templates"  button={{ icon: plusIcon, hiddenLabel: 'add page template', onClick: () => { modal = 'editpagetemplates' } }}>
+<DetailPanel header="Available Page Templates"  button={{ icon: plusIcon, hiddenLabel: 'add page template', onClick: () => { modal = 'addpagetemplates' } }}>
   <table>
     <thead>
       <tr>
@@ -357,12 +397,12 @@
       {#each $store.pageTemplates as template (template.key)}
         <tr>
           <td>{template.name}</td>
-          <td>{template.pagetrees.join(', ')}</td>
+          <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
           <td>
             {#if template.universal}
               <div>Universal</div>
             {:else}
-              <button on:click={() => { }}><Icon icon={pencilIcon} width="1.5em"/></button>
+              <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
               <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
             {/if}
           </td>
@@ -372,7 +412,7 @@
   </table>
 </DetailPanel>
 
-<DetailPanel header="Available Component Templates" button={{ icon: plusIcon, hiddenLabel: 'add component template', onClick: () => { modal = 'editcomponenttemplates' } }}>
+<DetailPanel header="Available Component Templates" button={{ icon: plusIcon, hiddenLabel: 'add component template', onClick: () => { modal = 'addcomponenttemplates' } }}>
   <table>
     <thead>
       <tr>
@@ -385,12 +425,12 @@
       {#each $store.componentTemplates as template (template.key)}
         <tr>
           <td>{template.name}</td>
-          <td>{template.pagetrees.join(', ')}</td>
+          <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
           <td>
             {#if template.universal}
               <div>Universal</div>
             {:else}
-              <button on:click={() => { }}><Icon icon={pencilIcon} width="1.5em"/></button>
+              <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
               <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
             {/if}
           </td>
@@ -514,23 +554,33 @@
     on:continue={onArchivePagetree}>
     Archive this pagetree?
   </Dialog>
-{:else if modal === 'editpagetemplates'}
+{:else if modal === 'addpagetemplates'}
   <FormDialog
-    name='editpagetemplates'
+    name='addpagetemplates'
     title='Authorize Page Templates'
     on:dismiss={() => { modal = undefined }}
     submit={updateTemplates}>
     <FieldAutocomplete path='template' label='Page Template' choices={getAvailablePageTemplates()} required/>
-    <FieldMultiselect path='pagetrees' label='Assigned to' getOptions={searchPagetrees}/>
+    <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
   </FormDialog>
-{:else if modal === 'editcomponenttemplates'}
-<FormDialog
-    name='editcomponenttemplates'
+{:else if modal === 'addcomponenttemplates'}
+  <FormDialog
+    name='addcomponenttemplates'
     title='Authorize Component Templates'
     on:dismiss={() => { modal = undefined }}
     submit={updateTemplates}>
     <FieldAutocomplete path='template' label='Component Template' choices={getAvailableComponentTemplates()} required/>
-    <FieldMultiselect path='pagetrees' label='Assigned to' getOptions={searchPagetrees}/>
+    <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
+  </FormDialog>
+{:else if modal === 'edittemplates'}
+<!-- preload={{ pagetrees: $store.templateAuthEditing?.pagetrees ?? [] }} -->
+  <FormDialog
+    name='edittemplates'
+    title='Edit Authorized Pagetrees'
+    on:dismiss={() => { modal = undefined }}
+    validate={async () => { return [] }}
+    submit={editTemplateAuthorizations}>
+    <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
   </FormDialog>
 {/if}
 <style>
@@ -557,15 +607,6 @@
   }
   li:first-child {
     padding-top: 0;
-  }
-  li.flex-row {
-    display: flex;
-    justify-content: space-between;
-  }
-  li.flex-row button {
-    border: 0;
-    padding: 0;
-    background-color: transparent;
   }
   li.comment-card {
     display: flex;
