@@ -87,7 +87,7 @@
   }
 
   async function setLaunchURL (state) {
-    const resp = await api.setLaunchURL($store.site.id, state.host, state.path, state.enabled)
+    const resp = await api.setLaunchURL($store.site.id, state.host, state.path, state.enabled ?? false)
     if (resp.success) {
       store.refresh($store.site.id)
       modal = undefined
