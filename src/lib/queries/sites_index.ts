@@ -299,6 +299,17 @@ export const GET_SITE_BY_ID = `
   }
 `
 
+export const ADD_SITE = `
+  mutation createSite ($name: String!, $data: JsonData!, $validateOnly: Boolean) {
+    createSite (name: $name, data: $data, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      site {
+        ${siteDetails}
+      }
+    }
+  }
+`
+
 export const RENAME_SITE = `
   mutation renameSite ($siteId: ID!, $name: String!, $validateOnly: Boolean) {
     renameSite (siteId: $siteId, name: $name, validateOnly: $validateOnly) {

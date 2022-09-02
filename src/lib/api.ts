@@ -19,7 +19,7 @@ import {
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
   GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
-  type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE
+  type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE
 } from './queries'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
@@ -388,6 +388,11 @@ class API {
   async getSiteById (siteId: string) {
     const { sites } = await this.query<{ sites: FullSite[]}>(GET_SITE_BY_ID, { siteId })
     return sites[0]
+  }
+
+  async addSite (name: string, data: PageData, validateOnly?: boolean) {
+    const { createSite } = await this.query<{ createSite: MutationResponse & {site: SiteListSite } }>(ADD_SITE, { name, data, validateOnly })
+    return createSite
   }
 
   async renameSite (siteId: string, name: string, validateOnly?: boolean) {

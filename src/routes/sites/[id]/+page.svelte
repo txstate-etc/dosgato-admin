@@ -10,13 +10,13 @@
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
-  import { SubForm, FormStore, type Feedback, MessageType } from '@txstate-mws/svelte-forms'
+  import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { keyby } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, templateRegistry, type Organization, type UserListUser, type TemplateListTemplate } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate } from '$lib'
   import { base } from '$app/paths'
   import { store } from './+page'
-  import type { PageData } from '@dosgato/templating'
+  import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
 
   export let data: { organizations: Organization[], users: UserListUser[], pageTemplates: TemplateListTemplate[], componentTemplates: TemplateListTemplate[] }
 
@@ -95,25 +95,18 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
-  interface AddPagetreeState {
-    name: string
-    templateKey: string
-    data: PageData
-  }
-
-  const addPagetreeFormStore: FormStore = new FormStore<AddPagetreeState>(onAddPagetree, validateAddPagetree)
-
   async function validateAddPagetree (state) {
     const localMessages = ensureRequiredNotNull(state, ['name', 'templateKey'])
     if (!localMessages.length) {
       const data = Object.assign({}, state.data, { templateKey: state.templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
       const resp = await api.addPagetree($store.site.id, state.name, data, true)
+      console.log(resp.messages.map(m => m.message).join(', '))
       return messageForDialog(resp.messages, 'data')
     }
     return localMessages
   }
 
-  async function onAddPagetree (state: AddPagetreeState) {
+  async function onAddPagetree (state: CreateWithPageState) {
     const localMessages = ensureRequiredNotNull(state, ['name', 'templateKey'])
     if (!localMessages.length) {
       // TODO: Get the actual schema version from somewhere
@@ -122,7 +115,6 @@
       if (resp.success) {
         store.refresh($store.site.id)
         modal = undefined
-        addPagetreeFormStore.reset()
       }
       return { success: resp.success, messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')], data: resp.success ? {} : state }
     }
@@ -498,7 +490,7 @@
     submit={editSiteManagement}
     name='editsitemanagement'
     title="Edit Site Management"
-    preload={{ organization: $store.site.organization.id, owner: $store.site.owner.id, managers: $store.site.managers.map(m => m.id) }}
+    preload={{ organization: $store.site.organization?.id, owner: $store.site.owner?.id, managers: $store.site.managers?.map(m => m.id) }}
     on:dismiss={() => { modal = undefined }}>
     <FieldSelect path='organization' label='Organization' choices={data.organizations.map(o => ({ label: o.name, value: o.id }))}/>
     <FieldAutocomplete path='owner' label='Site Owner' placeholder='Please Select' choices={data.users.map(u => ({ label: `${u.name} (${u.id})`, value: u.id }))}/>
@@ -516,26 +508,12 @@
     <FieldCheckbox path='enabled' label='Site Launched' boxLabel='This site is live.'/>
   </FormDialog>
 {:else if modal === 'addpagetree'}
-  <FormDialog
-    name="addpagetree"
-    title="Add Pagetree"
-    store={addPagetreeFormStore}
+  <CreateWithPageDialog
     submit={onAddPagetree}
     validate={validateAddPagetree}
-    on:dismiss={() => { addPagetreeFormStore.reset(); modal = undefined }}>
-    <FieldText path='name' label='Name' required/>
-    <FieldSelect path='templateKey' label='Root Page Template' placeholder='Select' choices={$store.site.pageTemplates.map(t => ({ label: t.name, value: t.key }))}/>
-    {#if $addPagetreeFormStore.data?.templateKey?.length > 0}
-    <SubForm path='data'>
-      {@const template = templateRegistry.getTemplate($addPagetreeFormStore.data.templateKey)}
-      {#if template && template.dialog}
-        <svelte:component this={template.dialog} store={addPagetreeFormStore} />
-      {:else}
-        <span>This content uses an unrecognized template. Please contact support for assistance.</span>
-      {/if}
-    </SubForm>
-    {/if}
-  </FormDialog>
+    title="Add Pagetree"
+    templateChoices={$store.site.pageTemplates.map(t => ({ label: t.name, value: t.key }))}
+    on:dismiss={() => { modal = undefined }}/>
 {:else if modal === 'editpagetree'}
   <FormDialog
     name="editpagetree"

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { FieldText, FieldSelect } from '@dosgato/dialog'
   import applicationOutline from '@iconify-icons/mdi/application-outline'
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
@@ -7,9 +6,10 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, Tree, TreeStore, globalStore, type TypedTreeItem, type SiteListSite, type ActionPanelAction, type TemplateListTemplate } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, globalStore, type TypedTreeItem, type SiteListSite, type ActionPanelAction, type CreateWithPageState, ensureRequiredNotNull, messageForDialog } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
-  import FormDialog from '$lib/components/FormDialog.svelte'
+  import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
+import { DateTime } from 'luxon'
   type TypedSiteItem = TypedTreeItem<SiteListSite>
 
   export let data: { pageTemplateChoices: PopupMenuItem[] }
@@ -47,9 +47,29 @@
     return []
   }
 
+  async function validateCreateSite (state: CreateWithPageState) {
+    const localMessages = ensureRequiredNotNull(state, ['name', 'templateKey'])
+    if (!localMessages.length) {
+      const data = Object.assign({}, state.data, { templateKey: state.templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+      const resp = await api.addSite(state.name, data, true)
+      return [...messageForDialog(resp.messages, 'data'), ...messageForDialog(resp.messages, '')]
+    }
+    return localMessages
+  }
+
   async function onCreateSite (state) {
-    // TODO
-    return { success: true, messages: [], data: {} }
+    const localMessages = ensureRequiredNotNull(state, ['name', 'templateKey'])
+    if (!localMessages.length) {
+      // TODO: Get the actual schema version
+      const data = Object.assign({}, state.data, { templateKey: state.templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+      const resp = await api.addSite(state.name, data)
+      if (resp.success) {
+        store.refresh()
+        modal = undefined
+      }
+      return { success: resp.success, messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')], data: resp.success ? {} : state }
+    }
+    return { success: false, messages: localMessages, data: state }
   }
 
   async function onDeleteSite () {
@@ -71,14 +91,13 @@
   </Tree>
 </ActionPanel>
 {#if modal === 'addsite'}
-  <FormDialog
-    submit={onCreateSite}
+  <CreateWithPageDialog
     title='Create Site'
-    name='createsite'
-    on:dismiss={() => { modal = undefined }}>
-    <FieldText path='name' label='Site Name'/>
-    <FieldSelect path='template' label='Root Page Template' choices={data.pageTemplateChoices} placeholder='Select'/>
-  </FormDialog>
+    submit={onCreateSite}
+    on:dismiss={() => { modal = undefined }}
+    validate={validateCreateSite}
+    templateChoices={data.pageTemplateChoices}
+  />
 {:else if modal === 'deletesite'}
   <Dialog
     title='Delete Site'
