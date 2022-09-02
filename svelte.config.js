@@ -12,7 +12,7 @@ const config = {
 			precompress: true
 		}),
 		prerender: {
-			enabled: false
+			entries: []
 		},
 		paths: {
 			base: '/admin'
