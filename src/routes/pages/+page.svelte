@@ -2,6 +2,7 @@
   import applicationOutline from '@iconify-icons/mdi/application-outline'
   import circleIcon from '@iconify-icons/mdi/circle'
   import pencilIcon from '@iconify-icons/mdi/pencil'
+  import plusIcon from '@iconify-icons/mdi/plus'
   import publishIcon from '@iconify-icons/mdi/publish'
   import squareIcon from '@iconify-icons/mdi/square'
   import triangleIcon from '@iconify-icons/mdi/triangle'
@@ -41,6 +42,7 @@
   }
   function singlepageactions (page: TypedPageItem) {
     return [
+      { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: () => {} },
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
       { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => {} }
     ]
