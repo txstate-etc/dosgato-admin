@@ -72,12 +72,17 @@
     }
   }
 
+  // if user refreshes the iframe manually, it's possible the temporary token will have
+  // expired, so we need to watch for refresh errors and load in a new token
+  async function iframeload () {
+    data.temptoken = await getTempToken($editorStore.page)
+  }
 </script>
 
 <ActionPanel actions={getActions()}>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
   to steal credentials from other editors! -->
-  <iframe use:messages sandbox="allow-scripts" src="{environmentConfig.renderBase}/.edit/{$pageStore.pagetree.id}{$pageStore.path}?token={data.temptoken}" title="page preview for editing"></iframe>
+  <iframe use:messages sandbox="allow-scripts" src="{environmentConfig.renderBase}/.edit/{$pageStore.pagetree.id}{$pageStore.path}?token={data.temptoken}" title="page preview for editing" on:load={iframeload}></iframe>
 </ActionPanel>
 
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
