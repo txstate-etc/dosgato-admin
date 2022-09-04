@@ -21,6 +21,7 @@ import {
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
   type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE
 } from './queries'
+import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
 
@@ -123,9 +124,7 @@ class API {
       })
     })
     if (!response.ok) {
-      if (response.status === 401) {
-        return location.assign(environmentConfig.authRedirect) as any
-      }
+      if (response.status === 401) handleUnauthorized(environmentConfig, response)
       throw new Error(`${response.status} ${response.statusText}`)
     }
     const gqlresponse = await response.json()
