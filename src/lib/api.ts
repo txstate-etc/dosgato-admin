@@ -124,8 +124,8 @@ class API {
       })
     })
     if (!response.ok) {
-      if (response.status === 401) handleUnauthorized(environmentConfig, response)
-      throw new Error(`${response.status} ${response.statusText}`)
+      if (response.status === 401) return handleUnauthorized(environmentConfig, response) as any
+      else throw new Error(`${response.status} ${response.statusText}`)
     }
     const gqlresponse = await response.json()
     if (gqlresponse.errors?.length) throw new Error(JSON.stringify(gqlresponse.errors))
@@ -137,12 +137,8 @@ class API {
   }
 
   async getSelf () {
-    try {
-      const { users, access } = await this.query<GlobalSelf>(GET_GLOBAL_SELF)
-      return { me: users[0], access }
-    } catch (e) {
-      return {}
-    }
+    const { users, access } = await this.query<GlobalSelf>(GET_GLOBAL_SELF)
+    return { me: users[0], access }
   }
 
   async getRootPages () {

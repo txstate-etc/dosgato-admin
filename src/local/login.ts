@@ -1,9 +1,9 @@
-import type { LoadEvent } from '@sveltejs/kit'
+import { type LoadEvent, redirect } from '@sveltejs/kit'
 
 export function handleUnauthorized (environmentConfig: any, response: any) {
   const authRedirect = new URL(environmentConfig.authRedirect)
   authRedirect.searchParams.set('returnUrl', location.href)
-  location.assign(authRedirect)
+  throw redirect(301, authRedirect.toString())
 }
 
 export function getToken ({ url }: LoadEvent) {

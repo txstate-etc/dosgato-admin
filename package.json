@@ -13,30 +13,30 @@
     "lint": "eslint --ignore-path .gitignore ."
   },
   "dependencies": {
-    "@dosgato/dialog": "^0.0.11",
-    "@dosgato/templating": "^0.0.15",
+    "@dosgato/dialog": "^0.0.12",
+    "@dosgato/templating": "^0.0.56",
     "@iconify-icons/mdi": "^1.2.8",
     "@iconify-icons/ph": "^1.2.2",
     "@txstate-mws/svelte-components": "^1.2.10",
     "@txstate-mws/svelte-forms": "^0.0.18",
     "@txstate-mws/svelte-store": "^1.0.6",
-    "luxon": "^2.3.1",
+    "luxon": "^3.0.3",
     "txstate-utils": "^1.7.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.19.1",
     "@sveltejs/adapter-static": "next",
     "@sveltejs/kit": "next",
-    "@types/luxon": "^2.3.1",
+    "@types/luxon": "^3.0.1",
     "eslint-config-standard-with-typescript": "^22.0.0",
-    "eslint-plugin-svelte3": "^3.2.1",
+    "eslint-plugin-svelte3": "^4.0.0",
     "svelte": "^3.47.0",
     "svelte-check": "^2.2.6",
     "svelte-preprocess": "^4.10.1",
     "svelte2tsx": "^0.5.5",
     "tslib": "^2.3.1",
     "typescript": "~4.6.2",
-    "vite": "^3.0.2"
+    "vite": "^3.1.0-beta.1"
   },
   "type": "module"
 }

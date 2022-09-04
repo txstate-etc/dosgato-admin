@@ -223,6 +223,7 @@
     aria-level={level}
     aria-posinset={posinset}
     aria-setsize={setsize}
+    aria-selected={isSelected}
     aria-expanded={item.hasChildren ? item.open && !!item.children && !!item.children.length : undefined}
     aria-busy={item.loading}
     on:keydown={onKeyDown}
