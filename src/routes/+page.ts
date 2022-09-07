@@ -1,7 +1,6 @@
-import { redirect } from '@sveltejs/kit'
+import { redirect, type Load } from '@sveltejs/kit'
 import { base } from '$app/paths'
-import type { PageLoad } from './$types'
 
-export const load: PageLoad = async () => {
+export const load: Load = async () => {
   throw redirect(301, base + '/pages')
 }

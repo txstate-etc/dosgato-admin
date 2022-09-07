@@ -1,5 +1,4 @@
-import { error } from '@sveltejs/kit'
-import type { PageLoad } from './$types'
+import { error, type Load } from '@sveltejs/kit'
 import { api, environmentConfig, pageEditorStore, type PageEditorPage } from '$lib'
 
 export async function getTempToken (page: PageEditorPage, skfetch = fetch) {
@@ -12,7 +11,7 @@ export async function getTempToken (page: PageEditorPage, skfetch = fetch) {
   return await resp.text()
 }
 
-export const load: PageLoad = async ({ params, fetch }) => {
+export const load: Load<{ id: string }> = async ({ params, fetch }) => {
   const page = await api.getEditorPage(params.id)
   if (!page) throw error(404)
   const temptoken = await getTempToken(page, fetch)

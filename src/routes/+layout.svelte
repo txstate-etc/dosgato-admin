@@ -13,6 +13,9 @@
   import { page } from '$app/stores'
   import { globalStore, subnav, type SubNavLink } from '$lib'
   import LabeledIcon from '$lib/components/LabeledIcon.svelte'
+
+  export let data: { errObj: any }
+
   let buttonelement: HTMLElement
 
   const profileItems: PopupMenuItem[] = [
@@ -37,43 +40,47 @@
   }
 </script>
 
-<nav>
-  <div class="topbar">
-    <div class="logo"></div>
-    <ul class="topnav">
-      {#if $globalStore.access.viewPageManager}<li><LabeledIcon href="{base}/pages" icon={fileCodeOutline} label="Pages"/></li>{/if}
-      {#if $globalStore.access.viewAssetManager}<li><LabeledIcon href="{base}/assets" icon={imageMultipleOutline} label="Assets" /></li>{/if}
-      {#if $globalStore.access.viewDataManager}<li><LabeledIcon href="{base}/data" icon={databaseOutline} label="Data" /></li>{/if}
-      {#if $globalStore.access.viewSiteManager}<li class="separator"><LabeledIcon href="{base}/sites" icon={webIcon} label="Sites" /></li>{/if}
-      {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={accountMultiple} label="Access" /></li>{/if}
-      {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings/templates" icon={dotsHorizontal} label="More" /></li>{/if}
-    </ul>
-    <button bind:this={buttonelement} class="login-status reset">
-      {$globalStore.me.name || 'Unauthorized User'}
-      <Icon icon={menuDown} inline />
-    </button>
-  </div>
-  {#if showsubnav}
-    <div class="subnav">
-      <ul>
-        {#each $subnav as link, i}
-          {@const selected = $page.url.pathname === link.href}
-          <li class:selected class:closeable={!!link.onClose}>
-            <a href={link.href}>{#if link.icon}<Icon icon={link.icon} inline/>{/if}{link.label}</a>
-            {#if link.onClose}
-              <button type="button" class="reset" on:click={closeSubNav(link, i)}><Icon icon={closeThick} inline hiddenLabel="Close {link.label}" width="1.2em" /></button>
-            {/if}
-          </li>
-        {/each}
+{#if data.errObj}
+  There was an error with your request. Please try again later or contact support.
+{:else}
+  <nav>
+    <div class="topbar">
+      <div class="logo"></div>
+      <ul class="topnav">
+        {#if $globalStore.access.viewPageManager}<li><LabeledIcon href="{base}/pages" icon={fileCodeOutline} label="Pages"/></li>{/if}
+        {#if $globalStore.access.viewAssetManager}<li><LabeledIcon href="{base}/assets" icon={imageMultipleOutline} label="Assets" /></li>{/if}
+        {#if $globalStore.access.viewDataManager}<li><LabeledIcon href="{base}/data" icon={databaseOutline} label="Data" /></li>{/if}
+        {#if $globalStore.access.viewSiteManager}<li class="separator"><LabeledIcon href="{base}/sites" icon={webIcon} label="Sites" /></li>{/if}
+        {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={accountMultiple} label="Access" /></li>{/if}
+        {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings/templates" icon={dotsHorizontal} label="More" /></li>{/if}
       </ul>
-      <div></div>
+      <button bind:this={buttonelement} class="login-status reset">
+        {$globalStore.me.name || 'Unauthorized User'}
+        <Icon icon={menuDown} inline />
+      </button>
     </div>
-  {/if}
-</nav>
-<PopupMenu {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
-<main>
-  <slot />
-</main>
+    {#if showsubnav}
+      <div class="subnav">
+        <ul>
+          {#each $subnav as link, i}
+            {@const selected = $page.url.pathname === link.href}
+            <li class:selected class:closeable={!!link.onClose}>
+              <a href={link.href}>{#if link.icon}<Icon icon={link.icon} inline/>{/if}{link.label}</a>
+              {#if link.onClose}
+                <button type="button" class="reset" on:click={closeSubNav(link, i)}><Icon icon={closeThick} inline hiddenLabel="Close {link.label}" width="1.2em" /></button>
+              {/if}
+            </li>
+          {/each}
+        </ul>
+        <div></div>
+      </div>
+    {/if}
+  </nav>
+  <PopupMenu {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
+  <main>
+    <slot />
+  </main>
+{/if}
 
 <style>
   @import url(../normalize.css);

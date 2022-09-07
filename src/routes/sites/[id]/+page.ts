@@ -1,10 +1,9 @@
 import { api, siteListStore, SiteDetailStore } from '$lib'
-import { error } from '@sveltejs/kit'
-import type { PageLoad } from './$types'
+import { error, type Load } from '@sveltejs/kit'
 
 export const store = new SiteDetailStore(getSite)
 
-export const load: PageLoad = async ({ params }) => {
+export const load: Load<{ id: string }> = async ({ params }) => {
   const site = await store.refresh(params.id)
   if (!store.siteFetched()) throw error(404)
 

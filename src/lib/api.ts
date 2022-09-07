@@ -24,6 +24,7 @@ import {
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
+import { error } from '@sveltejs/kit'
 
 export interface MutationResponse {
   success: boolean
@@ -125,7 +126,7 @@ class API {
     })
     if (!response.ok) {
       if (response.status === 401) return handleUnauthorized(environmentConfig, response) as any
-      else throw new Error(`${response.status} ${response.statusText}`)
+      else throw error(response.status, response.statusText)
     }
     const gqlresponse = await response.json()
     if (gqlresponse.errors?.length) throw new Error(JSON.stringify(gqlresponse.errors))

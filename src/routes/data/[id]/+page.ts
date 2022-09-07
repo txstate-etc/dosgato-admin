@@ -1,8 +1,7 @@
 import { api, dataListStore } from '$lib'
-import { error } from '@sveltejs/kit'
-import type { PageLoad } from './$types'
+import { error, type Load } from '@sveltejs/kit'
 
-export const load: PageLoad = async ({ params }) => {
+export const load: Load<{ id: string }> = async ({ params }) => {
   const template = await api.getTemplateInfo(params.id)
   if (!template) throw error(404)
 

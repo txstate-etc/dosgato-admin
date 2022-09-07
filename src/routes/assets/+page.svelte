@@ -8,7 +8,7 @@
   import uploadLight from '@iconify-icons/ph/upload-light'
   import { goto } from '$app/navigation'
   import { DateTime } from 'luxon'
-  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreePage, type TreeAsset, type TreeAssetFolder } from '$lib'
+  import { api, ActionPanel, Dialog, Tree, TreeStore, type TypedTreeItem, type TreeAsset, type TreeAssetFolder, environmentConfig } from '$lib'
   import { base } from '$app/paths'
 
   interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
@@ -23,6 +23,12 @@
   }
   type TypedAssetFolderItem = TypedTreeItem<AssetFolderItem>
   type TypedAnyAssetItem = TypedTreeItem<AssetItem | AssetFolderItem>
+
+  let uploadTo: TypedAssetFolderItem | undefined
+  let dragover = 0
+  let uploadInput: HTMLInputElement
+  let uploadForm: HTMLFormElement
+  let uploadLocked = false
 
   async function fetchChildren (item?: TypedAssetFolderItem) {
     const { folders, assets } = item ? (await api.getSubFoldersAndAssets(item.id))! : { folders: await api.getRootAssetFolders(), assets: [] }
@@ -48,7 +54,7 @@
           { label: 'Move', icon: arrowsOutCardinalLight, onClick: () => { /* TODO */ } }
         ]
       : [
-          { label: 'Upload', icon: uploadLight, disabled: !item.permissions.create, onClick: () => { /* TODO */ } }
+          { label: 'Upload', icon: uploadLight, disabled: !item.permissions.create, onClick: () => { uploadTo = item as TypedAssetFolderItem } }
         ]
   }
 
@@ -90,6 +96,35 @@
     return selectedSites.has(targetSite) ? 'move' : 'copy'
   }
 
+  function onUploadDrop (e: DragEvent) {
+    e.preventDefault()
+    if (!uploadLocked && e.dataTransfer?.items?.length) {
+      uploadInput.files = e.dataTransfer.files
+    }
+  }
+
+  async function onUploadSubmit (e: SubmitEvent) {
+    uploadLocked = true
+    try {
+      const data = new FormData()
+      data.append('assetFolderId', uploadTo?.id ?? '')
+      for (let i = 0; i < (uploadInput.files?.length ?? 0); i++) {
+        data.append('file' + i, uploadInput.files![i])
+      }
+
+      const resp = await fetch(uploadForm.action, {
+        method: 'POST',
+        body: data
+      })
+      if (resp.status === 200) {
+        await store.refresh(uploadTo)
+        uploadTo = undefined
+      }
+    } finally {
+      uploadLocked = false
+    }
+  }
+
   const store: TreeStore<AssetItem | AssetFolderItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
 </script>
 
@@ -104,9 +139,27 @@
     ]}
   />
 </ActionPanel>
+{#if uploadTo}
+  <Dialog title="Upload File(s)" cancelText="Cancel" continueText="Upload" on:escape={() => { uploadTo = undefined }} on:continue={() => uploadForm.submit()}>
+    <form bind:this={uploadForm} action={`${environmentConfig.apiBase}/upload`} on:submit|preventDefault={onUploadSubmit}>
+      <div class="uploader" class:dragover={dragover > 0} on:dragenter={() => { dragover++ }} on:dragleave={() => { dragover-- }} on:dragover|preventDefault on:drop={onUploadDrop}>
+        <input bind:this={uploadInput} type="file" name="file" multiple disabled={uploadLocked}>
+      </div>
+    </form>
+  </Dialog>
+{/if}
 
 <style>
   :global(.modified span) {
     font-size: 0.9em;
+  }
+  .uploader {
+    border: 2px dashed #666666;
+    border-radius: 0.5em;
+    text-align: center;
+    padding: 3em 0;
+  }
+  .uploader.dragover {
+    border-color: #333333;
   }
 </style>
