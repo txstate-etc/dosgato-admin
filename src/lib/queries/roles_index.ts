@@ -166,6 +166,17 @@ export const ADD_DATA_RULE = `
   }
 `
 
+export const UPDATE_DATA_RULE = `
+  mutation updateDataRule ($args: UpdateDataRuleInput!, $validateOnly: Boolean) {
+    updateDataRule (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      dataRule {
+        ${dataRuleDetails}
+      }
+    }
+  }
+`
+
 export const REMOVE_RULE = `
   mutation removeRule  ($ruleId: ID!, $type: RuleType!) {
     removeRule (ruleId: $ruleId, type: $type) {

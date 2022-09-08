@@ -8,15 +8,14 @@
   import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { isNull, unique } from 'txstate-utils'
   import { base } from '$app/paths'
-  import { api, DetailPanel, messageForDialog, ResponsiveTable, AssetRuleDialog } from '$lib'
-  import FormDialog from '$lib/components/FormDialog.svelte'
+  import { api, DetailPanel, messageForDialog, ResponsiveTable, AssetRuleDialog, DataRuleDialog } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
 
   export let data: { siteOptions: { value: string, label: string }[] }
   $: ({ siteOptions } = data)
 
-  let modal: 'editbasic' | 'addassetrule' | 'editassetrule' | 'deleterule'|undefined
+  let modal: 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' | 'deleterule' | undefined
 
   $: groupIds = unique([...$store.role.directGroups.map(g => g.id), ...$store.role.indirectGroups.map(g => g.id)])
 
@@ -58,6 +57,40 @@
     return { success: resp.success, messags: messageForDialog(resp.messages, 'args'), data: state }
   }
 
+  async function onAddDataRule (state) {
+    const resp = await api.addDataRule({ ...state, roleId: $store.role.id })
+    if (resp.success) {
+      modal = undefined
+      store.refresh($store.role.id)
+    }
+    return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
+  }
+
+  async function onEditDataRule (state) {
+    if (!$store.editing) return
+    const args = {
+      ruleId: $store.editing.id,
+      siteId: state.siteId,
+      path: state.path,
+      templateId: state.templateId,
+      grants: {
+        create: state.grants.create,
+        update: state.grants.update,
+        move: state.grants.move,
+        publish: state.grants.publish,
+        unpublish: state.grants.unpublish,
+        delete: state.grants.delete,
+        undelete: state.grants.undelete
+      }
+    }
+    const resp = await api.editDataRule(args)
+    if (resp.success) {
+      modal = undefined
+      store.refresh($store.role.id)
+    }
+    return { success: resp.success, messags: messageForDialog(resp.messages, 'args'), data: state }
+  }
+
   async function onDeleteRule () {
     if (!$store.editing) return
     const resp = await api.removeRule($store.editing.id, $store.editing.type.toLocaleUpperCase() as 'GLOBAL'|'SITE'|'PAGE'|'TEMPLATE'|'ASSET'|'DATA')
@@ -77,6 +110,8 @@
     store.setRuleEditing(ruleId, ruleType, rule)
     if (ruleType === 'asset') {
       modal = 'editassetrule'
+    } else if (ruleType === 'data') {
+      modal = 'editdatarule'
     }
   }
 
@@ -151,41 +186,23 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Data Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Data Rule' }}>
+<DetailPanel header='Data Rules' button={{ icon: plusIcon, onClick: () => { modal = 'adddatarule' }, hiddenLabel: 'Add Data Rule' }}>
   {#if $store.role.dataRules.length}
-    <table>
-      <tr class='headers'>
-        <th>Site</th>
-        <th>Path</th>
-        <th>Template</th>
-        <th>Create</th>
-        <th>Update</th>
-        <th>Move</th>
-        <th>Publish</th>
-        <th>Unpublish</th>
-        <th>Delete</th>
-        <th>Undelete</th>
-        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
-      </tr>
-      {#each $store.role.dataRules as rule (rule.id)}
-        <tr>
-          <td>{rule.site ? rule.site.name : 'All Sites'}</td>
-          <td>{rule.path}</td>
-          <td>{rule.template ? rule.template.name : 'All Templates'}</td>
-          <td><Icon icon={rule.grants.create ? checkIcon : minusIcon} hiddenLabel={`Create ${rule.grants.create ? '' : 'not'} permitted`}/></td>
-          <td><Icon icon={rule.grants.update ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.move ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.publish ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.unpublish ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.delete ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.undelete ? checkIcon : minusIcon}/></td>
-          <td>
-            <button class="edit"><Icon icon={pencilIcon} hiddenLabel='Edit Data Rule'/></button>
-            <button class="delete" on:click={onClickDelete(rule.id, 'data')}><Icon icon={deleteOutline} hiddenLabel='Delete Data Rule'/></button>
-          </td>
-        </tr>
-      {/each}
-    </table>
+    <ResponsiveTable items={$store.role.dataRules} headers={[
+      { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
+      { id: 'path', label: 'Path', get: 'path' },
+      { id: 'template', label: 'Template', render: (item) => { return item.template ? item.template.name : 'All Templates' } },
+      { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create permitted' } : { icon: minusIcon, hiddenLabel: 'Create not permitted' } } },
+      { id: 'update', label: 'Update', icon: (item) => { return item.grants.update ? { icon: checkIcon, hiddenLabel: 'Update permitted' } : { icon: minusIcon, hiddenLabel: 'Update not permitted' } } },
+      { id: 'move', label: 'Move', icon: (item) => { return item.grants.move ? { icon: checkIcon, hiddenLabel: 'Move permitted' } : { icon: minusIcon, hiddenLabel: 'Move not permitted' } } },
+      { id: 'publish', label: 'Publish', icon: (item) => { return item.grants.publish ? { icon: checkIcon, hiddenLabel: 'Publish permitted' } : { icon: minusIcon, hiddenLabel: 'Publish not permitted' } } },
+      { id: 'unpublish', label: 'Unpublish', icon: (item) => { return item.grants.unpublish ? { icon: checkIcon, hiddenLabel: 'Unpublish permitted' } : { icon: minusIcon, hiddenLabel: 'Unpublish not permitted' } } },
+      { id: 'delete', label: 'Delete', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'Delete permitted' } : { icon: minusIcon, hiddenLabel: 'Delete not permitted' } } },
+      { id: 'undelete', label: 'Undelete', icon: (item) => { return item.grants.undelete ? { icon: checkIcon, hiddenLabel: 'Undelete permitted' } : { icon: minusIcon, hiddenLabel: 'Undelete not permitted' } } }
+    ]} rowActions={[
+      { icon: pencilIcon, hiddenLabel: 'Edit Data Rule', label: 'Edit', onClick: (item) => { onClickEdit(item.id, 'data', item) } },
+      { icon: deleteOutline, hiddenLabel: 'Delete Data Rule', label: 'Delete', onClick: (item) => { onClickDelete(item.id, 'data') } }
+    ]}/>
   {:else}
     <div>This role has no data rules.</div>
   {/if}
@@ -330,7 +347,17 @@
     title='Edit Asset Rule'
     siteChoices={siteOptions}
     on:dismiss={() => { modal = undefined }}
-    preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site.id } : {} }/>
+    preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id } : {} }/>
+{:else if modal === 'adddatarule'}
+  <DataRuleDialog submit={onAddDataRule} name='adddatarule' title='Add Data Rule' siteChoices={siteOptions} on:dismiss={() => { modal = undefined }}/>
+{:else if modal === 'editdatarule'}
+    <DataRuleDialog
+      submit={onEditDataRule}
+      name='editdatarule'
+      title='Edit Data Rule'
+      siteChoices={siteOptions}
+      on:dismiss={() => { modal = undefined }}
+      preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id, templateId: $store.editing.data.template?.key } : {} }/>
 {:else if modal === 'deleterule'}
   <Dialog
   title={'Delete Rule'}

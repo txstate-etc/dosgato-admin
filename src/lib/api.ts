@@ -20,7 +20,8 @@ import {
   GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
   type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE,
-  UPDATE_ASSET_RULE, CREATE_USER, type CreateUserInput, ADD_ROLES_TO_USER, REMOVE_ROLE_FROM_USER
+  UPDATE_ASSET_RULE, CREATE_USER, type CreateUserInput, ADD_ROLES_TO_USER, REMOVE_ROLE_FROM_USER, type UpdateAssetRuleInput,
+  type UpdateDataRuleInput, UPDATE_DATA_RULE
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -465,6 +466,11 @@ class API {
   async addDataRule (args: CreateDataRuleInput, validateOnly?: boolean) {
     const { createDataRule } = await this.query<{ createDataRule: MutationResponse & { dataRule: DataRule }}>(ADD_DATA_RULE, { args, validateOnly })
     return createDataRule
+  }
+
+  async editDataRule (args: UpdateDataRuleInput, validateOnly?: boolean) {
+    const { updateDataRule } = await this.query<{ updateDataRule: MutationResponse & { dataRule: DataRule }}>(UPDATE_DATA_RULE, { args, validateOnly })
+    return updateDataRule
   }
 
   async removeRule (ruleId: string, type: 'GLOBAL' | 'SITE' | 'PAGE' | 'TEMPLATE' | 'ASSET' | 'DATA') {

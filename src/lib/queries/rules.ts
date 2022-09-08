@@ -358,7 +358,21 @@ export interface CreateAssetRuleInput {
   roleId: string
   siteId?: string
   path?: string
-  mode?: 'self'|'sub'|'selfsub'|undefined
+  mode?: 'self' | 'sub' | 'selfsub' | undefined
+  grants?: {
+    create: boolean
+    update: boolean
+    move: boolean
+    delete: boolean
+    undelete: boolean
+  }
+}
+
+export interface UpdateAssetRuleInput {
+  ruleId: string
+  siteId?: string
+  path?: string
+  mode?: 'self' | 'sub' | 'selfsub' | undefined
   grants?: {
     create: boolean
     update: boolean
@@ -376,6 +390,23 @@ export interface CreateDataRuleInput {
   grants?: {
     create: boolean
     update: boolean
+    move: boolean
+    publish: boolean
+    unpublish: boolean
+    delete: boolean
+    undelete: boolean
+  }
+}
+
+export interface UpdateDataRuleInput {
+  ruleId: string
+  siteId?: string
+  path?: string
+  templateId?: string
+  grants?: {
+    create: boolean
+    update: boolean
+    move: boolean
     publish: boolean
     unpublish: boolean
     delete: boolean
