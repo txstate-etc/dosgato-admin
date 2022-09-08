@@ -210,31 +210,17 @@
 
 <DetailPanel header='Global Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Global Rule' }}>
   {#if $store.role.globalRules.length}
-    <table>
-      <tr class='headers'>
-        <th>Manage Access</th>
-        <th>Manage Parent Roles</th>
-        <th>Create Sites</th>
-        <th>Manage Global Data</th>
-        <th>View Site List</th>
-        <th>Manage Templates</th>
-        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
-      </tr>
-      {#each $store.role.globalRules as rule (rule.id)}
-        <tr>
-          <td><Icon icon={rule.grants.manageAccess ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.manageParentRoles ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.createSites ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.manageGlobalData ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.viewSiteList ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.manageTemplates ? checkIcon : minusIcon}/></td>
-          <td>
-            <button class="edit"><Icon icon={pencilIcon}/></button>
-            <button class="delete" on:click={onClickDelete(rule.id, 'global')}><Icon icon={deleteOutline}/></button>
-          </td>
-        </tr>
-      {/each}
-    </table>
+    <ResponsiveTable items={$store.role.globalRules} headers={[
+      { id: 'manageaccess', label: 'Manage Access', icon: (item) => { return item.grants.manageAccess ? { icon: checkIcon, hiddenLabel: 'May manage access' } : { icon: minusIcon, hiddenLabel: 'May not manage access' } } },
+      { id: 'manageparentroles', label: 'Manage Parent Roles', icon: (item) => { return item.grants.manageParentRoles ? { icon: checkIcon, hiddenLabel: 'May manage parent roles' } : { icon: minusIcon, hiddenLabel: 'May not manage parent roles' } } },
+      { id: 'createsites', label: 'Create Sites', icon: (item) => { return item.grants.createSites ? { icon: checkIcon, hiddenLabel: 'May create sites' } : { icon: minusIcon, hiddenLabel: 'May not create sites' } } },
+      { id: 'manageglobaldata', label: 'Manage Global Data', icon: (item) => { return item.grants.manageGlobalData ? { icon: checkIcon, hiddenLabel: 'May manage global data' } : { icon: minusIcon, hiddenLabel: 'May not manage global data' } } },
+      { id: 'viewsitelist', label: 'View Site List', icon: (item) => { return item.grants.viewSiteList ? { icon: checkIcon, hiddenLabel: 'May view the site list' } : { icon: minusIcon, hiddenLabel: 'May not view the site list' } } },
+      { id: 'managetemplates', label: 'Manage Templates', icon: (item) => { return item.grants.manageTemplates ? { icon: checkIcon, hiddenLabel: 'May manage templates' } : { icon: minusIcon, hiddenLabel: 'May not manage templates' } } }
+    ]} rowActions={[
+      { icon: pencilIcon, hiddenLabel: 'Edit Global Rule', label: 'Edit', onClick: (item) => { onClickEdit(item.id, 'global', item) } },
+      { icon: deleteOutline, hiddenLabel: 'Delete Global Rule', label: 'Delete', onClick: (item) => { onClickDelete(item.id, 'global') } }
+    ]}/>
   {:else}
     <div>This role has no global rules.</div>
   {/if}
@@ -242,41 +228,22 @@
 
 <DetailPanel header='Page Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Page Rule' }}>
   {#if $store.role.pageRules.length}
-    <table>
-      <tr class='headers'>
-        <th>Site</th>
-        <th>Pagetree Type</th>
-        <th>Path</th>
-        <th>Mode</th>
-        <th>Create</th>
-        <th>Update</th>
-        <th>Move</th>
-        <th>Publish</th>
-        <th>Unpublish</th>
-        <th>Delete</th>
-        <th>Undelete</th>
-        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
-      </tr>
-      {#each $store.role.pageRules as rule (rule.id)}
-        <tr>
-          <td>{rule.site ? rule.site.name : 'All Sites'}</td>
-          <td>{rule.pagetreeType ? rule.pagetreeType : 'All types'}</td>
-          <td>{rule.path}</td>
-          <td>{rule.mode}</td>
-          <td><Icon icon={rule.grants.create ? checkIcon : minusIcon} hiddenLabel={`Create ${rule.grants.create ? '' : 'not'} permitted`}/></td>
-          <td><Icon icon={rule.grants.update ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.move ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.publish ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.unpublish ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.delete ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.undelete ? checkIcon : minusIcon}/></td>
-          <td>
-            <button class="edit"><Icon icon={pencilIcon}/></button>
-            <button class="delete" on:click={onClickDelete(rule.id, 'page')}><Icon icon={deleteOutline}/></button>
-          </td>
-        </tr>
-      {/each}
-    </table>
+    <ResponsiveTable items={$store.role.pageRules} headers={[
+      { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
+      { id: 'pagetreetype', label: 'Pagetree Type', render: (item) => { return item.pagetreeType ? item.pagetreeType : 'All types' } },
+      { id: 'path', label: 'Path', get: 'path' },
+      { id: 'mode', label: 'Mode', get: 'mode' },
+      { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create permitted' } : { icon: minusIcon, hiddenLabel: 'Create not permitted' } } },
+      { id: 'update', label: 'Update', icon: (item) => { return item.grants.update ? { icon: checkIcon, hiddenLabel: 'Update permitted' } : { icon: minusIcon, hiddenLabel: 'Update not permitted' } } },
+      { id: 'move', label: 'Move', icon: (item) => { return item.grants.move ? { icon: checkIcon, hiddenLabel: 'Move permitted' } : { icon: minusIcon, hiddenLabel: 'Move not permitted' } } },
+      { id: 'publish', label: 'Publish', icon: (item) => { return item.grants.publish ? { icon: checkIcon, hiddenLabel: 'Publish permitted' } : { icon: minusIcon, hiddenLabel: 'Publish not permitted' } } },
+      { id: 'unpublish', label: 'Unpublish', icon: (item) => { return item.grants.unpublish ? { icon: checkIcon, hiddenLabel: 'Unpublish permitted' } : { icon: minusIcon, hiddenLabel: 'Unpublish not permitted' } } },
+      { id: 'delete', label: 'Delete', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'Delete permitted' } : { icon: minusIcon, hiddenLabel: 'Delete not permitted' } } },
+      { id: 'undelete', label: 'Undelete', icon: (item) => { return item.grants.undelete ? { icon: checkIcon, hiddenLabel: 'Undelete permitted' } : { icon: minusIcon, hiddenLabel: 'Undelete not permitted' } } }
+    ]} rowActions={[
+      { icon: pencilIcon, hiddenLabel: 'Edit Page Rule', label: 'Edit', onClick: (item) => { onClickEdit(item.id, 'page', item) } },
+      { icon: deleteOutline, hiddenLabel: 'Delete Page Rule', label: 'Delete', onClick: (item) => { onClickDelete(item.id, 'page') } }
+    ]}/>
   {:else}
     <div>This role has no page rules</div>
   {/if}
@@ -284,31 +251,17 @@
 
 <DetailPanel header='Site Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Site Rule' }}>
   {#if $store.role.siteRules.length}
-    <table>
-      <tr class="headers">
-        <th>Site</th>
-        <th>Launch</th>
-        <th>Rename</th>
-        <th>Governance</th>
-        <th>Manage State</th>
-        <th>Delete/Undelete</th>
-        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
-      </tr>
-      {#each $store.role.siteRules as rule (rule.id)}
-        <tr>
-          <td>{rule.site ? rule.site.name : 'All Sites'}</td>
-          <td><Icon icon={rule.grants.launch ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.rename ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.governance ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.manageState ? checkIcon : minusIcon}/></td>
-          <td><Icon icon={rule.grants.delete ? checkIcon : minusIcon}/></td>
-          <td>
-            <button class="edit"><Icon icon={pencilIcon}/></button>
-            <button class="delete" on:click={onClickDelete(rule.id, 'site')}><Icon icon={deleteOutline}/></button>
-          </td>
-        </tr>
-      {/each}
-    </table>
+    <ResponsiveTable items={$store.role.siteRules} headers={[
+      { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
+      { id: 'launch', label: 'Launch', icon: (item) => { return item.grants.launch ? { icon: checkIcon, hiddenLabel: 'May launch sites' } : { icon: minusIcon, hiddenLabel: 'May not launch sites' } } },
+      { id: 'rename', label: 'Rename', icon: (item) => { return item.grants.rename ? { icon: checkIcon, hiddenLabel: 'May rename sites' } : { icon: minusIcon, hiddenLabel: 'May not rename sites' } } },
+      { id: 'governance', label: 'Governance', icon: (item) => { return item.grants.governance ? { icon: checkIcon, hiddenLabel: 'May update site management' } : { icon: minusIcon, hiddenLabel: 'May not update site management' } } },
+      { id: 'managestate', label: 'Manage State', icon: (item) => { return item.grants.manageState ? { icon: checkIcon, hiddenLabel: 'May manage pagetree state' } : { icon: minusIcon, hiddenLabel: 'May not manage pagetree state' } } },
+      { id: 'delete', label: 'Delete/Undelete', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'May delete or undelete sites' } : { icon: minusIcon, hiddenLabel: 'May not delete or undelete sites' } } }
+    ]} rowActions={[
+      { icon: pencilIcon, hiddenLabel: 'Edit Site Rule', label: 'Edit', onClick: (item) => { onClickEdit(item.id, 'site', item) } },
+      { icon: deleteOutline, hiddenLabel: 'Delete Site Rule', label: 'Delete', onClick: (item) => { onClickDelete(item.id, 'site') } }
+    ]}/>
   {:else}
     <div>This role has no site rules.</div>
   {/if}
@@ -316,23 +269,13 @@
 
 <DetailPanel header='Template Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Template Rule' }}>
   {#if $store.role.templateRules.length}
-    <table>
-      <tr class="headers">
-        <th>Template</th>
-        <th>Use</th>
-        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
-      </tr>
-      {#each $store.role.templateRules as rule (rule.id)}
-        <tr>
-          <td>{rule.template ? rule.template.name : 'All Templates'}</td>
-          <td><Icon icon={rule.grants.use ? checkIcon : minusIcon}/></td>
-          <td>
-            <button class="edit"><Icon icon={pencilIcon}/></button>
-            <button class="delete" on:click={onClickDelete(rule.id, 'template')}><Icon icon={deleteOutline}/></button>
-          </td>
-        </tr>
-      {/each}
-    </table>
+    <ResponsiveTable items={$store.role.templateRules} headers={[
+      { id: 'template', label: 'Template', render: (item) => { return item.template ? item.template.name : 'All Templates' } },
+      { id: 'use', label: 'Use', icon: (item) => { return item.grants.use ? { icon: checkIcon, hiddenLabel: 'May use template' } : { icon: minusIcon, hiddenLabel: 'May not use template' } } }
+    ]} rowActions={[
+      { icon: pencilIcon, hiddenLabel: 'Edit Template Rule', label: 'Edit', onClick: (item) => { onClickEdit(item.id, 'template', item) } },
+      { icon: deleteOutline, hiddenLabel: 'Delete Template Rule', label: 'Delete', onClick: (item) => { onClickDelete(item.id, 'template') } }
+    ]}/>
   {:else}
     <div>This role has no template rules.</div>
   {/if}
