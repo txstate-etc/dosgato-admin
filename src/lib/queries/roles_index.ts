@@ -144,6 +144,17 @@ export const ADD_ASSET_RULE = `
   }
 `
 
+export const UPDATE_ASSET_RULE = `
+  mutation updateAssetRule ($args: UpdateAssetRuleInput!, $validateOnly: Boolean) {
+    updateAssetRule (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      assetRule {
+        ${assetRuleDetails}
+      }
+    }
+  }
+`
+
 export const ADD_DATA_RULE = `
   mutation createDataRule ($args: CreateDataRuleInput!, $validateOnly: Boolean) {
     createDataRule (args: $args, validateOnly: $validateOnly) {

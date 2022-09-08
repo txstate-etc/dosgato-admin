@@ -7,6 +7,7 @@ interface IRoleDetailStore {
   editing?: {
     id: string
     type: 'asset' | 'data' | 'global' | 'page' | 'site' | 'template'
+    data: any
   }
 }
 
@@ -15,7 +16,7 @@ const initialValue: FullRole = {
   name: '',
   directUsers: [],
   usersThroughGroups: [],
-  permissions: { delete: false, createRules: false, rename: false },
+  permissions: { delete: false, createRules: false, rename: false, assign: false },
   directGroups: [],
   indirectGroups: [],
   assetRules: [],
@@ -40,9 +41,9 @@ export class RoleDetailStore extends Store<IRoleDetailStore> {
     return this.value.role.id.length > 0
   }
 
-  setRuleEditing (id: string, type: 'asset' | 'data' | 'global' | 'page' | 'site' | 'template') {
+  setRuleEditing (id: string, type: 'asset' | 'data' | 'global' | 'page' | 'site' | 'template', rule?: any) {
     this.update(v => {
-      return set(v, 'editing', { id, type })
+      return set(v, 'editing', { id, type, data: rule })
     })
   }
 

@@ -19,7 +19,8 @@ import {
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
   GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
-  type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE
+  type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE,
+  type UpdateAssetRuleInput, UPDATE_ASSET_RULE
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -439,6 +440,11 @@ class API {
   async addAssetRule (args: CreateAssetRuleInput, validateOnly?: boolean) {
     const { createAssetRule } = await this.query<{ createAssetRule: MutationResponse & { assetRule: AssetRule }}>(ADD_ASSET_RULE, { args, validateOnly })
     return createAssetRule
+  }
+
+  async editAssetRule (args: UpdateAssetRuleInput, validateOnly?: boolean) {
+    const { updateAssetRule } = await this.query<{ updateAssetRule: MutationResponse & { assetRule: AssetRule }}>(UPDATE_ASSET_RULE, { args, validateOnly })
+    return updateAssetRule
   }
 
   async addDataRule (args: CreateDataRuleInput, validateOnly?: boolean) {

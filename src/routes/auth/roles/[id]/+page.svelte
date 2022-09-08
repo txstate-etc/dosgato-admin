@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { Icon, FieldSelect, FieldChooserLink, FieldChoices, FieldMultiselect } from '@dosgato/dialog'
+  import { Icon } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import checkIcon from '@iconify-icons/mdi/check'
   import minusIcon from '@iconify-icons/mdi/minus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
-  import { ScreenReaderOnly, type PopupMenuItem } from '@txstate-mws/svelte-components'
+  import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { isNull, unique } from 'txstate-utils'
   import { base } from '$app/paths'
-  import { api, DetailPanel, messageForDialog, type CreateAssetRuleInput, ResponsiveTable } from '$lib'
+  import { api, DetailPanel, messageForDialog, ResponsiveTable, AssetRuleDialog } from '$lib'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
@@ -16,7 +16,7 @@
   export let data: { siteOptions: { value: string, label: string }[] }
   $: ({ siteOptions } = data)
 
-  let modal: 'editbasic'|'addassetrule'|'deleterule'|undefined
+  let modal: 'editbasic' | 'addassetrule' | 'editassetrule' | 'deleterule'|undefined
 
   $: groupIds = unique([...$store.role.directGroups.map(g => g.id), ...$store.role.indirectGroups.map(g => g.id)])
 
@@ -25,32 +25,8 @@
     return relevantGroups.map(g => g.id).join(', ')
   }
 
-  function stateToCreateAssetRuleInput (state) {
-    const input: CreateAssetRuleInput = {
-      roleId: $store.role.id,
-      siteId: state.site[0], // TODO: Change this if/when site becomes a single-select field that returns one value instead of an array
-      path: state.path,
-      mode: state.mode,
-      grants: { // TODO: Probably a better way to do this. Maybe FieldChoices isn't the right field to use here.
-        create: state.grants.includes('Create'),
-        update: state.grants.includes('Update'),
-        move: state.grants.includes('Move'),
-        delete: state.grants.includes('Delete'),
-        undelete: state.grants.includes('Undelete')
-      }
-    }
-    return input
-  }
-
-  async function validateAssetRule (state) {
-    const input = stateToCreateAssetRuleInput(state)
-    const resp = await api.addAssetRule(input, true)
-    return messageForDialog(resp.messages, '')
-  }
-
   async function onAddAssetRule (state) {
-    const input = stateToCreateAssetRuleInput(state)
-    const resp = await api.addAssetRule(input)
+    const resp = await api.addAssetRule({ ...state, roleId: $store.role.id })
     if (resp.success) {
       modal = undefined
       store.refresh($store.role.id)
@@ -59,8 +35,27 @@
     return { success: resp.success, messages: [...messageForDialog(resp.messages, ''), ...wholeDialogMessages], data: state }
   }
 
-  async function getSiteOptions (term: string) {
-    return siteOptions.filter((s: PopupMenuItem) => s.label!.indexOf(term) > -1)
+  async function onEditAssetRule (state) {
+    if (!$store.editing) return
+    const args = {
+      ruleId: $store.editing.id,
+      siteId: state.siteId,
+      path: state.path,
+      mode: state.mode,
+      grants: {
+        create: state.grants.create,
+        update: state.grants.update,
+        move: state.grants.move,
+        delete: state.grants.delete,
+        undelete: state.grants.undelete
+      }
+    }
+    const resp = await api.editAssetRule(args)
+    if (resp.success) {
+      modal = undefined
+      store.refresh($store.role.id)
+    }
+    return { success: resp.success, messags: messageForDialog(resp.messages, 'args'), data: state }
   }
 
   async function onDeleteRule () {
@@ -74,9 +69,14 @@
   }
 
   function onClickDelete (ruleId, ruleType) {
-    return () => {
-      store.setRuleEditing(ruleId, ruleType)
-      modal = 'deleterule'
+    store.setRuleEditing(ruleId, ruleType)
+    modal = 'deleterule'
+  }
+
+  function onClickEdit (ruleId, ruleType, rule) {
+    store.setRuleEditing(ruleId, ruleType, rule)
+    if (ruleType === 'asset') {
+      modal = 'editassetrule'
     }
   }
 
@@ -143,7 +143,7 @@
       { id: 'delete', label: 'Delete', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'Delete permitted' } : { icon: minusIcon, hiddenLabel: 'Delete not permitted' } } },
       { id: 'undelete', label: 'Undelete', icon: (item) => { return item.grants.undelete ? { icon: checkIcon, hiddenLabel: 'Undelete permitted' } : { icon: minusIcon, hiddenLabel: 'Undelete not permitted' } } }
     ]} rowActions={[
-      { icon: pencilIcon, hiddenLabel: 'Edit Asset Rule', label: 'Edit', onClick: () => { console.log('clicked edit') } },
+      { icon: pencilIcon, hiddenLabel: 'Edit Asset Rule', label: 'Edit', onClick: (item) => { onClickEdit(item.id, 'asset', item) } },
       { icon: deleteOutline, hiddenLabel: 'Delete Asset Rule', label: 'Delete', onClick: (item) => { onClickDelete(item.id, 'asset') } }
     ]}/>
   {:else}
@@ -320,19 +320,17 @@
     <div>This role has no template rules.</div>
   {/if}
 </DetailPanel>
-
+{modal}
 {#if modal === 'addassetrule'}
-  <FormDialog
-    submit={onAddAssetRule}
-    validate={validateAssetRule}
-    name='addassetrule'
-    title='Add Asset Rule'
-    on:dismiss={() => { modal = undefined }}>
-    <FieldMultiselect path='site' label='Site' getOptions={getSiteOptions}/>
-    <FieldChooserLink path='path' label='Path'/>
-    <FieldSelect path='mode' label='Mode' choices={[{ value: 'SELF', label: 'This path only' }, { value: 'SELFANDSUB', label: 'This path and its subfolders' }, { value: 'SUB', label: 'Only subfolders of this path' }]}/>
-    <FieldChoices path='grants' label='Grants' choices={[{ value: 'Create' }, { value: 'Update' }, { value: 'Move' }, { value: 'Delete' }, { value: 'Undelete' }]}/>
-  </FormDialog>
+  <AssetRuleDialog submit={onAddAssetRule} name='addassetrule' title='Add Asset Rule' siteChoices={siteOptions} on:dismiss={() => { modal = undefined }}/>
+{:else if modal === 'editassetrule'}
+  <AssetRuleDialog
+    submit={onEditAssetRule}
+    name='editassetrule'
+    title='Edit Asset Rule'
+    siteChoices={siteOptions}
+    on:dismiss={() => { modal = undefined }}
+    preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site.id } : {} }/>
 {:else if modal === 'deleterule'}
   <Dialog
   title={'Delete Rule'}
