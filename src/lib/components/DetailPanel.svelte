@@ -38,6 +38,7 @@
     color: white;
     background: transparent;
     border: 0;
+    cursor: pointer;
   }
   .body {
     border: 1px solid #666;

@@ -20,7 +20,7 @@ import {
   GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
   type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE,
-  type UpdateAssetRuleInput, UPDATE_ASSET_RULE
+  UPDATE_ASSET_RULE, CREATE_USER, type CreateUserInput, ADD_ROLES_TO_USER, REMOVE_ROLE_FROM_USER
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -217,9 +217,24 @@ class API {
     return enableUsers
   }
 
+  async createUser (args: CreateUserInput) {
+    const { createUser } = await this.query<{ createUser: MutationResponse & { user: UserListUser } }>(CREATE_USER, args)
+    return createUser
+  }
+
   async updateUserInfo (userId: string, args: any, validateOnly?: boolean) {
     const { updateUser } = await this.query<{ updateUser: MutationResponse & { user: UserListUser } }>(UPDATE_USER, { userId, args, validateOnly })
     return updateUser
+  }
+
+  async addRolesToUser (roleIds: string[], userId: string) {
+    const { addRolesToUser } = await this.query<{ addRolesToUser: MutationResponse }>(ADD_ROLES_TO_USER, { roleIds, userId })
+    return addRolesToUser
+  }
+
+  async removeRoleFromUser (roleId: string, userId: string) {
+    const { removeRoleFromUser } = await this.query<{ removeRoleFromUser: MutationResponse }>(REMOVE_ROLE_FROM_USER, { roleId, userId })
+    return removeRoleFromUser
   }
 
   async addUserToGroups (userId: string, groupIds: string[]) {

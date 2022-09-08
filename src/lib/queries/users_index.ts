@@ -6,6 +6,7 @@ id
 name
 email
 disabled
+trained
 roles {
   id
   name
@@ -27,6 +28,7 @@ const fullUserDetails = `
   directRoles: roles(direct: true) {
     id
     name
+    permissions { assign }
     ${accessDetailRules}
   }
   indirectRoles: roles(direct: false) {
@@ -72,6 +74,7 @@ export interface UserListUser {
   name: string
   email: string
   disabled: boolean
+  trained: boolean
   roles: {
     id: string
     name: string
@@ -102,6 +105,7 @@ export interface FullUser {
   directRoles: {
     id: string
     name: string
+    permissions: { assign: boolean }
     siteRules: AccessDetailSiteRule[]
     pageRules: AccessDetailPageRule[]
   }[]
@@ -133,6 +137,14 @@ export interface FullUser {
 export interface UserFilter {
   enabled?: boolean
   system?: boolean
+}
+
+export interface CreateUserInput {
+  userId: string
+  name: string
+  email: string
+  trained: boolean
+  validateOnly?: boolean
 }
 
 export const GET_USER_LIST = `
@@ -172,6 +184,17 @@ export const ENABLE_USERS = `
   }
 `
 
+export const CREATE_USER = `
+  mutation createUser ($userId: ID!, $name: String!, $email: String!, $trained: Boolean!, $validateOnly: Boolean) {
+    createUser (userId: $userId, name: $name, email: $email, trained: $trained, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      user {
+        ${userDetails}
+      }
+    }
+  }
+`
+
 export const UPDATE_USER = `
   mutation updateUser ($userId: ID!, $args: UpdateUserInput!, $validateOnly: Boolean) {
     updateUser (userId: $userId, args: $args, validateOnly: $validateOnly) {
@@ -194,6 +217,22 @@ export const REMOVE_USER_FROM_GROUP = `
 export const ADD_USER_TO_GROUPS = `
   mutation addUserToGroups ($groupIds: [ID!]!, $userId: ID!) {
     addUserToGroups (groupIds: $groupIds, userId: $userId) {
+      ${mutationResponse}
+    }
+  }
+`
+
+export const ADD_ROLES_TO_USER = `
+  mutation addRolesToUser ($roleIds: [ID!]!, $userId: ID!) {
+    addRolesToUser (roleIds: $roleIds, userId: $userId) {
+      ${mutationResponse}
+    }
+  }
+`
+
+export const REMOVE_ROLE_FROM_USER = `
+  mutation removeRoleFromUser ($roleId: ID!, $userId: ID!) {
+    removeRoleFromUser (roleId: $roleId, userId: $userId) {
       ${mutationResponse}
     }
   }

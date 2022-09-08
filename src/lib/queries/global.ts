@@ -11,6 +11,7 @@ export const GET_GLOBAL_SELF = `
       viewRoleManager
       viewSiteManager
       createSites
+      createUsers
     }
   }
 `
@@ -27,6 +28,7 @@ export interface GlobalSelf {
     viewRoleManager: boolean
     viewSiteManager: boolean
     createSites: boolean
+    createUsers: boolean
   }
 }
 
@@ -42,5 +44,5 @@ export const mutationResponse = `
 export interface MessageFromAPI {
   arg: string
   message: string
-  type: 'error'|'warning'|'success'
+  type: 'error' | 'warning' | 'success'
 }

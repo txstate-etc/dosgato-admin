@@ -6,7 +6,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
-  import { api, DetailPanel, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole } from '$lib'
+  import { api, DetailPanel, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser } from '$lib'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
@@ -71,10 +71,20 @@
     return filtered.map(role => ({ label: role.name, value: role.id }))
   }
 
-  async function onAddRoles (state) {
-    console.log(state)
-    // TODO
-    return { success: true, messages: [], data: state }
+  async function onAddRoles (state: { roleIds: string[] }) {
+    const resp = await api.addRolesToUser(state.roleIds, $store.user.id)
+    if (resp.success) {
+      store.refresh($store.user.id)
+      modal = undefined
+    }
+    return { ...resp, data: state }
+  }
+
+  function onRemoveRole (role: FullUser['directRoles'][number]) {
+    return async () => {
+      const resp = await api.removeRoleFromUser(role.id, $store.user.id)
+      if (resp.success) store.refresh($store.user.id)
+    }
   }
 
   async function onRemoveFromGroup () {
@@ -155,7 +165,7 @@
       {#each $store.user.directRoles as role (role.id)}
         <li class="flex-row">
           {role.name}
-          <button class="remove-role"><Icon icon={deleteOutline} width="1.5em"/></button>
+          <button class="remove-role" disabled={!role.permissions.assign} on:click={onRemoveRole(role)}><Icon icon={deleteOutline} width="1.5em"/></button>
         </li>
       {/each}
       {#each $store.user.indirectRoles as role (role.id)}
@@ -226,15 +236,13 @@
     Remove user {$store.user.id} from group {groupLeaving ? groupLeaving.name : ''}?
   </Dialog>
 {:else if modal === 'editroles'}
-<!-- TODO: This needs a preload but using it breaks the page -->
   <FormDialog
     submit={onAddRoles}
     name='editroles'
     title={`Edit roles for ${$store.user.id}`}
-    validate={async () => { return [] }}
     on:dismiss={() => { modal = undefined }}>
     <FieldMultiselect
-      path='roles'
+      path='roleIds'
       label='Add Roles'
       getOptions={searchRoles}/>
   </FormDialog>
@@ -273,5 +281,8 @@
     border: 0;
     padding: 0;
     background-color: transparent;
+  }
+  button {
+    cursor: pointer;
   }
 </style>

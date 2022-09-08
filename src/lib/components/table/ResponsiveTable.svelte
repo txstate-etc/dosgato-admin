@@ -66,6 +66,7 @@
     border: 0;
     padding: 0;
     background-color: transparent;
+    cursor: pointer;
   }
   button .button-label {
     display: none;
