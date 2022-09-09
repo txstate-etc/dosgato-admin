@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { Icon } from '@dosgato/dialog'
+  import { FieldText, Icon } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import checkIcon from '@iconify-icons/mdi/check'
   import minusIcon from '@iconify-icons/mdi/minus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
-  import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { isNull, unique } from 'txstate-utils'
   import { base } from '$app/paths'
   import { api, DetailPanel, messageForDialog, ResponsiveTable, AssetRuleDialog, DataRuleDialog } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
+  import FormDialog from '$lib/components/FormDialog.svelte'
 
   export let data: { siteOptions: { value: string, label: string }[] }
   $: ({ siteOptions } = data)
@@ -22,6 +22,29 @@
   function getUserGroups (userGroups) {
     const relevantGroups = userGroups.filter(g => groupIds.includes(g.id))
     return relevantGroups.map(g => g.id).join(', ')
+  }
+
+  async function validateBasic (state) {
+    const resp = await api.editRole($store.role.id, state.name, true)
+    return resp.messages.map(m => ({ ...m, path: m.arg }))
+  }
+
+  async function onEditBasic (state) {
+    const resp = await api.editRole($store.role.id, state.name)
+    return {
+      success: resp.success,
+      messages: resp.messages.map(m => ({ ...m, path: m.arg })),
+      data: resp.success
+        ? {
+            name: resp.role.name
+          }
+        : undefined
+    }
+  }
+
+  function onSaved () {
+    modal = undefined
+    store.refresh($store.role.id)
   }
 
   async function onAddAssetRule (state) {
@@ -123,7 +146,7 @@
   </a>
 </div>
 
-<DetailPanel header='Basic Information' button={{ icon: pencilIcon, onClick: () => {}, hiddenLabel: 'Edit Basic Information' }}>
+<DetailPanel header='Basic Information' button={ $store.role.permissions.rename ? { icon: pencilIcon, onClick: () => { modal = 'editbasic' }, hiddenLabel: 'Edit Basic Information' } : undefined }>
   <div class="row">
     <div class="label">Name:</div>
     <div class="value">{$store.role.name}</div>
@@ -281,7 +304,18 @@
   {/if}
 </DetailPanel>
 {modal}
-{#if modal === 'addassetrule'}
+{#if modal === 'editbasic'}
+  <FormDialog
+    submit={onEditBasic}
+    validate={validateBasic}
+    name='editbasicinfo'
+    title='Rename Role'
+    preload={{ name: $store.role.name }}
+    on:dismiss={() => { modal = undefined }}
+    on:saved={onSaved}>
+    <FieldText path='name' label="Name" required/>
+  </FormDialog>
+{:else if modal === 'addassetrule'}
   <AssetRuleDialog submit={onAddAssetRule} name='addassetrule' title='Add Asset Rule' siteChoices={siteOptions} on:dismiss={() => { modal = undefined }}/>
 {:else if modal === 'editassetrule'}
   <AssetRuleDialog

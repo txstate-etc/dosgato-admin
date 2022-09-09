@@ -133,6 +133,17 @@ export const GET_ROLE_BY_ID = `
   }
 `
 
+export const UPDATE_ROLE = `
+  mutation updateRole ($roleId: ID!, $name: String!, $validateOnly: Boolean) {
+    updateRole (roleId: $roleId, name: $name, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      role {
+        ${roleDetails}
+      }
+    }
+  }
+`
+
 export const ADD_ASSET_RULE = `
   mutation createAssetRule ($args: CreateAssetRuleInput!, $validateOnly: Boolean) {
     createAssetRule (args: $args, validateOnly: $validateOnly) {

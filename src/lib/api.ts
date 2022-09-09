@@ -23,7 +23,7 @@ import {
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
   type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE,
   UPDATE_ASSET_RULE, CREATE_USER, type CreateUserInput, ADD_ROLES_TO_USER, REMOVE_ROLE_FROM_USER, type UpdateAssetRuleInput,
-  type UpdateDataRuleInput, UPDATE_DATA_RULE, type MessageFromAPI
+  type UpdateDataRuleInput, UPDATE_DATA_RULE, type MessageFromAPI, UPDATE_ROLE
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -400,6 +400,11 @@ class API {
   async getRoleById (roleId: string) {
     const { roles } = await this.query<{ roles: FullRole[]}>(GET_ROLE_BY_ID, { roleId })
     return roles[0]
+  }
+
+  async editRole (roleId: string, name: string, validateOnly?: boolean) {
+    const { updateRole } = await this.query<{ updateRole: MutationResponse & { role: RoleListRole } }>(UPDATE_ROLE, { roleId, name, validateOnly })
+    return updateRole
   }
 
   async getSiteList () {
