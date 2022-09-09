@@ -5,7 +5,7 @@
   import accountCancel from '@iconify-icons/mdi/account-cancel'
   import accountOff from '@iconify-icons/mdi/account-off'
   import pencilIcon from '@iconify-icons/mdi/pencil'
-  import { omit, sortby } from 'txstate-utils'
+  import { sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, Dialog, FormDialog, globalStore, Tree, TreeStore, type TypedTreeItem, type UserListUser } from '$lib'
@@ -62,21 +62,24 @@
   }
 
   async function onCreate (data: CreateUserInput) {
-    const resp = await api.createUser(data)
+    const resp = await api.createUser({ ...data, system })
     return {
-      ...omit(resp, 'user'),
-      data: {
-        userId: resp.user.id,
-        name: resp.user.name,
-        email: resp.user.email,
-        trained: resp.user.trained
-      }
+      success: resp.success,
+      messages: resp.messages.map(m => ({ ...m, path: m.arg })),
+      data: resp.success
+        ? {
+            userId: resp.user!.id,
+            name: resp.user!.name,
+            email: resp.user!.email,
+            trained: resp.user!.trained
+          }
+        : undefined
     }
   }
 
   async function onCreateValidate (data: CreateUserInput) {
-    const resp = await api.createUser({ ...data, validateOnly: true })
-    return resp.messages
+    const resp = await api.createUser({ ...data, validateOnly: true, system })
+    return resp.messages.map(m => ({ ...m, path: m.arg }))
   }
 
   function onCreateComplete () {

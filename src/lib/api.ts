@@ -1,6 +1,8 @@
 import { base } from '$app/paths'
 import type { AssetLink, ComponentData, PageData, PageLink } from '@dosgato/templating'
-import { get, keyby, set, splice, toArray } from 'txstate-utils'
+import { error } from '@sveltejs/kit'
+import { MessageType } from '@txstate-mws/svelte-forms'
+import { get, isBlank, keyby, set, splice, toArray } from 'txstate-utils'
 import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
@@ -21,20 +23,15 @@ import {
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
   type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE,
   UPDATE_ASSET_RULE, CREATE_USER, type CreateUserInput, ADD_ROLES_TO_USER, REMOVE_ROLE_FROM_USER, type UpdateAssetRuleInput,
-  type UpdateDataRuleInput, UPDATE_DATA_RULE
+  type UpdateDataRuleInput, UPDATE_DATA_RULE, type MessageFromAPI
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
-import { error } from '@sveltejs/kit'
 
 export interface MutationResponse {
   success: boolean
-  messages: {
-    arg: string
-    message: string
-    type: 'error' | 'warning' | 'success'
-  }[]
+  messages: MessageFromAPI[]
 }
 
 export class Loader<T> {
@@ -81,6 +78,16 @@ export class Loader<T> {
         }
       })
   }
+}
+
+function validateRequired <T = {}> (data: any, requiredFields: string[]) {
+  const messages: MutationResponse['messages'] = []
+  for (const field of requiredFields) {
+    if (isBlank(data[field])) {
+      messages.push({ type: MessageType.ERROR, message: 'This field is required.', arg: field })
+    }
+  }
+  return (messages.length ? { success: false, messages } : undefined) as (MutationResponse & T) | undefined
 }
 
 class API {
@@ -219,6 +226,8 @@ class API {
   }
 
   async createUser (args: CreateUserInput) {
+    const resp = validateRequired<{ user: undefined }>(args, ['userId', 'name', 'email'])
+    if (resp) return resp
     const { createUser } = await this.query<{ createUser: MutationResponse & { user: UserListUser } }>(CREATE_USER, args)
     return createUser
   }

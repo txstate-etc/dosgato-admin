@@ -1,6 +1,6 @@
 import type { MessageFromAPI } from '$lib'
 import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
-import { isNull, isNotBlank } from 'txstate-utils'
+import { isNull, isNotBlank, omit } from 'txstate-utils'
 
 export function messageForDialog (messages: MessageFromAPI[], prefix: string) {
   return messages.filter(m => {
@@ -11,6 +11,10 @@ export function messageForDialog (messages: MessageFromAPI[], prefix: string) {
   }).map(m => {
     return { path: isNotBlank(prefix) ? m.arg.replace(`${prefix}.`, '') : m.arg, type: m.type, message: m.message }
   }) as Feedback[]
+}
+
+export function messagesStripPrefix (messages: MessageFromAPI[], prefix: string) {
+  return messages.map(m => ({ ...omit(m, 'arg'), path: m.arg.replace(RegExp('^' + prefix + '\\.'), '') })) as Feedback[]
 }
 
 export function ensureRequiredNotNull (data: any, requiredFields: string[]) {
