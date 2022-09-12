@@ -1,14 +1,15 @@
 <script lang="ts">
-  import { iconForMime } from '@dosgato/dialog'
+  import { iconForMime, Icon, bytesToHuman } from '@dosgato/dialog'
   import arrowsOutCardinalLight from '@iconify-icons/ph/arrows-out-cardinal-light'
   import downloadLight from '@iconify-icons/ph/download-light'
   import folderLight from '@iconify-icons/ph/folder-light'
   import folderNotchOpenLight from '@iconify-icons/ph/folder-notch-open-light'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import uploadLight from '@iconify-icons/ph/upload-light'
-  import { goto } from '$app/navigation'
   import { DateTime } from 'luxon'
-  import { api, ActionPanel, Dialog, Tree, TreeStore, type TypedTreeItem, type TreeAsset, type TreeAssetFolder, environmentConfig } from '$lib'
+  import { roundTo, unique } from 'txstate-utils'
+  import { goto } from '$app/navigation'
+  import { api, ActionPanel, Dialog, Tree, TreeStore, type TypedTreeItem, type TreeAsset, type TreeAssetFolder, environmentConfig, uploadWithProgress } from '$lib'
   import { base } from '$app/paths'
 
   interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
@@ -26,9 +27,10 @@
 
   let uploadTo: TypedAssetFolderItem | undefined
   let dragover = 0
-  let uploadInput: HTMLInputElement
+  let uploadList: File[] = []
   let uploadForm: HTMLFormElement
   let uploadLocked = false
+  let uploadProgress = 0
 
   async function fetchChildren (item?: TypedAssetFolderItem) {
     const { folders, assets } = item ? (await api.getSubFoldersAndAssets(item.id))! : { folders: await api.getRootAssetFolders(), assets: [] }
@@ -98,32 +100,45 @@
 
   function onUploadDrop (e: DragEvent) {
     e.preventDefault()
+    dragover = 0
     if (!uploadLocked && e.dataTransfer?.items?.length) {
-      uploadInput.files = e.dataTransfer.files
+      uploadList = unique(uploadList.concat(Array.from(e.dataTransfer.files)), 'name')
     }
   }
 
+  function onUploadEnter (e: DragEvent) {
+    if (e.dataTransfer?.items.length) dragover++
+  }
+
+  function onUploadLeave (e: DragEvent) {
+    if (e.dataTransfer?.items.length) dragover--
+  }
+
+  function onUploadChange (e: InputEvent & { currentTarget: HTMLInputElement }) {
+    const files = e.currentTarget.files
+    if (files?.length) uploadList = unique(uploadList.concat(Array.from(files)), 'name')
+    e.currentTarget.value = ''
+  }
+
   async function onUploadSubmit () {
-    if (!uploadTo) return
+    if (!uploadTo || uploadLocked) return
     uploadLocked = true
     try {
       const data = new FormData()
       data.append('folderId', uploadTo.id)
-      for (let i = 0; i < (uploadInput.files?.length ?? 0); i++) {
-        data.append('file' + i, uploadInput.files![i])
+      for (let i = 0; i < uploadList.length; i++) {
+        data.append('file' + i, uploadList[i])
       }
 
-      const resp = await fetch(uploadForm.action, {
-        method: 'POST',
-        body: data,
-        headers: {
-          Authorization: `Bearer ${api.token}`
-        }
-      })
-      if (resp.status === 200) {
-        await store.openAndRefresh(uploadTo)
-        uploadTo = undefined
-      }
+      await uploadWithProgress(
+        uploadForm.action,
+        { Authorization: `Bearer ${api.token}` },
+        data,
+        ratio => { uploadProgress = ratio }
+      )
+      await store.openAndRefresh(uploadTo)
+      uploadTo = undefined
+      uploadList = []
     } finally {
       uploadLocked = false
     }
@@ -136,7 +151,7 @@
   <Tree {store} let:item let:level let:isSelected on:choose={({ detail }) => goto(base + '/pages/' + detail.id)}
     headers={[
       { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight), render: itm => 'filename' in itm ? itm.filename : itm.name },
-      { label: 'Size', id: 'template', defaultWidth: '8.5em', get: 'size' },
+      { label: 'Size', id: 'template', defaultWidth: '8.5em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },
       { label: 'Type', id: 'title', defaultWidth: 'calc(40% - 10.75em)', get: 'mime' },
       { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => item.kind === 'asset' ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
       { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
@@ -144,12 +159,26 @@
   />
 </ActionPanel>
 {#if uploadTo}
-  <Dialog title="Upload File(s)" cancelText="Cancel" continueText="Upload" on:escape={() => { uploadTo = undefined }} on:continue={onUploadSubmit}>
-    <form bind:this={uploadForm} method="POST" enctype="multipart/form-data" action={`${environmentConfig.apiBase}/assets`} on:submit|preventDefault|stopPropagation={onUploadSubmit}>
-      <div class="uploader" class:dragover={dragover > 0} on:dragenter={() => { dragover++ }} on:dragleave={() => { dragover-- }} on:dragover|preventDefault on:drop={onUploadDrop}>
-        <input bind:this={uploadInput} type="file" name="file" multiple disabled={uploadLocked}>
-      </div>
-    </form>
+  <Dialog title="Upload Files to {uploadTo.path}" cancelText="Cancel" continueText="Upload" on:escape={() => { uploadTo = undefined }} on:continue={onUploadSubmit}>
+    {#if uploadLocked}
+      <progress value={uploadProgress} aria-label="Assets Uploading">{roundTo(100 * uploadProgress)}%</progress>
+    {:else}
+      <form bind:this={uploadForm} method="POST" enctype="multipart/form-data"
+        action={`${environmentConfig.apiBase}/assets`}
+        on:submit|preventDefault|stopPropagation={onUploadSubmit}
+        class="uploader" class:dragover={dragover > 0}
+        on:dragenter={onUploadEnter} on:dragleave={onUploadLeave}
+        on:dragover|preventDefault on:drop={onUploadDrop}
+      >
+        <input type="file" id="uploader_input" multiple on:change={onUploadChange}>
+        <label for="uploader_input">Choose or drag files</label>
+        <ul>
+          {#each uploadList as file}
+            <li><Icon icon={iconForMime(file.type)} inline />{file.name}</li>
+          {/each}
+        </ul>
+      </form>
+    {/if}
   </Dialog>
 {/if}
 
@@ -161,9 +190,36 @@
     border: 2px dashed #666666;
     border-radius: 0.5em;
     text-align: center;
-    padding: 3em 0;
+    padding: 1em;
+    min-height: 10em;
   }
   .uploader.dragover {
     border-color: #333333;
+  }
+  .uploader ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    text-align: left;
+  }
+  progress {
+    width: 80%;
+    margin-left: 10%;
+  }
+  input[type="file"] {
+    opacity: 0;
+  }
+  label {
+    display: inline-block;
+    width: 50%;
+    padding: 1em;
+    background: #ccc;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-bottom: 1em;
+  }
+  input:focus + label {
+    outline: 2px solid blue;
   }
 </style>
