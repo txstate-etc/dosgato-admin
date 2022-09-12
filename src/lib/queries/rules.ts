@@ -471,3 +471,42 @@ export interface UpdatePageRuleInput {
     undelete: boolean
   }
 }
+
+export interface CreateSiteRuleInput {
+  roleId: string
+  grants?: {
+    launch: boolean
+    rename: boolean
+    governance: boolean
+    manageState: boolean
+    delete: boolean
+  }
+}
+
+export interface UpdateSiteRuleInput {
+  ruleId: string
+  siteId?: string
+  grants?: {
+    launch: boolean
+    rename: boolean
+    governance: boolean
+    manageState: boolean
+    delete: boolean
+  }
+}
+
+export interface CreateTemplateRuleInput {
+  roleId: string
+  templateId?: string
+  grants?: {
+    use: boolean
+  }
+}
+
+export interface UpdateTemplateRuleInput {
+  ruleId: string
+  templateId?: string
+  grants?: {
+    use: boolean
+  }
+}

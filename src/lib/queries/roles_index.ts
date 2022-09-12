@@ -231,6 +231,50 @@ export const UPDATE_PAGE_RULE = `
   }
 `
 
+export const ADD_SITE_RULE = `
+  mutation createSiteRule ($args: CreateSiteRuleInput!, $validateOnly: Boolean) {
+    createSiteRule (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      siteRule {
+        ${siteRuleDetails}
+      }
+    }
+  }
+`
+
+export const UPDATE_SITE_RULE = `
+  mutation updateSiteRule ($args: UpdateSiteRuleInput!, $validateOnly: Boolean) {
+    updateSiteRule (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      siteRule {
+        ${siteRuleDetails}
+      }
+    }
+  }
+`
+
+export const ADD_TEMPLATE_RULE = `
+  mutation createTemplateRule ($args: CreateTemplateRuleInput!, $validateOnly: Boolean) {
+    createTemplateRule (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      templateRule {
+        ${templateRuleDetails}
+      }
+    }
+  }
+`
+
+export const UPDATE_TEMPLATE_RULE = `
+  mutation updateTemplateRule ($args: UpdateTemplateRuleInput!, $validateOnly: Boolean) {
+    updateTemplateRule (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      templateRule {
+        ${templateRuleDetails}
+      }
+    }
+  }
+`
+
 export const REMOVE_RULE = `
   mutation removeRule  ($ruleId: ID!, $type: RuleType!) {
     removeRule (ruleId: $ruleId, type: $type) {

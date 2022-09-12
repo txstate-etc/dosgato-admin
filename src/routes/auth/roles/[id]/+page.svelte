@@ -5,9 +5,9 @@
   import checkIcon from '@iconify-icons/mdi/check'
   import minusIcon from '@iconify-icons/mdi/minus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
-  import { isNull, unique } from 'txstate-utils'
+  import { unique } from 'txstate-utils'
   import { base } from '$app/paths'
-  import { api, DetailPanel, messageForDialog, ResponsiveTable, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog } from '$lib'
+  import { api, DetailPanel, ResponsiveTable, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
   import FormDialog from '$lib/components/FormDialog.svelte'
@@ -16,7 +16,8 @@
   $: ({ siteOptions } = data)
 
   let modal: 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' |
-    'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | undefined
+    'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' |
+    'addsiterule' | 'editsiterule' | 'addtemplaterule' | undefined
 
   $: groupIds = unique([...$store.role.directGroups.map(g => g.id), ...$store.role.indirectGroups.map(g => g.id)])
 
@@ -73,6 +74,10 @@
       modal = 'editglobalrule'
     } else if (ruleType === 'page') {
       modal = 'editpagerule'
+    } else if (ruleType === 'site') {
+      modal = 'editsiterule'
+    } else if (ruleType === 'template') {
+      modal = 'edittemplaterule'
     }
   }
 
@@ -210,7 +215,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Site Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Site Rule' }}>
+<DetailPanel header='Site Rules' button={{ icon: plusIcon, onClick: () => { modal = 'addsiterule' }, hiddenLabel: 'Add Site Rule' }}>
   {#if $store.role.siteRules.length}
     <ResponsiveTable items={$store.role.siteRules} headers={[
       { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
@@ -228,13 +233,12 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Template Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Template Rule' }}>
+<DetailPanel header='Template Rules' button={{ icon: plusIcon, onClick: () => { modal = 'addtemplaterule' }, hiddenLabel: 'Add Template Rule' }}>
   {#if $store.role.templateRules.length}
     <ResponsiveTable items={$store.role.templateRules} headers={[
       { id: 'template', label: 'Template', render: (item) => { return item.template ? item.template.name : 'All Templates' } },
       { id: 'use', label: 'Use', icon: (item) => { return item.grants.use ? { icon: checkIcon, hiddenLabel: 'May use template' } : { icon: minusIcon, hiddenLabel: 'May not use template' } } }
     ]} rowActions={[
-      { icon: pencilIcon, hiddenLabel: 'Edit Template Rule', label: 'Edit', onClick: (item) => { onClickEdit(item.id, 'template', item) } },
       { icon: deleteOutline, hiddenLabel: 'Delete Template Rule', label: 'Delete', onClick: (item) => { onClickDelete(item.id, 'template') } }
     ]}/>
   {:else}
@@ -291,6 +295,18 @@
     on:dismiss={() => { modal = undefined }}
     on:saved={onSaved}
     preload={$store.editing ? $store.editing.data : {} }/>
+{:else if modal === 'addsiterule'}
+  <SiteRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
+{:else if modal === 'editsiterule'}
+  <SiteRuleDialog
+    roleId={$store.role.id}
+    ruleId={$store.editing?.id}
+    siteChoices={siteOptions}
+    on:dismiss={() => { modal = undefined }}
+    on:saved={onSaved}
+    preload={$store.editing ? $store.editing.data : {} }/>
+{:else if modal === 'addtemplaterule'}
+  <TemplateRuleDialog roleId={$store.role.id} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'deleterule'}
   <Dialog
   title={'Delete Rule'}

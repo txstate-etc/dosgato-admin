@@ -25,7 +25,8 @@ import {
   UPDATE_ASSET_RULE, CREATE_USER, type CreateUserInput, ADD_ROLES_TO_USER, REMOVE_ROLE_FROM_USER, type UpdateAssetRuleInput,
   type UpdateDataRuleInput, UPDATE_DATA_RULE, type MessageFromAPI, UPDATE_ROLE, type CreateGlobalRuleInput, type UpdateGlobalRuleInput,
   type GlobalRule, ADD_GLOBAL_RULE, UPDATE_GLOBAL_RULE, type PageRule, type CreatePageRuleInput, type UpdatePageRuleInput,
-  ADD_PAGE_RULE, UPDATE_PAGE_RULE
+  ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
+  type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -507,6 +508,26 @@ class API {
   async editPageRule (args: UpdatePageRuleInput, validateOnly?: boolean) {
     const { updatePageRule } = await this.query<{ updatePageRule: MutationResponse & { pageRule: PageRule }}>(UPDATE_PAGE_RULE, { args, validateOnly })
     return updatePageRule
+  }
+
+  async addSiteRule (args: CreateSiteRuleInput, validateOnly?: boolean) {
+    const { createSiteRule } = await this.query<{ createSiteRule: MutationResponse & { siteRule: SiteRule }}>(ADD_SITE_RULE, { args, validateOnly })
+    return createSiteRule
+  }
+
+  async editSiteRule (args: UpdateSiteRuleInput, validateOnly?: boolean) {
+    const { updateSiteRule } = await this.query<{ updateSiteRule: MutationResponse & { siteRule: SiteRule }}>(UPDATE_SITE_RULE, { args, validateOnly })
+    return updateSiteRule
+  }
+
+  async addTemplateRule (args: CreateTemplateRuleInput, validateOnly?: boolean) {
+    const { createTemplateRule } = await this.query<{ createTemplateRule: MutationResponse & { templateRule: TemplateRule }}>(ADD_TEMPLATE_RULE, { args, validateOnly })
+    return createTemplateRule
+  }
+
+  async editTemplateRule (args: UpdateTemplateRuleInput, validateOnly?: boolean) {
+    const { updateTemplateRule } = await this.query<{ updateTemplateRule: MutationResponse & { templateRule: TemplateRule }}>(UPDATE_TEMPLATE_RULE, { args, validateOnly })
+    return updateTemplateRule
   }
 
   async removeRule (ruleId: string, type: 'GLOBAL' | 'SITE' | 'PAGE' | 'TEMPLATE' | 'ASSET' | 'DATA') {
