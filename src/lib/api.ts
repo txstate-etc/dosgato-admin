@@ -23,7 +23,9 @@ import {
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
   type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE,
   UPDATE_ASSET_RULE, CREATE_USER, type CreateUserInput, ADD_ROLES_TO_USER, REMOVE_ROLE_FROM_USER, type UpdateAssetRuleInput,
-  type UpdateDataRuleInput, UPDATE_DATA_RULE, type MessageFromAPI, UPDATE_ROLE
+  type UpdateDataRuleInput, UPDATE_DATA_RULE, type MessageFromAPI, UPDATE_ROLE, type CreateGlobalRuleInput, type UpdateGlobalRuleInput,
+  type GlobalRule, ADD_GLOBAL_RULE, UPDATE_GLOBAL_RULE, type PageRule, type CreatePageRuleInput, type UpdatePageRuleInput,
+  ADD_PAGE_RULE, UPDATE_PAGE_RULE
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -485,6 +487,26 @@ class API {
   async editDataRule (args: UpdateDataRuleInput, validateOnly?: boolean) {
     const { updateDataRule } = await this.query<{ updateDataRule: MutationResponse & { dataRule: DataRule }}>(UPDATE_DATA_RULE, { args, validateOnly })
     return updateDataRule
+  }
+
+  async addGlobalRule (args: CreateGlobalRuleInput, validateOnly?: boolean) {
+    const { createGlobalRule } = await this.query<{ createGlobalRule: MutationResponse & { globalRule: GlobalRule }}>(ADD_GLOBAL_RULE, { args, validateOnly })
+    return createGlobalRule
+  }
+
+  async editGlobalRule (args: UpdateGlobalRuleInput, validateOnly?: boolean) {
+    const { updateGlobalRule } = await this.query<{ updateGlobalRule: MutationResponse & { globalRule: GlobalRule }}>(UPDATE_GLOBAL_RULE, { args, validateOnly })
+    return updateGlobalRule
+  }
+
+  async addPageRule (args: CreatePageRuleInput, validateOnly?: boolean) {
+    const { createPageRule } = await this.query<{ createPageRule: MutationResponse & { pageRule: PageRule }}>(ADD_PAGE_RULE, { args, validateOnly })
+    return createPageRule
+  }
+
+  async editPageRule (args: UpdatePageRuleInput, validateOnly?: boolean) {
+    const { updatePageRule } = await this.query<{ updatePageRule: MutationResponse & { pageRule: PageRule }}>(UPDATE_PAGE_RULE, { args, validateOnly })
+    return updatePageRule
   }
 
   async removeRule (ruleId: string, type: 'GLOBAL' | 'SITE' | 'PAGE' | 'TEMPLATE' | 'ASSET' | 'DATA') {

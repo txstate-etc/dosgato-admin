@@ -358,7 +358,7 @@ export interface CreateAssetRuleInput {
   roleId: string
   siteId?: string
   path?: string
-  mode?: 'self' | 'sub' | 'selfsub' | undefined
+  mode?: string | undefined
   grants?: {
     create: boolean
     update: boolean
@@ -372,7 +372,7 @@ export interface UpdateAssetRuleInput {
   ruleId: string
   siteId?: string
   path?: string
-  mode?: 'self' | 'sub' | 'selfsub' | undefined
+  mode?: string | undefined
   grants?: {
     create: boolean
     update: boolean
@@ -403,6 +403,64 @@ export interface UpdateDataRuleInput {
   siteId?: string
   path?: string
   templateId?: string
+  grants?: {
+    create: boolean
+    update: boolean
+    move: boolean
+    publish: boolean
+    unpublish: boolean
+    delete: boolean
+    undelete: boolean
+  }
+}
+
+export interface CreateGlobalRuleInput {
+  roleId: string
+  grants?: {
+    manageAccess: boolean
+    manageParentRoles: boolean
+    createSites: boolean
+    manageGlobalData: boolean
+    viewSiteList: boolean
+    manageTemplates: boolean
+  }
+}
+
+export interface UpdateGlobalRuleInput {
+  ruleId: string
+  grants?: {
+    manageAccess: boolean
+    manageParentRoles: boolean
+    createSites: boolean
+    manageGlobalData: boolean
+    viewSiteList: boolean
+    manageTemplates: boolean
+  }
+}
+
+export interface CreatePageRuleInput {
+  roleId: string
+  siteId?: string
+  pagetreeType?: string
+  path?: string
+  mode?: string
+  grants?: {
+    create: boolean
+    update: boolean
+    move: boolean
+    publish: boolean
+    unpublish: boolean
+    delete: boolean
+    undelete: boolean
+  }
+}
+
+export interface UpdatePageRuleInput {
+  ruleId: string
+  siteId?: string
+  pagetreeType?: string
+  path?: string
+  mode?: string
   grants?: {
     create: boolean
     update: boolean

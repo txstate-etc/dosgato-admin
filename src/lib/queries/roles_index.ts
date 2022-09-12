@@ -188,6 +188,49 @@ export const UPDATE_DATA_RULE = `
   }
 `
 
+export const ADD_GLOBAL_RULE = `
+  mutation createGlobalRule ($args: CreateGlobalRuleInput!, $validateOnly: Boolean) {
+    createGlobalRule (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      globalRule {
+        ${globalRuleDetails}
+      }
+    }
+  }
+`
+
+export const UPDATE_GLOBAL_RULE = `
+  mutation updateGlobalRule ($args: UpdateGlobalRuleInput!, $validateOnly: Boolean) {
+    updateGlobalRule (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      globalRule {
+        ${globalRuleDetails}
+      }
+    }
+  }
+`
+export const ADD_PAGE_RULE = `
+  mutation createPageRule ($args: CreatePageRuleInput!, $validateOnly: Boolean) {
+    createPageRule (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      pageRule {
+        ${pageRuleDetails}
+      }
+    }
+  }
+`
+
+export const UPDATE_PAGE_RULE = `
+  mutation updatePageRule ($args: UpdatePageRuleInput!, $validateOnly: Boolean) {
+    updatePageRule (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      pageRule {
+        ${pageRuleDetails}
+      }
+    }
+  }
+`
+
 export const REMOVE_RULE = `
   mutation removeRule  ($ruleId: ID!, $type: RuleType!) {
     removeRule (ruleId: $ruleId, type: $type) {

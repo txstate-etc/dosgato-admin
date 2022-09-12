@@ -7,7 +7,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { isNull, unique } from 'txstate-utils'
   import { base } from '$app/paths'
-  import { api, DetailPanel, messageForDialog, ResponsiveTable, AssetRuleDialog, DataRuleDialog } from '$lib'
+  import { api, DetailPanel, messageForDialog, ResponsiveTable, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
   import FormDialog from '$lib/components/FormDialog.svelte'
@@ -15,7 +15,8 @@
   export let data: { siteOptions: { value: string, label: string }[] }
   $: ({ siteOptions } = data)
 
-  let modal: 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' | 'deleterule' | undefined
+  let modal: 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' |
+    'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | undefined
 
   $: groupIds = unique([...$store.role.directGroups.map(g => g.id), ...$store.role.indirectGroups.map(g => g.id)])
 
@@ -47,73 +48,6 @@
     store.refresh($store.role.id)
   }
 
-  async function onAddAssetRule (state) {
-    const resp = await api.addAssetRule({ ...state, roleId: $store.role.id })
-    if (resp.success) {
-      modal = undefined
-      store.refresh($store.role.id)
-    }
-    const wholeDialogMessages = resp.messages.filter(m => isNull(m.arg))
-    return { success: resp.success, messages: [...messageForDialog(resp.messages, ''), ...wholeDialogMessages], data: state }
-  }
-
-  async function onEditAssetRule (state) {
-    if (!$store.editing) return
-    const args = {
-      ruleId: $store.editing.id,
-      siteId: state.siteId,
-      path: state.path,
-      mode: state.mode,
-      grants: {
-        create: state.grants.create,
-        update: state.grants.update,
-        move: state.grants.move,
-        delete: state.grants.delete,
-        undelete: state.grants.undelete
-      }
-    }
-    const resp = await api.editAssetRule(args)
-    if (resp.success) {
-      modal = undefined
-      store.refresh($store.role.id)
-    }
-    return { success: resp.success, messags: messageForDialog(resp.messages, 'args'), data: state }
-  }
-
-  async function onAddDataRule (state) {
-    const resp = await api.addDataRule({ ...state, roleId: $store.role.id })
-    if (resp.success) {
-      modal = undefined
-      store.refresh($store.role.id)
-    }
-    return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
-  }
-
-  async function onEditDataRule (state) {
-    if (!$store.editing) return
-    const args = {
-      ruleId: $store.editing.id,
-      siteId: state.siteId,
-      path: state.path,
-      templateId: state.templateId,
-      grants: {
-        create: state.grants.create,
-        update: state.grants.update,
-        move: state.grants.move,
-        publish: state.grants.publish,
-        unpublish: state.grants.unpublish,
-        delete: state.grants.delete,
-        undelete: state.grants.undelete
-      }
-    }
-    const resp = await api.editDataRule(args)
-    if (resp.success) {
-      modal = undefined
-      store.refresh($store.role.id)
-    }
-    return { success: resp.success, messags: messageForDialog(resp.messages, 'args'), data: state }
-  }
-
   async function onDeleteRule () {
     if (!$store.editing) return
     const resp = await api.removeRule($store.editing.id, $store.editing.type.toLocaleUpperCase() as 'GLOBAL'|'SITE'|'PAGE'|'TEMPLATE'|'ASSET'|'DATA')
@@ -135,6 +69,10 @@
       modal = 'editassetrule'
     } else if (ruleType === 'data') {
       modal = 'editdatarule'
+    } else if (ruleType === 'global') {
+      modal = 'editglobalrule'
+    } else if (ruleType === 'page') {
+      modal = 'editpagerule'
     }
   }
 
@@ -231,7 +169,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Global Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Global Rule' }}>
+<DetailPanel header='Global Rules' button={$store.role.globalRules.length < 1 ? { icon: plusIcon, onClick: () => { modal = 'addglobalrule' }, hiddenLabel: 'Add Global Rule' } : undefined}>
   {#if $store.role.globalRules.length}
     <ResponsiveTable items={$store.role.globalRules} headers={[
       { id: 'manageaccess', label: 'Manage Access', icon: (item) => { return item.grants.manageAccess ? { icon: checkIcon, hiddenLabel: 'May manage access' } : { icon: minusIcon, hiddenLabel: 'May not manage access' } } },
@@ -249,7 +187,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Page Rules' button={{ icon: plusIcon, onClick: () => {}, hiddenLabel: 'Add Page Rule' }}>
+<DetailPanel header='Page Rules' button={{ icon: plusIcon, onClick: () => { modal = 'addpagerule' }, hiddenLabel: 'Add Page Rule' }}>
   {#if $store.role.pageRules.length}
     <ResponsiveTable items={$store.role.pageRules} headers={[
       { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
@@ -303,7 +241,6 @@
     <div>This role has no template rules.</div>
   {/if}
 </DetailPanel>
-{modal}
 {#if modal === 'editbasic'}
   <FormDialog
     submit={onEditBasic}
@@ -316,25 +253,44 @@
     <FieldText path='name' label="Name" required/>
   </FormDialog>
 {:else if modal === 'addassetrule'}
-  <AssetRuleDialog submit={onAddAssetRule} name='addassetrule' title='Add Asset Rule' siteChoices={siteOptions} on:dismiss={() => { modal = undefined }}/>
+  <AssetRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'editassetrule'}
   <AssetRuleDialog
-    submit={onEditAssetRule}
-    name='editassetrule'
-    title='Edit Asset Rule'
+    roleId={$store.role.id}
+    ruleId={$store.editing?.id}
     siteChoices={siteOptions}
+    on:saved={onSaved}
     on:dismiss={() => { modal = undefined }}
     preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id } : {} }/>
 {:else if modal === 'adddatarule'}
-  <DataRuleDialog submit={onAddDataRule} name='adddatarule' title='Add Data Rule' siteChoices={siteOptions} on:dismiss={() => { modal = undefined }}/>
+  <DataRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'editdatarule'}
     <DataRuleDialog
-      submit={onEditDataRule}
-      name='editdatarule'
-      title='Edit Data Rule'
+      roleId={$store.role.id}
+      ruleId={$store.editing?.id}
       siteChoices={siteOptions}
       on:dismiss={() => { modal = undefined }}
+      on:saved={onSaved}
       preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id, templateId: $store.editing.data.template?.key } : {} }/>
+{:else if modal === 'addglobalrule'}
+    <GlobalRuleDialog roleId={$store.role.id} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
+{:else if modal === 'editglobalrule'}
+    <GlobalRuleDialog
+      roleId={$store.role.id}
+      ruleId={$store.editing?.id}
+      on:dismiss={() => { modal = undefined }}
+      on:saved={onSaved}
+      preload={$store.editing ? $store.editing.data : {} }/>
+{:else if modal === 'addpagerule'}
+  <PageRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
+{:else if modal === 'editpagerule'}
+  <PageRuleDialog
+    roleId={$store.role.id}
+    ruleId={$store.editing?.id}
+    siteChoices={siteOptions}
+    on:dismiss={() => { modal = undefined }}
+    on:saved={onSaved}
+    preload={$store.editing ? $store.editing.data : {} }/>
 {:else if modal === 'deleterule'}
   <Dialog
   title={'Delete Rule'}
@@ -378,23 +334,5 @@
     border: 0;
     padding: 0;
     background-color: transparent;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  table tr { border-bottom: 1px dashed #ebebeb }
-  table tr:nth-child(even) { background-color: #f6f7f9 }
-  table tr.headers {
-    border-bottom: 1px solid #ebebeb;
-  }
-  table tr td { text-align: center }
-  td button {
-    border: 0;
-    padding: 0;
-    background-color: transparent;
-  }
-  td button.edit {
-    margin-right: 0.5em;
   }
 </style>
