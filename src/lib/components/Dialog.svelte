@@ -66,16 +66,15 @@
   header {
     font-weight: bold;
     margin: -1em;
+    margin-bottom: 0;
     padding: 1em;
     background-color: var(--dosgato-dialog-header-bg, #DDDDDD);
     color: var(--dosgato-dialog-header-text, black);
   }
 
-  header, .content {
-    margin-bottom: 1em;
-  }
-
   .content {
+    margin: 0 -1em;
+    padding: 1em;
     min-height: 5em;
     overflow: auto;
     background-color: var(--dosgato-dialog-content-bg, #f4f4f4);
@@ -88,6 +87,7 @@
     flex-wrap: wrap;
     background-color: var(--dosgato-dialog-footer-bg, #DDDDDD);
     margin: -1em;
+    margin-top: 0;
     padding: 0.5em 1em;
   }
 
