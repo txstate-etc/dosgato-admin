@@ -9,6 +9,10 @@ interface IRoleDetailStore {
     type: 'asset' | 'data' | 'global' | 'page' | 'site' | 'template'
     data: any
   }
+  userRemoving?: {
+    id: string
+    name: string
+  }
 }
 
 const initialValue: FullRole = {
@@ -50,6 +54,18 @@ export class RoleDetailStore extends Store<IRoleDetailStore> {
   resetRuleEditing () {
     this.update(v => {
       return set(v, 'editing', undefined)
+    })
+  }
+
+  setUserRemoving (id: string, name: string) {
+    this.update(v => {
+      return set(v, 'userRemoving', { id, name })
+    })
+  }
+
+  resetUserRemoving () {
+    this.update(v => {
+      return set(v, 'userRemoving', undefined)
     })
   }
 }

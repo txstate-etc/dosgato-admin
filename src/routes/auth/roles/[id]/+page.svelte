@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FieldText, Icon } from '@dosgato/dialog'
+  import { FieldAutocomplete, FieldText, Icon } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import checkIcon from '@iconify-icons/mdi/check'
@@ -11,13 +11,14 @@
   import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
   import FormDialog from '$lib/components/FormDialog.svelte'
+  import { MessageType } from '@txstate-mws/svelte-forms'
 
-  export let data: { siteOptions: { value: string, label: string }[] }
-  $: ({ siteOptions } = data)
+  export let data: { siteOptions: { value: string, label: string }[], userOptions: { value: string, label: string }[] }
+  $: ({ siteOptions, userOptions } = data)
 
   let modal: 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' |
     'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' |
-    'addsiterule' | 'editsiterule' | 'addtemplaterule' | undefined
+    'addsiterule' | 'editsiterule' | 'addtemplaterule' | 'assigntouser' | 'unassignfromuser' | undefined
 
   $: groupIds = unique([...$store.role.directGroups.map(g => g.id), ...$store.role.indirectGroups.map(g => g.id)])
 
@@ -42,6 +43,33 @@
           }
         : undefined
     }
+  }
+
+  function filterUsers () {
+    const alreadyAssigned = $store.role.directUsers.map(u => u.id)
+    return userOptions.filter(u => {
+      return !alreadyAssigned.includes(u.value)
+    })
+  }
+
+  async function onAssignRole (state) {
+    const resp = await api.addRolesToUser([$store.role.id], state.userId)
+    return { ...resp, data: state }
+  }
+
+  function onClickUnassign (id: string, name: string) {
+    store.setUserRemoving(id, name)
+    modal = 'unassignfromuser'
+  }
+
+  async function onUnassign (state) {
+    if (!$store.userRemoving) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Please select a user to remove.' }], data: state }
+    const resp = await api.removeRoleFromUser($store.role.id, $store.userRemoving.id)
+    if (resp.success) {
+      store.resetUserRemoving()
+      onSaved()
+    }
+    return { ...resp, data: state }
   }
 
   function onSaved () {
@@ -76,8 +104,6 @@
       modal = 'editpagerule'
     } else if (ruleType === 'site') {
       modal = 'editsiterule'
-    } else if (ruleType === 'template') {
-      modal = 'edittemplaterule'
     }
   }
 
@@ -115,12 +141,12 @@
   </DetailPanel>
 {/if}
 
-<DetailPanel header='Users'>
+<DetailPanel header='Users' button={{ icon: plusIcon, onClick: () => { modal = 'assigntouser' }, hiddenLabel: 'Assign this role to a user' }}>
   <ul>
     {#each $store.role.directUsers as user (user.id)}
       <li class="flex-row">
         <a href={`${base}/auth/users/${user.id}`}>{user.name} ({user.id})</a>
-        <button on:click={() => { }}><Icon icon={deleteOutline} width="1.5em"/></button>
+        <button on:click={() => { onClickUnassign(user.id, user.name) }}><Icon icon={deleteOutline} width="1.5em"/></button>
       </li>
     {/each}
     {#each $store.role.usersThroughGroups as user (user.id)}
@@ -256,6 +282,25 @@
     on:saved={onSaved}>
     <FieldText path='name' label="Name" required/>
   </FormDialog>
+{:else if modal === 'assigntouser'}
+  <FormDialog
+    submit={onAssignRole}
+    name='assigntouser'
+    title='Assign Role to User'
+    on:dismiss={() => { modal = undefined }}
+    on:saved={onSaved}>
+    <FieldAutocomplete path='userId' label='User' choices={filterUsers()}/>
+  </FormDialog>
+{:else if modal === 'unassignfromuser'}
+  <Dialog
+  title={'Remove Role from User'}
+  continueText='Unassign'
+  cancelText='Cancel'
+  on:continue={onUnassign}
+  on:dismiss={() => { modal = undefined }}>
+  {`Are you sure you want to remove the ${$store.role.name} role from user ${$store.userRemoving?.id}?`}
+
+  </Dialog>
 {:else if modal === 'addassetrule'}
   <AssetRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'editassetrule'}
