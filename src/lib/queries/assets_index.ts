@@ -41,6 +41,7 @@ const assetDetails = `
 id
 path
 name
+filename
 deleted
 modifiedAt
 modifiedBy {
@@ -59,6 +60,7 @@ export interface TreeAsset {
   id: string
   path: string
   name: string
+  filename: string
   deleted: boolean
   modifiedAt: string
   modifiedBy: {

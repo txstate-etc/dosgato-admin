@@ -23,7 +23,7 @@ export type TypedTreeItem<T extends TreeItemFromDB> = TreeItem<T> & T
 export interface ITreeStore<T extends TreeItemFromDB> {
   loading?: boolean
   rootItems?: TypedTreeItem<T>[]
-  itemsById: Record<string, TypedTreeItem<T>|undefined>
+  itemsById: Record<string, TypedTreeItem<T> | undefined>
   focused?: TypedTreeItem<T>
   selected: Map<string, TypedTreeItem<T>>
   selectedItems: TypedTreeItem<T>[]
@@ -38,18 +38,18 @@ export interface ITreeStore<T extends TreeItemFromDB> {
 export type FetchChildrenFn<T extends TreeItemFromDB> = (item?: TypedTreeItem<T>) => Promise<T[]>
 export type DragEligibleFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[]) => boolean
 export type DropEligibleFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => boolean
-export type DropEffectFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => 'move'|'copy'
-export type DropHandlerFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => boolean|Promise<boolean>
+export type DropEffectFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => 'move' | 'copy'
+export type DropHandlerFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => boolean | Promise<boolean>
 
 export interface TreeHeader<T extends TreeItemFromDB> {
   id: string
   label: string
   defaultWidth: string
-  icon?: IconifyIcon|((item: TypedTreeItem<T>) => IconifyIcon|undefined)
+  icon?: IconifyIcon | ((item: TypedTreeItem<T>) => IconifyIcon | undefined)
   get?: string
   render?: (item: TypedTreeItem<T>) => string
   component?: SvelteComponent
-  class?: (item: TypedTreeItem<T>) => string|string[]
+  class?: (item: TypedTreeItem<T>) => string | string[]
 }
 
 export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<T>> {
@@ -185,7 +185,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     const viewLevel = 1 + item.level - leftLevel
     if (viewLevel >= this.value.viewDepth || viewLevel === Math.floor(Math.floor(this.value.viewDepth / 2))) {
       const seekBack = Math.floor(this.value.viewDepth / 2) + 1
-      let p = item as TypedTreeItem<T>|undefined
+      let p = item as TypedTreeItem<T> | undefined
       for (let i = 0; i < seekBack; i++) p = p?.parent
       this.value.viewUnder = p
     }
@@ -222,6 +222,10 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
 
   async open (item: TypedTreeItem<T>) {
     if (item.open === true || item.hasChildren === false) return
+    await this.openAndRefresh(item)
+  }
+
+  async openAndRefresh (item: TypedTreeItem<T>) {
     await this.refresh(item, true)
     item.open = !!item.children?.length
     this.trigger()

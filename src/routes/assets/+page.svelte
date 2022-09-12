@@ -103,21 +103,25 @@
     }
   }
 
-  async function onUploadSubmit (e: SubmitEvent) {
+  async function onUploadSubmit () {
+    if (!uploadTo) return
     uploadLocked = true
     try {
       const data = new FormData()
-      data.append('assetFolderId', uploadTo?.id ?? '')
+      data.append('folderId', uploadTo.id)
       for (let i = 0; i < (uploadInput.files?.length ?? 0); i++) {
         data.append('file' + i, uploadInput.files![i])
       }
 
       const resp = await fetch(uploadForm.action, {
         method: 'POST',
-        body: data
+        body: data,
+        headers: {
+          Authorization: `Bearer ${api.token}`
+        }
       })
       if (resp.status === 200) {
-        await store.refresh(uploadTo)
+        await store.openAndRefresh(uploadTo)
         uploadTo = undefined
       }
     } finally {
@@ -131,7 +135,7 @@
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} let:item let:level let:isSelected on:choose={({ detail }) => goto(base + '/pages/' + detail.id)}
     headers={[
-      { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight), get: 'name' },
+      { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight), render: itm => 'filename' in itm ? itm.filename : itm.name },
       { label: 'Size', id: 'template', defaultWidth: '8.5em', get: 'size' },
       { label: 'Type', id: 'title', defaultWidth: 'calc(40% - 10.75em)', get: 'mime' },
       { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => item.kind === 'asset' ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
@@ -140,8 +144,8 @@
   />
 </ActionPanel>
 {#if uploadTo}
-  <Dialog title="Upload File(s)" cancelText="Cancel" continueText="Upload" on:escape={() => { uploadTo = undefined }} on:continue={() => uploadForm.submit()}>
-    <form bind:this={uploadForm} action={`${environmentConfig.apiBase}/upload`} on:submit|preventDefault={onUploadSubmit}>
+  <Dialog title="Upload File(s)" cancelText="Cancel" continueText="Upload" on:escape={() => { uploadTo = undefined }} on:continue={onUploadSubmit}>
+    <form bind:this={uploadForm} method="POST" enctype="multipart/form-data" action={`${environmentConfig.apiBase}/assets`} on:submit|preventDefault|stopPropagation={onUploadSubmit}>
       <div class="uploader" class:dragover={dragover > 0} on:dragenter={() => { dragover++ }} on:dragleave={() => { dragover-- }} on:dragover|preventDefault on:drop={onUploadDrop}>
         <input bind:this={uploadInput} type="file" name="file" multiple disabled={uploadLocked}>
       </div>
