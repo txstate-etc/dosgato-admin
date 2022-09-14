@@ -21,8 +21,9 @@
 
 <style>
   .panel {
-    width: 50%;
+    width: calc(100% - 2em);
     margin: 0 auto 3em auto;
+    max-width: 60em;
   }
   .header {
     background-color: #00507A;

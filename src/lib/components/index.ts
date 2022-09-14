@@ -1,4 +1,5 @@
 export { default as ActionPanel } from './ActionPanel.svelte'
+export { default as DetailList } from './DetailList.svelte'
 export { default as DetailPanel } from './DetailPanel.svelte'
 export { default as Dialog } from './Dialog.svelte'
 export { default as FormDialog } from './FormDialog.svelte'

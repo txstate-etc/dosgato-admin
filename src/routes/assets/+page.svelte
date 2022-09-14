@@ -52,7 +52,7 @@
     return item.kind === 'asset'
       ? [
           { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: () => goto(base + '/assets/' + item.id) },
-          { label: 'Download', icon: downloadLight, onClick: () => { /* goto(item.url) */ } },
+          { label: 'Download', icon: downloadLight, onClick: () => { goto(`${environmentConfig.apiBase}/assets/${item.id}/${item.filename}`) } },
           { label: 'Move', icon: arrowsOutCardinalLight, onClick: () => { /* TODO */ } }
         ]
       : [
@@ -148,7 +148,7 @@
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
-  <Tree {store} let:item let:level let:isSelected on:choose={({ detail }) => goto(base + '/pages/' + detail.id)}
+  <Tree {store} on:choose={({ detail }) => goto(base + '/assets/' + detail.id)}
     headers={[
       { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight), render: itm => 'filename' in itm ? itm.filename : itm.name },
       { label: 'Size', id: 'template', defaultWidth: '8.5em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },
