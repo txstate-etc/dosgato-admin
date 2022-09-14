@@ -321,6 +321,17 @@ export const RENAME_SITE = `
   }
 `
 
+export const DELETE_SITE = `
+  mutation deleteSite ($siteId: ID!) {
+    deleteSite (siteId: $siteId) {
+      ${mutationResponse}
+      site {
+        ${siteDetails}
+      }
+    }
+  }
+`
+
 export const UPDATE_SITE_MANAGEMENT = `
   mutation updateSiteManagement ($siteId: ID!, $args: UpdateSiteManagementInput!, $validateOnly: Boolean) {
     updateSiteManagement (siteId: $siteId, args: $args, validateOnly: $validateOnly) {

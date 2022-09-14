@@ -9,7 +9,7 @@
   import { api, ActionPanel, Tree, TreeStore, globalStore, type TypedTreeItem, type SiteListSite, type ActionPanelAction, type CreateWithPageState, ensureRequiredNotNull, messageForDialog } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
-import { DateTime } from 'luxon'
+
   type TypedSiteItem = TypedTreeItem<SiteListSite>
 
   export let data: { pageTemplateChoices: PopupMenuItem[] }
@@ -67,7 +67,9 @@ import { DateTime } from 'luxon'
   }
 
   async function onDeleteSite () {
-    // TODO
+    const resp = await api.deleteSite($store.selectedItems[0].id)
+    if (resp.success) store.refresh()
+    modal = undefined
   }
 
   async function onRestoreSite () {
@@ -100,7 +102,7 @@ import { DateTime } from 'luxon'
     cancelText='Cancel'
     on:continue={onDeleteSite}
     on:dismiss={() => { modal = undefined }}>
-    {`Delete ${$store.selectedItems[0].name}?`}
+    {`Are you sure you want to delete ${$store.selectedItems[0].name}?`}
   </Dialog>
 {:else if modal === 'restoresite'}
   <Dialog
