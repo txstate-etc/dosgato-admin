@@ -96,29 +96,22 @@
   }
 
   async function validateAddPagetree (state) {
-    const localMessages = ensureRequiredNotNull(state, ['name', 'templateKey'])
-    if (!localMessages.length) {
-      const data = Object.assign({}, state.data, { templateKey: state.templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-      const resp = await api.addPagetree($store.site.id, state.name, data, true)
-      console.log(resp.messages.map(m => m.message).join(', '))
-      return messageForDialog(resp.messages, 'data')
-    }
-    return localMessages
+    const resp = await api.addPagetree($store.site.id, state.name, state.templateKey, state.data, true)
+    return resp.messages.map(m => ({ ...m, path: m.arg }))
   }
 
   async function onAddPagetree (state: CreateWithPageState) {
-    const localMessages = ensureRequiredNotNull(state, ['name', 'templateKey'])
-    if (!localMessages.length) {
-      // TODO: Get the actual schema version from somewhere
-      const data = Object.assign({}, state.data, { templateKey: state.templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-      const resp = await api.addPagetree($store.site.id, state.name, data)
-      if (resp.success) {
-        store.refresh($store.site.id)
-        modal = undefined
-      }
-      return { success: resp.success, messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')], data: resp.success ? {} : state }
+    const resp = await api.addPagetree($store.site.id, state.name, state.templateKey, state.data)
+    return {
+      success: resp.success,
+      messages: resp.messages.map(m => ({ ...m, path: m.arg })),
+      data: state
     }
-    return { success: false, messages: localMessages, data: state }
+  }
+
+  function onAddPagetreeComplete () {
+    store.refresh($store.site.id)
+    modal = undefined
   }
 
   async function onClickEditPagetree (id, name) {
@@ -513,7 +506,8 @@
     validate={validateAddPagetree}
     title="Add Pagetree"
     templateChoices={$store.site.pageTemplates.map(t => ({ label: t.name, value: t.key }))}
-    on:dismiss={() => { modal = undefined }}/>
+    on:dismiss={() => { modal = undefined }}
+    on:saved={onAddPagetreeComplete}/>
 {:else if modal === 'editpagetree'}
   <FormDialog
     name="editpagetree"

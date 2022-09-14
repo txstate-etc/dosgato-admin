@@ -31,6 +31,7 @@ import {
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
+import { DateTime } from 'luxon'
 
 export interface MutationResponse {
   success: boolean
@@ -420,8 +421,12 @@ class API {
     return sites[0]
   }
 
-  async addSite (name: string, data: PageData, validateOnly?: boolean) {
-    const { createSite } = await this.query<{ createSite: MutationResponse & {site: SiteListSite } }>(ADD_SITE, { name, data, validateOnly })
+  async addSite (name: string, templateKey: string, data: any, validateOnly?: boolean) {
+    const resp = validateRequired<{ site: undefined }>({ name, templateKey, data }, ['name', 'templateKey'])
+    if (resp) return resp
+    // TODO: Get actual schema version
+    const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+    const { createSite } = await this.query<{ createSite: MutationResponse & {site: SiteListSite } }>(ADD_SITE, { name, data: pageData, validateOnly })
     return createSite
   }
 
@@ -440,8 +445,12 @@ class API {
     return createSiteComment
   }
 
-  async addPagetree (siteId: string, name: string, data: PageData, validateOnly?: boolean) {
-    const { createPagetree } = await this.query<{ createPagetree: MutationResponse & { pagetree: SitePagetree }}>(ADD_PAGETREE, { siteId, name, data, validateOnly })
+  async addPagetree (siteId: string, name: string, templateKey: string, data: any, validateOnly?: boolean) {
+    const resp = validateRequired<{ pagetree: undefined }>({ name, templateKey, data }, ['name', 'templateKey'])
+    if (resp) return resp
+    // TODO: Get actual schema version
+    const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+    const { createPagetree } = await this.query<{ createPagetree: MutationResponse & { pagetree: SitePagetree }}>(ADD_PAGETREE, { siteId, name, data: pageData, validateOnly })
     return createPagetree
   }
 

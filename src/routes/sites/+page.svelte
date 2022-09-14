@@ -48,28 +48,22 @@ import { DateTime } from 'luxon'
   }
 
   async function validateCreateSite (state: CreateWithPageState) {
-    const localMessages = ensureRequiredNotNull(state, ['name', 'templateKey'])
-    if (!localMessages.length) {
-      const data = Object.assign({}, state.data, { templateKey: state.templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-      const resp = await api.addSite(state.name, data, true)
-      return [...messageForDialog(resp.messages, 'data'), ...messageForDialog(resp.messages, '')]
-    }
-    return localMessages
+    const resp = await api.addSite(state.name, state.templateKey, state.data, true)
+    return resp.messages.map(m => ({ ...m, path: m.arg }))
   }
 
-  async function onCreateSite (state) {
-    const localMessages = ensureRequiredNotNull(state, ['name', 'templateKey'])
-    if (!localMessages.length) {
-      // TODO: Get the actual schema version
-      const data = Object.assign({}, state.data, { templateKey: state.templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-      const resp = await api.addSite(state.name, data)
-      if (resp.success) {
-        store.refresh()
-        modal = undefined
-      }
-      return { success: resp.success, messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')], data: resp.success ? {} : state }
+  async function onCreateSite (state: CreateWithPageState) {
+    const resp = await api.addSite(state.name, state.templateKey, state.data)
+    return {
+      success: resp.success,
+      messages: resp.messages.map(m => ({ ...m, path: m.arg })),
+      data: state
     }
-    return { success: false, messages: localMessages, data: state }
+  }
+
+  function onCreateSiteComplete () {
+    store.refresh()
+    modal = undefined
   }
 
   async function onDeleteSite () {
@@ -97,6 +91,7 @@ import { DateTime } from 'luxon'
     on:dismiss={() => { modal = undefined }}
     validate={validateCreateSite}
     templateChoices={data.pageTemplateChoices}
+    on:saved={onCreateSiteComplete}
   />
 {:else if modal === 'deletesite'}
   <Dialog

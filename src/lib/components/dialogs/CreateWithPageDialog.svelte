@@ -6,6 +6,7 @@
   import { type SubmitResponse, type Feedback, FormStore, SubForm } from '@txstate-mws/svelte-forms'
   import type { CreateWithPageState } from './createwithpage'
   import { createEventDispatcher } from 'svelte'
+  import { isNotNull } from 'txstate-utils'
 
   const dispatch = createEventDispatcher()
 
@@ -22,17 +23,15 @@
   }
 </script>
 
-<FormDialog {title} {submit} {validate} {store} on:dismiss={dismiss}>
+<FormDialog {title} {submit} {validate} {store} on:dismiss={dismiss} on:saved>
   <FieldText path='name' label='Name' required/>
   <FieldSelect path='templateKey' label='Page Template' placeholder='Select' choices={templateChoices}/>
-  {#if $store.data?.templateKey?.length > 0}
-    <SubForm path='data'>
-      {@const template = templateRegistry.getTemplate($store.data.templateKey)}
-      {#if template && template.dialog}
-        <svelte:component this={template.dialog} {store}/>
-      {:else}
-        <span>This content uses an unrecognized template. Please contact support for assistance.</span>
-      {/if}
-    </SubForm>
+  <SubForm path='data' conditional={isNotNull($store.data?.templateKey)}>
+    {@const template = templateRegistry.getTemplate($store.data.templateKey)}
+    {#if template && template.dialog}
+      <svelte:component this={template.dialog} {store}/>
+    {:else}
+      <span>This content uses an unrecognized template. Please contact support for assistance.</span>
     {/if}
+  </SubForm>
 </FormDialog>
