@@ -87,3 +87,29 @@ export const CREATE_PAGE = `
     }
   }
 `
+
+const pageWithTemplates = `
+  id
+  templates(filter: { types: [PAGE] }) {
+    key
+    name
+  }
+`
+
+export interface PageWithTemplates {
+  id: string
+  templates: {
+    key: string
+    name: string
+    type: string
+  }[]
+}
+
+// used when creating a page to get the allowed templates. Based on what's allowed for the target page (parent or sibling)
+export const GET_TEMPLATES_BY_PAGE = `
+  query getTemplatesByPage ($pageId: ID!) {
+    pages (filter: { ids: [$pageId]}) {
+      ${pageWithTemplates}
+    }
+  }
+`

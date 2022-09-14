@@ -29,8 +29,6 @@
   }
   type TypedPageItem = TypedTreeItem<PageItem>
 
-  export let data: { pageTemplateChoices: PopupMenuItem[] }
-
   async function fetchChildren (item?: TypedPageItem) {
     const children = item ? await api.getSubPages(item.id) : await api.getRootPages()
     return children.map(p => {
@@ -48,7 +46,7 @@
   }
   function singlepageactions (page: TypedPageItem) {
     return [
-      { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: () => { modal = 'addpage' } },
+      { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: () => { onClickAddPage() } },
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
       { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => {} }
     ]
@@ -87,6 +85,13 @@
   }
   const store: TreeStore<PageItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
 
+  let availableTemplates: PopupMenuItem[] = []
+
+  async function onClickAddPage () {
+    availableTemplates = await api.getTemplatesByPage($store.selectedItems[0].id)
+    modal = 'addpage'
+  }
+
   async function validateAddPage (state) {
     // TODO: How do we handle the "above" option in the UI? A separate action in the actions area? For now, just making
     // pages as children of the target
@@ -104,6 +109,8 @@
   }
 
   function onAddPageComplete () {
+    // TODO: Open the parent of the newly created page
+    availableTemplates = []
     store.refresh()
     modal = undefined
   }
@@ -126,7 +133,7 @@
     submit={onAddPage}
     validate={validateAddPage}
     title="Add New Page"
-    templateChoices={data.pageTemplateChoices}
+    templateChoices={availableTemplates}
     on:dismiss={() => { modal = undefined }}
     on:saved={onAddPageComplete}/>
 {/if}

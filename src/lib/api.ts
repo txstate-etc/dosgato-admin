@@ -26,7 +26,7 @@ import {
   type UpdateDataRuleInput, UPDATE_DATA_RULE, type MessageFromAPI, UPDATE_ROLE, type CreateGlobalRuleInput, type UpdateGlobalRuleInput,
   type GlobalRule, ADD_GLOBAL_RULE, UPDATE_GLOBAL_RULE, type PageRule, type CreatePageRuleInput, type UpdatePageRuleInput,
   ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
-  type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE
+  type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE, GET_TEMPLATES_BY_PAGE, type PageWithTemplates
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -269,6 +269,11 @@ class API {
   async getTemplatesByType (type: string, universal?: boolean) {
     const { templates } = await this.query<{ templates: TemplateListTemplate[] }>(GET_TEMPLATES_BY_TYPE, { type, universal })
     return templates.map((template) => ({ id: template.key, name: template.name, key: template.key }))
+  }
+
+  async getTemplatesByPage (pageId: string) {
+    const { pages } = await this.query<{ pages: PageWithTemplates[] }>(GET_TEMPLATES_BY_PAGE, { pageId })
+    return pages[0].templates.map(template => ({ value: template.key, label: template.name }))
   }
 
   async getTemplateInfo (key: string) {
