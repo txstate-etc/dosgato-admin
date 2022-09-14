@@ -1,3 +1,5 @@
+import { mutationResponse } from './global'
+
 const pageDetails = `
 id
 path
@@ -72,5 +74,16 @@ export const GET_TREE_PAGES = `
 export const MOVE_PAGES = `
   query movePages ($ids: [ID], $target: ID) {
     mutation movePages TODO
+  }
+`
+
+export const CREATE_PAGE = `
+  mutation createPage ($name: UrlSafeString!, $data: JsonData!, $targetId: ID!, $above: Boolean, $validate: Boolean) {
+    createPage (name: $name, data: $data, targetId: $targetId, above: $above, validate: $validate) {
+      ${mutationResponse}
+      page {
+        ${pageDetails}
+      }
+    }
   }
 `

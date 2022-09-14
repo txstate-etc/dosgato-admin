@@ -11,6 +11,10 @@
   import { base } from '$app/paths'
   import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreePage } from '$lib'
   import './index.css'
+  import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
+  import type { PopupMenuItem } from '@txstate-mws/svelte-components'
+
+  let modal: 'addpage' | undefined = undefined
 
   const statusIcon = {
     published: triangleIcon,
@@ -24,6 +28,8 @@
     status: string
   }
   type TypedPageItem = TypedTreeItem<PageItem>
+
+  export let data: { pageTemplateChoices: PopupMenuItem[] }
 
   async function fetchChildren (item?: TypedPageItem) {
     const children = item ? await api.getSubPages(item.id) : await api.getRootPages()
@@ -42,7 +48,7 @@
   }
   function singlepageactions (page: TypedPageItem) {
     return [
-      { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: () => {} },
+      { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: () => { modal = 'addpage' } },
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
       { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => {} }
     ]
@@ -80,6 +86,27 @@
     return selectedSites.has(targetSite) ? 'move' : 'copy'
   }
   const store: TreeStore<PageItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
+
+  async function validateAddPage (state) {
+    // TODO: How do we handle the "above" option in the UI? A separate action in the actions area? For now, just making
+    // pages as children of the target
+    const resp = await api.createPage(state.name, state.templateKey, state.data, $store.selectedItems[0].id, false, true)
+    return resp.messages.map(m => ({ ...m, path: m.arg }))
+  }
+
+  async function onAddPage (state) {
+    const resp = await api.createPage(state.name, state.templateKey, state.data, $store.selectedItems[0].id, false)
+    return {
+      success: resp.success,
+      messages: resp.messages.map(m => ({ ...m, path: m.arg })),
+      data: state
+    }
+  }
+
+  function onAddPageComplete () {
+    store.refresh()
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
@@ -94,3 +121,12 @@
     ]}
   />
 </ActionPanel>
+{#if modal === 'addpage'}
+  <CreateWithPageDialog
+    submit={onAddPage}
+    validate={validateAddPage}
+    title="Add New Page"
+    templateChoices={data.pageTemplateChoices}
+    on:dismiss={() => { modal = undefined }}
+    on:saved={onAddPageComplete}/>
+{/if}
