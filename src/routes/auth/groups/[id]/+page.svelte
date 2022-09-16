@@ -6,7 +6,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { FieldText, FieldMultiselect, Icon } from '@dosgato/dialog'
   import { base } from '$app/paths'
-  import { api, DetailPanel, type UserListUser } from '$lib'
+  import { api, DetailPanel, StyledList, type UserListUser } from '$lib'
   import { store } from './+page'
   let modal: 'editbasic'|'addmembers'|undefined
   let allUsers: UserListUser[]
@@ -77,7 +77,7 @@
 
 <DetailPanel header='Members' button={{ icon: plusIcon, onClick: () => openAddUsersDialog() }} >
   {#if $store.group.directMembers.length || $store.group.indirectMembers.length}
-    <ul>
+    <StyledList>
       {#each $store.group.directMembers as member (member.id)}
         <li class="flex-row">
           {member.name} ({member.id})
@@ -90,7 +90,7 @@
           <div>{`Via ${getMemberDirectGroup(member.groups)}`}</div>
         </li>
       {/each}
-    </ul>
+    </StyledList>
   {:else}
     <div>{$store.group.name} has no members.</div>
   {/if}
@@ -98,7 +98,7 @@
 
 {#if $store.group.subgroups.length}
 <DetailPanel header='Subgroups'>
-  <ul>
+  <StyledList>
     {#each $store.group.subgroups as group (group.id)}
       <li class="flex-row">
         <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
@@ -109,22 +109,24 @@
         {/if}
       </li>
     {/each}
-  </ul>
+  </StyledList>
 </DetailPanel>
 {/if}
 
 {#if $store.group.supergroups.length}
   <DetailPanel header='Ancestor Groups'>
-    {#each $store.group.supergroups as group (group.id)}
-    <li class="flex-row">
-      <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-    </li>
-    {/each}
+    <StyledList>
+      {#each $store.group.supergroups as group (group.id)}
+      <li class="flex-row">
+        <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
+      </li>
+      {/each}
+    </StyledList>
   </DetailPanel>
 {/if}
 
 <DetailPanel header='Roles' button={{ icon: plusIcon, onClick: () => {} } }>
-  <ul>
+  <StyledList>
     {#each $store.group.directRoles as role (role.id)}
       <li class="flex-row">
         {role.name}
@@ -137,12 +139,12 @@
         <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
       </li>
     {/each}
-  </ul>
+  </StyledList>
 </DetailPanel>
 
 {#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
   <DetailPanel header='Sites'>
-    <ul class="sites">
+    <StyledList>
       {#if $store.permittedOnAllSites.length}
         <li class="flex-row">
           All Sites
@@ -155,7 +157,7 @@
           <div>{$store.sites[site].join(', ')}</div>
         </li>
       {/each}
-    </ul>
+    </StyledList>
   </DetailPanel>
 {/if}
 
@@ -194,25 +196,5 @@
   .label {
     font-weight: bold;
     width: 25%;
-  }
-   ul {
-    list-style: none;
-    padding-left: 0;
-  }
-  li {
-    border-bottom: 1px dashed #aaa;
-    padding: 0.6em 0.3em;
-  }
-  li:first-child {
-    padding-top: 0;
-  }
-  li.flex-row {
-    display: flex;
-    justify-content: space-between;
-  }
-  li.flex-row button {
-    border: 0;
-    padding: 0;
-    background-color: transparent;
   }
 </style>

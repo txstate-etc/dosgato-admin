@@ -7,7 +7,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { unique } from 'txstate-utils'
   import { base } from '$app/paths'
-  import { api, DetailPanel, ResponsiveTable, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog } from '$lib'
+  import { api, DetailPanel, StyledList, ResponsiveTable, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
   import FormDialog from '$lib/components/FormDialog.svelte'
@@ -124,7 +124,7 @@
 
 {#if $store.role.directGroups.length || $store.role.indirectGroups.length}
   <DetailPanel header='Groups'>
-    <ul>
+    <StyledList>
       {#each $store.role.directGroups as group (group.id)}
         <li class="flex-row">
           <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
@@ -137,12 +137,12 @@
           <div>{`Via ${group.parents.map(g => g.name).join(', ')}`}</div>
         </li>
       {/each}
-    </ul>
+    </StyledList>
   </DetailPanel>
 {/if}
 
 <DetailPanel header='Users' button={{ icon: plusIcon, onClick: () => { modal = 'assigntouser' }, hiddenLabel: 'Assign this role to a user' }}>
-  <ul>
+  <StyledList>
     {#each $store.role.directUsers as user (user.id)}
       <li class="flex-row">
         <a href={`${base}/auth/users/${user.id}`}>{user.name} ({user.id})</a>
@@ -155,7 +155,7 @@
         {`Via group ${getUserGroups(user.groups)}`}
       </li>
     {/each}
-  </ul>
+  </StyledList>
 </DetailPanel>
 
 <DetailPanel header='Asset Rules' button={{ icon: plusIcon, onClick: () => { modal = 'addassetrule' }, hiddenLabel: 'Add Asset Rule' }}>
@@ -375,25 +375,5 @@
   .label {
     font-weight: bold;
     width: 25%;
-  }
-  ul {
-    list-style: none;
-    padding-left: 0;
-  }
-  li {
-    border-bottom: 1px dashed #aaa;
-    padding: 0.6em 0.3em;
-  }
-  li:first-child {
-    padding-top: 0;
-  }
-  li.flex-row {
-    display: flex;
-    justify-content: space-between;
-  }
-  li.flex-row button {
-    border: 0;
-    padding: 0;
-    background-color: transparent;
   }
 </style>

@@ -6,7 +6,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
-  import { api, DetailPanel, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser } from '$lib'
+  import { api, DetailPanel, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser } from '$lib'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
@@ -140,7 +140,7 @@
 
 <DetailPanel header='Group Memberships' button={{ icon: plusIcon, onClick: () => { modal = 'editgroups' } }}>
   {#if $store.user.directGroups.length || $store.user.indirectGroups.length}
-    <ul class="groups">
+    <StyledList>
       {#each $store.user.directGroups as group (group.id)}
         <li class="flex-row">
           <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
@@ -153,7 +153,7 @@
           <div>{`Via ${getGroupParents(group)}`}</div>
         </li>
       {/each}
-    </ul>
+    </StyledList>
   {:else}
     <div>User {$store.user.id} is not a member of any groups.</div>
   {/if}
@@ -161,7 +161,7 @@
 
 <DetailPanel header='Roles' button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modal = 'editroles' } } : undefined}>
   {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
-    <ul class="roles">
+    <StyledList>
       {#each $store.user.directRoles as role (role.id)}
         <li class="flex-row">
           {role.name}
@@ -174,7 +174,7 @@
           <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
         </li>
       {/each}
-    </ul>
+      </StyledList>
   {:else}
   <div>User {$store.user.id} has no roles assigned.</div>
   {/if}
@@ -182,7 +182,7 @@
 
 {#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
   <DetailPanel header='Sites'>
-    <ul class="sites">
+    <StyledList>
       {#if $store.permittedOnAllSites.length}
         <li class="flex-row">
           All Sites
@@ -195,7 +195,7 @@
           <div>{$store.sites[site].join(', ')}</div>
         </li>
       {/each}
-    </ul>
+    </StyledList>
   </DetailPanel>
 {/if}
 
@@ -261,28 +261,5 @@
   .label {
     font-weight: bold;
     width: 25%;
-  }
-  ul {
-    list-style: none;
-    padding-left: 0;
-  }
-  li {
-    border-bottom: 1px dashed #aaa;
-    padding: 0.6em 0.3em;
-  }
-  li:first-child {
-    padding-top: 0;
-  }
-  li.flex-row {
-    display: flex;
-    justify-content: space-between;
-  }
-  .leave-group, .remove-role {
-    border: 0;
-    padding: 0;
-    background-color: transparent;
-  }
-  button {
-    cursor: pointer;
   }
 </style>
