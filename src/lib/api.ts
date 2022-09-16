@@ -26,7 +26,8 @@ import {
   type UpdateDataRuleInput, UPDATE_DATA_RULE, type MessageFromAPI, UPDATE_ROLE, type CreateGlobalRuleInput, type UpdateGlobalRuleInput,
   type GlobalRule, ADD_GLOBAL_RULE, UPDATE_GLOBAL_RULE, type PageRule, type CreatePageRuleInput, type UpdatePageRuleInput,
   ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
-  type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE, GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE
+  type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
+  GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -443,6 +444,11 @@ class API {
   async deleteSite (siteId: string) {
     const { deleteSite } = await this.query<{ deleteSite: MutationResponse & { site: FullSite } }>(DELETE_SITE, { siteId })
     return deleteSite
+  }
+
+  async unDeleteSite (siteId: string) {
+    const { unDeleteSite } = await this.query<{ unDeleteSite: MutationResponse & { site: FullSite } }>(UNDELETE_SITE, { siteId })
+    return unDeleteSite
   }
 
   async updateSiteManagement (siteId: string, organizationId?: string, ownerId?: string, managerIds?: string[], validateOnly?: boolean) {
