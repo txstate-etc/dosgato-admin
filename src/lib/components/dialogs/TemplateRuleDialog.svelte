@@ -29,7 +29,7 @@
       messages: [...resp.messages.filter(m => isNull(m.arg)), ...messageForDialog(resp.messages, 'args')],
       data: resp.success
         ? {
-            siteId: resp.templateRule.template?.id,
+            templateId: resp.templateRule.template?.key,
             grants: resp.templateRule.grants
           }
         : undefined
