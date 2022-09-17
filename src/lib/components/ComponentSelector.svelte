@@ -26,7 +26,7 @@
 
 </script>
 
-<FormDialog submit={onsubmit} title='Add Content' on:dismiss>
+<FormDialog submit={onsubmit} title='Add Content' on:escape>
   <fieldset class="component-selector">
     <legend><ScreenReaderOnly>Select a content type</ScreenReaderOnly></legend>
     <div class="available-components">

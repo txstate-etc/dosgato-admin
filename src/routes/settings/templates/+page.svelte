@@ -42,11 +42,11 @@
   ]}/>
 </ActionPanel>
 {#if modal === 'setuniversal'}
-  <Dialog title="Make Template Universal" cancelText="Cancel" continueText="Set Universal" on:dismiss={() => { modal = undefined }} on:continue={() => setUniversal(true)}>
+  <Dialog title="Make Template Universal" cancelText="Cancel" continueText="Set Universal" on:escape={() => { modal = undefined }} on:continue={() => setUniversal(true)}>
     <span>{`Making the ${$store.selectedItems[0].name} template universal will allow it to be used on all sites and pagetrees.`}</span>
   </Dialog>
 {:else if modal === 'setrestricted'}
-  <Dialog title="Restrict Template Usage" cancelText="Cancel" continueText="Restrict" on:dismiss={() => { modal = undefined }} on:continue={() => setUniversal(false)}>
+  <Dialog title="Restrict Template Usage" cancelText="Cancel" continueText="Restrict" on:escape={() => { modal = undefined }} on:continue={() => setUniversal(false)}>
     <span>Restricted templates must be improved for usage on individual sites and/or pagetrees. Proceed?</span>
   </Dialog>
 {/if}

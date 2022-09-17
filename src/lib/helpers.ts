@@ -36,11 +36,11 @@ export async function uploadWithProgress (url: URL | string, headers: Record<str
 
     // request finished
     request.addEventListener('load', e => {
-      if (request.status >= 400) reject(request.statusText)
+      if (request.status >= 400) reject(new Error(request.responseText))
       else resolve(request.status)
     })
 
-    request.addEventListener('error', e => reject(new Error('An error occurred during transfer. Request not completed.')))
+    request.addEventListener('error', e => reject(new Error('An error occurred during transfer. Upload not completed.')))
 
     request.send(formData)
   })

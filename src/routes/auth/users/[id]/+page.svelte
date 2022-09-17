@@ -208,7 +208,7 @@
     name='editbasicinfo'
     title= {`Edit ${$store.user.id}`}
     preload={{ name: $store.user.name, email: $store.user.email, trained: $store.user.trained }}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <FieldText path='name' label='Full Name' required={true}/>
     <FieldText path='email' label='Email' required={true}/>
     <FieldCheckbox path='trained' label='Trained' defaultValue={false} boxLabel='User has received training'/>
@@ -218,7 +218,7 @@
     submit={onAddGroups}
     name='editgroups'
     title={`Edit groups for ${$store.user.id}`}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <!-- TODO: This needs a preload but using it breaks the page -->
     <FieldMultiselect
       path='groups'
@@ -232,7 +232,7 @@
     continueText='Remove'
     cancelText='Cancel'
     on:continue={onRemoveFromGroup}
-    on:dismiss={() => { modal = undefined; groupLeaving = undefined }}>
+    on:escape={() => { modal = undefined; groupLeaving = undefined }}>
     Remove user {$store.user.id} from group {groupLeaving ? groupLeaving.name : ''}?
   </Dialog>
 {:else if modal === 'editroles'}
@@ -240,7 +240,7 @@
     submit={onAddRoles}
     name='editroles'
     title={`Edit roles for ${$store.user.id}`}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <FieldMultiselect
       path='roleIds'
       label='Add Roles'

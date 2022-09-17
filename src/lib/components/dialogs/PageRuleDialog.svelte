@@ -119,7 +119,7 @@
   }
 </script>
 
-<FormDialog submit={ruleId ? onEditPageRule : onAddPageRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:dismiss on:saved>
+<FormDialog submit={ruleId ? onEditPageRule : onAddPageRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:escape on:saved>
   <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
   <FieldSelect path='pagetreeType' label='Pagetree Type' choices={pageTreeTypes}/>
   <FieldText path='path' label='Path'/>

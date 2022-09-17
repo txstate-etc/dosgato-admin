@@ -103,7 +103,7 @@
   }
 
 </script>
-<FormDialog submit={ruleId ? onEditAssetRule : onAddAssetRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:dismiss on:saved>
+<FormDialog submit={ruleId ? onEditAssetRule : onAddAssetRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:escape on:saved>
   <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
   <FieldText path='path' label='Path'/>
   <FieldSelect path='mode' label='Mode' choices={modeChoices}/>

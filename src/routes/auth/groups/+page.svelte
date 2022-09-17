@@ -71,7 +71,7 @@
     validate={validateGroupName}
     title='Add Group'
     name='addgroup'
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <FieldText path='name' label='Group Name' required></FieldText>
   </FormDialog>
 {:else if modal === 'deletegroup' }
@@ -79,7 +79,7 @@
     title='Delete Group'
     continueText='Delete'
     cancelText='Cancel'
-    on:dismiss={() => { modal = undefined }}
+    on:escape={() => { modal = undefined }}
     on:continue={onDeleteGroup}>
     Delete {$store.selectedItems[0].name} {$store.selectedItems[0].subgroups.length ? 'and its subgroups?' : '?'}
   </Dialog>

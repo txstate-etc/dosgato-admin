@@ -82,7 +82,7 @@
   }
 </script>
 
-<FormDialog submit={ruleId ? onEditGlobalRule : onAddGlobalRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:dismiss on:saved>
+<FormDialog submit={ruleId ? onEditGlobalRule : onAddGlobalRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:escape on:saved>
   <SubForm path='grants'>
     <FieldCheckbox path='manageAccess' boxLabel='Manage Access' defaultValue={false}/>
     <FieldCheckbox path='manageParentRoles' boxLabel='Manage Parent Roles' defaultValue={false}/>

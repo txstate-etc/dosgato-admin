@@ -48,7 +48,7 @@
   })
 </script>
 
-<FormDialog submit={onAddTemplateRule} validate={validateAdd} {name} {title} {preload} on:dismiss on:saved>
+<FormDialog submit={onAddTemplateRule} validate={validateAdd} {name} {title} {preload} on:escape on:saved>
   <FieldSelect path='templateId' label='Template' choices={templateChoices}/>
   <SubForm path='grants'>
     <FieldCheckbox path='use' boxLabel='Use' defaultValue={false}/>

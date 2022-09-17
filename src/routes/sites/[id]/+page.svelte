@@ -465,7 +465,7 @@
     submit={addComment}
     name='addcomment'
     title='Add Comment'
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <FieldText path='comment' label='Comment'/>
   </FormDialog>
 {:else if modal === 'editbasic'}
@@ -475,7 +475,7 @@
     name='editbasic'
     title='Rename Site'
     preload={{ name: $store.site.name }}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <FieldText path='name' label='Name' required/>
   </FormDialog>
 {:else if modal === 'editsitemanagement'}
@@ -484,7 +484,7 @@
     name='editsitemanagement'
     title="Edit Site Management"
     preload={{ organization: $store.site.organization?.id, owner: $store.site.owner?.id, managers: $store.site.managers?.map(m => m.id) }}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <FieldSelect path='organization' label='Organization' choices={data.organizations.map(o => ({ label: o.name, value: o.id }))}/>
     <FieldAutocomplete path='owner' label='Site Owner' placeholder='Please Select' choices={data.users.map(u => ({ label: `${u.name} (${u.id})`, value: u.id }))}/>
     <FieldMultiselect path='managers' label='Site Managers' getOptions={searchUsers}/>
@@ -495,7 +495,7 @@
     name='editlaunch'
     title='Set Public URL'
     preload={{ host: $store.site.url?.host ?? '', path: $store.site.url?.path ?? '', enabled: $store.site.url?.enabled }}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <FieldText path='host' label='Host'/>
     <FieldText path='path' label='Path'/>
     <FieldCheckbox path='enabled' label='Site Launched' boxLabel='This site is live.'/>
@@ -506,7 +506,7 @@
     validate={validateAddPagetree}
     title="Add Pagetree"
     templateChoices={$store.site.pageTemplates.map(t => ({ label: t.name, value: t.key }))}
-    on:dismiss={() => { modal = undefined }}
+    on:escape={() => { modal = undefined }}
     on:saved={onAddPagetreeComplete}/>
 {:else if modal === 'editpagetree'}
   <FormDialog
@@ -514,12 +514,12 @@
     title="Rename Pagetree"
     submit={onRenamePagetree}
     preload={{ name: $store.editingPagetree?.name }}
-    on:dismiss={() => { store.cancelEditPagetree(); modal = undefined }}>
+    on:escape={() => { store.cancelEditPagetree(); modal = undefined }}>
     <FieldText path="name" label="Name" required/>
   </FormDialog>
 {:else if modal === 'deletepagetree'}
   <Dialog
-    on:dismiss={() => { store.cancelEditPagetree(); modal = undefined }}
+    on:escape={() => { store.cancelEditPagetree(); modal = undefined }}
     continueText="Delete"
     cancelText="Cancel"
     title="Delete Pagetree"
@@ -528,7 +528,7 @@
   </Dialog>
 {:else if modal === 'promotepagetree'}
   <Dialog
-    on:dismiss={() => { store.cancelEditPagetree(); modal = undefined }}
+    on:escape={() => { store.cancelEditPagetree(); modal = undefined }}
     continueText="Promote"
     cancelText="Cancel"
     title="Promote Pagetree"
@@ -537,7 +537,7 @@
   </Dialog>
 {:else if modal === 'archivepagetree'}
   <Dialog
-    on:dismiss={() => { store.cancelEditPagetree(); modal = undefined }}
+    on:escape={() => { store.cancelEditPagetree(); modal = undefined }}
     continueText="Archive"
     cancelText="Cancel"
     title="Archive Pagetree"
@@ -548,7 +548,7 @@
   <FormDialog
     name='addpagetemplates'
     title='Authorize Page Templates'
-    on:dismiss={() => { modal = undefined }}
+    on:escape={() => { modal = undefined }}
     submit={updateTemplates}>
     <FieldAutocomplete path='template' label='Page Template' choices={getAvailablePageTemplates()} required/>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
@@ -557,7 +557,7 @@
   <FormDialog
     name='addcomponenttemplates'
     title='Authorize Component Templates'
-    on:dismiss={() => { modal = undefined }}
+    on:escape={() => { modal = undefined }}
     submit={updateTemplates}>
     <FieldAutocomplete path='template' label='Component Template' choices={getAvailableComponentTemplates()} required/>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
@@ -567,14 +567,14 @@
   <FormDialog
     name='edittemplates'
     title='Edit Authorized Pagetrees'
-    on:dismiss={() => { store.cancelEditTemplateAuth(); modal = undefined }}
+    on:escape={() => { store.cancelEditTemplateAuth(); modal = undefined }}
     validate={async () => { return [] }}
     submit={editTemplateAuthorizations}>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
   </FormDialog>
 {:else if modal === 'deletetemplateauth'}
   <Dialog
-    on:dismiss={() => { store.cancelEditTemplateAuth(); modal = undefined }}
+    on:escape={() => { store.cancelEditTemplateAuth(); modal = undefined }}
     continueText="Remove"
     cancelText="Cancel"
     title="Remove Template Authorization"

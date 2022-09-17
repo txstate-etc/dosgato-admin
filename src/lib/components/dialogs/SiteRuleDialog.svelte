@@ -88,7 +88,7 @@
   }
 </script>
 
-<FormDialog submit={ruleId ? onEditSiteRule : onAddSiteRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:dismiss on:saved>
+<FormDialog submit={ruleId ? onEditSiteRule : onAddSiteRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:escape on:saved>
   <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
   <SubForm path='grants'>
     <FieldCheckbox path='launch' boxLabel='Launch' defaultValue={false}/>

@@ -7,9 +7,11 @@
   export let secondary = false
   export let describedby: string|undefined = undefined
   export let element: HTMLElement|undefined = undefined
+  let className: string | undefined = undefined
+  export { className as class }
 </script>
 
-<button {disabled} bind:this={element} {type} class="reset" class:cancel class:destructive class:secondary class:compact aria-describedby={describedby} on:click><slot /></button>
+<button {disabled} bind:this={element} {type} class="reset {className}" class:cancel class:destructive class:secondary class:compact aria-describedby={describedby} on:click><slot /></button>
 
 <style>
   button.reset {

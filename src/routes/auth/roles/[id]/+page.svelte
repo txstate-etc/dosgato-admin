@@ -278,7 +278,7 @@
     name='editbasicinfo'
     title='Rename Role'
     preload={{ name: $store.role.name }}
-    on:dismiss={() => { modal = undefined }}
+    on:escape={() => { modal = undefined }}
     on:saved={onSaved}>
     <FieldText path='name' label="Name" required/>
   </FormDialog>
@@ -287,7 +287,7 @@
     submit={onAssignRole}
     name='assigntouser'
     title='Assign Role to User'
-    on:dismiss={() => { modal = undefined }}
+    on:escape={() => { modal = undefined }}
     on:saved={onSaved}>
     <FieldAutocomplete path='userId' label='User' choices={filterUsers()}/>
   </FormDialog>
@@ -297,68 +297,68 @@
   continueText='Unassign'
   cancelText='Cancel'
   on:continue={onUnassign}
-  on:dismiss={() => { modal = undefined }}>
+  on:escape={() => { modal = undefined }}>
   {`Are you sure you want to remove the ${$store.role.name} role from user ${$store.userRemoving?.id}?`}
 
   </Dialog>
 {:else if modal === 'addassetrule'}
-  <AssetRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
+  <AssetRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'editassetrule'}
   <AssetRuleDialog
     roleId={$store.role.id}
     ruleId={$store.editing?.id}
     siteChoices={siteOptions}
     on:saved={onSaved}
-    on:dismiss={() => { modal = undefined }}
+    on:escape={() => { modal = undefined }}
     preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id } : {} }/>
 {:else if modal === 'adddatarule'}
-  <DataRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
+  <DataRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'editdatarule'}
     <DataRuleDialog
       roleId={$store.role.id}
       ruleId={$store.editing?.id}
       siteChoices={siteOptions}
-      on:dismiss={() => { modal = undefined }}
+      on:escape={() => { modal = undefined }}
       on:saved={onSaved}
       preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id, templateId: $store.editing.data.template?.key } : {} }/>
 {:else if modal === 'addglobalrule'}
-    <GlobalRuleDialog roleId={$store.role.id} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
+    <GlobalRuleDialog roleId={$store.role.id} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'editglobalrule'}
     <GlobalRuleDialog
       roleId={$store.role.id}
       ruleId={$store.editing?.id}
-      on:dismiss={() => { modal = undefined }}
+      on:escape={() => { modal = undefined }}
       on:saved={onSaved}
       preload={$store.editing ? $store.editing.data : {} }/>
 {:else if modal === 'addpagerule'}
-  <PageRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
+  <PageRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'editpagerule'}
   <PageRuleDialog
     roleId={$store.role.id}
     ruleId={$store.editing?.id}
     siteChoices={siteOptions}
-    on:dismiss={() => { modal = undefined }}
+    on:escape={() => { modal = undefined }}
     on:saved={onSaved}
     preload={$store.editing ? $store.editing.data : {} }/>
 {:else if modal === 'addsiterule'}
-  <SiteRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
+  <SiteRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'editsiterule'}
   <SiteRuleDialog
     roleId={$store.role.id}
     ruleId={$store.editing?.id}
     siteChoices={siteOptions}
-    on:dismiss={() => { modal = undefined }}
+    on:escape={() => { modal = undefined }}
     on:saved={onSaved}
     preload={$store.editing ? $store.editing.data : {} }/>
 {:else if modal === 'addtemplaterule'}
-  <TemplateRuleDialog roleId={$store.role.id} on:dismiss={() => { modal = undefined }} on:saved={onSaved}/>
+  <TemplateRuleDialog roleId={$store.role.id} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'deleterule'}
   <Dialog
   title={'Delete Rule'}
   continueText='Delete'
   cancelText='Cancel'
   on:continue={onDeleteRule}
-  on:dismiss={() => { modal = undefined }}>
+  on:escape={() => { modal = undefined }}>
   {`Are you sure you want to delete this ${$store.editing?.type} rule?`}
   </Dialog>
 {/if}

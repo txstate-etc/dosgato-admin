@@ -9,7 +9,7 @@
 
   interface $$Events {
     saved: CustomEvent<T>
-    dismiss: CustomEvent<undefined>
+    escape: CustomEvent<undefined>
   }
 
   export let submit: (state: T) => Promise<SubmitResponse<T>>
@@ -34,7 +34,7 @@
   setContext(CHOOSER_API_CONTEXT, chooserClient)
 </script>
 
-<Dialog continueText="Save" cancelText="Cancel" on:dismiss on:continue={onSubmit} {title}>
+<Dialog continueText="Save" cancelText="Cancel" on:escape on:continue={onSubmit} {title}>
   <Form bind:store {submit} {validate} {chooserClient} {autocomplete} {name} {preload} on:saved let:messages let:saved let:valid let:invalid let:validating let:submitting>
     <slot {messages} {saved} {validating} {submitting} {valid} {invalid} {data} />
   </Form>

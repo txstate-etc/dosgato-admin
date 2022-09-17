@@ -88,7 +88,7 @@
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
   {#if template && template.dialog}
-    <FormDialog preload={$editorStore.editing.data} submit={onEditComponentSubmit} on:dismiss={cancelModal} let:data>
+    <FormDialog preload={$editorStore.editing.data} submit={onEditComponentSubmit} on:escape={cancelModal} let:data>
       <svelte:component this={template.dialog} {data} {environmentConfig} />
     </FormDialog>
   {:else}
@@ -98,14 +98,14 @@
   {#if $editorStore.creating.templateKey}
     {@const template = templateRegistry.getTemplate($editorStore.creating.templateKey)}
     {#if template && template.dialog}
-      <FormDialog preload={$editorStore.creating.data} submit={onAddComponentSubmit} on:dismiss={cancelModal}>
+      <FormDialog preload={$editorStore.creating.data} submit={onAddComponentSubmit} on:escape={cancelModal}>
         <svelte:component this={template.dialog} />
       </FormDialog>
     {:else}
       <Dialog title="Unrecognized Template">This content uses an unrecognized template. Please contact support for assistance.</Dialog>
     {/if}
   {:else}
-    <Dialog title="What would you like to add?" cancelText="Cancel" size="large" on:dismiss={cancelModal}>
+    <Dialog title="What would you like to add?" cancelText="Cancel" size="large" on:escape={cancelModal}>
       <div class="component-chooser">
         {#each $editorStore.creating.availableComponents as availableComponent}
           <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
@@ -117,7 +117,7 @@
   {/if}
 {:else if $editorStore.modal === 'delete' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
-  <Dialog title="Delete Content" cancelText="Cancel" continueText="Delete" on:dismiss={cancelModal} on:continue={onDeleteComponentSubmit}>
+  <Dialog title="Delete Content" cancelText="Cancel" continueText="Delete" on:escape={cancelModal} on:continue={onDeleteComponentSubmit}>
     Are you sure you want to delete the {template?.templateKey} content?
   </Dialog>
 {/if}

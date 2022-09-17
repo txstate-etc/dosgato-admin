@@ -335,7 +335,7 @@
     validate={validateFolder}
     name='addfolder'
     title= 'Add Data Folder'
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <FieldText path='name' label='Name' required></FieldText>
   </FormDialog>
 {:else if modal === 'deletefolder'}
@@ -344,7 +344,7 @@
     continueText='Delete Folder{$store.selectedItems.length > 1 ? 's' : ''}'
     cancelText='Cancel'
     on:continue={onDeleteFolder}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     {$store.selectedItems.length > 1 ? `Delete ${$store.selectedItems.length} data folders?` : `Delete data folder ${$store.selectedItems[0].name}?`}
   </Dialog>
 {:else if modal === 'renamefolder'}
@@ -354,7 +354,7 @@
     name='renamefolder'
     title='Rename Data Folder'
     preload={{ name: $store.selectedItems[0].name }}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <FieldText path='name' label='Name' required></FieldText>
   </FormDialog>
 {:else if modal === 'publishdata'}
@@ -363,7 +363,7 @@
     continueText='Publish'
     cancelText='Cancel'
     on:continue={onPublishData}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     {$store.selectedItems.length > 1 ? `Publish ${$store.selectedItems.length} data entries?` : `Publish data ${$store.selectedItems[0].name}?`}
   </Dialog>
 {:else if modal === 'unpublishdata'}
@@ -372,14 +372,14 @@
     continueText='Unpublish'
     cancelText='Cancel'
     on:continue={onUnpublishData}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     {$store.selectedItems.length > 1 ? `Unpublish ${$store.selectedItems.length} data entries?` : `Unpublish data ${$store.selectedItems[0].name}?`}
   </Dialog>
 {:else if modal === 'adddata'}
   <FormDialog
     submit={onAddData}
     title='Add Data'
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <!-- TODO: Need some description text explaining this field -->
     <FieldText path='dataname' label='Data Name' required></FieldText>
     <svelte:component this={templateRegistry.getTemplate($templateStore.id)?.dialog}></svelte:component>

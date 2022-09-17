@@ -168,7 +168,7 @@
     name='editbasicinfo'
     title= {'Edit Group'}
     preload={{ name: $store.group.name }}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <FieldText path='name' label='Group Name'></FieldText>
   </FormDialog>
 {:else if modal === 'addmembers'}
@@ -176,7 +176,7 @@
     submit={onAddMembers}
     name="addmembers"
     title={`Add Members to Group ${$store.group.name}`}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     <FieldMultiselect
       path='users'
       label='Add Members'

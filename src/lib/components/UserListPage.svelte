@@ -102,7 +102,7 @@
     continueText="Disable User{$store.selectedItems.length > 1 ? 's' : ''}"
     cancelText="Cancel"
     on:continue={onDisable}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     Are you sure you want to disable {#if $store.selectedItems.length > 1}{$store.selectedItems.length} users{:else}this user{/if}? They will be unable to log in, but their roles will be preserved so that they can be re-enabled with minimal work.
   </Dialog>
 {:else if modal === 'enable'}
@@ -111,11 +111,11 @@
     continueText="Enable User{$store.selectedItems.length > 1 ? 's' : ''}"
     cancelText="Cancel"
     on:continue={onEnable}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     Are you sure you want to enable {#if $store.selectedItems.length > 1}{$store.selectedItems.length} users{:else}this user{/if}? They will be able to log in again and will have all the same roles as when they were disabled.
   </Dialog>
 {:else if modal === 'create'}
-  <FormDialog submit={onCreate} validate={onCreateValidate} on:dismiss={() => { modal = undefined }} on:saved={onCreateComplete}>
+  <FormDialog submit={onCreate} validate={onCreateValidate} on:escape={() => { modal = undefined }} on:saved={onCreateComplete}>
     <FieldText path="userId" label="Login"></FieldText>
     <FieldText path="name" label="Full Name"></FieldText>
     <FieldText path="email" label="E-mail"></FieldText>

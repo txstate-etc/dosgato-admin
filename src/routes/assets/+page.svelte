@@ -1,15 +1,16 @@
 <script lang="ts">
-  import { iconForMime, Icon, bytesToHuman } from '@dosgato/dialog'
+  import { iconForMime, Icon, bytesToHuman, FieldText } from '@dosgato/dialog'
   import arrowsOutCardinalLight from '@iconify-icons/ph/arrows-out-cardinal-light'
   import downloadLight from '@iconify-icons/ph/download-light'
   import folderLight from '@iconify-icons/ph/folder-light'
+  import folderPlusLight from '@iconify-icons/ph/folder-plus-light'
   import folderNotchOpenLight from '@iconify-icons/ph/folder-notch-open-light'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import uploadLight from '@iconify-icons/ph/upload-light'
   import { DateTime } from 'luxon'
   import { roundTo, unique } from 'txstate-utils'
   import { goto } from '$app/navigation'
-  import { api, ActionPanel, Dialog, Tree, TreeStore, type TypedTreeItem, type TreeAsset, type TreeAssetFolder, environmentConfig, uploadWithProgress } from '$lib'
+  import { api, ActionPanel, Dialog, Tree, TreeStore, type TypedTreeItem, type TreeAsset, type TreeAssetFolder, environmentConfig, uploadWithProgress, FormDialog, type CreateAssetFolderInput, messageForDialog } from '$lib'
   import { base } from '$app/paths'
 
   interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
@@ -25,12 +26,14 @@
   type TypedAssetFolderItem = TypedTreeItem<AssetFolderItem>
   type TypedAnyAssetItem = TypedTreeItem<AssetItem | AssetFolderItem>
 
-  let uploadTo: TypedAssetFolderItem | undefined
+  let modal: 'upload' | 'create' | undefined
+  let selectedFolder: TypedAssetFolderItem | undefined
   let dragover = 0
   let uploadList: File[] = []
   let uploadForm: HTMLFormElement
   let uploadLocked = false
   let uploadProgress = 0
+  let uploadError: string | undefined
 
   async function fetchChildren (item?: TypedAssetFolderItem) {
     const { folders, assets } = item ? (await api.getSubFoldersAndAssets(item.id))! : { folders: await api.getRootAssetFolders(), assets: [] }
@@ -56,7 +59,8 @@
           { label: 'Move', icon: arrowsOutCardinalLight, onClick: () => { /* TODO */ } }
         ]
       : [
-          { label: 'Upload', icon: uploadLight, disabled: !item.permissions.create, onClick: () => { uploadTo = item as TypedAssetFolderItem } }
+          { label: 'Upload', icon: uploadLight, disabled: !item.permissions.create, onClick: () => { modal = 'upload'; selectedFolder = item as TypedAssetFolderItem } },
+          { label: 'Create Folder', icon: folderPlusLight, disabled: !item.permissions.create, onClick: () => { modal = 'create'; selectedFolder = item as TypedAssetFolderItem } }
         ]
   }
 
@@ -121,11 +125,10 @@
   }
 
   async function onUploadSubmit () {
-    if (!uploadTo || uploadLocked) return
+    if (!selectedFolder || uploadLocked) return
     uploadLocked = true
     try {
       const data = new FormData()
-      data.append('folderId', uploadTo.id)
       for (let i = 0; i < uploadList.length; i++) {
         data.append('file' + i, uploadList[i])
       }
@@ -136,12 +139,42 @@
         data,
         ratio => { uploadProgress = ratio }
       )
-      await store.openAndRefresh(uploadTo)
-      uploadTo = undefined
+      await store.openAndRefresh(selectedFolder)
+      modal = undefined
+      selectedFolder = undefined
       uploadList = []
+      uploadError = undefined
+    } catch (e: any) {
+      uploadError = e.message
     } finally {
       uploadLocked = false
     }
+  }
+
+  function onUploadEscape () {
+    if (!uploadLocked) {
+      modal = undefined
+      selectedFolder = undefined
+      uploadList = []
+      uploadError = undefined
+    }
+  }
+
+  async function onCreateSubmit (data: CreateAssetFolderInput) {
+    const { success, messages } = await api.createAssetFolder({ ...data, parentId: selectedFolder!.id })
+    if (success) store.refresh(selectedFolder)
+    return { success, messages: messageForDialog(messages, 'args'), data }
+  }
+
+  async function onCreateValidate (data: CreateAssetFolderInput) {
+    if (!selectedFolder) return []
+    const { success, messages } = await api.createAssetFolder({ ...data, parentId: selectedFolder!.id }, true)
+    return messageForDialog(messages, 'args')
+  }
+
+  function onCreateEscape () {
+    modal = undefined
+    selectedFolder = undefined
   }
 
   const store: TreeStore<AssetItem | AssetFolderItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
@@ -158,13 +191,14 @@
     ]}
   />
 </ActionPanel>
-{#if uploadTo}
-  <Dialog title="Upload Files to {uploadTo.path}" cancelText="Cancel" continueText="Upload" on:escape={() => { uploadTo = undefined }} on:continue={onUploadSubmit}>
+{#if modal === 'upload' && selectedFolder}
+  <Dialog title="Upload Files to {selectedFolder.path}" cancelText="Cancel" continueText="Upload" on:escape={onUploadEscape} on:continue={onUploadSubmit}>
     {#if uploadLocked}
       <progress value={uploadProgress} aria-label="Assets Uploading">{roundTo(100 * uploadProgress)}%</progress>
     {:else}
+      {#if uploadError}<div class="error">{uploadError}</div>{/if}
       <form bind:this={uploadForm} method="POST" enctype="multipart/form-data"
-        action={`${environmentConfig.apiBase}/assets`}
+        action="{environmentConfig.apiBase}/assets/{selectedFolder.id}"
         on:submit|preventDefault|stopPropagation={onUploadSubmit}
         class="uploader" class:dragover={dragover > 0}
         on:dragenter={onUploadEnter} on:dragleave={onUploadLeave}
@@ -180,6 +214,10 @@
       </form>
     {/if}
   </Dialog>
+{:else if modal === 'create' && selectedFolder}
+  <FormDialog title="Create Folder beneath {selectedFolder.path}" on:escape={onCreateEscape} submit={onCreateSubmit} validate={onCreateValidate} on:saved={onCreateEscape}>
+    <FieldText path="name" label="Name" required />
+  </FormDialog>
 {/if}
 
 <style>
@@ -221,5 +259,8 @@
   }
   input:focus + label {
     outline: 2px solid blue;
+  }
+  .error {
+    color: red;
   }
 </style>

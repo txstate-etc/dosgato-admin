@@ -1,22 +1,22 @@
 <script lang="ts">
   import { Modal } from '@txstate-mws/svelte-components'
   import { createEventDispatcher } from 'svelte'
-  import { randomid } from 'txstate-utils'
+  import { isNotBlank, randomid } from 'txstate-utils'
   import Button from './Button.svelte'
   const dispatch = createEventDispatcher()
 
-  export let escapable = false
-  export let initialfocus: string|undefined = 'div.actions button.primary'
+  export let initialfocus: string|undefined = undefined
   export let title = ''
   export let size: 'tiny'|'small'|'normal'|'large' = 'normal'
   export let cancelText: string|undefined = undefined
   export let continueText: string = 'Ok'
+  export let escapable = isNotBlank(cancelText)
 
   export let labelid = randomid()
   export let descid = randomid()
 </script>
 
-<Modal {escapable} {initialfocus} hidefocus={false} on:dismiss>
+<Modal {escapable} {initialfocus} hidefocus={false} on:escape>
   <section class="{size}">
     <header id={labelid}>
       {title}
@@ -26,10 +26,10 @@
     </div>
     <footer class="actions">
       <slot name="buttons">
-        {#if cancelText}
-          <Button cancel describedby="{labelid} {descid}" on:click={() => dispatch('dismiss')}>{cancelText}</Button>
+        {#if isNotBlank(cancelText)}
+          <Button cancel describedby="{labelid} {descid}" on:click={() => dispatch('escape')}>{cancelText}</Button>
         {/if}
-        <Button describedby="{labelid} {descid}" on:click={() => dispatch('continue')}>{continueText}</Button>
+        <Button class="primary" describedby="{labelid} {descid}" on:click={() => dispatch('continue')}>{continueText}</Button>
       </slot>
     </footer>
   </section>

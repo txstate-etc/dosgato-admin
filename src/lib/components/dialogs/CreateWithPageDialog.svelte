@@ -17,13 +17,13 @@
 
   const store: FormStore = new FormStore<CreateWithPageState>(submit, validate)
 
-  function dismiss () {
+  function escape () {
     store.reset()
-    dispatch('dismiss')
+    dispatch('escape')
   }
 </script>
 
-<FormDialog {title} {submit} {validate} {store} on:dismiss={dismiss} on:saved>
+<FormDialog {title} {submit} {validate} {store} on:escape={escape} on:saved>
   <FieldText path='name' label='Name' required/>
   <FieldSelect path='templateKey' label='Page Template' placeholder='Select' choices={templateChoices}/>
   <SubForm path='data' conditional={isNotNull($store.data?.templateKey)}>

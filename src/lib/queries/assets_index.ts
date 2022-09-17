@@ -1,3 +1,5 @@
+import { mutationResponse } from './global'
+
 const assetFolderDetails = `
 id
 path
@@ -103,5 +105,17 @@ export const GET_ASSETFOLDER_CHILDREN = `
 export const MOVE_ASSETS = `
   query moveAssets ($ids: [ID], $target: ID) {
     mutation moveAssets TODO
+  }
+`
+
+export interface CreateAssetFolderInput {
+  name: string
+  parentId: string
+}
+export const CREATE_ASSET_FOLDER = `
+  mutation createAssetFolder ($args: CreateAssetFolderInput!, $validateOnly: Boolean) {
+    createAssetFolder (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+    }
   }
 `

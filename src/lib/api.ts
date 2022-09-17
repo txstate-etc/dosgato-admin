@@ -27,7 +27,7 @@ import {
   type GlobalRule, ADD_GLOBAL_RULE, UPDATE_GLOBAL_RULE, type PageRule, type CreatePageRuleInput, type UpdatePageRuleInput,
   ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
-  GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE
+  GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -203,6 +203,13 @@ class API {
   async getRootAssetFolders () {
     const { sites } = await this.query<{ sites: { assetroot: TreeAssetFolder }[] }>(GET_ASSET_ROOTS)
     return sites.map(s => s.assetroot)
+  }
+
+  async createAssetFolder (args: CreateAssetFolderInput, validateOnly?: boolean) {
+    const resp = validateRequired<{ assetFolder: undefined }>(args, ['name', 'parentId'])
+    if (resp) return resp
+    const { createAssetFolder } = await this.query<{ createAssetFolder: MutationResponse }>(CREATE_ASSET_FOLDER, { args, validateOnly })
+    return createAssetFolder
   }
 
   async getEditorPage (pageId: string) {

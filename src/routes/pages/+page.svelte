@@ -134,6 +134,6 @@
     validate={validateAddPage}
     title="Add New Page"
     templateChoices={availableTemplates}
-    on:dismiss={() => { modal = undefined }}
+    on:escape={() => { modal = undefined }}
     on:saved={onAddPageComplete}/>
 {/if}

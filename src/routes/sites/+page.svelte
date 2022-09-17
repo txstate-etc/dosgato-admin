@@ -90,7 +90,7 @@
   <CreateWithPageDialog
     title='Create Site'
     submit={onCreateSite}
-    on:dismiss={() => { modal = undefined }}
+    on:escape={() => { modal = undefined }}
     validate={validateCreateSite}
     templateChoices={data.pageTemplateChoices}
     on:saved={onCreateSiteComplete}
@@ -101,7 +101,7 @@
     continueText='Delete Site'
     cancelText='Cancel'
     on:continue={onDeleteSite}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     {`Are you sure you want to delete ${$store.selectedItems[0].name}?`}
   </Dialog>
 {:else if modal === 'restoresite'}
@@ -110,7 +110,7 @@
     continueText='Restore Site'
     cancelText='Cancel'
     on:continue={onRestoreSite}
-    on:dismiss={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}>
     {`Restore ${$store.selectedItems[0].name}?`}
   </Dialog>
 {/if}
