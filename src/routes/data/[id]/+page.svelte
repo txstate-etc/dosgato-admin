@@ -253,19 +253,21 @@
   async function onAddFolder (state) {
     const siteId: string|undefined = ($store.selectedItems[0] as TreeDataSite).siteId
     const resp = await api.addDataFolder(state.name, templateKey, siteId)
-    if (resp.success) store.refresh()
-    modal = undefined
-    return { success: resp.success, messages: resp.messages, data: resp.dataFolder }
+    return {
+      success: resp.success,
+      messages: messageForDialog(resp.messages, 'args'),
+      data: resp.success
+        ? {
+            name: resp.dataFolder!.name
+          }
+        : undefined
+    }
   }
 
   async function validateFolder (state) {
-    const localMessages = ensureRequiredNotNull(state, ['name'])
-    if (!localMessages.length) {
-      const siteId: string|undefined = ($store.selectedItems[0] as TreeDataSite).siteId
-      const resp = await api.addDataFolder(state.name, templateKey, siteId, true)
-      return messageForDialog(resp.messages, 'args')
-    }
-    return localMessages
+    const siteId: string|undefined = ($store.selectedItems[0] as TreeDataSite).siteId
+    const resp = await api.addDataFolder(state.name, templateKey, siteId, true)
+    return messageForDialog(resp.messages, 'args')
   }
 
   async function onDeleteFolder () {
@@ -276,9 +278,20 @@
 
   async function onRenameFolder (state) {
     const resp = await api.renameDataFolder($store.selectedItems[0].id, state.name)
-    if (resp.success) store.refresh()
-    modal = undefined
-    return { success: resp.success, messages: resp.messages, data: resp.dataFolder }
+    return {
+      success: resp.success,
+      messages: messageForDialog(resp.messages, ''),
+      data: resp.success
+        ? {
+            name: resp.dataFolder!.name
+          }
+        : undefined
+    }
+  }
+
+  async function validateRenameFolder (state) {
+    const resp = await api.renameDataFolder($store.selectedItems[0].id, state.name, true)
+    return messageForDialog(resp.messages, '')
   }
 
   async function onPublishData () {
@@ -319,6 +332,11 @@
       return { success: false, messages: resp.messages, data: resp.data }
     }
   }
+
+  function onSaved () {
+    store.refresh()
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={getActions($store.selectedItems)}>
@@ -335,7 +353,8 @@
     validate={validateFolder}
     name='addfolder'
     title= 'Add Data Folder'
-    on:escape={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}
+    on:saved={onSaved}>
     <FieldText path='name' label='Name' required></FieldText>
   </FormDialog>
 {:else if modal === 'deletefolder'}
@@ -350,11 +369,12 @@
 {:else if modal === 'renamefolder'}
   <FormDialog
     submit={onRenameFolder}
-    validate={validateFolder}
+    validate={validateRenameFolder}
     name='renamefolder'
     title='Rename Data Folder'
     preload={{ name: $store.selectedItems[0].name }}
-    on:escape={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}
+    on:saved={onSaved}>
     <FieldText path='name' label='Name' required></FieldText>
   </FormDialog>
 {:else if modal === 'publishdata'}

@@ -345,6 +345,8 @@ class API {
   }
 
   async addDataFolder (name: string, templateKey: string, siteId?: string, validateOnly?: boolean) {
+    const resp = validateRequired<{ dataFolder: undefined }>({ name }, ['name'])
+    if (resp) return resp
     const { createDataFolder } = await this.query<{ createDataFolder: MutationResponse & { dataFolder: DataFolder } }>(CREATE_DATA_FOLDER, { args: { name, templateKey, siteId }, validateOnly })
     return createDataFolder
   }
@@ -354,8 +356,10 @@ class API {
     return deleteDataFolders
   }
 
-  async renameDataFolder (folderId: string, name: string) {
-    const { renameDataFolder } = await this.query<{ renameDataFolder: MutationResponse & { dataFolder: DataFolder } }>(RENAME_DATA_FOLDER, { folderId, name })
+  async renameDataFolder (folderId: string, name: string, validateOnly?: boolean) {
+    const resp = validateRequired<{ dataFolder: undefined }>({ name }, ['name'])
+    if (resp) return resp
+    const { renameDataFolder } = await this.query<{ renameDataFolder: MutationResponse & { dataFolder: DataFolder } }>(RENAME_DATA_FOLDER, { folderId, name, validateOnly })
     return renameDataFolder
   }
 
