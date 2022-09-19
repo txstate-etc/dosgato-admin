@@ -41,7 +41,11 @@
 </script>
 
 {#if data.errObj}
-  There was an error with your request. Please try again later or contact support.
+  {#if data.errObj.status === 403}
+    You are not authorized to use this system. If you believe you should have access, please contact an administrator.
+  {:else}
+    There was an error with your request. Please try again later or contact support.
+  {/if}
 {:else}
   <nav>
     <div class="topbar">
