@@ -1,7 +1,7 @@
 <script lang="ts">
   import folderOutline from '@iconify-icons/mdi/folder-outline'
   import applicationOutline from '@iconify-icons/mdi/application-outline'
-  import databaseOutline from '@iconify-icons/mdi/database-outline'
+  import cubeLight from '@iconify-icons/ph/cube-light'
   import triangleIcon from '@iconify-icons/mdi/triangle'
   import circleIcon from '@iconify-icons/mdi/circle'
   import squareIcon from '@iconify-icons/mdi/square'
@@ -133,7 +133,7 @@
   }
 
   function getPathIcon (type: DataTreeNodeType) {
-    if (type === DataTreeNodeType.DATA) return databaseOutline
+    if (type === DataTreeNodeType.DATA) return cubeLight
     else if (type === DataTreeNodeType.FOLDER) return folderOutline
     else return applicationOutline
   }
@@ -402,6 +402,9 @@
     on:escape={() => { modal = undefined }}>
     <!-- TODO: Need some description text explaining this field -->
     <FieldText path='dataname' label='Data Name' required></FieldText>
-    <svelte:component this={templateRegistry.getTemplate($templateStore.id)?.dialog}></svelte:component>
+    {@const reg = templateRegistry.getTemplate($templateStore.id)}
+    {#if reg}
+      <svelte:component this={reg.dialog}></svelte:component>
+    {/if}
   </FormDialog>
 {/if}

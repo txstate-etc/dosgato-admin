@@ -4,5 +4,5 @@ import { base } from '$app/paths'
 import { subnavStore } from '$lib'
 
 export const load: Load = async () => {
-  subnavStore.init('pages', [{ label: 'Pages', href: base + '/pages', icon: fileTree }])
+  subnavStore.init('assets', [{ label: 'Assets', href: base + '/assets', icon: fileTree }])
 }

@@ -1,5 +1,7 @@
+import applicationEditOutline from '@iconify-icons/mdi/application-edit-outline'
 import { error, type Load } from '@sveltejs/kit'
-import { api, environmentConfig, pageEditorStore, type PageEditorPage } from '$lib'
+import { base } from '$app/paths'
+import { api, environmentConfig, pageEditorStore, subnavStore, type PageEditorPage } from '$lib'
 
 export async function getTempToken (page: PageEditorPage, skfetch = fetch) {
   const resp = await skfetch(environmentConfig.renderBase + '/token' + page.path, {
@@ -16,5 +18,6 @@ export const load: Load<{ id: string }> = async ({ params, fetch }) => {
   if (!page) throw error(404)
   const temptoken = await getTempToken(page, fetch)
   pageEditorStore.open(page)
+  subnavStore.open('pages', { href: `${base}/pages/${page.id}`, label: page.name, icon: applicationEditOutline })
   return { temptoken }
 }

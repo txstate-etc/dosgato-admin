@@ -1,18 +1,19 @@
 <script lang="ts">
   import { Icon } from '@dosgato/dialog'
-  import accountMultiple from '@iconify-icons/mdi/account-multiple'
+  import usersLight from '@iconify-icons/ph/users-light'
   import closeThick from '@iconify-icons/mdi/close-thick'
-  import dotsHorizontal from '@iconify-icons/mdi/dots-horizontal'
-  import databaseOutline from '@iconify-icons/mdi/database-outline'
-  import fileCodeOutline from '@iconify-icons/mdi/file-code-outline'
-  import imageMultipleOutline from '@iconify-icons/mdi/image-multiple-outline'
+  import dotsThree from '@iconify-icons/ph/dots-three'
+  import databaseLight from '@iconify-icons/ph/database-light'
+  import fileCodeLight from '@iconify-icons/ph/file-code-light'
+  import copySimpleLight from '@iconify-icons/ph/copy-simple-light'
   import menuDown from '@iconify-icons/mdi/menu-down'
-  import webIcon from '@iconify-icons/mdi/web'
+  import globeLight from '@iconify-icons/ph/globe-light'
   import { PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
-  import { globalStore, subnav, type SubNavLink } from '$lib'
+  import { globalStore, subnavStore, currentSubNav } from '$lib'
   import LabeledIcon from '$lib/components/LabeledIcon.svelte'
+  import { goto } from '$app/navigation'
 
   export let data: { errObj: any }
 
@@ -21,8 +22,6 @@
   const profileItems: PopupMenuItem[] = [
     { value: 'Logout' }
   ]
-
-  $: showsubnav = $subnav.length > 0 && ['auth', 'data', 'pages', 'sites', 'settings'].some(section => $page.url.pathname.startsWith(base + '/' + section))
 
   function onProfileChange (e: any) {
     if (e.detail.value === 'Logout') {
@@ -33,9 +32,10 @@
     }
   }
 
-  function closeSubNav (link: SubNavLink, i: number) {
+  function closeSubNav (i: number) {
     return () => {
-      link.onClose?.(i)
+      const href = subnavStore.close(i)
+      if (href) goto(href)
     }
   }
 </script>
@@ -47,27 +47,27 @@
     <div class="topbar">
       <div class="logo"></div>
       <ul class="topnav">
-        {#if $globalStore.access.viewPageManager}<li><LabeledIcon href="{base}/pages" icon={fileCodeOutline} label="Pages"/></li>{/if}
-        {#if $globalStore.access.viewAssetManager}<li><LabeledIcon href="{base}/assets" icon={imageMultipleOutline} label="Assets" /></li>{/if}
-        {#if $globalStore.access.viewDataManager}<li><LabeledIcon href="{base}/data" icon={databaseOutline} label="Data" /></li>{/if}
-        {#if $globalStore.access.viewSiteManager}<li class="separator"><LabeledIcon href="{base}/sites" icon={webIcon} label="Sites" /></li>{/if}
-        {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={accountMultiple} label="Access" /></li>{/if}
-        {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings/templates" icon={dotsHorizontal} label="More" /></li>{/if}
+        {#if $globalStore.access.viewPageManager}<li><LabeledIcon href="{base}/pages" icon={fileCodeLight} label="Pages"/></li>{/if}
+        {#if $globalStore.access.viewAssetManager}<li><LabeledIcon href="{base}/assets" icon={copySimpleLight} label="Assets" /></li>{/if}
+        {#if $globalStore.access.viewDataManager}<li><LabeledIcon href="{base}/data" icon={databaseLight} label="Data" /></li>{/if}
+        {#if $globalStore.access.viewSiteManager}<li class="separator"><LabeledIcon href="{base}/sites" icon={globeLight} label="Sites" /></li>{/if}
+        {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={usersLight} label="Access" /></li>{/if}
+        {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings/templates" icon={dotsThree} label="More" /></li>{/if}
       </ul>
       <button bind:this={buttonelement} class="login-status reset">
         {$globalStore.me.name || 'Unauthorized User'}
         <Icon icon={menuDown} inline />
       </button>
     </div>
-    {#if showsubnav}
+    {#if $currentSubNav}
       <div class="subnav">
         <ul>
-          {#each $subnav as link, i}
-            {@const selected = $page.url.pathname === link.href}
-            <li class:selected class:closeable={!!link.onClose}>
+          {#each $currentSubNav.links as link, i}
+            {@const selected = $page.url.pathname === link.href || (!$currentSubNav.links.some(l => l.href === $page.url.pathname) && $page.url.pathname.startsWith(link.href))}
+            <li class:selected class:closeable={link.closeable}>
               <a href={link.href}>{#if link.icon}<Icon icon={link.icon} inline/>{/if}{link.label}</a>
-              {#if link.onClose}
-                <button type="button" class="reset" on:click={closeSubNav(link, i)}><Icon icon={closeThick} inline hiddenLabel="Close {link.label}" width="1.2em" /></button>
+              {#if link.closeable}
+                <button type="button" class="reset" on:click={closeSubNav(i)}><Icon icon={closeThick} inline hiddenLabel="Close {link.label}" width="1.2em" /></button>
               {/if}
             </li>
           {/each}

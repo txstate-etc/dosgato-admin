@@ -1,5 +1,5 @@
 <script lang="ts">
-  import applicationOutline from '@iconify-icons/mdi/application-outline'
+  import globeLight from '@iconify-icons/ph/globe-light'
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
@@ -79,7 +79,7 @@
 
 <ActionPanel  actions={getActions($store.selectedItems)}>
   <Tree singleSelect {store}  on:choose={({ detail }) => goto(base + '/sites/' + detail.id)} headers={[
-     { id: 'name', label: 'Site Name', get: 'name', defaultWidth: '20%', icon: applicationOutline },
+     { id: 'name', label: 'Site Name', get: 'name', defaultWidth: '20%', icon: globeLight },
      { id: 'url', label: 'URL', get: 'url.prefix', defaultWidth: '20%' },
      { id: 'organization', label: 'Organization', get: 'organization.name', defaultWidth: '20%' },
      { id: 'owner', label: 'Owner', render: renderOwner, defaultWidth: '20%' }

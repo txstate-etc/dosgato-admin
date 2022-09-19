@@ -5,7 +5,6 @@
     "prepublishOnly": "echo \"Do not publish this project.",
     "dev": "vite dev --host 0.0.0.0 --port 3000",
     "build": "vite build",
-    "package": "svelte-kit package",
     "preview": "vite preview",
     "test": "playwright test",
     "check": "svelte-check --tsconfig ./tsconfig.json",
@@ -13,7 +12,7 @@
     "lint": "eslint --ignore-path .gitignore ."
   },
   "dependencies": {
-    "@dosgato/dialog": ">=0.0.13",
+    "@dosgato/dialog": ">=0.0.15",
     "@dosgato/templating":"^0.0.56",
     "@iconify-icons/mdi": "^1.2.8",
     "@iconify-icons/ph": "^1.2.2",

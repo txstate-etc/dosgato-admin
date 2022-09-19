@@ -1,8 +1,8 @@
-import fileTree from '@iconify-icons/mdi/file-tree'
+import codeJson from '@iconify-icons/mdi/code-json'
 import type { Load } from '@sveltejs/kit'
 import { base } from '$app/paths'
 import { subnavStore } from '$lib'
 
 export const load: Load = async () => {
-  subnavStore.init('pages', [{ label: 'Pages', href: base + '/pages', icon: fileTree }])
+  subnavStore.init('data', [{ label: 'Data Types', href: base + '/data', icon: codeJson }])
 }

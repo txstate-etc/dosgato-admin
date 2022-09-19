@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type TemplateListTemplate } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type TemplateListTemplate, templateRegistry } from '$lib'
   import checkIcon from '@iconify-icons/mdi/check'
   import earthIcon from '@iconify-icons/mdi/earth'
   import earthOffIcon from '@iconify-icons/mdi/earth-off'
+  import boundingBoxLight from '@iconify-icons/ph/bounding-box-light'
   import Dialog from '$lib/components/Dialog.svelte'
 
   type TypedTemplateItem = TypedTreeItem<TemplateListTemplate>
@@ -36,7 +37,7 @@
 
 <ActionPanel actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : []}>
   <Tree singleSelect {store} headers={[
-    { id: 'key', label: 'Key', get: 'key', defaultWidth: '25%' },
+    { id: 'key', label: 'Key', get: 'key', defaultWidth: '25%', icon: itm => templateRegistry.getTemplate(itm.key)?.icon ?? boundingBoxLight },
     { id: 'name', label: 'Name', get: 'name', defaultWidth: '25%' },
     { id: 'universal', label: 'Universal', icon: item => item.universal ? checkIcon : undefined, defaultWidth: '25%' }
   ]}/>

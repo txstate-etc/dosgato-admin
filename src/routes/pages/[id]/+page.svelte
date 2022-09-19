@@ -34,7 +34,7 @@
   }
 
   async function refreshIframe () {
-    const newTempToken = await getTempToken($editorStore.page)
+    const newTempToken = await getTempToken($editorStore!.page)
     if (newTempToken === data.temptoken) {
       iframe.src = iframe.src // force refresh the iframe
     } else {

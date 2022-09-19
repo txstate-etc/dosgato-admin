@@ -6,13 +6,13 @@
   import publishIcon from '@iconify-icons/mdi/publish'
   import squareIcon from '@iconify-icons/mdi/square'
   import triangleIcon from '@iconify-icons/mdi/triangle'
-  import { DateTime } from 'luxon'
+  import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreePage } from '$lib'
-  import './index.css'
+  import { api, ActionPanel, Tree } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
-  import type { PopupMenuItem } from '@txstate-mws/svelte-components'
+  import { store, type TypedPageItem } from './+page'
+  import './index.css'
 
   let modal: 'addpage' | undefined = undefined
 
@@ -21,29 +21,7 @@
     modified: circleIcon,
     unpublished: squareIcon
   }
-  interface PageItem extends Omit<Omit<Omit<TreePage, 'modifiedAt'>, 'publishedAt'>, 'children'> {
-    modifiedAt: DateTime
-    publishedAt: DateTime
-    hasChildren: boolean
-    status: string
-  }
-  type TypedPageItem = TypedTreeItem<PageItem>
 
-  async function fetchChildren (item?: TypedPageItem) {
-    const children = item ? await api.getSubPages(item.id) : await api.getRootPages()
-    return children.map(p => {
-      const modifiedAt = DateTime.fromISO(p.modifiedAt)
-      const publishedAt = DateTime.fromISO(p.publishedAt)
-      return {
-        ...p,
-        children: undefined,
-        hasChildren: !!p.children.length,
-        modifiedAt,
-        publishedAt,
-        status: p.published ? (publishedAt >= modifiedAt ? 'published' : 'modified') : 'unpublished'
-      } as PageItem
-    })
-  }
   function singlepageactions (page: TypedPageItem) {
     return [
       { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: () => { onClickAddPage() } },
@@ -58,32 +36,6 @@
       { label: 'Publish', disabled: pages.some(p => !p.permissions.publish), onClick: () => {} }
     ]
   }
-  async function dropHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
-    return true
-  }
-  function dragEligible (items: TypedPageItem[]) {
-    // sites cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites
-    return items.every(item => !!item.parent)
-  }
-  function dropEligible (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
-    // cannot place an item at the root: instead create a new site in the site management UI
-    if (!dropTarget.parent && above) return false
-    return above ? dropTarget.parent!.permissions.create : dropTarget.permissions.create
-  }
-  function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
-    const selectedSites = new Set<string>()
-    let noMovePerm = false
-    for (const slctd of selectedItems) {
-      const ancestors = store.collectAncestors(slctd)
-      selectedSites.add((ancestors[ancestors.length - 1] ?? slctd).id)
-      if (!slctd.permissions.move) noMovePerm = true
-    }
-    if (selectedSites.size > 1 || noMovePerm) return 'copy'
-    const anc = store.collectAncestors(dropTarget)
-    const targetSite = (anc[anc.length - 1] ?? dropTarget).id
-    return selectedSites.has(targetSite) ? 'move' : 'copy'
-  }
-  const store: TreeStore<PageItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
 
   let availableTemplates: PopupMenuItem[] = []
 
@@ -117,7 +69,7 @@
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
-  <Tree {store} let:item let:level let:isSelected on:choose={({ detail }) => goto(base + '/pages/' + detail.id)}
+  <Tree {store} on:choose={({ detail }) => goto(base + '/pages/' + detail.id)}
     headers={[
       { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => applicationOutline, get: 'name' },
       { label: 'Title', id: 'title', defaultWidth: 'calc(40% - 10.75em)', get: 'title' },

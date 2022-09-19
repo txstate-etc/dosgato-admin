@@ -1,4 +1,6 @@
-import { api } from '$lib'
+import { base } from '$app/paths'
+import { api, subnavStore } from '$lib'
+import { iconForMime } from '@dosgato/dialog'
 import { error, type Load } from '@sveltejs/kit'
 
 export interface AssetDetail {
@@ -36,6 +38,7 @@ export const load: Load<{ id: string }> = async ({ params }) => {
     }
   `, { id: params.id })
   if (!assets.length) throw error(404)
-
-  return { asset: assets[0] }
+  const asset = assets[0]
+  subnavStore.open('assets', { href: `${base}/assets/${asset.id}`, label: asset.filename, icon: iconForMime(asset.mime) })
+  return { asset }
 }

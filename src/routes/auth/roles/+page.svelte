@@ -1,4 +1,5 @@
 <script lang="ts">
+  import keyLight from '@iconify-icons/ph/key-light'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type RoleListRole } from '$lib'
@@ -29,7 +30,7 @@
 
 <ActionPanel actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/roles/' + detail.id)} headers={[
-    { id: 'name', label: 'Name', get: 'name', defaultWidth: '30%' }
+    { id: 'name', label: 'Name', get: 'name', defaultWidth: '30%', icon: keyLight }
   ]}>
   </Tree>
 </ActionPanel>
