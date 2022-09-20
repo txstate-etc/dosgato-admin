@@ -363,8 +363,12 @@ class API {
     return renameDataFolder
   }
 
-  async addDataEntry (name: string, data: any, siteId?: string, folderId?: string) {
-    const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem }}>(CREATE_DATA_ITEM, { args: { name, data, siteId, folderId } })
+  async addDataEntry (name: string, data: any, templateKey: string, siteId?: string, folderId?: string, validateOnly?: boolean) {
+    const resp = validateRequired<{ data: undefined }>({ name }, ['name'])
+    if (resp) return resp
+    // TODO: Get actual schema version
+    const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+    const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem }}>(CREATE_DATA_ITEM, { args: { name, data: dataToSave, siteId, folderId }, validateOnly })
     return createDataEntry
   }
 

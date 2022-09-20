@@ -246,8 +246,8 @@ export const UNPUBLISH_DATA_ENTRIES = `
 `
 
 export const CREATE_DATA_ITEM = `
-  mutation createDataEntry ($args: CreateDataInput!) {
-    createDataEntry (args: $args) {
+  mutation createDataEntry ($args: CreateDataInput!, $validateOnly: Boolean) {
+    createDataEntry (args: $args, validateOnly: $validateOnly) {
       ${mutationResponse}
       data {
         ${dataDetails}

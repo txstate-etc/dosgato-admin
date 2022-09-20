@@ -15,11 +15,12 @@
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import { FieldText } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
-  import { unique } from 'txstate-utils'
+  import { isBlank, unique } from 'txstate-utils'
   import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, ensureRequiredNotNull, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import '../index.css'
+  import { SubForm } from '@txstate-mws/svelte-forms'
 
   export let data: { mayManageGlobalData: boolean }
 
@@ -306,7 +307,7 @@
     modal = undefined
   }
 
-  async function onAddData (state) {
+  function getSiteAndFolder () {
     let siteId: string|undefined
     let folderId: string|undefined
     const selected = $store.selectedItems[0]
@@ -316,20 +317,32 @@
       folderId = selected.id
       siteId = (selected.parent as TreeDataSite).siteId
     }
+    return { siteId, folderId }
+  }
 
-    const { dataname, ...data } = state
-    // TODO: Get the actual schema version from somewhere
-    data.savedAtVersion = DateTime.now().toFormat('yLLddHHmmss')
-    data.templateKey = templateKey
-    const resp = await api.addDataEntry(dataname, data, siteId, folderId)
-    if (resp.success) {
-      store.refresh()
-      modal = undefined
-      return { success: true, messages: resp.messages, data: resp.data }
-    } else {
-      // display errors
-      console.log('error')
-      return { success: false, messages: resp.messages, data: resp.data }
+  async function validateAddData (state) {
+    const { siteId, folderId } = getSiteAndFolder()
+    const resp = await api.addDataEntry(state.name, state.data, templateKey, siteId, folderId, true)
+    console.log(resp)
+    const messages = messageForDialog(resp.messages, 'args')
+    const nameError = resp.messages.find(m => m.arg === 'name')
+    if (nameError) messages.push({ type: nameError.type, message: nameError.message, path: nameError.arg })
+    console.log(messages)
+    return messages
+  }
+
+  async function onAddData (state) {
+    const { siteId, folderId } = getSiteAndFolder()
+    const resp = await api.addDataEntry(state.name, state.data, templateKey, siteId, folderId)
+    return {
+      success: resp.success,
+      messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')],
+      data: resp.success
+        ? {
+            name: resp.data!.name,
+            data: state
+          }
+        : state
     }
   }
 
@@ -398,13 +411,17 @@
 {:else if modal === 'adddata'}
   <FormDialog
     submit={onAddData}
+    validate={validateAddData}
     title='Add Data'
-    on:escape={() => { modal = undefined }}>
+    on:escape={() => { modal = undefined }}
+    on:saved={onSaved}>
     <!-- TODO: Need some description text explaining this field -->
-    <FieldText path='dataname' label='Data Name' required></FieldText>
+    <FieldText path='name' label='Data Name' required></FieldText>
     {@const reg = templateRegistry.getTemplate($templateStore.id)}
     {#if reg}
-      <svelte:component this={reg.dialog}></svelte:component>
+      <SubForm path='data'>
+        <svelte:component this={reg.dialog}></svelte:component>
+      </SubForm>
     {/if}
   </FormDialog>
 {/if}
