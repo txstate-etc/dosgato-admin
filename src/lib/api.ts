@@ -1,5 +1,5 @@
 import { base } from '$app/paths'
-import type { AssetLink, ComponentData, PageData, PageLink } from '@dosgato/templating'
+import type { AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
 import { MessageType } from '@txstate-mws/svelte-forms'
 import { get, isBlank, keyby, set, splice, toArray } from 'txstate-utils'
@@ -27,7 +27,8 @@ import {
   type GlobalRule, ADD_GLOBAL_RULE, UPDATE_GLOBAL_RULE, type PageRule, type CreatePageRuleInput, type UpdatePageRuleInput,
   ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
-  GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA
+  GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
+  GET_DATA_BY_ID, type DataWithData, UPDATE_DATA
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -377,6 +378,18 @@ class API {
     if (resp) return resp
     const { renameDataEntry } = await this.query<{ renameDataEntry: MutationResponse & { data: DataItem }}>(RENAME_DATA, { dataId, name, validateOnly })
     return renameDataEntry
+  }
+
+  async getDataEntryById (dataId: string) {
+    const { data } = await this.query<{ data: DataWithData[] }>(GET_DATA_BY_ID, { id: dataId })
+    return data[0]
+  }
+
+  async editDataEntry (dataId: string, data: DataData, templateKey: string, dataVersion: number, validateOnly?: boolean) {
+    // TODO: Get actual schema version
+    const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+    const { updateDataEntry } = await this.query<{ updateDataEntry: MutationResponse & { data: DataItem }}>(UPDATE_DATA, { dataId, args: { data: dataToSave, dataVersion }, validateOnly })
+    return updateDataEntry
   }
 
   async publishDataEntries (dataIds: string[]) {

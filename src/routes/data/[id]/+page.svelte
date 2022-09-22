@@ -16,15 +16,15 @@
   import { FieldText } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
-  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, ensureRequiredNotNull, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import '../index.css'
-  import { SubForm } from '@txstate-mws/svelte-forms'
+  import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
 
   export let data: { mayManageGlobalData: boolean }
 
-  let modal: 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'renamedata' | 'publishdata' | 'unpublishdata' | undefined
+  let modal: 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'renamedata' | 'editdata' | 'publishdata' | 'unpublishdata' | undefined
 
   $: templateKey = $templateStore?.id
   $: if ($templateStore) store.refresh()
@@ -193,8 +193,8 @@
   function singleActions (item: TypedDataTreeItem) {
     if (item.type === DataTreeNodeType.DATA) {
       const actions = [
-        { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => {} },
-        { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamedata' }},
+        { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { onClickEdit() } },
+        { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamedata' } },
         { label: 'Move', icon: cursorMove, disabled: !item.permissions?.move, onClick: () => {} }
       ]
       if (item.published) {
@@ -265,6 +265,11 @@
     }
   }
 
+  async function onAddFolderComplete () {
+    store.openAndRefresh($store.selectedItems[0])
+    modal = undefined
+  }
+
   async function validateFolder (state) {
     const siteId: string|undefined = ($store.selectedItems[0] as TreeDataSite).siteId
     const resp = await api.addDataFolder(state.name, templateKey, siteId, true)
@@ -326,7 +331,6 @@
     const messages = messageForDialog(resp.messages, 'args')
     const nameError = resp.messages.find(m => m.arg === 'name')
     if (nameError) messages.push({ type: nameError.type, message: nameError.message, path: nameError.arg })
-    console.log(messages)
     return messages
   }
 
@@ -345,6 +349,11 @@
     }
   }
 
+  async function onAddDataComplete () {
+    store.openAndRefresh($store.selectedItems[0])
+    modal = undefined
+  }
+
   async function onRenameData (state) {
     const resp = await api.renameDataEntry($store.selectedItems[0].id, state.name)
     return {
@@ -359,9 +368,33 @@
     return messageForDialog(resp.messages, '')
   }
 
+  let itemEditing: DataWithData | undefined = undefined
+
+  async function onClickEdit () {
+    itemEditing = await api.getDataEntryById($store.selectedItems[0].id)
+    modal = 'editdata'
+  }
+
+  async function onEditData (state) {
+    if (!itemEditing) return { success: false, messages: [{ message: 'Something went wrong. Please contact support for help.', type: MessageType.ERROR }], data: state }
+    const resp = await api.editDataEntry(itemEditing.id, state.data, templateKey, itemEditing.version.version)
+    return {
+      success: resp.success,
+      messages: messageForDialog(resp.messages, 'args'),
+      data: resp.success ? resp.data.data : state
+    }
+  }
+
+  async function validateEdit (state) {
+    if (!itemEditing) return [{ message: 'Something went wrong. Please contact support for help.', type: MessageType.ERROR }]
+    const resp = await api.editDataEntry(itemEditing.id, state.data, templateKey, itemEditing.version.version, true)
+    return messageForDialog(resp.messages, 'args')
+  }
+
   function onSaved () {
     store.refresh()
     modal = undefined
+    if (itemEditing) itemEditing = undefined
   }
 </script>
 
@@ -380,7 +413,7 @@
     name='addfolder'
     title= 'Add Data Folder'
     on:escape={() => { modal = undefined }}
-    on:saved={onSaved}>
+    on:saved={onAddFolderComplete}>
     <FieldText path='name' label='Name' required></FieldText>
   </FormDialog>
 {:else if modal === 'deletefolder'}
@@ -427,7 +460,7 @@
     validate={validateAddData}
     title='Add Data'
     on:escape={() => { modal = undefined }}
-    on:saved={onSaved}>
+    on:saved={onAddDataComplete}>
     <!-- TODO: Need some description text explaining this field -->
     <FieldText path='name' label='Data Name' required></FieldText>
     {@const reg = templateRegistry.getTemplate($templateStore.id)}
@@ -441,10 +474,25 @@
   <FormDialog
     submit={onRenameData}
     validate={onValidateRename}
-    title='RenameData'
+    title='Rename Data'
     on:escape={() => { modal = undefined }}
     on:saved={onSaved}
     preload={{ name: $store.selectedItems[0].name }}>
     <FieldText path='name' label='Data Name' required></FieldText>
+  </FormDialog>
+{:else if modal === 'editdata'}
+  <FormDialog
+    submit={onEditData}
+    validate={validateEdit}
+    title='Edit Data'
+    on:escape={() => { modal = undefined }}
+    on:saved={onSaved}
+    preload={{ data: itemEditing ? itemEditing.data : {} }}>
+    {@const reg = templateRegistry.getTemplate($templateStore.id)}
+    {#if reg}
+      <SubForm path='data'>
+        <svelte:component this={reg.dialog}></svelte:component>
+      </SubForm>
+    {/if}
   </FormDialog>
 {/if}

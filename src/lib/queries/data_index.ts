@@ -1,4 +1,5 @@
 import { mutationResponse } from './global'
+import type { DataData } from '@dosgato/templating'
 
 const dataDetails = `
   id
@@ -11,6 +12,7 @@ const dataDetails = `
     id
     name
   }
+  data
   modifiedAt
   modifiedBy {
     id
@@ -62,6 +64,7 @@ export interface DataItem {
     id: string
     name: string
   }
+  data: DataData
   modifiedAt: string
   modifiedBy: {
     id: string
@@ -116,6 +119,15 @@ export interface DataRoot {
   site?: DataSite
   permissions: {
     create: boolean
+  }
+}
+
+export interface DataWithData {
+  id: string
+  name: string
+  data: DataData
+  version: {
+    version: number
   }
 }
 
@@ -259,6 +271,30 @@ export const CREATE_DATA_ITEM = `
 export const RENAME_DATA = `
   mutation renameDataEntry ($dataId: ID!, $name: String!, $validateOnly: Boolean) {
     renameDataEntry (dataId: $dataId, name: $name, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      data {
+        ${dataDetails}
+      }
+    }
+  }
+`
+
+export const GET_DATA_BY_ID = `
+  query getDataById ($id: ID!) {
+    data (filter: { ids: [$id]}) {
+      id
+      name
+      data
+      version {
+        version
+      }
+    }
+  }
+`
+
+export const UPDATE_DATA = `
+  mutation updateDataEntry ($dataId: ID!, $args: UpdateDataInput!, $validateOnly: Boolean) {
+    updateDataEntry (dataId: $dataId, args: $args, validateOnly: $validateOnly) {
       ${mutationResponse}
       data {
         ${dataDetails}
