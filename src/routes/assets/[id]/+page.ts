@@ -10,6 +10,7 @@ export interface AssetDetail {
   path: string
   size: number
   mime: string
+  checksum: string
   box?: {
     width: number
     height: number
@@ -22,7 +23,7 @@ export interface AssetDetail {
   }[]
 }
 
-export const load: Load<{ id: string }> = async ({ params }) => {
+export async function getAssetDetail (id: string) {
   const { assets } = await api.query<{ assets: AssetDetail[] }>(`
     query getAssetDetail ($id: ID!) {
       assets (filter: { ids: [$id] }) {
@@ -32,13 +33,19 @@ export const load: Load<{ id: string }> = async ({ params }) => {
         path
         size
         mime
+        checksum
         box { width height }
         resizes { id width height extension }
       }
     }
-  `, { id: params.id })
-  if (!assets.length) throw error(404)
+  `, { id })
   const asset = assets[0]
-  subnavStore.open('assets', { href: `${base}/assets/${asset.id}`, label: asset.filename, icon: iconForMime(asset.mime) })
+  if (asset) subnavStore.open('assets', { href: `${base}/assets/${asset.id}`, label: asset.filename, icon: iconForMime(asset.mime) })
+  return asset
+}
+
+export const load: Load<{ id: string }> = async ({ params }) => {
+  const asset = await getAssetDetail(params.id)
+  if (!asset) throw error(404)
   return { asset }
 }

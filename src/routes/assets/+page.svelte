@@ -8,9 +8,8 @@
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import uploadLight from '@iconify-icons/ph/upload-light'
   import { DateTime } from 'luxon'
-  import { roundTo, unique } from 'txstate-utils'
   import { goto } from '$app/navigation'
-  import { api, ActionPanel, Dialog, Tree, TreeStore, type TypedTreeItem, type TreeAsset, type TreeAssetFolder, environmentConfig, uploadWithProgress, FormDialog, type CreateAssetFolderInput, messageForDialog } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreeAsset, type TreeAssetFolder, environmentConfig, FormDialog, type CreateAssetFolderInput, messageForDialog, UploadUI } from '$lib'
   import { base } from '$app/paths'
 
   interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
@@ -28,12 +27,6 @@
 
   let modal: 'upload' | 'create' | undefined
   let selectedFolder: TypedAssetFolderItem | undefined
-  let dragover = 0
-  let uploadList: File[] = []
-  let uploadForm: HTMLFormElement
-  let uploadLocked = false
-  let uploadProgress = 0
-  let uploadError: string | undefined
 
   async function fetchChildren (item?: TypedAssetFolderItem) {
     const { folders, assets } = item ? (await api.getSubFoldersAndAssets(item.id))! : { folders: await api.getRootAssetFolders(), assets: [] }
@@ -102,62 +95,10 @@
     return selectedSites.has(targetSite) ? 'move' : 'copy'
   }
 
-  function onUploadDrop (e: DragEvent) {
-    e.preventDefault()
-    dragover = 0
-    if (!uploadLocked && e.dataTransfer?.items?.length) {
-      uploadList = unique(uploadList.concat(Array.from(e.dataTransfer.files)), 'name')
-    }
-  }
-
-  function onUploadEnter (e: DragEvent) {
-    if (e.dataTransfer?.items.length) dragover++
-  }
-
-  function onUploadLeave (e: DragEvent) {
-    if (e.dataTransfer?.items.length) dragover--
-  }
-
-  function onUploadChange (e: InputEvent & { currentTarget: HTMLInputElement }) {
-    const files = e.currentTarget.files
-    if (files?.length) uploadList = unique(uploadList.concat(Array.from(files)), 'name')
-    e.currentTarget.value = ''
-  }
-
-  async function onUploadSubmit () {
-    if (!selectedFolder || uploadLocked) return
-    uploadLocked = true
-    try {
-      const data = new FormData()
-      for (let i = 0; i < uploadList.length; i++) {
-        data.append('file' + i, uploadList[i])
-      }
-
-      await uploadWithProgress(
-        uploadForm.action,
-        { Authorization: `Bearer ${api.token}` },
-        data,
-        ratio => { uploadProgress = ratio }
-      )
-      await store.openAndRefresh(selectedFolder)
-      modal = undefined
-      selectedFolder = undefined
-      uploadList = []
-      uploadError = undefined
-    } catch (e: any) {
-      uploadError = e.message
-    } finally {
-      uploadLocked = false
-    }
-  }
-
-  function onUploadEscape () {
-    if (!uploadLocked) {
-      modal = undefined
-      selectedFolder = undefined
-      uploadList = []
-      uploadError = undefined
-    }
+  async function onUploadSaved () {
+    modal = undefined
+    await store.openAndRefresh(selectedFolder!)
+    selectedFolder = undefined
   }
 
   async function onCreateSubmit (data: CreateAssetFolderInput) {
@@ -192,28 +133,7 @@
   />
 </ActionPanel>
 {#if modal === 'upload' && selectedFolder}
-  <Dialog title="Upload Files to {selectedFolder.path}" cancelText="Cancel" continueText="Upload" on:escape={onUploadEscape} on:continue={onUploadSubmit}>
-    {#if uploadLocked}
-      <progress value={uploadProgress} aria-label="Assets Uploading">{roundTo(100 * uploadProgress)}%</progress>
-    {:else}
-      {#if uploadError}<div class="error">{uploadError}</div>{/if}
-      <form bind:this={uploadForm} method="POST" enctype="multipart/form-data"
-        action="{environmentConfig.apiBase}/assets/{selectedFolder.id}"
-        on:submit|preventDefault|stopPropagation={onUploadSubmit}
-        class="uploader" class:dragover={dragover > 0}
-        on:dragenter={onUploadEnter} on:dragleave={onUploadLeave}
-        on:dragover|preventDefault on:drop={onUploadDrop}
-      >
-        <input type="file" id="uploader_input" multiple on:change={onUploadChange}>
-        <label for="uploader_input">Choose or drag files</label>
-        <ul>
-          {#each uploadList as file}
-            <li><Icon icon={iconForMime(file.type)} inline />{file.name}</li>
-          {/each}
-        </ul>
-      </form>
-    {/if}
-  </Dialog>
+  <UploadUI title="Upload Files to {selectedFolder.path}" uploadPath="{environmentConfig.apiBase}/assets/{selectedFolder.id}" on:saved={onUploadSaved} />
 {:else if modal === 'create' && selectedFolder}
   <FormDialog title="Create Folder beneath {selectedFolder.path}" on:escape={onCreateEscape} submit={onCreateSubmit} validate={onCreateValidate} on:saved={onCreateEscape}>
     <FieldText path="name" label="Name" required />
@@ -223,44 +143,5 @@
 <style>
   :global(.modified span) {
     font-size: 0.9em;
-  }
-  .uploader {
-    border: 2px dashed #666666;
-    border-radius: 0.5em;
-    text-align: center;
-    padding: 1em;
-    min-height: 10em;
-  }
-  .uploader.dragover {
-    border-color: #333333;
-  }
-  .uploader ul {
-    padding: 0;
-    margin: 0;
-    list-style: none;
-    text-align: left;
-  }
-  progress {
-    width: 80%;
-    margin-left: 10%;
-  }
-  input[type="file"] {
-    opacity: 0;
-  }
-  label {
-    display: inline-block;
-    width: 50%;
-    padding: 1em;
-    background: #ccc;
-    cursor: pointer;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    margin-bottom: 1em;
-  }
-  input:focus + label {
-    outline: 2px solid blue;
-  }
-  .error {
-    color: red;
   }
 </style>
