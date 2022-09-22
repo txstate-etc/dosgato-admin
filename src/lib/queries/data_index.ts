@@ -255,3 +255,14 @@ export const CREATE_DATA_ITEM = `
     }
   }
 `
+
+export const RENAME_DATA = `
+  mutation renameDataEntry ($dataId: ID!, $name: String!, $validateOnly: Boolean) {
+    renameDataEntry (dataId: $dataId, name: $name, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      data {
+        ${dataDetails}
+      }
+    }
+  }
+`

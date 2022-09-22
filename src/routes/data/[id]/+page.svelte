@@ -15,7 +15,7 @@
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import { FieldText } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
-  import { isBlank, unique } from 'txstate-utils'
+  import { unique } from 'txstate-utils'
   import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, ensureRequiredNotNull, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
@@ -24,7 +24,7 @@
 
   export let data: { mayManageGlobalData: boolean }
 
-  let modal: 'addfolder'|'adddata'|'deletefolder'|'renamefolder'|'publishdata'|'unpublishdata'|undefined
+  let modal: 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'renamedata' | 'publishdata' | 'unpublishdata' | undefined
 
   $: templateKey = $templateStore?.id
   $: if ($templateStore) store.refresh()
@@ -194,7 +194,7 @@
     if (item.type === DataTreeNodeType.DATA) {
       const actions = [
         { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => {} },
-        { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => {} },
+        { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamedata' }},
         { label: 'Move', icon: cursorMove, disabled: !item.permissions?.move, onClick: () => {} }
       ]
       if (item.published) {
@@ -323,7 +323,6 @@
   async function validateAddData (state) {
     const { siteId, folderId } = getSiteAndFolder()
     const resp = await api.addDataEntry(state.name, state.data, templateKey, siteId, folderId, true)
-    console.log(resp)
     const messages = messageForDialog(resp.messages, 'args')
     const nameError = resp.messages.find(m => m.arg === 'name')
     if (nameError) messages.push({ type: nameError.type, message: nameError.message, path: nameError.arg })
@@ -344,6 +343,20 @@
           }
         : state
     }
+  }
+
+  async function onRenameData (state) {
+    const resp = await api.renameDataEntry($store.selectedItems[0].id, state.name)
+    return {
+      success: resp.success,
+      messages: messageForDialog(resp.messages, ''),
+      data: resp.success ? { name: resp.data!.name } : state
+    }
+  }
+
+  async function onValidateRename (state) {
+    const resp = await api.renameDataEntry($store.selectedItems[0].id, state.name, true)
+    return messageForDialog(resp.messages, '')
   }
 
   function onSaved () {
@@ -423,5 +436,15 @@
         <svelte:component this={reg.dialog}></svelte:component>
       </SubForm>
     {/if}
+  </FormDialog>
+{:else if modal === 'renamedata'}
+  <FormDialog
+    submit={onRenameData}
+    validate={onValidateRename}
+    title='RenameData'
+    on:escape={() => { modal = undefined }}
+    on:saved={onSaved}
+    preload={{ name: $store.selectedItems[0].name }}>
+    <FieldText path='name' label='Data Name' required></FieldText>
   </FormDialog>
 {/if}

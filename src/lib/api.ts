@@ -27,7 +27,7 @@ import {
   type GlobalRule, ADD_GLOBAL_RULE, UPDATE_GLOBAL_RULE, type PageRule, type CreatePageRuleInput, type UpdatePageRuleInput,
   ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
-  GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER
+  GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -370,6 +370,13 @@ class API {
     const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
     const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem }}>(CREATE_DATA_ITEM, { args: { name, data: dataToSave, siteId, folderId }, validateOnly })
     return createDataEntry
+  }
+
+  async renameDataEntry (dataId: string, name: string, validateOnly?: boolean) {
+    const resp = validateRequired<{ data: undefined }>({ name }, ['name'])
+    if (resp) return resp
+    const { renameDataEntry } = await this.query<{ renameDataEntry: MutationResponse & { data: DataItem }}>(RENAME_DATA, { dataId, name, validateOnly })
+    return renameDataEntry
   }
 
   async publishDataEntries (dataIds: string[]) {
