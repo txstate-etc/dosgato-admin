@@ -37,8 +37,8 @@
 
 <ActionPanel actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : []}>
   <Tree singleSelect {store} headers={[
-    { id: 'key', label: 'Key', get: 'key', defaultWidth: '25%', icon: itm => templateRegistry.getTemplate(itm.key)?.icon ?? boundingBoxLight },
-    { id: 'name', label: 'Name', get: 'name', defaultWidth: '25%' },
+    { id: 'name', label: 'Name', get: 'name', defaultWidth: '25%', icon: itm => templateRegistry.getTemplate(itm.key)?.icon ?? boundingBoxLight },
+    { id: 'key', label: 'Key', get: 'key', defaultWidth: '25%' },
     { id: 'universal', label: 'Universal', icon: item => item.universal ? checkIcon : undefined, defaultWidth: '25%' }
   ]}/>
 </ActionPanel>
