@@ -223,6 +223,22 @@ export const ADD_USER_TO_GROUPS = `
   }
 `
 
+export const SET_GROUP_USERS = `
+  mutation setGroupUsers ($groupId: ID!, $userIds: [ID!]!) {
+    setGroupUsers (groupId: $groupId, userIds: $userIds) {
+      ${mutationResponse}
+    }
+  }
+`
+
+export const REMOVE_USER_FROM_GROUPS = `
+  mutation removeUserFromGroups ($groupIds: [ID!]!, $userId: ID!) {
+    removeUserFromGroups (groupIds: $groupIds, userId: $userId) {
+      ${mutationResponse}
+    }
+  }
+`
+
 export const ADD_ROLES_TO_USER = `
   mutation addRolesToUser ($roleIds: [ID!]!, $userId: ID!) {
     addRolesToUser (roleIds: $roleIds, userId: $userId) {
@@ -234,6 +250,22 @@ export const ADD_ROLES_TO_USER = `
 export const REMOVE_ROLE_FROM_USER = `
   mutation removeRoleFromUser ($roleId: ID!, $userId: ID!) {
     removeRoleFromUser (roleId: $roleId, userId: $userId) {
+      ${mutationResponse}
+    }
+  }
+`
+
+export const ADD_ROLE_TO_GROUP = `
+  mutation addRoleToGroup ($roleId: ID!, $groupId: ID!) {
+    addRoleToGroup (roleId: $roleId, groupId: $groupId) {
+      ${mutationResponse}
+    }
+  }
+`
+
+export const REMOVE_ROLE_FROM_GROUP = `
+  mutation removeRoleFromGroup ($roleId: ID!, $groupId: ID!) {
+    removeRoleFromGroup (roleId: $roleId, groupId: $groupId) {
       ${mutationResponse}
     }
   }

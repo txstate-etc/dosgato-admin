@@ -7,7 +7,7 @@
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import { FieldText } from '@dosgato/dialog'
-  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type GroupListGroup } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type GroupListGroup, messageForDialog } from '$lib'
 
   type TypedGroupItem = TypedTreeItem<GroupListGroup>
 
@@ -42,11 +42,18 @@
       store.refresh()
       modal = undefined
     }
-    // TODO: What data should be returned?
-    return { success: resp.success, messages: resp.messages, data: state }
+    return {
+      success: resp.success,
+      messages: messageForDialog(resp.messages, ''),
+      data: resp.success
+        ? {
+            name: resp.group!.name
+          }
+        : undefined
+    }
   }
 
-  async function validateGroupName (state) {
+  async function validateAddGroup (state) {
     const resp = await api.addGroup(state.name, undefined, true)
     return resp.messages.map(m => ({ path: m.arg, type: m.type, message: m.message }))
   }
@@ -69,7 +76,7 @@
 {#if modal === 'addgroup'}
   <FormDialog
     submit={onAddGroup}
-    validate={validateGroupName}
+    validate={validateAddGroup}
     title='Add Group'
     name='addgroup'
     on:escape={() => { modal = undefined }}>

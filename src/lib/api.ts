@@ -28,7 +28,7 @@ import {
   ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
-  GET_DATA_BY_ID, type DataWithData, UPDATE_DATA
+  GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, mutationResponse, REMOVE_USER_FROM_GROUPS
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -265,6 +265,26 @@ class API {
     return addUserToGroups
   }
 
+  async setGroupUsers (groupId: string, userIds: string[]) {
+    const { setGroupUsers } = await this.query<{ setGroupUsers: MutationResponse }>(SET_GROUP_USERS, { groupId, userIds })
+    return setGroupUsers
+  }
+
+  async removeMemberFromGroup (groupId: string, userId: string) {
+    const { removeUserFromGroups } = await this.query<{ removeUserFromGroups: MutationResponse}>(REMOVE_USER_FROM_GROUPS, { groupIds: [groupId], userId })
+    return removeUserFromGroups
+  }
+
+  async addRoleToGroup (roleId: string, groupId: string) {
+    const { addRoleToGroup } = await this.query<{ addRoleToGroup: MutationResponse }>(ADD_ROLE_TO_GROUP, { roleId, groupId })
+    return addRoleToGroup
+  }
+
+  async removeRoleFromGroup (roleId: string, groupId: string) {
+    const { removeRoleFromGroup } = await this.query<{ removeRoleFromGroup: MutationResponse }>(REMOVE_ROLE_FROM_GROUP, { roleId, groupId })
+    return removeRoleFromGroup
+  }
+
   async removeUserFromGroup (userId: string, groupId: string) {
     const { removeUserFromGroups } = await this.query<{ removeUserFromGroups: MutationResponse }>(REMOVE_USER_FROM_GROUP, { groupIds: [groupId], userId })
     return removeUserFromGroups
@@ -428,11 +448,15 @@ class API {
   }
 
   async addGroup (name: string, parentId?: string, validateOnly?: boolean) {
+    const resp = validateRequired<{ group: undefined }>({ name }, ['name'])
+    if (resp) return resp
     const { createGroup } = await this.query<{ createGroup: MutationResponse & { group: GroupListGroup } }>(CREATE_GROUP, { name, parentId, validateOnly })
     return createGroup
   }
 
   async editGroup (groupId: string, name: string, validateOnly?: boolean) {
+    const resp = validateRequired<{ group: undefined }>({ name }, ['name'])
+    if (resp) return resp
     const { updateGroup } = await this.query<{ updateGroup: MutationResponse & { group: GroupListGroup } }>(UPDATE_GROUP, { groupId, name, validateOnly })
     return updateGroup
   }
