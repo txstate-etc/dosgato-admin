@@ -28,7 +28,7 @@ import {
   ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
-  GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, mutationResponse, REMOVE_USER_FROM_GROUPS
+  GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, mutationResponse, REMOVE_USER_FROM_GROUPS, SET_USER_GROUPS
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -268,6 +268,11 @@ class API {
   async setGroupUsers (groupId: string, userIds: string[]) {
     const { setGroupUsers } = await this.query<{ setGroupUsers: MutationResponse }>(SET_GROUP_USERS, { groupId, userIds })
     return setGroupUsers
+  }
+
+  async setUserGroups (userId: string, groupIds: string[]) {
+    const { setUserGroups } = await this.query< {setUserGroups: MutationResponse }>(SET_USER_GROUPS, { userId, groupIds })
+    return setUserGroups
   }
 
   async removeMemberFromGroup (groupId: string, userId: string) {

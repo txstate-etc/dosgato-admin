@@ -53,17 +53,20 @@
   }
 
   async function searchGroups (term: string) {
-    const directGroupIds = $store.user.directGroups.map(g => g.id)
-    return data.allGroups.filter(g => !directGroupIds.includes(g.id) && g.name.indexOf(term) > -1).map(g => ({ label: g.name, value: g.id }))
+    return data.allGroups.filter(g => g.name.includes(term)).map(g => ({ label: g.name, value: g.id }))
   }
 
   async function onAddGroups (state) {
-    const resp = await api.addUserToGroups($store.user.id, state.groups)
+    const resp = await api.setUserGroups($store.user.id, state.groups)
     if (resp.success) {
       store.refresh($store.user.id)
       modal = undefined
     }
-    return { success: resp.success, messages: resp.messages, data: state }
+    return {
+      success: resp.success,
+      messages: messageForDialog(resp.messages, ''),
+      data: undefined
+    }
   }
 
   async function searchRoles (term: string) {
@@ -218,8 +221,8 @@
     submit={onAddGroups}
     name='editgroups'
     title={`Edit groups for ${$store.user.id}`}
+    preload={{ groups: $store.user.directGroups.map(g => g.id) }}
     on:escape={() => { modal = undefined }}>
-    <!-- TODO: This needs a preload but using it breaks the page -->
     <FieldMultiselect
       path='groups'
       label='Add Groups'

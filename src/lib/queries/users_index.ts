@@ -223,6 +223,14 @@ export const ADD_USER_TO_GROUPS = `
   }
 `
 
+export const SET_USER_GROUPS = `
+  mutation setUserGroups ($userId: ID!, $groupIds: [ID!]!) {
+    setUserGroups(userId: $userId, groupIds: $groupIds) {
+      ${mutationResponse}
+    }
+  }
+`
+
 export const SET_GROUP_USERS = `
   mutation setGroupUsers ($groupId: ID!, $userIds: [ID!]!) {
     setGroupUsers (groupId: $groupId, userIds: $userIds) {
