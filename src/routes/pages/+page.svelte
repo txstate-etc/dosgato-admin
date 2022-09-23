@@ -45,10 +45,8 @@
   }
 
   async function validateAddPage (state) {
-    // TODO: How do we handle the "above" option in the UI? A separate action in the actions area? For now, just making
-    // pages as children of the target
     const resp = await api.createPage(state.name, state.templateKey, state.data, $store.selectedItems[0].id, false, true)
-    return resp.messages.map(m => ({ ...m, path: m.arg }))
+    return resp.messages.map(m => ({ ...m, path: (m.arg === 'name' || m.arg === 'templateKey') ? m.arg : `data.${m.arg}` }))
   }
 
   async function onAddPage (state) {
@@ -61,9 +59,8 @@
   }
 
   function onAddPageComplete () {
-    // TODO: Open the parent of the newly created page
     availableTemplates = []
-    store.refresh()
+    store.openAndRefresh($store.selectedItems[0])
     modal = undefined
   }
 </script>
