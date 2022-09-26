@@ -300,7 +300,7 @@ export const GET_SITE_BY_ID = `
 `
 
 export const ADD_SITE = `
-  mutation createSite ($name: String!, $data: JsonData!, $validateOnly: Boolean) {
+  mutation createSite ($name: UrlSafeString!, $data: JsonData!, $validateOnly: Boolean) {
     createSite (name: $name, data: $data, validateOnly: $validateOnly) {
       ${mutationResponse}
       site {
@@ -311,7 +311,7 @@ export const ADD_SITE = `
 `
 
 export const RENAME_SITE = `
-  mutation renameSite ($siteId: ID!, $name: String!, $validateOnly: Boolean) {
+  mutation renameSite ($siteId: ID!, $name: UrlSafeString!, $validateOnly: Boolean) {
     renameSite (siteId: $siteId, name: $name, validateOnly: $validateOnly) {
       ${mutationResponse}
       site {
@@ -377,7 +377,7 @@ export const ADD_SITE_COMMENT = `
 `
 
 export const ADD_PAGETREE = `
-  mutation createPagetree ($siteId: ID!, $name: String!, $data: JsonData!, $validateOnly: Boolean) {
+  mutation createPagetree ($siteId: ID!, $name: UrlSafeString!, $data: JsonData!, $validateOnly: Boolean) {
     createPagetree (siteId: $siteId, name: $name, data: $data, validateOnly: $validateOnly) {
       ${mutationResponse}
       pagetree {
@@ -388,7 +388,7 @@ export const ADD_PAGETREE = `
 `
 
 export const UPDATE_PAGETREE = `
-  mutation updatePagetree ($pagetreeId: ID!, $name: String!, $validateOnly: Boolean) {
+  mutation updatePagetree ($pagetreeId: ID!, $name: UrlSafeString!, $validateOnly: Boolean) {
     updatePagetree (pagetreeId: $pagetreeId, name: $name, validateOnly: $validateOnly) {
       ${mutationResponse}
       pagetree {
