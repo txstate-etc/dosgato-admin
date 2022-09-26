@@ -41,6 +41,7 @@ services:
     ports:
       - 3002:80
     environment:
+      NODE_ENV: development
       DOSGATO_RENDER_JWT_SECRET: rendertoken
       DOSGATO_API_URL: http://dosgato-api/graphql
     volumes:

@@ -2,7 +2,7 @@
   import { bytesToHuman } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import uploadLight from '@iconify-icons/ph/upload-light'
-  import { DetailList, DetailPanel, environmentConfig, UploadUI } from '$lib'
+  import { DetailList, DetailPanel, environmentConfig, UploadUI, StyledList } from '$lib'
   import { getAssetDetail, type AssetDetail } from './+page'
 
   export let data: { asset: AssetDetail }
@@ -20,14 +20,27 @@
   async function onUploadSaved () {
     modal = undefined
     asset = await getAssetDetail(asset.id)
+    watchForResizes()
   }
   function onUploadEscape () {
     modal = undefined
   }
 
-  setInterval(async () => {
-    asset = await getAssetDetail(asset.id)
-  }, 20000)
+  let timer
+  let refreshes = 0
+  function watchForResizes () {
+    clearTimeout(timer)
+    refreshes = 1
+    if (!image) return
+    timer = setTimeout(async () => {
+      if (image && refreshes++ < 12 && asset.resizes.length < Math.floor(Math.log2(image.width) - Math.log2(100) + 1) * 2) {
+        asset = await getAssetDetail(asset.id)
+        watchForResizes()
+      } else {
+        refreshes = 0
+      }
+    }, 5000)
+  }
 </script>
 
 <div class="container">
@@ -41,11 +54,18 @@
         Type: asset.mime
       }} />
     </DetailPanel>
-    {#if asset.resizes.length}
-      <DetailPanel header='Resizes'>
-        {#each asset.resizes as resize}
-          <img src="{environmentConfig.apiBase}/resize/{resize.id}/{asset.name}_{resize.width}.{resize.extension}" width={resize.width} height={resize.height} alt="">
-        {/each}
+    {#if asset.resizes.length || refreshes}
+      <DetailPanel header="Resizes{refreshes ? ' (loading more...)' : ''}">
+        <StyledList>
+          {#each asset.resizes as resize}
+            <li class="flex-row">
+              <img src="{environmentConfig.apiBase}/resize/{resize.id}/{asset.name}_{resize.width}.{resize.extension}" width={resize.width} height={resize.height} alt="">
+              <span class="mime">{resize.mime}</span>
+              <span class="resolution">{resize.width} x {resize.height}</span>
+              <span class="size">{bytesToHuman(resize.size)}</span>
+            </li>
+          {/each}
+        </StyledList>
       </DetailPanel>
     {/if}
   </div>
@@ -85,5 +105,10 @@
   }
   .details {
     text-align: center;
+  }
+  .flex-row img {
+    width: 5em;
+    height: 3em;
+    object-fit: contain;
   }
 </style>

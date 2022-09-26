@@ -24,7 +24,7 @@ class SubNavStore extends Store<{ sections: Record<string, { links: SubNavLink[]
           ...v.sections,
           [section]: {
             active: active ?? current.links.length,
-            links: active ? current.links.map(l => l.href === link.href ? link : l) : [...current.links, { ...link, closeable: true }]
+            links: active ? current.links.map(l => l.href === link.href ? { ...link, closeable: l.closeable } : l) : [...current.links, { ...link, closeable: true }]
           }
         }
       }

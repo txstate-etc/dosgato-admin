@@ -1,31 +1,61 @@
 <script lang="ts">
   import { Icon } from '@dosgato/dialog'
-  import { editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry } from '$lib'
-  import Dialog from '$lib/components/Dialog.svelte'
-  import FormDialog from '$lib/components/FormDialog.svelte'
-  import ActionPanel from '$lib/components/ActionPanel.svelte'
+  import type { ComponentData } from '@dosgato/templating'
+  import { get } from 'txstate-utils'
+  import { ActionPanel, Dialog, editorStore, environmentConfig, FormDialog, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry } from '$lib'
   import { getTempToken } from './+page'
 
   export let data: { temptoken: string }
 
   let iframe: HTMLIFrameElement
+  let selectedPath: string
 
-  function getActions () {
-    return [
-      { label: 'Delete', onClick: () => {} }
-    ] as ActionPanelAction[]
+  function getActions (selectedPath: string) {
+    return (selectedPath
+      ? [
+          { label: 'Edit', onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
+          { label: 'Delete', onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) }
+        ]
+      : []) as ActionPanelAction[]
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[] }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string }) {
     console.log('received message', message)
     if (message.action === 'drag') {
-      iframe.contentWindow?.postMessage({ validdrops: new Set(message.allpaths!.filter(p => p !== message.path)) }, '*')
+      const validdrops = new Set<string>()
+      const pageData = $editorStore.page.data
+      const draggingKey = get<ComponentData>(pageData, message.path).templateKey
+      for (const p of message.allpaths ?? []) {
+        if (p === message.path) continue
+        const d = get<ComponentData | ComponentData[]>(pageData, p) ?? []
+        let draggable = false
+        if (Array.isArray(d)) {
+          const parts = p.split('.')
+          const cpath = parts.slice(0, -2).join('.')
+          const aname = parts[parts.length - 1]
+          const tkey = get<ComponentData>(pageData, cpath).templateKey
+          draggable = !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(draggingKey)
+        } else {
+          const parts = p.split('.')
+          const cpath = parts.slice(0, -3).join('.')
+          const aname = parts[parts.length - 2]
+          const tkey = get<ComponentData>(pageData, cpath).templateKey
+          draggable = !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(draggingKey)
+        }
+        if (draggable) validdrops.add(p)
+      }
+      iframe.contentWindow?.postMessage({ validdrops }, '*')
+    } else if (message.action === 'select') {
+      selectedPath = message.path
     } else if (message.action === 'edit') {
       pageEditorStore.editComponentShowModal(message.path)
     } else if (message.action === 'create') {
       pageEditorStore.addComponentShowModal(message.path)
     } else if (message.action === 'del') {
       pageEditorStore.removeComponentShowModal(message.path)
+    } else if (message.action === 'drop') {
+      pageEditorStore.moveComponent(message.from!, message.to!)
+        .then(refreshIframe)
     }
   }
 
@@ -79,7 +109,7 @@
   }
 </script>
 
-<ActionPanel actions={getActions()}>
+<ActionPanel actions={getActions(selectedPath)}>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
   to steal credentials from other editors! -->
   <iframe use:messages sandbox="allow-scripts" src="{environmentConfig.renderBase}/.edit/{$pageStore.pagetree.id}{$pageStore.path}?token={data.temptoken}" title="page preview for editing" on:load={iframeload}></iframe>
@@ -88,8 +118,8 @@
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
   {#if template && template.dialog}
-    <FormDialog preload={$editorStore.editing.data} submit={onEditComponentSubmit} on:escape={cancelModal} let:data>
-      <svelte:component this={template.dialog} {data} {environmentConfig} />
+    <FormDialog title={template.name} preload={$editorStore.editing.data} submit={onEditComponentSubmit} on:escape={cancelModal} let:data>
+      <svelte:component this={template.dialog} {data} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
     </FormDialog>
   {:else}
     <Dialog title="Unrecognized Template">This content uses an unrecognized template. Please contact support for assistance.</Dialog>
@@ -98,8 +128,8 @@
   {#if $editorStore.creating.templateKey}
     {@const template = templateRegistry.getTemplate($editorStore.creating.templateKey)}
     {#if template && template.dialog}
-      <FormDialog preload={$editorStore.creating.data} submit={onAddComponentSubmit} on:escape={cancelModal}>
-        <svelte:component this={template.dialog} />
+      <FormDialog title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} on:escape={cancelModal}>
+        <svelte:component this={template.dialog} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
       </FormDialog>
     {:else}
       <Dialog title="Unrecognized Template">This content uses an unrecognized template. Please contact support for assistance.</Dialog>
@@ -117,8 +147,8 @@
   {/if}
 {:else if $editorStore.modal === 'delete' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
-  <Dialog title="Delete Content" cancelText="Cancel" continueText="Delete" on:escape={cancelModal} on:continue={onDeleteComponentSubmit}>
-    Are you sure you want to delete the {template?.templateKey} content?
+  <Dialog title="Delete {template?.name ?? 'Content'}" cancelText="Cancel" continueText="Delete" on:escape={cancelModal} on:continue={onDeleteComponentSubmit}>
+    Are you sure you want to delete the {template?.name ?? 'unrecognized'}?
   </Dialog>
 {/if}
 

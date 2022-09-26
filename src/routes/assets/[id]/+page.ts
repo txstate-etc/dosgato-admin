@@ -19,7 +19,9 @@ export interface AssetDetail {
     id: string
     width: number
     height: number
+    mime: string
     extension: string
+    size: number
   }[]
 }
 
@@ -35,7 +37,7 @@ export async function getAssetDetail (id: string) {
         mime
         checksum
         box { width height }
-        resizes { id width height extension }
+        resizes { id width height mime extension size }
       }
     }
   `, { id })

@@ -10,18 +10,18 @@
     list-style: none;
     padding-left: 0;
   }
-  :global(.styled-list li) {
+  .styled-list :global(li) {
     border-bottom: 1px dashed #aaa;
     padding: 0.6em 0.3em;
   }
-  :global(.styled-list li:first-child) {
+  .styled-list :global(li:first-child) {
     padding-top: 0;
   }
-  :global(.styled-list li.flex-row) {
+  .styled-list :global(li.flex-row) {
     display: flex;
     justify-content: space-between;
   }
-  :global(.styled-list .flex-row button) {
+  .styled-list :global(.flex-row button) {
     border: 0;
     padding: 0;
     background-color: transparent;

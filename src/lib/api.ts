@@ -661,6 +661,32 @@ class API {
     }
   }
 
+  async moveComponent (pageId: string, dataVersion: number, page: PageData, from: string, to: string) {
+    const fromObj = get<ComponentData>(page, from)
+    const fromParts = from.split('.')
+    const fromParent = fromParts.slice(0, -1).join('.')
+    let fromIdx = Number(fromParts[fromParts.length - 1])
+    let data = page
+
+    // copy the component into the new spot
+    const toObj = get<ComponentData | ComponentData[]>(page, to) ?? []
+    if (!Array.isArray(toObj)) {
+      const toParts = to.split('.')
+      const toParent = toParts.slice(0, -1).join('.')
+      const toIdx = Number(toParts[toParts.length - 1])
+      data = set(data, toParent, get<ComponentData[]>(data, toParent).flatMap((c, i) => i === toIdx ? [fromObj, c] : [c]))
+      if (fromIdx > toIdx) fromIdx++ // if moving up within an area, adjust the idx we're going to remove
+    } else {
+      data = set(data, to, [...toObj, fromObj])
+    }
+
+    // remove the component from its old spot
+    data = set(data, fromParent, get<ComponentData[]>(data, fromParent).filter((c, i) => i !== fromIdx))
+
+    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data, dataVersion })
+    return updatePage
+  }
+
   async removeComponent (pageId: string, dataVersion: number, page: PageData, path: string, opts?: { comment?: string }) {
     const { comment } = opts ?? {}
     const m = path.match(/^(.*)\.(\d+)$/)

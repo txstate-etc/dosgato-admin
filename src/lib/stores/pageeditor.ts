@@ -1,9 +1,8 @@
 import type { ComponentData, UITemplate } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
-import { get, isNotBlank, set, splice } from 'txstate-utils'
+import { get, isNotBlank, set } from 'txstate-utils'
 import type { PageEditorPage } from '$lib/queries'
 import { api } from '$lib/api'
-import { page } from '$app/stores'
 
 export interface IPageEditorStore {
   editors: Record<string, EditorState>
@@ -43,7 +42,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const m = path.match(/(.*)\.?areas\.(\w+)$/)
     if (!m) return
     const [_, componentPath, area] = Array.from(m)
-    const templateKey = get(editorState.page.data, [componentPath, 'templateKey'].filter(isNotBlank).join('.'))
+    const templateKey = get<string>(editorState.page.data, [componentPath, 'templateKey'].filter(isNotBlank).join('.'))
     const availableComponents = await api.getAvailableComponents(templateKey, area, pageId)
     this.update(v => set(v, `editors["${pageId}"]`, { ...editorState, modal: 'create', editing: undefined, creating: { path, data: undefined, availableComponents } }))
   }
@@ -127,6 +126,21 @@ class PageEditorStore extends Store<IPageEditorStore> {
       this.cancelModal()
     }
     return resp
+  }
+
+  async moveComponent (from: string, to: string) {
+    const pageId = this.value.active
+    if (!pageId) return
+    const editorState = this.value.editors[pageId]
+    if (!editorState) return
+    const resp = await api.moveComponent(pageId, editorState.page.version.version, editorState.page.data, from, to)
+    if (resp.success) {
+      this.update(v => {
+        const editorState = v.editors[pageId]
+        const newEditorState = { ...editorState, page: resp.page }
+        return set(v, `editors["${pageId}"]`, newEditorState)
+      })
+    }
   }
 
   cancelModal () {
