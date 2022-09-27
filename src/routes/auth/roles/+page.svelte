@@ -2,7 +2,8 @@
   import keyLight from '@iconify-icons/ph/key-light'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type RoleListRole } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type RoleListRole, FormDialog, messageForDialog } from '$lib'
+  import { FieldText } from '@dosgato/dialog'
 
   type TypedRoleItem = TypedTreeItem<RoleListRole>
 
@@ -15,7 +16,7 @@
 
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [
-      { label: 'Add Role', disabled: false, onClick: () => {} }
+      { label: 'Add Role', disabled: false, onClick: () => { modal = 'addrole' } }
     ]
     return actions
   }
@@ -26,6 +27,31 @@
     ]
     return actions
   }
+
+  let modal: 'addrole'|'deleterole'|undefined
+
+  async function validateAddRole (state) {
+    const resp = await api.addRole(state.name, true)
+    return resp.messages.map(m => ({ path: m.arg, type: m.type, message: m.message }))
+  }
+
+  async function onAddRole (state) {
+    const resp = await api.addRole(state.name)
+    return {
+      success: resp.success,
+      messages: messageForDialog(resp.messages, ''),
+      data: resp.success
+        ? {
+            name: resp.role!.name
+          }
+        : undefined
+    }
+  }
+
+  function onCompleteAddRole () {
+    store.refresh()
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
@@ -34,3 +60,15 @@
   ]}>
   </Tree>
 </ActionPanel>
+{#if modal === 'addrole'}
+  <FormDialog
+    submit={onAddRole}
+    validate={validateAddRole}
+    title='Add Role'
+    name='addrole'
+    on:escape={() => { modal = undefined }}
+    on:saved={onCompleteAddRole}>
+    <FieldText path='name' label='Name' required />
+  </FormDialog>
+{:else if modal === 'deleterole'}
+{/if}

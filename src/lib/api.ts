@@ -28,7 +28,8 @@ import {
   ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
-  GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, mutationResponse, REMOVE_USER_FROM_GROUPS, SET_USER_GROUPS, RENAME_ASSET_FOLDER
+  GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
+  SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -437,6 +438,13 @@ class API {
   async getRoleList () {
     const { roles } = await this.query<{ roles: RoleListRole[] }>(GET_ROLE_LIST)
     return roles
+  }
+
+  async addRole (name: string, validateOnly?: boolean) {
+    const resp = validateRequired<{ role: undefined }>({ name }, ['name'])
+    if (resp) return resp
+    const { createRole } = await this.query<{ createRole: MutationResponse & { role: RoleListRole }}>(CREATE_ROLE, { name, validateOnly })
+    return createRole
   }
 
   async getAllGroups () {
