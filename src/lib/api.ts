@@ -28,7 +28,7 @@ import {
   ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
-  GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, mutationResponse, REMOVE_USER_FROM_GROUPS, SET_USER_GROUPS
+  GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, mutationResponse, REMOVE_USER_FROM_GROUPS, SET_USER_GROUPS, RENAME_ASSET_FOLDER
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -87,7 +87,7 @@ export class Loader<T> {
 }
 
 function validateRequired <T = {}> (data: any, requiredFields: string[]) {
-  const messages: MutationResponse['messages'] = []
+  const messages: MessageFromAPI[] = []
   for (const field of requiredFields) {
     if (isBlank(data[field])) {
       messages.push({ type: MessageType.ERROR, message: 'This field is required.', arg: field })
@@ -209,8 +209,15 @@ class API {
   async createAssetFolder (args: CreateAssetFolderInput, validateOnly?: boolean) {
     const resp = validateRequired<{ assetFolder: undefined }>(args, ['name', 'parentId'])
     if (resp) return resp
-    const { createAssetFolder } = await this.query<{ createAssetFolder: MutationResponse }>(CREATE_ASSET_FOLDER, { args, validateOnly })
+    const { createAssetFolder } = await this.query<{ createAssetFolder: MutationResponse & { assetFolder: TreeAssetFolder } }>(CREATE_ASSET_FOLDER, { args, validateOnly })
     return createAssetFolder
+  }
+
+  async renameAssetFolder (folderId: string, name: string, validateOnly?: boolean) {
+    const resp = validateRequired<{ assetFolder: undefined }>({ name, folderId }, ['name', 'folderId'])
+    if (resp) return resp
+    const { renameAssetFolder } = await this.query<{ renameAssetFolder: MutationResponse & { assetFolder: TreeAssetFolder } }>(RENAME_ASSET_FOLDER, { folderId, name, validateOnly })
+    return renameAssetFolder
   }
 
   async getEditorPage (pageId: string) {

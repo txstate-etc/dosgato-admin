@@ -9,7 +9,7 @@
   import uploadLight from '@iconify-icons/ph/upload-light'
   import { DateTime } from 'luxon'
   import { goto } from '$app/navigation'
-  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreeAsset, type TreeAssetFolder, environmentConfig, FormDialog, type CreateAssetFolderInput, messageForDialog, UploadUI } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreeAsset, type TreeAssetFolder, environmentConfig, FormDialog, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog } from '$lib'
   import { base } from '$app/paths'
 
   interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
@@ -25,7 +25,7 @@
   type TypedAssetFolderItem = TypedTreeItem<AssetFolderItem>
   type TypedAnyAssetItem = TypedTreeItem<AssetItem | AssetFolderItem>
 
-  let modal: 'upload' | 'create' | undefined
+  let modal: 'upload' | 'create' | 'rename' | undefined
   let selectedFolder: TypedAssetFolderItem | undefined
 
   async function fetchChildren (item?: TypedAssetFolderItem) {
@@ -53,6 +53,7 @@
         ]
       : [
           { label: 'Upload', icon: uploadLight, disabled: !item.permissions.create, onClick: () => { modal = 'upload'; selectedFolder = item as TypedAssetFolderItem } },
+          { label: 'Rename Folder', icon: pencilIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { modal = 'rename'; selectedFolder = item as TypedAssetFolderItem } },
           { label: 'Create Folder', icon: folderPlusLight, disabled: !item.permissions.create, onClick: () => { modal = 'create'; selectedFolder = item as TypedAssetFolderItem } }
         ]
   }
@@ -95,27 +96,43 @@
     return selectedSites.has(targetSite) ? 'move' : 'copy'
   }
 
-  async function onUploadSaved () {
+  async function onChildSaved () {
     modal = undefined
     await store.openAndRefresh(selectedFolder!)
     selectedFolder = undefined
   }
+  async function onSelfSaved () {
+    modal = undefined
+    if (selectedFolder?.parent) await store.openAndRefresh(selectedFolder.parent)
+    selectedFolder = undefined
+  }
+  function onModalEscape () {
+    modal = undefined
+    selectedFolder = undefined
+  }
 
   async function onCreateSubmit (data: CreateAssetFolderInput) {
-    const { success, messages } = await api.createAssetFolder({ ...data, parentId: selectedFolder!.id })
-    if (success) store.refresh(selectedFolder)
-    return { success, messages: messageForDialog(messages, 'args'), data }
+    if (!selectedFolder) return { success: false, messages: [], data }
+    const resp = await api.createAssetFolder({ ...data, parentId: selectedFolder.id })
+    return mutationForDialog(resp, { prefix: 'args', dataName: 'assetFolder' })
   }
 
   async function onCreateValidate (data: CreateAssetFolderInput) {
     if (!selectedFolder) return []
-    const { success, messages } = await api.createAssetFolder({ ...data, parentId: selectedFolder!.id }, true)
+    const { success, messages } = await api.createAssetFolder({ ...data, parentId: selectedFolder.id }, true)
     return messageForDialog(messages, 'args')
   }
 
-  function onCreateEscape () {
-    modal = undefined
-    selectedFolder = undefined
+  async function onRenameSubmit (data: { name: string }) {
+    if (!selectedFolder) return { success: false, messages: [], data }
+    const resp = await api.renameAssetFolder(selectedFolder.id, data.name)
+    return mutationForDialog(resp, { dataName: 'assetFolder' })
+  }
+
+  async function onRenameValidate (data: CreateAssetFolderInput) {
+    if (!selectedFolder) return []
+    const { success, messages } = await api.renameAssetFolder(selectedFolder.id, data.name, true)
+    return messageForDialog(messages)
   }
 
   const store: TreeStore<AssetItem | AssetFolderItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
@@ -133,9 +150,13 @@
   />
 </ActionPanel>
 {#if modal === 'upload' && selectedFolder}
-  <UploadUI title="Upload Files to {selectedFolder.path}" uploadPath="{environmentConfig.apiBase}/assets/{selectedFolder.id}" on:saved={onUploadSaved} />
+  <UploadUI title="Upload Files to {selectedFolder.path}" uploadPath="{environmentConfig.apiBase}/assets/{selectedFolder.id}" on:saved={onChildSaved} />
 {:else if modal === 'create' && selectedFolder}
-  <FormDialog title="Create Folder beneath {selectedFolder.path}" on:escape={onCreateEscape} submit={onCreateSubmit} validate={onCreateValidate} on:saved={onCreateEscape}>
+  <FormDialog title="Create Folder beneath {selectedFolder.path}" on:escape={onModalEscape} submit={onCreateSubmit} validate={onCreateValidate} on:saved={onChildSaved}>
+    <FieldText path="name" label="Name" required />
+  </FormDialog>
+{:else if modal === 'rename' && selectedFolder}
+  <FormDialog title="Rename Folder {selectedFolder.path}" preload={{ name: selectedFolder.name }} on:escape={onModalEscape} submit={onRenameSubmit} validate={onRenameValidate} on:saved={onSelfSaved}>
     <FieldText path="name" label="Name" required />
   </FormDialog>
 {/if}

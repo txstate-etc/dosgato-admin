@@ -1,20 +1,17 @@
-import type { MessageFromAPI } from '$lib'
-import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
+import type { MessageFromAPI, MutationResponse } from '$lib'
+import { MessageType, type Feedback, type SubmitResponse } from '@txstate-mws/svelte-forms'
 import { isNull, isNotBlank, omit } from 'txstate-utils'
 
-export function messageForDialog (messages: MessageFromAPI[], prefix: string) {
-  return messages.filter(m => {
-    if (m.arg) {
-      return m.arg.startsWith(`${prefix}`)
-    }
-    return false
-  }).map(m => {
-    return { path: isNotBlank(prefix) ? m.arg.replace(`${prefix}.`, '') : m.arg, type: m.type, message: m.message }
+export function messageForDialog (messages: MessageFromAPI[], prefix?: string) {
+  return messages.map(m => {
+    return { ...omit(m, 'arg'), path: isNotBlank(prefix) ? m.arg.replace(RegExp('^' + prefix + '\\.'), '') : m.arg }
   }) as Feedback[]
 }
 
-export function messagesStripPrefix (messages: MessageFromAPI[], prefix: string) {
-  return messages.map(m => ({ ...omit(m, 'arg'), path: m.arg.replace(RegExp('^' + prefix + '\\.'), '') })) as Feedback[]
+export function mutationForDialog (resp: MutationResponse, { prefix }: { prefix?: string }): SubmitResponse<undefined>
+export function mutationForDialog<T = any> (resp: MutationResponse, { prefix, dataName }: { prefix?: string, dataName: string }): SubmitResponse<T>
+export function mutationForDialog<T = any> (resp: MutationResponse, { prefix, dataName }: { prefix?: string, dataName?: string }) {
+  return { success: resp.success, messages: messageForDialog(resp.messages, prefix), data: (dataName ? resp[dataName] : undefined) as T }
 }
 
 export function ensureRequiredNotNull (data: any, requiredFields: string[]) {

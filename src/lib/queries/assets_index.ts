@@ -116,6 +116,15 @@ export const CREATE_ASSET_FOLDER = `
   mutation createAssetFolder ($args: CreateAssetFolderInput!, $validateOnly: Boolean) {
     createAssetFolder (args: $args, validateOnly: $validateOnly) {
       ${mutationResponse}
+      assetFolder { ${assetFolderDetails} }
+    }
+  }
+`
+export const RENAME_ASSET_FOLDER = `
+  mutation renameAssetFolder ($folderId: ID!, $name: UrlSafeString!, $validateOnly: Boolean) {
+    renameAssetFolder (folderId: $folderId, name: $name, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      assetFolder { ${assetFolderDetails} }
     }
   }
 `
