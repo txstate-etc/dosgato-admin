@@ -150,7 +150,7 @@
   />
 </ActionPanel>
 {#if modal === 'upload' && selectedFolder}
-  <UploadUI title="Upload Files to {selectedFolder.path}" uploadPath="{environmentConfig.apiBase}/assets/{selectedFolder.id}" on:saved={onChildSaved} />
+  <UploadUI title="Upload Files to {selectedFolder.path}" uploadPath="{environmentConfig.apiBase}/assets/{selectedFolder.id}" on:escape={onModalEscape} on:saved={onChildSaved} />
 {:else if modal === 'create' && selectedFolder}
   <FormDialog title="Create Folder beneath {selectedFolder.path}" on:escape={onModalEscape} submit={onCreateSubmit} validate={onCreateValidate} on:saved={onChildSaved}>
     <FieldText path="name" label="Name" required />
