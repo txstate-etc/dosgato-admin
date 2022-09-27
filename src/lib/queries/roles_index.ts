@@ -155,6 +155,14 @@ export const UPDATE_ROLE = `
   }
 `
 
+export const DELETE_ROLE = `
+  mutation deleteRole ($roleId: ID!) {
+    deleteRole (roleId: $roleId) {
+      ${mutationResponse}
+    }
+  }
+`
+
 export const ADD_ASSET_RULE = `
   mutation createAssetRule ($args: CreateAssetRuleInput!, $validateOnly: Boolean) {
     createAssetRule (args: $args, validateOnly: $validateOnly) {

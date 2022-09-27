@@ -2,7 +2,7 @@
   import keyLight from '@iconify-icons/ph/key-light'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type RoleListRole, FormDialog, messageForDialog } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type RoleListRole, FormDialog, messageForDialog, Dialog } from '$lib'
   import { FieldText } from '@dosgato/dialog'
 
   type TypedRoleItem = TypedTreeItem<RoleListRole>
@@ -23,7 +23,7 @@
 
   function singleactions (role: TypedRoleItem) {
     const actions: ActionPanelAction[] = [
-      { label: 'Delete', disabled: !role.permissions.delete, onClick: () => {} }
+      { label: 'Delete', disabled: !role.permissions.delete, onClick: () => { modal = 'deleterole' } }
     ]
     return actions
   }
@@ -52,6 +52,12 @@
     store.refresh()
     modal = undefined
   }
+
+  async function onDeleteRole () {
+    const resp = await api.deleteRole($store.selectedItems[0].id)
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
@@ -71,4 +77,12 @@
     <FieldText path='name' label='Name' required />
   </FormDialog>
 {:else if modal === 'deleterole'}
+  <Dialog
+    title='Delete Role'
+    continueText='Delete'
+    cancelText='Cancel'
+    on:escape={() => { modal = undefined }}
+    on:continue={onDeleteRole}>
+    {`Delete ${$store.selectedItems[0].name} role?`}
+  </Dialog>
 {/if}
