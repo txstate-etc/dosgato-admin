@@ -88,6 +88,17 @@ export const CREATE_PAGE = `
   }
 `
 
+export const RENAME_PAGE = `
+  mutation renamePage ($pageId: ID!, $name: UrlSafeString!, $validateOnly: Boolean) {
+    renamePage (pageId: $pageId, name: $name, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      page {
+        ${pageDetails}
+      }
+    }
+  }
+`
+
 const pageWithTemplates = `
   id
   templates(filter: { types: [PAGE] }) {

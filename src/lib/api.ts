@@ -29,7 +29,7 @@ import {
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
   GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
-  SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE
+  SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -650,12 +650,19 @@ class API {
   }
 
   async createPage (name: string, templateKey: string, data: any, targetId: string, above: boolean, validateOnly?: boolean) {
-    const resp = validateRequired<{ site: undefined }>({ name, templateKey, data }, ['name', 'templateKey'])
+    const resp = validateRequired<{ page: undefined }>({ name, templateKey, data }, ['name', 'templateKey'])
     if (resp) return resp
     // TODO: Get actual schema version
     const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
     const { createPage } = await this.query<{ createPage: MutationResponse & { page: PageEditorPage }}>(CREATE_PAGE, { name, data: pageData, targetId, validate: validateOnly })
     return createPage
+  }
+
+  async renamePage (pageId: string, name: string, validateOnly?: boolean) {
+    const resp = validateRequired<{ page: undefined }>({ name }, ['name'])
+    if (resp) return resp
+    const { renamePage } = await this.query<{ renamePage: MutationResponse & { page: PageEditorPage }}>(RENAME_PAGE, { pageId, name, validateOnly })
+    return renamePage
   }
 
   async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validate?: boolean, comment?: string }) {

@@ -9,12 +9,13 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, Tree } from '$lib'
+  import { api, ActionPanel, Tree, FormDialog, messageForDialog } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { store, type TypedPageItem } from './+page'
   import './index.css'
+  import { FieldText } from '@dosgato/dialog'
 
-  let modal: 'addpage' | undefined = undefined
+  let modal: 'addpage' | 'renamepage' | undefined = undefined
 
   const statusIcon = {
     published: triangleIcon,
@@ -26,6 +27,7 @@
     return [
       { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: () => { onClickAddPage() } },
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
+      { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move || !page.parent, onClick: () => { modal = 'renamepage' } },
       { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => {} }
     ]
   }
@@ -63,6 +65,25 @@
     store.openAndRefresh($store.selectedItems[0])
     modal = undefined
   }
+
+  async function validateRename (state) {
+    const resp = await api.renamePage($store.selectedItems[0].id, state.name, true)
+    return messageForDialog(resp.messages, '')
+  }
+
+  async function onRenamePage (state) {
+    const resp = await api.renamePage($store.selectedItems[0].id, state.name)
+    return {
+      success: resp.success,
+      messages: messageForDialog(resp.messages, ''),
+      data: resp.success ? resp.page!.name : state
+    }
+  }
+
+  function onRenamePageComplete () {
+    store.refresh()
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
@@ -85,4 +106,15 @@
     templateChoices={availableTemplates}
     on:escape={() => { modal = undefined }}
     on:saved={onAddPageComplete}/>
+{:else if modal === 'renamepage'}
+  <FormDialog
+    submit={onRenamePage}
+    validate={validateRename}
+    name='renamepage'
+    title='Rename Page'
+    preload={{ name: $store.selectedItems[0].name }}
+    on:escape={() => { modal = undefined }}
+    on:saved={onRenamePageComplete}>
+    <FieldText path='name' label='Name' required />
+  </FormDialog>
 {/if}
