@@ -22,6 +22,7 @@ permissions {
   update
   publish
   move
+  delete
 }
 `
 
@@ -47,6 +48,7 @@ export interface TreePage {
     update: boolean
     publish: boolean
     move: boolean
+    delete: boolean
   }
 }
 

@@ -7,6 +7,12 @@
   import squareIcon from '@iconify-icons/mdi/square'
   import triangleIcon from '@iconify-icons/mdi/triangle'
   import duplicateIcon from '@iconify-icons/mdi/content-duplicate'
+  import cursorMove from '@iconify-icons/mdi/cursor-move'
+  import contentCopy from '@iconify-icons/mdi/content-copy'
+  import contentPaste from '@iconify-icons/mdi/content-paste'
+  import exportIcon from '@iconify-icons/mdi/export'
+  import importIcon from '@iconify-icons/mdi/import'
+  import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
@@ -27,17 +33,24 @@
   function singlepageactions (page: TypedPageItem) {
     return [
       { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: () => { onClickAddPage() } },
+      { label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete || !page.parent, onClick: () => {} },
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
       { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move || !page.parent, onClick: () => { modal = 'renamepage' } },
       { label: 'Duplicate', icon: duplicateIcon, disabled: !page.permissions.create || !page.parent, onClick: () => { modal = 'duplicatepage' } },
-      { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => {} }
+      { label: 'Move', icon: cursorMove, disabled: !page.permissions.move || !page.parent, onClick: () => {} },
+      { label: 'Copy', icon: contentCopy, disabled: false, onClick: () => {} },
+      { label: 'Paste', icon: contentPaste, disabled: !page.permissions.create, onClick: () => {} }, // TODO: should only be enabled if there's something to paste
+      { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => {} },
+      { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => {} },
+      { label: 'Export', icon: exportIcon, disabled: false, onClick: () => {} },
+      { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => {} }
     ]
   }
   function multipageactions (pages: TypedPageItem[]) {
     if (!pages?.length) return []
     return [
-      { label: 'Move', disabled: pages.some(p => !p.permissions.move), onClick: () => {} },
-      { label: 'Publish', disabled: pages.some(p => !p.permissions.publish), onClick: () => {} }
+      { label: 'Move', icon: cursorMove, disabled: pages.some(p => !p.permissions.move), onClick: () => {} },
+      { label: 'Publish', icon: publishIcon, disabled: pages.some(p => !p.permissions.publish), onClick: () => {} }
     ]
   }
 
