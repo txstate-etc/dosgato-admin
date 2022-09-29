@@ -99,6 +99,17 @@ export const RENAME_PAGE = `
   }
 `
 
+export const COPY_PAGES = `
+  mutation copyPages ($pageIds: [ID!]!, $targetId: ID!, $above: Boolean, $includeChildren: Boolean) {
+    copyPages (pageIds: $pageIds, targetId: $targetId, above: $above, includeChildren: $includeChildren) {
+      ${mutationResponse}
+      page {
+        ${pageDetails}
+      }
+    }
+  }
+`
+
 const pageWithTemplates = `
   id
   templates(filter: { types: [PAGE] }) {

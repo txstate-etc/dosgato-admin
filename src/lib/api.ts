@@ -29,7 +29,7 @@ import {
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
   GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
-  SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE
+  SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -663,6 +663,11 @@ class API {
     if (resp) return resp
     const { renamePage } = await this.query<{ renamePage: MutationResponse & { page: PageEditorPage }}>(RENAME_PAGE, { pageId, name, validateOnly })
     return renamePage
+  }
+
+  async duplicatePage (pageId: string, parentId: string) {
+    const { copyPages } = await this.query<{ copyPages: MutationResponse & { page: PageEditorPage }}>(COPY_PAGES, { pageIds: [pageId], targetId: parentId, above: false, includeChildren: true })
+    return copyPages
   }
 
   async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validate?: boolean, comment?: string }) {

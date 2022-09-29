@@ -6,16 +6,17 @@
   import publishIcon from '@iconify-icons/mdi/publish'
   import squareIcon from '@iconify-icons/mdi/square'
   import triangleIcon from '@iconify-icons/mdi/triangle'
+  import duplicateIcon from '@iconify-icons/mdi/content-duplicate'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, Tree, FormDialog, messageForDialog } from '$lib'
+  import { api, ActionPanel, Tree, FormDialog, messageForDialog, Dialog } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { store, type TypedPageItem } from './+page'
   import './index.css'
   import { FieldText } from '@dosgato/dialog'
 
-  let modal: 'addpage' | 'renamepage' | undefined = undefined
+  let modal: 'addpage' | 'renamepage' | 'duplicatepage' | undefined = undefined
 
   const statusIcon = {
     published: triangleIcon,
@@ -28,6 +29,7 @@
       { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: () => { onClickAddPage() } },
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
       { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move || !page.parent, onClick: () => { modal = 'renamepage' } },
+      { label: 'Duplicate', icon: duplicateIcon, disabled: !page.permissions.create || !page.parent, onClick: () => { modal = 'duplicatepage' } },
       { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => {} }
     ]
   }
@@ -84,6 +86,14 @@
     store.refresh()
     modal = undefined
   }
+
+  async function onDuplicatePage () {
+    const resp = await api.duplicatePage($store.selectedItems[0].id, $store.selectedItems[0].parent!.id)
+    if (resp.success) {
+      store.refresh()
+      modal = undefined
+    }
+  }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
@@ -117,4 +127,13 @@
     on:saved={onRenamePageComplete}>
     <FieldText path='name' label='Name' required />
   </FormDialog>
+{:else if modal === 'duplicatepage'}
+  <Dialog
+    title={`Duplicate Page${$store.selectedItems[0].hasChildren ? 's' : ''}`}
+    continueText='Duplicate'
+    cancelText='Cancel'
+    on:continue={onDuplicatePage}
+    on:escape={() => { modal = undefined }}>
+    Duplicate this page and all of its subpages?
+  </Dialog>
 {/if}
