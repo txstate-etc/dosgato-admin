@@ -4,6 +4,7 @@
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import publishIcon from '@iconify-icons/mdi/publish'
+  import publishOffIcon from '@iconify-icons/mdi/publish-off'
   import squareIcon from '@iconify-icons/mdi/square'
   import triangleIcon from '@iconify-icons/mdi/triangle'
   import duplicateIcon from '@iconify-icons/mdi/content-duplicate'
@@ -23,7 +24,7 @@
   import { FieldText } from '@dosgato/dialog'
   import { isNull } from 'txstate-utils'
 
-  let modal: 'addpage' | 'renamepage' | 'duplicatepage' | 'copiedpage' | undefined = undefined
+  let modal: 'addpage' | 'renamepage' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | undefined = undefined
 
   const statusIcon = {
     published: triangleIcon,
@@ -41,8 +42,9 @@
       { label: 'Move', icon: cursorMove, disabled: !page.permissions.move || !page.parent, onClick: () => {} },
       { label: 'Copy', icon: contentCopy, disabled: false, onClick: onCopyPage },
       { label: 'Paste', icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage },
-      { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => {} },
-      { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => {} },
+      { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => { modal = 'publishpages' } },
+      { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages'} },
+      { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => { modal = 'unpublishpages' } },
       { label: 'Export', icon: exportIcon, disabled: false, onClick: () => {} },
       { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => {} }
     ]
@@ -51,7 +53,8 @@
     if (!pages?.length) return []
     return [
       { label: 'Move', icon: cursorMove, disabled: pages.some(p => !p.permissions.move), onClick: () => {} },
-      { label: 'Publish', icon: publishIcon, disabled: pages.some(p => !p.permissions.publish), onClick: () => {} }
+      { label: 'Publish', icon: publishIcon, disabled: pages.some(p => !p.permissions.publish), onClick: () => { modal = 'publishpages' } },
+      { label: 'Unpublish', icon: publishOffIcon, disabled: pages.some(p => !p.permissions.unpublish), onClick: () => { modal = 'unpublishpages' } }
     ]
   }
 
@@ -123,6 +126,24 @@
       store.openAndRefresh($store.selectedItems[0])
     }
   }
+
+  async function onPublishPages () {
+    const resp = await api.publishPages($store.selectedItems.map(d => d.id), false)
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
+
+  async function onPublishPagesWithSubpages () {
+    const resp = await api.publishPages($store.selectedItems.map(d => d.id), true)
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
+
+  async function onUnpublishPages () {
+    const resp = await api.unpublishPages($store.selectedItems.map(d => d.id))
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
@@ -170,5 +191,32 @@
     title='Copy'
     on:continue={() => { modal = undefined }}>
     Copied page {$store.selectedItems[0].name}
+  </Dialog>
+{:else if modal === 'publishpages'}
+  <Dialog
+    title='Publish'
+    continueText='Publish'
+    cancelText='Cancel'
+    on:continue={onPublishPages}
+    on:escape={() => { modal = undefined }}>
+    Publish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''}?`}
+  </Dialog>
+{:else if modal === 'publishwithsubpages'}
+  <Dialog
+    title='Publish With Subpages'
+    continueText='Publish'
+    cancelText='Cancel'
+    on:continue={onPublishPagesWithSubpages}
+    on:escape={() => { modal = undefined }}>
+    Publish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''} and ${$store.selectedItems.length > 1 ? 'their' : 'its'} subpages?`}
+  </Dialog>
+{:else if modal === 'unpublishpages'}
+  <Dialog
+    title='Unpublish'
+    continueText='Unpublish'
+    cancelText='Cancel'
+    on:continue={onUnpublishPages}
+    on:escape={() => { modal = undefined }}>
+    Unpublish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''}?`}
   </Dialog>
 {/if}

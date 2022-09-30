@@ -23,6 +23,7 @@ permissions {
   publish
   move
   delete
+  unpublish
 }
 `
 
@@ -49,6 +50,7 @@ export interface TreePage {
     publish: boolean
     move: boolean
     delete: boolean
+    unpublish: boolean
   }
 }
 
@@ -108,6 +110,22 @@ export const COPY_PAGES = `
       page {
         ${pageDetails}
       }
+    }
+  }
+`
+
+export const PUBLISH_PAGES = `
+  mutation publishPages($pageIds: [ID!]!, $includeChildren: Boolean) {
+    publishPages (pageIds: $pageIds, includeChildren: $includeChildren) {
+      ${mutationResponse}
+    }
+  }
+`
+
+export const UNPUBLISH_PAGES = `
+  mutation unpublishPages($pageIds: [ID!]!) {
+    unpublishPages (pageIds: $pageIds) {
+      ${mutationResponse}
     }
   }
 `

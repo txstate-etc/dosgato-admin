@@ -29,7 +29,7 @@ import {
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
   GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
-  SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES
+  SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES, PUBLISH_PAGES, UNPUBLISH_PAGES
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -673,6 +673,16 @@ class API {
   async pastePage (pageId: string, targetId: string) {
     const { copyPages } = await this.query<{ copyPages: MutationResponse & { page: PageEditorPage }}>(COPY_PAGES, { pageIds: [pageId], targetId, above: false, includeChildren: false })
     return copyPages
+  }
+
+  async publishPages (pageIds: string[], includeChildren: boolean) {
+    const { publishPages } = await this.query<{ publishPages: MutationResponse }>(PUBLISH_PAGES, { pageIds, includeChildren })
+    return publishPages
+  }
+
+  async unpublishPages (pageIds: string[]) {
+    const { unpublishPages } = await this.query<{ unpublishPages: MutationResponse }>(UNPUBLISH_PAGES, { pageIds })
+    return unpublishPages
   }
 
   async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validate?: boolean, comment?: string }) {
