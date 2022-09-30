@@ -21,8 +21,9 @@
   import { store, type TypedPageItem } from './+page'
   import './index.css'
   import { FieldText } from '@dosgato/dialog'
+  import { isNull } from 'txstate-utils'
 
-  let modal: 'addpage' | 'renamepage' | 'duplicatepage' | undefined = undefined
+  let modal: 'addpage' | 'renamepage' | 'duplicatepage' | 'copiedpage' | undefined = undefined
 
   const statusIcon = {
     published: triangleIcon,
@@ -38,8 +39,8 @@
       { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move || !page.parent, onClick: () => { modal = 'renamepage' } },
       { label: 'Duplicate', icon: duplicateIcon, disabled: !page.permissions.create || !page.parent, onClick: () => { modal = 'duplicatepage' } },
       { label: 'Move', icon: cursorMove, disabled: !page.permissions.move || !page.parent, onClick: () => {} },
-      { label: 'Copy', icon: contentCopy, disabled: false, onClick: () => {} },
-      { label: 'Paste', icon: contentPaste, disabled: !page.permissions.create, onClick: () => {} }, // TODO: should only be enabled if there's something to paste
+      { label: 'Copy', icon: contentCopy, disabled: false, onClick: onCopyPage },
+      { label: 'Paste', icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage },
       { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => {} },
       { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => {} },
       { label: 'Export', icon: exportIcon, disabled: false, onClick: () => {} },
@@ -107,6 +108,21 @@
       modal = undefined
     }
   }
+
+  let copiedPageId: string | undefined = undefined
+
+  function onCopyPage () {
+    copiedPageId = $store.selectedItems[0].id
+    modal = 'copiedpage'
+  }
+
+  async function onPastePage () {
+    if (!copiedPageId) return
+    const resp = await api.pastePage(copiedPageId, $store.selectedItems[0].id)
+    if (resp.success) {
+      store.openAndRefresh($store.selectedItems[0])
+    }
+  }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
@@ -148,5 +164,11 @@
     on:continue={onDuplicatePage}
     on:escape={() => { modal = undefined }}>
     Duplicate this page and all of its subpages?
+  </Dialog>
+{:else if modal === 'copiedpage'}
+  <Dialog
+    title='Copy'
+    on:continue={() => { modal = undefined }}>
+    Copied page {$store.selectedItems[0].name}
   </Dialog>
 {/if}

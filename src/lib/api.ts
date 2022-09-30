@@ -670,6 +670,11 @@ class API {
     return copyPages
   }
 
+  async pastePage (pageId: string, targetId: string) {
+    const { copyPages } = await this.query<{ copyPages: MutationResponse & { page: PageEditorPage }}>(COPY_PAGES, { pageIds: [pageId], targetId, above: false, includeChildren: false })
+    return copyPages
+  }
+
   async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validate?: boolean, comment?: string }) {
     const { validate, comment } = opts ?? {}
     const area = get<any[]>(page, path) ?? []
