@@ -24,7 +24,7 @@
   import { FieldText } from '@dosgato/dialog'
   import { isNull } from 'txstate-utils'
 
-  let modal: 'addpage' | 'renamepage' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | undefined = undefined
+  let modal: 'addpage' | 'deletepage' | 'renamepage' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | undefined = undefined
 
   const statusIcon = {
     published: triangleIcon,
@@ -35,7 +35,7 @@
   function singlepageactions (page: TypedPageItem) {
     return [
       { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: () => { onClickAddPage() } },
-      { label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete || !page.parent, onClick: () => {} },
+      { label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete || !page.parent, onClick: () => { modal = 'deletepage' } },
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
       { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move || !page.parent, onClick: () => { modal = 'renamepage' } },
       { label: 'Duplicate', icon: duplicateIcon, disabled: !page.permissions.create || !page.parent, onClick: () => { modal = 'duplicatepage' } },
@@ -144,6 +144,12 @@
     if (resp.success) store.refresh()
     modal = undefined
   }
+
+  async function onDeletePage () {
+    const resp = await api.deletePages([$store.selectedItems[0].id])
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
@@ -218,5 +224,14 @@
     on:continue={onUnpublishPages}
     on:escape={() => { modal = undefined }}>
     Unpublish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''}?`}
+  </Dialog>
+{:else if modal === 'deletepage'}
+  <Dialog
+    title='Delete'
+    continueText='Delete'
+    cancelText='Cancel'
+    on:continue={onDeletePage}
+    on:escape={() => { modal = undefined }}>
+    Delete this page and all its subpages?
   </Dialog>
 {/if}

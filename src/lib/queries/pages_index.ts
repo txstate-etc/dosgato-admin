@@ -130,6 +130,17 @@ export const UNPUBLISH_PAGES = `
   }
 `
 
+export const DELETE_PAGES = `
+  mutation deletePages($pageIds: [ID!]!) {
+    deletePages (pageIds: $pageIds) {
+      ${mutationResponse}
+      pages {
+        ${pageDetails}
+      }
+    }
+  }
+`
+
 const pageWithTemplates = `
   id
   templates(filter: { types: [PAGE] }) {
