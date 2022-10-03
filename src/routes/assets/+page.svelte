@@ -11,6 +11,7 @@
   import { goto } from '$app/navigation'
   import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreeAsset, type TreeAssetFolder, environmentConfig, FormDialog, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog } from '$lib'
   import { base } from '$app/paths'
+  import { sortby } from 'txstate-utils'
 
   interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
     kind: 'asset'
@@ -41,7 +42,7 @@
       modifiedAt: DateTime.fromISO(a.modifiedAt),
       hasChildren: false
     } as AssetItem))
-    return [...typedfolders, ...typedassets]
+    return [...sortby(typedfolders, 'name'), ...sortby(typedassets, 'name')]
   }
 
   function singlepageactions (item: TypedAnyAssetItem) {
