@@ -143,7 +143,7 @@
     headers={[
       { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight), render: itm => 'filename' in itm ? itm.filename : itm.name },
       { label: 'Size', id: 'template', defaultWidth: '8.5em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },
-      { label: 'Type', id: 'title', defaultWidth: 'calc(40% - 10.75em)', get: 'mime' },
+      { label: 'Type', id: 'title', defaultWidth: 'calc(40% - 10.75em)', render: itm => itm.kind === 'asset' ? itm.mime.split(';')[0] : '' },
       { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => item.kind === 'asset' ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
       { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
     ]}
