@@ -727,7 +727,7 @@ class API {
       const toParent = toParts.slice(0, -1).join('.')
       const toIdx = Number(toParts[toParts.length - 1])
       data = set(data, toParent, get<ComponentData[]>(data, toParent).flatMap((c, i) => i === toIdx ? [fromObj, c] : [c]))
-      if (fromIdx > toIdx) fromIdx++ // if moving up within an area, adjust the idx we're going to remove
+      if (fromParent === toParent && fromIdx > toIdx) fromIdx++ // if moving up within an area, adjust the idx we're going to remove
     } else {
       data = set(data, to, [...toObj, fromObj])
     }

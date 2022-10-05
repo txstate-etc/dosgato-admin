@@ -119,7 +119,7 @@
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
   {#if template && template.dialog}
     <FormDialog title={template.name} preload={$editorStore.editing.data} submit={onEditComponentSubmit} on:escape={cancelModal} let:data>
-      <svelte:component this={template.dialog} {data} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
+      <svelte:component this={template.dialog} creating={false} {data} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
     </FormDialog>
   {:else}
     <Dialog title="Unrecognized Template">This content uses an unrecognized template. Please contact support for assistance.</Dialog>
@@ -129,7 +129,7 @@
     {@const template = templateRegistry.getTemplate($editorStore.creating.templateKey)}
     {#if template && template.dialog}
       <FormDialog title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} on:escape={cancelModal}>
-        <svelte:component this={template.dialog} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
+        <svelte:component this={template.dialog} creating={true} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
       </FormDialog>
     {:else}
       <Dialog title="Unrecognized Template">This content uses an unrecognized template. Please contact support for assistance.</Dialog>
