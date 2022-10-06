@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@dosgato/dialog": ">=0.0.17",
-    "@dosgato/templating":"^0.0.56",
+    "@dosgato/templating":"^0.0.69",
     "@iconify-icons/mdi": "^1.2.8",
     "@iconify-icons/ph": "^1.2.2",
     "@txstate-mws/svelte-components": "^1.2.10",

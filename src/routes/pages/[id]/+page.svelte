@@ -73,7 +73,7 @@
   }
 
   function onAddComponentChooseTemplate (templateKey: string) {
-    return () => pageEditorStore.addComponentChooseTemplate(templateKey)
+    return () => pageEditorStore.addComponentChooseTemplate(templateKey, refreshIframe)
   }
 
   async function onAddComponentSubmit (data: any) {
@@ -122,17 +122,19 @@
       <svelte:component this={template.dialog} creating={false} {data} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
     </FormDialog>
   {:else}
-    <Dialog title="Unrecognized Template">This content uses an unrecognized template. Please contact support for assistance.</Dialog>
+    <Dialog title="Unrecognized Template" on:continue={cancelModal} on:escape={cancelModal}>This content uses an unrecognized template. Please contact support for assistance.</Dialog>
   {/if}
 {:else if $editorStore.modal === 'create' && $editorStore.creating }
   {#if $editorStore.creating.templateKey}
     {@const template = templateRegistry.getTemplate($editorStore.creating.templateKey)}
-    {#if template && template.dialog}
-      <FormDialog title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} on:escape={cancelModal}>
-        <svelte:component this={template.dialog} creating={true} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
-      </FormDialog>
+    {#if template}
+      {#if template.dialog}
+        <FormDialog title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} on:escape={cancelModal}>
+          <svelte:component this={template.dialog} creating={true} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
+        </FormDialog>
+      {/if}
     {:else}
-      <Dialog title="Unrecognized Template">This content uses an unrecognized template. Please contact support for assistance.</Dialog>
+      <Dialog title="Unrecognized Template" on:continue={cancelModal} on:escape={cancelModal}>This content uses an unrecognized template. Please contact support for assistance.</Dialog>
     {/if}
   {:else}
     <Dialog title="What would you like to add?" cancelText="Cancel" size="large" on:escape={cancelModal}>

@@ -3,6 +3,7 @@ import { derivedStore, Store } from '@txstate-mws/svelte-store'
 import { get, isNotBlank, set } from 'txstate-utils'
 import type { PageEditorPage } from '$lib/queries'
 import { api } from '$lib/api'
+import { templateRegistry } from '$lib/registry'
 
 export interface IPageEditorStore {
   editors: Record<string, EditorState>
@@ -47,20 +48,32 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.update(v => set(v, `editors["${pageId}"]`, { ...editorState, modal: 'create', editing: undefined, creating: { path, data: undefined, availableComponents } }))
   }
 
-  async addComponentChooseTemplate (templateKey: string) {
+  async addComponentChooseTemplate (templateKey: string, refreshIframe: () => Promise<void>) {
     this.update(v => {
       if (!v.active) return v
       const editorState = v.editors[v.active]
       const newEditorState = set(editorState, 'creating.templateKey', templateKey)
       return set(v, `editors["${v.active}"]`, newEditorState)
     })
+    const def = templateRegistry.getTemplate(templateKey)
+    if (def && def.dialog == null) {
+      const resp = await this.addComponentSubmit({})
+      if (resp?.success) await refreshIframe()
+    } else {
+      this.update(v => {
+        if (!v.active) return v
+        const editorState = v.editors[v.active]
+        const newEditorState = set(editorState, 'creating.templateKey', templateKey)
+        return set(v, `editors["${v.active}"]`, newEditorState)
+      })
+    }
   }
 
   async addComponentSubmit (data: any, validate?: boolean) {
     const pageId = this.value.active
     if (!pageId) return
     const editorState = this.value.editors[pageId]
-    if (!editorState.creating) return
+    if (!editorState.creating?.templateKey) return
     const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey }, { validate })
     if (!validate && resp.success) {
       this.update(v => {
