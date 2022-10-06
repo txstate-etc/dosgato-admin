@@ -141,7 +141,7 @@
       <div class="component-chooser">
         {#each $editorStore.creating.availableComponents as availableComponent}
           <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
-            <Icon icon={availableComponent.icon} width="60%" /><br>{availableComponent.name}
+            <Icon icon={availableComponent.preview ?? availableComponent.icon} width="60%" /><br>{availableComponent.name}
           </button>
         {/each}
       </div>
