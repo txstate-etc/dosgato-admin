@@ -6,7 +6,7 @@ import { api } from '$lib/api'
 import { templateRegistry } from '$lib/registry'
 
 export interface IPageEditorStore {
-  editors: Record<string, EditorState>
+  editors: Record<string, EditorState | undefined>
   active?: string
 }
 
@@ -32,7 +32,11 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   open (page: PageEditorPage) {
-    this.update(v => ({ editors: { ...v.editors, [page.id]: v.editors[page.id] ?? { page } }, active: page.id }))
+    this.update(v => ({ editors: { ...v.editors, [page.id]: { ...v.editors[page.id], page } }, active: page.id }))
+  }
+
+  free (pageId: string) {
+    this.update(v => ({ ...v, editors: { ...v.editors, [pageId]: undefined } }))
   }
 
   async addComponentShowModal (path: string) {
@@ -73,7 +77,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const pageId = this.value.active
     if (!pageId) return
     const editorState = this.value.editors[pageId]
-    if (!editorState.creating?.templateKey) return
+    if (!editorState?.creating?.templateKey) return
     const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey }, { validate })
     if (!validate && resp.success) {
       this.update(v => {
@@ -89,6 +93,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.update(v => {
       if (!v.active) return v
       const editorState = v.editors[v.active]
+      if (!editorState) return v
       const data = get<ComponentData>(editorState.page.data, path)
       const templateKey = data.templateKey
       const newEditorState: EditorState = { ...editorState, modal: 'edit', editing: { path, data, templateKey }, creating: undefined }
@@ -100,7 +105,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const pageId = this.value.active
     if (!pageId) return
     const editorState = this.value.editors[pageId]
-    if (!editorState.editing) return
+    if (!editorState?.editing) return
     const resp = await api.editComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.editing.path, data, { validate })
     if (!validate && resp.success) {
       this.update(v => {
@@ -116,6 +121,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.update(v => {
       if (!v.active) return v
       const editorState = v.editors[v.active]
+      if (!editorState) return v
       const data = get<ComponentData>(editorState.page.data, path)
       const templateKey = data.templateKey
       const newEditorState: EditorState = { ...editorState, modal: 'delete', editing: { path, data, templateKey }, creating: undefined }
@@ -127,7 +133,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const pageId = this.value.active
     if (!pageId) return
     const editorState = this.value.editors[pageId]
-    if (!editorState.editing) return
+    if (!editorState?.editing) return
     const resp = await api.removeComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.editing.path)
     if (resp.success) {
       this.update(v => {

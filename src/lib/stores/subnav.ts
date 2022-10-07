@@ -7,6 +7,7 @@ export interface SubNavLink {
   label: string
   icon?: IconifyIcon
   closeable?: boolean
+  onClose?: (link: this) => void
 }
 
 class SubNavStore extends Store<{ sections: Record<string, { links: SubNavLink[], active: number }>, active?: string }> {
@@ -14,7 +15,7 @@ class SubNavStore extends Store<{ sections: Record<string, { links: SubNavLink[]
     this.update(v => ({ ...v, sections: { ...v.sections, [section]: v.sections[section] ?? { active: 0, links } }, active: section }))
   }
 
-  open (section: string, link: SubNavLink) {
+  open<LinkType extends SubNavLink = SubNavLink> (section: string, link: LinkType) {
     this.update(v => {
       const current = v.sections[section]
       const active = findIndex(current.links, l => l.href === link.href)
@@ -33,7 +34,9 @@ class SubNavStore extends Store<{ sections: Record<string, { links: SubNavLink[]
 
   close (idx: number) {
     if (!this.value.active) return
-    const oldHref = this.value.sections[this.value.active].links[this.value.sections[this.value.active].active]?.href
+    const oldlink = this.value.sections[this.value.active].links[this.value.sections[this.value.active].active]
+    if (!oldlink) return
+    const oldHref = oldlink.href
     this.update(v => {
       if (!v.active) return v
       const current = v.sections[v.active]
@@ -43,6 +46,7 @@ class SubNavStore extends Store<{ sections: Record<string, { links: SubNavLink[]
       return set(v, `sections["${v.active}"]`, { active, links: splice(current.links, idx, 1) })
     })
     const newHref = this.value.sections[this.value.active].links[this.value.sections[this.value.active].active].href
+    oldlink.onClose?.(oldlink)
     return oldHref !== newHref ? newHref : undefined
   }
 }

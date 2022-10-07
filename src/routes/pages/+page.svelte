@@ -43,7 +43,7 @@
       { label: 'Copy', icon: contentCopy, disabled: false, onClick: onCopyPage },
       { label: 'Paste', icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage },
       { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish || (page.parent && !page.parent.published), onClick: () => { modal = 'publishpages' } },
-      { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || (page.parent && !page.parent.published) || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages'} },
+      { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || (page.parent && !page.parent.published) || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages' } },
       { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => { modal = 'unpublishpages' } },
       { label: 'Export', icon: exportIcon, disabled: false, onClick: () => {} },
       { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => {} }
