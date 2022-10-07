@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { iconForMime, Icon, bytesToHuman, FieldText } from '@dosgato/dialog'
+  import { iconForMime, bytesToHuman, FieldText } from '@dosgato/dialog'
   import arrowsOutCardinalLight from '@iconify-icons/ph/arrows-out-cardinal-light'
   import downloadLight from '@iconify-icons/ph/download-light'
   import folderLight from '@iconify-icons/ph/folder-light'
@@ -7,43 +7,13 @@
   import folderNotchOpenLight from '@iconify-icons/ph/folder-notch-open-light'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import uploadLight from '@iconify-icons/ph/upload-light'
-  import { DateTime } from 'luxon'
   import { goto } from '$app/navigation'
-  import { api, ActionPanel, Tree, TreeStore, type TypedTreeItem, type TreeAsset, type TreeAssetFolder, environmentConfig, FormDialog, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog } from '$lib'
+  import { api, ActionPanel, Tree, environmentConfig, FormDialog, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog } from '$lib'
   import { base } from '$app/paths'
-  import { sortby } from 'txstate-utils'
-
-  interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
-    kind: 'asset'
-    modifiedAt: DateTime
-    hasChildren: false
-  }
-  type TypedAssetItem = TypedTreeItem<AssetItem>
-  interface AssetFolderItem extends TreeAssetFolder {
-    kind: 'folder'
-    hasChildren: boolean
-  }
-  type TypedAssetFolderItem = TypedTreeItem<AssetFolderItem>
-  type TypedAnyAssetItem = TypedTreeItem<AssetItem | AssetFolderItem>
+  import { store, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
 
   let modal: 'upload' | 'create' | 'rename' | undefined
   let selectedFolder: TypedAssetFolderItem | undefined
-
-  async function fetchChildren (item?: TypedAssetFolderItem) {
-    const { folders, assets } = item ? (await api.getSubFoldersAndAssets(item.id))! : { folders: await api.getRootAssetFolders(), assets: [] }
-    const typedfolders = folders.map(f => ({
-      ...f,
-      kind: 'folder',
-      hasChildren: !!(f.folders.length + f.assets.length)
-    } as AssetFolderItem))
-    const typedassets = assets.map(a => ({
-      ...a,
-      kind: 'asset',
-      modifiedAt: DateTime.fromISO(a.modifiedAt),
-      hasChildren: false
-    } as AssetItem))
-    return [...sortby(typedfolders, 'name'), ...sortby(typedassets, 'name')]
-  }
 
   function singlepageactions (item: TypedAnyAssetItem) {
     return item.kind === 'asset'
@@ -65,36 +35,6 @@
       // { label: 'Move', disabled: pages.some(p => !p.permissions.move), onClick: () => {} },
       // { label: 'Publish', disabled: pages.some(p => !p.permissions.publish), onClick: () => {} }
     ]
-  }
-
-  async function dropHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean) {
-    return true
-  }
-
-  function dragEligible (items: (TypedAssetFolderItem|TypedAssetItem)[]) {
-    // sites cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites
-    return items.every(item => !!item.parent)
-  }
-
-  function dropEligible (selectedItems: (TypedAssetFolderItem|TypedAssetItem)[], dropTarget: TypedAnyAssetItem, above: boolean) {
-    // cannot place an item at the root: instead create a new site in the site management UI
-    if (!dropTarget.parent && above) return false
-    if (dropTarget.kind === 'asset' && !above) return false
-    return above ? (dropTarget.parent! as TypedAssetFolderItem).permissions.create : (dropTarget as TypedAssetFolderItem).permissions.create
-  }
-
-  function dropEffect (selectedItems: (TypedAssetFolderItem|TypedAssetItem)[], dropTarget: TypedAnyAssetItem, above: boolean) {
-    const selectedSites = new Set<string>()
-    let noMovePerm = false
-    for (const slctd of selectedItems) {
-      const ancestors = store.collectAncestors(slctd)
-      selectedSites.add((ancestors[ancestors.length - 1] ?? slctd).id)
-      if (!slctd.permissions.move) noMovePerm = true
-    }
-    if (selectedSites.size > 1 || noMovePerm) return 'copy'
-    const anc = store.collectAncestors(dropTarget)
-    const targetSite = (anc[anc.length - 1] ?? dropTarget).id
-    return selectedSites.has(targetSite) ? 'move' : 'copy'
   }
 
   async function onChildSaved () {
@@ -135,8 +75,6 @@
     const { success, messages } = await api.renameAssetFolder(selectedFolder.id, data.name, true)
     return messageForDialog(messages)
   }
-
-  const store: TreeStore<AssetItem | AssetFolderItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
