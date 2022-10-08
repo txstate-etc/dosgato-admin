@@ -241,7 +241,7 @@
     </div>
     {#each headers as header, i (header.id)}
       <div
-        class={(header.class ? toArray(header.class(item)) : []).concat(header.id).join(' ')}
+        class={(header.class ? toArray(header.class(item)) : []).concat([header.id]).join(' ')}
         style:width={header.defaultWidth}
         style:padding-left={i === 0 ? `${level + 0.3}em` : undefined}
         class:left={i === 0}

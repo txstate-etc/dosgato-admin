@@ -11,6 +11,7 @@
   import { api, ActionPanel, Tree, environmentConfig, FormDialog, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog } from '$lib'
   import { base } from '$app/paths'
   import { store, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
+  import './assets.css'
 
   let modal: 'upload' | 'create' | 'rename' | undefined
   let selectedFolder: TypedAssetFolderItem | undefined
@@ -99,9 +100,3 @@
     <FieldText path="name" label="Name" required />
   </FormDialog>
 {/if}
-
-<style>
-  :global(.modified span) {
-    font-size: 0.9em;
-  }
-</style>
