@@ -53,15 +53,15 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   async addComponentChooseTemplate (templateKey: string, refreshIframe: () => Promise<void>) {
+    const def = templateRegistry.getTemplate(templateKey)
     this.update(v => {
       if (!v.active) return v
       const editorState = v.editors[v.active]
-      const newEditorState = set(editorState, 'creating.templateKey', templateKey)
+      const newEditorState = { ...editorState, creating: { ...editorState?.creating, templateKey, data: { areas: def?.defaultContent } } }
       return set(v, `editors["${v.active}"]`, newEditorState)
     })
-    const def = templateRegistry.getTemplate(templateKey)
     if (def && def.dialog == null) {
-      const resp = await this.addComponentSubmit({})
+      const resp = await this.addComponentSubmit({ areas: def.defaultContent })
       if (resp?.success) await refreshIframe()
     } else {
       this.update(v => {
