@@ -44,7 +44,7 @@ export interface ChooserAssetDetails {
 }
 
 export const GET_SUBPAGES_BY_PATH = `
-  query getPagesByPath ($path: String!) {
+  query getPagesByPath ($path: UrlSafePath!) {
     pages (filter: { parentPaths: [$path] }) {
       ${chooserPageDetails}
     }
@@ -56,7 +56,7 @@ export interface GetSubPagesByPath {
 }
 
 export const GET_SUBFOLDERS_AND_ASSETS_BY_PATH = `
-  query getPagesByPath ($path: String!) {
+  query getPagesByPath ($path: UrlSafePath!) {
     assets (filter: { parentPaths: [$path] }) {
       ${chooserAssetDetails}
     }
