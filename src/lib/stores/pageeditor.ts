@@ -12,7 +12,7 @@ export interface IPageEditorStore {
 
 export interface EditorState {
   page: PageEditorPage
-  modal?: 'edit' | 'create' | 'delete' | 'move'
+  modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties'
   editing?: {
     path: string
     data: any
@@ -73,13 +73,13 @@ class PageEditorStore extends Store<IPageEditorStore> {
     }
   }
 
-  async addComponentSubmit (data: any, validate?: boolean) {
+  async addComponentSubmit (data: any, validateOnly?: boolean) {
     const pageId = this.value.active
     if (!pageId) return
     const editorState = this.value.editors[pageId]
     if (!editorState?.creating?.templateKey) return
-    const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey }, { validate })
-    if (!validate && resp.success) {
+    const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey }, { validateOnly })
+    if (!validateOnly && resp.success) {
       this.update(v => {
         const editorState = v.editors[pageId]
         const newEditorState = { ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }
@@ -101,13 +101,13 @@ class PageEditorStore extends Store<IPageEditorStore> {
     })
   }
 
-  async editComponentSubmit (data: any, validate?: boolean) {
+  async editComponentSubmit (data: any, validateOnly?: boolean) {
     const pageId = this.value.active
     if (!pageId) return
     const editorState = this.value.editors[pageId]
     if (!editorState?.editing) return
-    const resp = await api.editComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.editing.path, data, { validate })
-    if (!validate && resp.success) {
+    const resp = await api.editComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.editing.path, data, { validateOnly })
+    if (!validateOnly && resp.success) {
       this.update(v => {
         const editorState = v.editors[pageId]
         const newEditorState = { ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }
@@ -143,6 +143,32 @@ class PageEditorStore extends Store<IPageEditorStore> {
       })
     } else {
       this.cancelModal()
+    }
+    return resp
+  }
+
+  editPropertiesShowModal () {
+    this.update(v => {
+      if (!v.active) return v
+      const editorState = v.editors[v.active]
+      if (!editorState) return v
+      const newEditorState: EditorState = { ...editorState, modal: 'properties', editing: { path: '', data: editorState.page.data, templateKey: editorState.page.data.templateKey }, creating: undefined }
+      return set(v, `editors["${v.active}"]`, newEditorState)
+    })
+  }
+
+  async editPropertiesSubmit (data: any, validateOnly?: boolean) {
+    const pageId = this.value.active
+    if (!pageId) return
+    const editorState = this.value.editors[pageId]
+    if (!editorState?.editing) return
+    const resp = await api.editPageProperties(pageId, editorState.page.version.version, data, { validateOnly })
+    if (!validateOnly && resp.success) {
+      this.update(v => {
+        const editorState = v.editors[pageId]
+        const newEditorState = { ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }
+        return set(v, `editors["${pageId}"]`, newEditorState)
+      })
     }
     return resp
   }

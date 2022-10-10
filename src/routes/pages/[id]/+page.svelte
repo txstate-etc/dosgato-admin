@@ -1,9 +1,12 @@
 <script lang="ts">
   import { Icon } from '@dosgato/dialog'
+  import pencilIcon from '@iconify-icons/mdi/pencil'
+  import historyIcon from '@iconify-icons/mdi/history'
   import type { ComponentData } from '@dosgato/templating'
   import { get } from 'txstate-utils'
   import { ActionPanel, Dialog, editorStore, environmentConfig, FormDialog, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry } from '$lib'
   import { getTempToken } from './+page'
+  import { FormStore } from '@txstate-mws/svelte-forms'
 
   export let data: { temptoken: string }
 
@@ -16,7 +19,10 @@
           { label: 'Edit', onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
           { label: 'Delete', onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) }
         ]
-      : []) as ActionPanelAction[]
+      : [
+          { label: 'Edit Page Properties', icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
+          { label: 'Show Versions', icon: historyIcon, onClick: () => {} }
+        ]) as ActionPanelAction[]
   }
 
   function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string }) {
@@ -93,6 +99,19 @@
     if (resp?.success) await refreshIframe()
   }
 
+  async function onEditPagePropertiesValidate (data: any) {
+    const resp = await pageEditorStore.editPropertiesSubmit(data, true)
+    return resp!.messages
+  }
+
+  async function onEditPagePropertiesSubmit (data: any) {
+    const resp = await pageEditorStore.editPropertiesSubmit(data)
+    if (resp?.success) await refreshIframe()
+    return resp!
+  }
+
+  const pagePropertiesStore = new FormStore<any>(onEditPagePropertiesSubmit, onEditPagePropertiesValidate)
+
   function messages (el: HTMLIFrameElement) {
     iframe = el
     const handler = e => { if (e.source === el.contentWindow) onMessage(e.data) }
@@ -152,7 +171,17 @@
   <Dialog title="Delete {template?.name ?? 'Content'}" cancelText="Cancel" continueText="Delete" on:escape={cancelModal} on:continue={onDeleteComponentSubmit}>
     Are you sure you want to delete the {template?.name ?? 'unrecognized'}?
   </Dialog>
+{:else if $editorStore.modal === 'properties' && $editorStore.editing}
+  <FormDialog store={pagePropertiesStore} title="Edit Page Properties" submit={onEditPagePropertiesSubmit} on:escape={cancelModal} preload={$editorStore.editing.data}>
+    {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
+    {#if template && template.dialog}
+      <svelte:component this={template.dialog} store={pagePropertiesStore}/>
+    {:else}
+      <span>This content uses an unrecognized template. Please contact support for assistance.</span>
+    {/if}
+  </FormDialog>
 {/if}
+
 
 <style>
   iframe {

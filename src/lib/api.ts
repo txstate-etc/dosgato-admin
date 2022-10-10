@@ -690,10 +690,10 @@ class API {
     return deletePages
   }
 
-  async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validate?: boolean, comment?: string }) {
-    const { validate, comment } = opts ?? {}
+  async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validateOnly?: boolean, comment?: string }) {
+    const { validateOnly, comment } = opts ?? {}
     const area = get<any[]>(page, path) ?? []
-    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: set(page, path, [...area, data]), dataVersion, validate, comment })
+    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: set(page, path, [...area, data]), dataVersion, validateOnly, comment })
     const msgPrefix = `data.${path}.${area.length}`
     return {
       ...updatePage,
@@ -702,9 +702,9 @@ class API {
     }
   }
 
-  async editComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validate?: boolean, comment?: string }) {
-    const { validate, comment } = opts ?? {}
-    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: set(page, path, data), dataVersion, validate, comment })
+  async editComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validateOnly?: boolean, comment?: string }) {
+    const { validateOnly, comment } = opts ?? {}
+    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: set(page, path, data), dataVersion, validateOnly, comment })
     const msgPrefix = `data.${path}`
     return {
       ...updatePage,
@@ -750,6 +750,16 @@ class API {
       ...updatePage,
       messages: [],
       data: get(updatePage.page.data, path)
+    }
+  }
+
+  async editPageProperties (pageId: string, dataVersion: number, page: PageData, opts?: { validateOnly?: boolean, comment?: string }) {
+    const { validateOnly, comment } = opts ?? {}
+    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: page, dataVersion, validateOnly, comment })
+    return {
+      ...updatePage,
+      messages: updatePage.messages.map(m => ({ type: m.type, message: m.message, path: m.arg })),
+      data: updatePage.page.data
     }
   }
 }

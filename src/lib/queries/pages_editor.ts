@@ -81,8 +81,8 @@ export interface GetAvailableComponents {
 }
 
 export const UPDATE_PAGE = `
-  mutation updatePage ($pageId: ID!, $dataVersion: Int!, $data: JsonData!, $validate: Boolean, $comment: String) {
-    updatePage (pageId: $pageId, dataVersion: $dataVersion, data: $data, validate: $validate, comment: $comment) {
+  mutation updatePage ($pageId: ID!, $dataVersion: Int!, $data: JsonData!, $validateOnly: Boolean, $comment: String) {
+    updatePage (pageId: $pageId, dataVersion: $dataVersion, data: $data, validateOnly: $validateOnly, comment: $comment) {
       success
       page {
         ${EDITOR_PAGE_DETAILS}
