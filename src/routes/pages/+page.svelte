@@ -17,7 +17,7 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, Tree, FormDialog, messageForDialog, Dialog } from '$lib'
+  import { api, ActionPanel, Tree, FormDialog, messageForDialog, Dialog, dateStamp } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { store, type TypedPageItem } from './+page'
   import './index.css'
@@ -159,7 +159,7 @@
       { label: 'Title', id: 'title', defaultWidth: 'calc(40% - 10.75em)', get: 'title' },
       { label: 'Template', id: 'template', defaultWidth: '8.5em', get: 'template.name' },
       { label: 'Status', id: 'status', defaultWidth: '4em', icon: item => statusIcon[item.status], class: item => item.status },
-      { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` },
+      { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => `<span>${dateStamp(item.modifiedAt)}</span>` },
       { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
     ]}
   />

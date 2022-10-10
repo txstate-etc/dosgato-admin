@@ -1,5 +1,6 @@
 import type { MessageFromAPI, MutationResponse } from '$lib'
 import { MessageType, type Feedback, type SubmitResponse } from '@txstate-mws/svelte-forms'
+import { DateTime } from 'luxon'
 import { isNull, isNotBlank, omit } from 'txstate-utils'
 
 export function messageForDialog (messages: MessageFromAPI[], prefix?: string) {
@@ -41,4 +42,9 @@ export async function uploadWithProgress (url: URL | string, headers: Record<str
 
     request.send(formData)
   })
+}
+
+export function dateStamp (dt: string | Date | DateTime) {
+  const luxdt = typeof dt === 'string' ? DateTime.fromISO(dt) : (dt instanceof Date ? DateTime.fromJSDate(dt) : dt)
+  return luxdt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())
 }

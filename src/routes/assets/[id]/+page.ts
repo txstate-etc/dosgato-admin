@@ -7,10 +7,16 @@ export interface AssetDetail {
   id: string
   name: string
   filename: string
+  uploadedFilename: string
+  modifiedBy: { id: string, name: string }
+  modifiedAt: string
   path: string
   size: number
   mime: string
   checksum: string
+  data: {
+    legacyId?: string
+  }
   box?: {
     width: number
     height: number
@@ -32,10 +38,14 @@ export async function getAssetDetail (id: string) {
         id
         name
         filename
+        uploadedFilename
+        modifiedBy { id name }
+        modifiedAt
         path
         size
         mime
         checksum
+        data
         box { width height }
         resizes { id width height mime extension size }
       }

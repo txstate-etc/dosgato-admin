@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { isNotBlank, sortby } from 'txstate-utils'
+  import { isNotBlank } from 'txstate-utils'
 
-  export let records: Record<string, string>
-  $: entries = sortby(Object.entries(records).filter(([k, v]) => isNotBlank(v)), '0')
+  export let records: Record<string, string | undefined | null>
+  $: entries = Object.entries(records).filter(([k, v]) => isNotBlank(v))
 </script>
 
 <dl>

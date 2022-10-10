@@ -2,7 +2,7 @@
   import { bytesToHuman } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import uploadLight from '@iconify-icons/ph/upload-light'
-  import { DetailList, DetailPanel, environmentConfig, UploadUI, StyledList } from '$lib'
+  import { DetailList, DetailPanel, environmentConfig, UploadUI, StyledList, dateStamp } from '$lib'
   import { getAssetDetail, type AssetDetail } from './+page'
 
   export let data: { asset: AssetDetail }
@@ -51,7 +51,11 @@
     ]}>
       <DetailList records={{
         Size: bytesToHuman(asset.size),
-        Type: asset.mime
+        Type: asset.mime,
+        'Modified By': `${asset.modifiedBy.name} (${asset.modifiedBy.id})`,
+        'Modified At': dateStamp(asset.modifiedAt),
+        'Filename Uploaded': asset.uploadedFilename !== asset.filename ? asset.uploadedFilename : undefined,
+        'Legacy ID': asset.data.legacyId
       }} />
     </DetailPanel>
     {#if asset.resizes.length || refreshes}
@@ -71,7 +75,7 @@
   </div>
   {#if image}
     <div class="image">
-      <img src="{environmentConfig.apiBase}/assets/{asset.id}/w/500/{asset.checksum}/{asset.name}" width={image.width} height={image.height} alt="">
+      <img src="{environmentConfig.apiBase}/assets/{asset.id}/w/500/{asset.checksum}/{asset.name}?admin=1" width={image.width} height={image.height} alt="">
       <div class="details">
         {image.width}x{image.height}
       </div>
@@ -79,7 +83,7 @@
   {/if}
 </div>
 {#if modal === 'upload'}
-  <UploadUI title="Upload new file for {asset.path}" uploadPath="{environmentConfig.apiBase}/assets/replace/{asset.id}" maxFiles={1} on:escape={onUploadEscape} on:saved={onUploadSaved} />
+  <UploadUI title="Upload new file for {asset.path}" uploadPath="{environmentConfig.apiBase}/assets/replace/{asset.id}?admin=1" maxFiles={1} on:escape={onUploadEscape} on:saved={onUploadSaved} />
 {/if}
 
 <style>

@@ -11,7 +11,7 @@
   import { api, ActionPanel, Tree, environmentConfig, FormDialog, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog } from '$lib'
   import { base } from '$app/paths'
   import { store, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
-  import './assets.css'
+  import './index.css'
 
   let modal: 'upload' | 'create' | 'rename' | undefined
   let selectedFolder: TypedAssetFolderItem | undefined
@@ -20,7 +20,7 @@
     return item.kind === 'asset'
       ? [
           { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: () => goto(base + '/assets/' + item.id) },
-          { label: 'Download', icon: downloadLight, onClick: () => { goto(`${environmentConfig.apiBase}/assets/${item.id}/${item.filename}`) } },
+          { label: 'Download', icon: downloadLight, onClick: () => { goto(`${environmentConfig.apiBase}/assets/${item.id}/${item.filename}?admin=1`) } },
           { label: 'Move', icon: arrowsOutCardinalLight, onClick: () => { /* TODO */ } }
         ]
       : [
