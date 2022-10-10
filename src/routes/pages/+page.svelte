@@ -34,7 +34,7 @@
 
   function singlepageactions (page: TypedPageItem) {
     return [
-      { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: () => { onClickAddPage() } },
+      { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: onClickAddPage },
       { label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete || !page.parent, onClick: () => { modal = 'deletepage' } },
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
       { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move || !page.parent, onClick: () => { modal = 'renamepage' } },

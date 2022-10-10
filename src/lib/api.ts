@@ -654,7 +654,7 @@ class API {
     if (resp) return resp
     // TODO: Get actual schema version
     const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-    const { createPage } = await this.query<{ createPage: MutationResponse & { page: PageEditorPage }}>(CREATE_PAGE, { name, data: pageData, targetId, validate: validateOnly })
+    const { createPage } = await this.query<{ createPage: MutationResponse & { page: PageEditorPage }}>(CREATE_PAGE, { name, data: pageData, targetId, validateOnly })
     return createPage
   }
 

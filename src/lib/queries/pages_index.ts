@@ -82,8 +82,8 @@ export const MOVE_PAGES = `
 `
 
 export const CREATE_PAGE = `
-  mutation createPage ($name: UrlSafeString!, $data: JsonData!, $targetId: ID!, $above: Boolean, $validate: Boolean) {
-    createPage (name: $name, data: $data, targetId: $targetId, above: $above, validate: $validate) {
+  mutation createPage ($name: UrlSafeString!, $data: JsonData!, $targetId: ID!, $above: Boolean, $validateOnly: Boolean) {
+    createPage (name: $name, data: $data, targetId: $targetId, above: $above, validateOnly: $validateOnly) {
       ${mutationResponse}
       page {
         ${pageDetails}
