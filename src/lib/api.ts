@@ -698,7 +698,7 @@ class API {
     return {
       ...updatePage,
       messages: updatePage.messages.map(m => ({ type: m.type, message: m.message, path: m.arg.startsWith(msgPrefix) ? m.arg.substring(msgPrefix.length) : '' })),
-      data: get(updatePage.page.data, path).slice(-1)[0]
+      data: get(updatePage.page.data, path)?.slice(-1)[0]
     }
   }
 
