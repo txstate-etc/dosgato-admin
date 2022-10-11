@@ -82,10 +82,20 @@
     return () => pageEditorStore.addComponentChooseTemplate(templateKey, refreshIframe)
   }
 
+  async function onAddComponentValidate (data: any) {
+    const resp = await pageEditorStore.addComponentSubmit(data, true)
+    return resp?.messages ?? []
+  }
+
   async function onAddComponentSubmit (data: any) {
     const resp = await pageEditorStore.addComponentSubmit(data)
     if (resp?.success) await refreshIframe()
     return resp!
+  }
+
+  async function onEditComponentValidate (data: any) {
+    const resp = await pageEditorStore.editComponentSubmit(data, true)
+    return resp?.messages ?? []
   }
 
   async function onEditComponentSubmit (data: any) {
@@ -137,7 +147,7 @@
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
   {#if template && template.dialog}
-    <FormDialog title={template.name} preload={$editorStore.editing.data} submit={onEditComponentSubmit} on:escape={cancelModal} let:data>
+    <FormDialog title={template.name} preload={$editorStore.editing.data} submit={onEditComponentSubmit} validate={onEditComponentValidate} on:escape={cancelModal} let:data>
       <svelte:component this={template.dialog} creating={false} {data} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
     </FormDialog>
   {:else}
@@ -148,7 +158,7 @@
     {@const template = templateRegistry.getTemplate($editorStore.creating.templateKey)}
     {#if template}
       {#if template.dialog}
-        <FormDialog title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} on:escape={cancelModal}>
+        <FormDialog title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} validate={onAddComponentValidate} on:escape={cancelModal}>
           <svelte:component this={template.dialog} creating={true} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
         </FormDialog>
       {/if}

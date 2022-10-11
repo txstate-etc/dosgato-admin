@@ -1,9 +1,7 @@
 import type { ComponentData, UITemplate } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
 import { get, isNotBlank, set } from 'txstate-utils'
-import type { PageEditorPage } from '$lib/queries'
-import { api } from '$lib/api'
-import { templateRegistry } from '$lib/registry'
+import { api, type PageEditorPage, templateRegistry } from '$lib'
 
 export interface IPageEditorStore {
   editors: Record<string, EditorState | undefined>
