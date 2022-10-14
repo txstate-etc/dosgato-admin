@@ -182,7 +182,7 @@
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
-  <Tree {store} on:choose={({ detail }) => goto(base + '/pages/' + detail.id)}
+  <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) goto(base + '/pages/' + detail.id) }}
     headers={[
       { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.deleteState === DeleteState.NOTDELETED ? applicationOutline : deleteEmtpy, get: 'name' },
       { label: 'Title', id: 'title', defaultWidth: 'calc(40% - 10.75em)', get: 'title' },
