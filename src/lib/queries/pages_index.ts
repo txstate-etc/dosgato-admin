@@ -14,6 +14,7 @@ modifiedBy {
 }
 published
 publishedAt
+deleteState
 children {
   id
 }
@@ -23,6 +24,7 @@ permissions {
   publish
   move
   delete
+  undelete
   unpublish
 }
 `
@@ -41,6 +43,7 @@ export interface TreePage {
   }
   published: boolean
   publishedAt: string
+  deleteState: number
   children: {
     id: string
   }[]
@@ -50,6 +53,7 @@ export interface TreePage {
     publish: boolean
     move: boolean
     delete: boolean
+    undelete: boolean
     unpublish: boolean
   }
 }
@@ -133,6 +137,28 @@ export const UNPUBLISH_PAGES = `
 export const DELETE_PAGES = `
   mutation deletePages($pageIds: [ID!]!) {
     deletePages (pageIds: $pageIds) {
+      ${mutationResponse}
+      pages {
+        ${pageDetails}
+      }
+    }
+  }
+`
+
+export const PUBLISH_DELETION = `
+  mutation publishPageDeletions($pageIds: [ID!]!) {
+    publishPageDeletions (pageIds: $pageIds) {
+      ${mutationResponse}
+      pages {
+        ${pageDetails}
+      }
+    }
+  }
+`
+
+export const UNDELETE_PAGES = `
+  mutation undeletePages($pageIds: [ID!]!, $includeChildren: Boolean) {
+    undeletePages (pageIds: $pageIds, includeChildren: $includeChildren) {
       ${mutationResponse}
       pages {
         ${pageDetails}

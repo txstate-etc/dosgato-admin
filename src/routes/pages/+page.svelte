@@ -1,5 +1,7 @@
 <script lang="ts">
   import applicationOutline from '@iconify-icons/mdi/application-outline'
+  import deleteEmtpy from '@iconify-icons/mdi/delete-empty'
+  import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import circleIcon from '@iconify-icons/mdi/circle'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
@@ -14,17 +16,18 @@
   import exportIcon from '@iconify-icons/mdi/export'
   import importIcon from '@iconify-icons/mdi/import'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
+  import trashSimpleFill from '@iconify-icons/ph/trash-simple-fill'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, Tree, FormDialog, messageForDialog, Dialog, dateStamp } from '$lib'
+  import { api, ActionPanel, Tree, FormDialog, messageForDialog, Dialog, dateStamp, type ActionPanelAction, DeleteState } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { store, type TypedPageItem } from './+page'
   import './index.css'
   import { FieldText } from '@dosgato/dialog'
-  import { isNull } from 'txstate-utils'
+  import { isNotNull, isNull } from 'txstate-utils'
 
-  let modal: 'addpage' | 'deletepage' | 'renamepage' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | undefined = undefined
+  let modal: 'addpage' | 'deletepage' | 'renamepage' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | undefined = undefined
 
   const statusIcon = {
     published: triangleIcon,
@@ -33,21 +36,29 @@
   }
 
   function singlepageactions (page: TypedPageItem) {
-    return [
-      { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: onClickAddPage },
-      { label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete || !page.parent, onClick: () => { modal = 'deletepage' } },
+    const actions: ActionPanelAction[] = [{ label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: onClickAddPage }]
+    if (page.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete || !page.parent, onClick: () => { modal = 'deletepage' } })
+    else if (page.deleteState === DeleteState.MARKEDFORDELETE) {
+      actions.push(
+        { label: 'Restore Page', icon: deleteRestore, disabled: !page.permissions.undelete, onClick: () => { modal = 'undeletepage' } },
+        { label: 'Restore incl. Subpages', icon: deleteRestore, disabled: !page.permissions.undelete || !page.hasChildren, onClick: () => { modal = 'undeletewithsubpages' }})
+    }
+    actions.push(
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
       { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move || !page.parent, onClick: () => { modal = 'renamepage' } },
       { label: 'Duplicate', icon: duplicateIcon, disabled: !page.permissions.create || !page.parent, onClick: () => { modal = 'duplicatepage' } },
       { label: 'Move', icon: cursorMove, disabled: !page.permissions.move || !page.parent, onClick: () => {} },
       { label: 'Copy', icon: contentCopy, disabled: false, onClick: onCopyPage },
-      { label: 'Paste', icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage },
-      { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish || (page.parent && !page.parent.published), onClick: () => { modal = 'publishpages' } },
+      { label: 'Paste', icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage }
+    )
+    if (page.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish || (isNotNull(page.parent) && !page.parent.published), onClick: () => { modal = 'publishpages' } })
+    else if (page.deleteState === DeleteState.MARKEDFORDELETE) actions.push({ label: 'Publish Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'publishdelete' } })
+    actions.push(
       { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || (page.parent && !page.parent.published) || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages' } },
       { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => { modal = 'unpublishpages' } },
       { label: 'Export', icon: exportIcon, disabled: false, onClick: () => {} },
-      { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => {} }
-    ]
+      { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => {} })
+    return actions
   }
   function multipageactions (pages: TypedPageItem[]) {
     if (!pages?.length) return []
@@ -150,15 +161,33 @@
     if (resp.success) store.refresh()
     modal = undefined
   }
+
+  async function onPublishDeletion () {
+    const resp = await api.publishDeletion([$store.selectedItems[0].id])
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
+
+  async function onUndeletePage () {
+    const resp = await api.undeletePages([$store.selectedItems[0].id])
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
+
+  async function onUndeletePageWithChildren () {
+    const resp = await api.undeletePages([$store.selectedItems[0].id], true)
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={({ detail }) => goto(base + '/pages/' + detail.id)}
     headers={[
-      { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => applicationOutline, get: 'name' },
+      { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.deleteState === DeleteState.NOTDELETED ? applicationOutline : deleteEmtpy, get: 'name' },
       { label: 'Title', id: 'title', defaultWidth: 'calc(40% - 10.75em)', get: 'title' },
       { label: 'Template', id: 'template', defaultWidth: '8.5em', get: 'template.name' },
-      { label: 'Status', id: 'status', defaultWidth: '4em', icon: item => statusIcon[item.status], class: item => item.status },
+      { label: 'Status', id: 'status', defaultWidth: '4em', icon: item => item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : trashSimpleFill, class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
       { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => `<span>${dateStamp(item.modifiedAt)}</span>` },
       { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
     ]}
@@ -232,6 +261,33 @@
     cancelText='Cancel'
     on:continue={onDeletePage}
     on:escape={() => { modal = undefined }}>
-    Delete this page and all its subpages?
+    Delete this page and all its subpages? Deleted pages will no longer be visible on your live site.
+  </Dialog>
+{:else if modal === 'publishdelete'}
+  <Dialog
+    title='Publish Deletion'
+    continueText='Delete'
+    cancelText='Cancel'
+    on:continue={onPublishDeletion}
+    on:escape={() => { modal = undefined }}>
+    Publish this deletion? The selected pages will no longer appear in your site.
+  </Dialog>
+{:else if modal === 'undeletepage'}
+  <Dialog
+    title='Restore Deleted Page'
+    continueText='Restore'
+    cancelText='Cancel'
+    on:continue={onUndeletePage}
+    on:escape={() => { modal = undefined }}>
+    Restore this deleted page?
+  </Dialog>
+{:else if modal === 'undeletewithsubpages'}
+  <Dialog
+    title='Restore Deleted Pages'
+    continueText='Restore'
+    cancelText='Cancel'
+    on:continue={onUndeletePageWithChildren}
+    on:escape={() => { modal = undefined }}>
+    Restore this deleted page and its child pages?
   </Dialog>
 {/if}

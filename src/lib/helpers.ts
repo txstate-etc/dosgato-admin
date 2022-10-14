@@ -48,3 +48,9 @@ export function dateStamp (dt: string | Date | DateTime) {
   const luxdt = typeof dt === 'string' ? DateTime.fromISO(dt) : (dt instanceof Date ? DateTime.fromJSDate(dt) : dt)
   return luxdt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())
 }
+
+export enum DeleteState {
+  NOTDELETED = 0,
+  MARKEDFORDELETE = 1,
+  DELETED = 2
+}

@@ -29,7 +29,8 @@ import {
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
   GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
-  SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES, PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES
+  SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES, PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES,
+  PUBLISH_DELETION, UNDELETE_PAGES
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -688,6 +689,16 @@ class API {
   async deletePages (pageIds: string[]) {
     const { deletePages } = await this.query<{ deletePages: MutationResponse & { pages: PageEditorPage }}>(DELETE_PAGES, { pageIds })
     return deletePages
+  }
+
+  async publishDeletion (pageIds: string[]) {
+    const { publishPageDeletions } = await this.query<{ publishPageDeletions: MutationResponse & { pages: PageEditorPage }}>(PUBLISH_DELETION, { pageIds })
+    return publishPageDeletions
+  }
+
+  async undeletePages (pageIds: string[], includeChildren = false) {
+    const { undeletePages } = await this.query<{ undeletePages: MutationResponse & { pages: PageEditorPage }}>(UNDELETE_PAGES, { pageIds, includeChildren })
+    return undeletePages
   }
 
   async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validateOnly?: boolean, comment?: string }) {

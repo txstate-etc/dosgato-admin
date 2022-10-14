@@ -15,6 +15,9 @@
 .status.unpublished {
   color: var(--dosgato-red, #9a3332);
 }
+.status.deleted {
+  color: #555;
+}
 .modified span {
   font-size: 0.9em;
 }
