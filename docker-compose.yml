@@ -55,7 +55,7 @@ services:
     ports:
       - 3001:80
   mysql:
-    image: percona:5
+    image: mariadb
     ports:
       - 3306:3306
     environment:
