@@ -2,6 +2,8 @@
   import applicationOutline from '@iconify-icons/mdi/application-outline'
   import deleteEmtpy from '@iconify-icons/mdi/delete-empty'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
+  import archiveLight from '@iconify-icons/ph/archive-light'
+  import sandboxIcon from '@iconify-icons/file-icons/sandbox'
   import circleIcon from '@iconify-icons/mdi/circle'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
@@ -35,19 +37,27 @@
     unpublished: squareIcon
   }
 
+  const siteIcon = {
+    PRIMARY: applicationOutline,
+    SANDBOX: sandboxIcon,
+    ARCHIVE: archiveLight
+  }
+
   function singlepageactions (page: TypedPageItem) {
     const actions: ActionPanelAction[] = [{ label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: onClickAddPage }]
     if (page.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete || !page.parent, onClick: () => { modal = 'deletepage' } })
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) {
       actions.push(
         { label: 'Restore Page', icon: deleteRestore, disabled: !page.permissions.undelete, onClick: () => { modal = 'undeletepage' } },
-        { label: 'Restore incl. Subpages', icon: deleteRestore, disabled: !page.permissions.undelete || !page.hasChildren, onClick: () => { modal = 'undeletewithsubpages' }})
+        { label: 'Restore incl. Subpages', icon: deleteRestore, disabled: !page.permissions.undelete || !page.hasChildren, onClick: () => { modal = 'undeletewithsubpages' } })
     }
     actions.push(
+      { label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: onClickAddPage },
+      { label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'deletepage' } },
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
-      { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move || !page.parent, onClick: () => { modal = 'renamepage' } },
-      { label: 'Duplicate', icon: duplicateIcon, disabled: !page.permissions.create || !page.parent, onClick: () => { modal = 'duplicatepage' } },
-      { label: 'Move', icon: cursorMove, disabled: !page.permissions.move || !page.parent, onClick: () => {} },
+      { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move, onClick: () => { modal = 'renamepage' } },
+      { label: 'Duplicate', icon: duplicateIcon, disabled: !page.parent?.permissions.create, onClick: () => { modal = 'duplicatepage' } },
+      { label: 'Move', icon: cursorMove, disabled: !page.permissions.move, onClick: () => {} },
       { label: 'Copy', icon: contentCopy, disabled: false, onClick: onCopyPage },
       { label: 'Paste', icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage }
     )
@@ -55,6 +65,9 @@
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) actions.push({ label: 'Publish Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'publishdelete' } })
     actions.push(
       { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || (page.parent && !page.parent.published) || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages' } },
+      { label: 'Paste', icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage },
+      { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => { modal = 'publishpages' } },
+      { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages' } },
       { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => { modal = 'unpublishpages' } },
       { label: 'Export', icon: exportIcon, disabled: false, onClick: () => {} },
       { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => {} })
@@ -184,7 +197,7 @@
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) goto(base + '/pages/' + detail.id) }}
     headers={[
-      { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.deleteState === DeleteState.NOTDELETED ? applicationOutline : deleteEmtpy, get: 'name' },
+      { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmtpy : item.parent ? applicationOutline : siteIcon[item.type], get: 'name' },
       { label: 'Title', id: 'title', defaultWidth: 'calc(40% - 10.75em)', get: 'title' },
       { label: 'Template', id: 'template', defaultWidth: '8.5em', get: 'template.name' },
       { label: 'Status', id: 'status', defaultWidth: '4em', icon: item => item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : trashSimpleFill, class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },

@@ -58,11 +58,26 @@ export interface TreePage {
   }
 }
 
+export type PagetreeTypes = 'PRIMARY' | 'SANDBOX' | 'ARCHIVE'
+
+export interface RootTreePage extends TreePage {
+  pagetree: {
+    type: PagetreeTypes
+    name: string
+  }
+}
+
 export const GET_ROOT_PAGES = `
   query getRootPages {
     sites {
-      pageroot {
-        ${pageDetails}
+      pagetrees {
+        rootPage {
+          ${pageDetails}
+          pagetree {
+            type
+            name
+          }
+        }
       }
     }
   }

@@ -1,5 +1,6 @@
 import type { MutationResponse } from '$lib/api'
 import type { PageData } from '@dosgato/templating'
+import type { PagetreeTypes } from './pages_index'
 
 export const EDITOR_PAGE_DETAILS = `
 id

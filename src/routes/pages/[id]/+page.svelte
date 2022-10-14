@@ -12,6 +12,7 @@
 
   let iframe: HTMLIFrameElement
   let selectedPath: string
+  $: editable = $editorStore.page.permissions.update
 
   function getActions (selectedPath: string) {
     return (selectedPath
@@ -20,7 +21,7 @@
           { label: 'Delete', onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) }
         ]
       : [
-          { label: 'Edit Page Properties', icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
+          { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
           { label: 'Show Versions', icon: historyIcon, onClick: () => {} }
         ]) as ActionPanelAction[]
   }
@@ -136,12 +137,16 @@
   async function iframeload () {
     data.temptoken = await getTempToken($editorStore.page)
   }
+
+  $: iframesrc = editable
+    ? `${environmentConfig.renderBase}/.edit/${$pageStore.pagetree.id}${$pageStore.path}?token=${data.temptoken}`
+    : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/latest${$pageStore.path}?token=${data.temptoken}`
 </script>
 
 <ActionPanel actions={getActions(selectedPath)}>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
   to steal credentials from other editors! -->
-  <iframe use:messages sandbox="allow-scripts" src="{environmentConfig.renderBase}/.edit/{$pageStore.pagetree.id}{$pageStore.path}?token={data.temptoken}" title="page preview for editing" on:load={iframeload}></iframe>
+  <iframe use:messages sandbox="allow-scripts" src={iframesrc} title="page preview for editing" on:load={iframeload}></iframe>
 </ActionPanel>
 
 {#if $editorStore.modal === 'edit' && $editorStore.editing}

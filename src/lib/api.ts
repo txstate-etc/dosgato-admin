@@ -29,8 +29,8 @@ import {
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
   GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
-  SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES, PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES,
-  PUBLISH_DELETION, UNDELETE_PAGES
+  PUBLISH_DELETION, UNDELETE_PAGES, SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES,
+  PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -160,8 +160,8 @@ class API {
   }
 
   async getRootPages () {
-    const { sites } = await this.query<{ sites: { pageroot: TreePage }[] }>(GET_ROOT_PAGES)
-    return sites.map(s => s.pageroot)
+    const { sites } = await this.query<{ sites: { pagetrees: { rootPage: RootTreePage }[] }[] }>(GET_ROOT_PAGES)
+    return sites.flatMap(s => s.pagetrees.map(t => t.rootPage))
   }
 
   async getSubPages (pageId: string) {
