@@ -53,6 +53,10 @@
   onMount(async () => {
     document.addEventListener('dragend', onDragEnd)
     await store.refresh()
+    if ($store.focused?.id) {
+      const el = document.getElementById(hashid($store.focused.id))
+      el?.scrollIntoView({ block: 'center' })
+    }
   })
   onDestroy(() => {
     document.removeEventListener('dragend', onDragEnd)
