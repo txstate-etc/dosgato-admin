@@ -3,10 +3,10 @@
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import historyIcon from '@iconify-icons/mdi/history'
   import type { ComponentData } from '@dosgato/templating'
+  import { FormStore } from '@txstate-mws/svelte-forms'
   import { get } from 'txstate-utils'
   import { ActionPanel, Dialog, editorStore, environmentConfig, FormDialog, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry } from '$lib'
   import { getTempToken } from './+page'
-  import { FormStore } from '@txstate-mws/svelte-forms'
 
   export let data: { temptoken: string }
 
@@ -26,7 +26,11 @@
         ]) as ActionPanelAction[]
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number }) {
+    if (message.action === 'scroll') {
+      $editorStore.scrollY = message.scrollTop!
+      return
+    }
     console.log('received message', message)
     if (message.action === 'drag') {
       const validdrops = new Set<string>()
@@ -135,6 +139,7 @@
   // if user refreshes the iframe manually, it's possible the temporary token will have
   // expired, so we need to watch for refresh errors and load in a new token
   async function iframeload () {
+    iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY }, '*')
     data.temptoken = await getTempToken($editorStore.page)
   }
 
