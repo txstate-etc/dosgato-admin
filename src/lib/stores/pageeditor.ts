@@ -22,7 +22,7 @@ export interface EditorState {
     availableComponents: (UITemplate & { name: string })[]
     templateKey?: string
   }
-  scrollY: number
+  scrollY?: number
 }
 
 class PageEditorStore extends Store<IPageEditorStore> {
@@ -31,7 +31,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   open (page: PageEditorPage) {
-    this.update(v => ({ editors: { ...v.editors, [page.id]: { ...v.editors[page.id], page, scrollY: 0 } }, active: page.id }))
+    this.update(v => ({ editors: { ...v.editors, [page.id]: { ...v.editors[page.id], page } }, active: page.id }))
   }
 
   free (pageId: string) {

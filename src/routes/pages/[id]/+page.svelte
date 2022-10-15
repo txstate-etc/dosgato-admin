@@ -139,7 +139,7 @@
   // if user refreshes the iframe manually, it's possible the temporary token will have
   // expired, so we need to watch for refresh errors and load in a new token
   async function iframeload () {
-    iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY }, '*')
+    iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0 }, '*')
     data.temptoken = await getTempToken($editorStore.page)
   }
 
