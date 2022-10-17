@@ -11,6 +11,7 @@
   export let cancelText: string|undefined = undefined
   export let continueText: string = 'Ok'
   export let escapable = isNotBlank(cancelText)
+  export let disabled = false
 
   export let labelid = randomid()
   export let descid = randomid()
@@ -29,7 +30,7 @@
         {#if isNotBlank(cancelText)}
           <Button cancel describedby="{labelid} {descid}" on:click={() => dispatch('escape')}>{cancelText}</Button>
         {/if}
-        <Button class="primary" describedby="{labelid} {descid}" on:click={() => dispatch('continue')}>{continueText}</Button>
+        <Button class="primary" {disabled} describedby="{labelid} {descid}" on:click={() => dispatch('continue')}>{continueText}</Button>
       </slot>
     </footer>
   </section>

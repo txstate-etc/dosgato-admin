@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { FileIcon } from '@dosgato/dialog'
+  import { FileIcon, Icon } from '@dosgato/dialog'
+  import trashLight from '@iconify-icons/ph/trash-light'
   import { roundTo, unique } from 'txstate-utils'
   import { api, uploadWithProgress } from '$lib'
   import Dialog from './Dialog.svelte'
@@ -9,6 +10,10 @@
   export let uploadPath: string
   export let maxFiles: number = 200
   export let escapable = true
+  export let mimeWhitelist: string[] = []
+  export let mimeBlacklist: string[] = []
+  $: whitelist = new Set(mimeWhitelist)
+  $: blacklist = new Set(mimeBlacklist)
 
   const dispatch = createEventDispatcher()
 
@@ -30,13 +35,13 @@
     e.preventDefault()
     dragover = 0
     if (!uploadLocked && e.dataTransfer?.items?.length) {
-      uploadList = unique(uploadList.concat(Array.from(e.dataTransfer.files)), 'name').slice(0, maxFiles)
+      uploadList = unique(uploadList.concat(Array.from(e.dataTransfer.files)), 'name').slice(-1 * maxFiles)
     }
   }
 
   function onUploadChange (e: InputEvent & { currentTarget: HTMLInputElement }) {
     const files = e.currentTarget.files
-    if (files?.length) uploadList = unique(uploadList.concat(Array.from(files)), 'name').slice(0, maxFiles)
+    if (files?.length) uploadList = unique(uploadList.concat(Array.from(files)), 'name').slice(-1 * maxFiles)
     e.currentTarget.value = ''
   }
 
@@ -72,9 +77,15 @@
       dispatch('escape')
     }
   }
+
+  function onDeleteFile (file: File) {
+    return () => {
+      uploadList = uploadList.filter(f => f !== file)
+    }
+  }
 </script>
 
-<Dialog {title} cancelText="Cancel" continueText="Upload" on:escape={onUploadEscape} on:continue={onUploadSubmit}>
+<Dialog {title} disabled={!uploadList.length} cancelText="Cancel" continueText="Upload" on:escape={onUploadEscape} on:continue={onUploadSubmit}>
   {#if uploadLocked}
     <progress value={uploadProgress} aria-label="Assets Uploading">{roundTo(100 * uploadProgress)}%</progress>
   {:else}
@@ -90,7 +101,12 @@
       <label for="uploader_input">Choose or drag files</label>
       <ul>
         {#each uploadList as file}
-          <li><FileIcon mime={file.type} inline />{file.name}</li>
+          <li>
+            <FileIcon width="1.5em" mime={file.type} inline />{file.name}<button type="button" on:click={onDeleteFile(file)}><Icon icon={trashLight} width="1.5em" hiddenLabel="Remove File" inline /></button>
+            {#if (whitelist.size && !whitelist.has(file.type)) || (blacklist.size && blacklist.has(file.type))}
+              <div class="error">File type not allowed</div>
+            {/if}
+          </li>
         {/each}
       </ul>
     </form>
@@ -136,5 +152,19 @@
   }
   .error {
     color: red;
+  }
+  button {
+    border: 0;
+    background: none;
+    padding: 0.5em;
+    cursor: pointer;
+  }
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  li div {
+    width: 100%;
   }
 </style>

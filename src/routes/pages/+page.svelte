@@ -22,14 +22,14 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, Tree, FormDialog, messageForDialog, Dialog, dateStamp, type ActionPanelAction, DeleteState } from '$lib'
+  import { api, ActionPanel, Tree, FormDialog, messageForDialog, Dialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { store, type TypedPageItem } from './+page'
   import './index.css'
   import { FieldText } from '@dosgato/dialog'
-  import { isNotNull, isNull } from 'txstate-utils'
+  import { isNull } from 'txstate-utils'
 
-  let modal: 'addpage' | 'deletepage' | 'renamepage' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | undefined = undefined
+  let modal: 'addpage' | 'deletepage' | 'renamepage' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | undefined = undefined
 
   const statusIcon = {
     published: triangleIcon,
@@ -64,8 +64,8 @@
     actions.push(
       { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages' } },
       { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => { modal = 'unpublishpages' } },
-      { label: 'Export', icon: exportIcon, disabled: false, onClick: () => {} },
-      { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => {} })
+      { label: 'Export', icon: exportIcon, disabled: false, onClick: () => goto(`${environmentConfig.apiBase}/pages/${page.id}`) },
+      { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => { modal = 'import' } })
     return actions
   }
   function multipageactions (pages: TypedPageItem[]) {
@@ -187,6 +187,11 @@
     if (resp.success) store.refresh()
     modal = undefined
   }
+
+  async function onImportSaved () {
+    store.openAndRefresh($store.selectedItems[0])
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
@@ -298,4 +303,12 @@
     on:escape={() => { modal = undefined }}>
     Restore this deleted page and its child pages?
   </Dialog>
+{:else if modal === 'import' && $store.selectedItems[0]}
+  <UploadUI
+    title="Import page into {$store.selectedItems[0].path}"
+    uploadPath="{environmentConfig.apiBase}/pages/{$store.selectedItems[0].id}"
+    mimeWhitelist={['application/json']}
+    maxFiles={1}
+    on:escape={() => { modal = undefined }}
+    on:saved={onImportSaved} />
 {/if}

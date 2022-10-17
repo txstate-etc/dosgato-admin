@@ -23,8 +23,11 @@
   button.reset.compact {
     padding: 0.1em;
   }
+  button.reset[disabled] {
+    opacity: 0.6;
+  }
 
-  button.reset:hover {
+  button.reset:not([disabled]):hover {
     background-color: var(--dosgato-btn-hover-bg, #622a2c);
     color: var(--dosgato-btn-hover-text, white);
   }
@@ -33,7 +36,7 @@
     background-color: var(--dosgato-btn-secondary-bg, rgb(18, 184, 134));
     color: var(--dosgato-btn-secondary-text, white);
   }
-  button.secondary:hover {
+  button.secondary:not([disabled]):hover {
     background-color: var(--dosgato-btn-secondary-hover-bg, rgb(12, 166, 120));
     color: var(--dosgato-btn-secondary-hover-text, white);
   }
@@ -42,7 +45,7 @@
     background-color: var(--dosgato-btn-cancel-bg, #757575);
     color: var(--dosgato-btn-cancel-text, white);
   }
-  button.cancel:hover {
+  button.cancel:not([disabled]):hover {
     background-color: var(--dosgato-btn-cancel-hover-bg, #595959);
     color: var(--dosgato-btn-cancel-hover-text, white);
   }
@@ -51,7 +54,7 @@
     background-color: var(--dosgato-btn-delete-bg, rgb(250, 82, 82));
     color: var(--dosgato-btn-delete-text, white);
   }
-  button.destructive:hover {
+  button.destructive:not([disabled]):hover {
     background-color: var(--dosgato-btn-delete-hover-bg, rgb(240, 62, 62));
     color: var(--dosgato-btn-delete-hover-text, white);
   }
