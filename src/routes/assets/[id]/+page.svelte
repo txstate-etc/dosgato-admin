@@ -63,7 +63,7 @@
         <StyledList>
           {#each asset.resizes as resize}
             <li class="flex-row">
-              <img src="{environmentConfig.apiBase}/resize/{resize.id}/{asset.name}_{resize.width}.{resize.extension}" width={resize.width} height={resize.height} alt="">
+              <img src="{environmentConfig.apiBase}/resize/{resize.id}/{asset.name}_{resize.width}.{resize.extension}?admin=1" width={resize.width} height={resize.height} alt="">
               <span class="mime">{resize.mime}</span>
               <span class="resolution">{resize.width} x {resize.height}</span>
               <span class="size">{bytesToHuman(resize.size)}</span>
