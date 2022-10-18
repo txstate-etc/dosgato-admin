@@ -18,6 +18,7 @@ const dataDetails = `
     id
   }
   deleted
+  deleteState
   published
   publishedAt
   permissions {
@@ -70,6 +71,7 @@ export interface DataItem {
     id: string
   }
   deleted: boolean
+  deleteState: number
   published: boolean
   publishedAt: string
   permissions: {
@@ -295,6 +297,39 @@ export const GET_DATA_BY_ID = `
 export const UPDATE_DATA = `
   mutation updateDataEntry ($dataId: ID!, $args: UpdateDataInput!, $validateOnly: Boolean) {
     updateDataEntry (dataId: $dataId, args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      data {
+        ${dataDetails}
+      }
+    }
+  }
+`
+
+export const DELETE_DATA = `
+  mutation deleteDataEntries ($dataIds: [ID!]!) {
+    deleteDataEntries (dataIds: $dataIds) {
+      ${mutationResponse}
+      data {
+        ${dataDetails}
+      }
+    }
+  }
+`
+
+export const PUBLISH_DATA_DELETION = `
+  mutation publishDataEntryDeletions ($dataIds: [ID!]!) {
+    publishDataEntryDeletions (dataIds: $dataIds) {
+      ${mutationResponse}
+      data {
+        ${dataDetails}
+      }
+    }
+  }
+`
+
+export const UNDELETE_DATA = `
+  mutation undeleteDataEntries ($dataIds: [ID!]!) {
+    undeleteDataEntries (dataIds: $dataIds) {
       ${mutationResponse}
       data {
         ${dataDetails}

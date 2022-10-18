@@ -13,10 +13,12 @@
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
+  import deleteEmpty from '@iconify-icons/mdi/delete-empty'
+  import trashSimpleFill from '@iconify-icons/ph/trash-simple-fill'
   import { FieldText } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
-  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import '../index.css'
@@ -24,7 +26,7 @@
 
   export let data: { mayManageGlobalData: boolean }
 
-  let modal: 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'renamedata' | 'editdata' | 'publishdata' | 'unpublishdata' | undefined
+  let modal: 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'renamedata' | 'editdata' | 'publishdata' | 'unpublishdata' | 'deletedata' | 'publishdeletedata' | 'undeletedata' | undefined
 
   $: templateKey = $templateStore?.id
   $: if ($templateStore) store.refresh()
@@ -41,6 +43,7 @@
     modifiedAt: DateTime
     publishedAt: DateTime
     status: string
+    deleteState: number
   }
 
   interface TreeDataFolder extends Omit<DataFolder, 'data'> {
@@ -133,8 +136,9 @@
     return []
   }
 
-  function getPathIcon (type: DataTreeNodeType) {
-    if (type === DataTreeNodeType.DATA) return cubeLight
+  function getPathIcon (item: AnyDataTreeItem) {
+    const type = item.type
+    if (type === DataTreeNodeType.DATA) return item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : cubeLight
     else if (type === DataTreeNodeType.FOLDER) return folderOutline
     else return applicationOutline
   }
@@ -197,15 +201,15 @@
         { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamedata' } },
         { label: 'Move', icon: cursorMove, disabled: !item.permissions?.move, onClick: () => {} }
       ]
-      if (item.published) {
-        actions.push({ label: 'Unpublish', icon: publishOffIcon, disabled: !item.permissions?.unpublish, onClick: () => { modal = 'unpublishdata' } })
-      } else {
+      if (item.deleteState === DeleteState.NOTDELETED) {
         actions.push({ label: 'Publish', icon: publishIcon, disabled: !item.permissions?.publish, onClick: () => { modal = 'publishdata' } })
+      } else if (item.deleteState === DeleteState.MARKEDFORDELETE) {
+        actions.push({ label: 'Publish Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => { modal = 'publishdeletedata' } })
       }
-      if (item.deleted) {
-        actions.push({ label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} })
-      } else {
-        actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => {} })
+      actions.push({ label: 'Unpublish', icon: publishOffIcon, disabled: !item.permissions?.unpublish, onClick: () => { modal = 'unpublishdata' } })
+      if (item.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => { modal = 'deletedata' } })
+      else if (item.deleteState === DeleteState.MARKEDFORDELETE) {
+        actions.push({ label: 'Restore Data', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => { modal = 'undeletedata' } })
       }
       return actions
     } else if (item.type === DataTreeNodeType.FOLDER) {
@@ -396,12 +400,30 @@
     modal = undefined
     if (itemEditing) itemEditing = undefined
   }
+
+  async function onDeleteData () {
+    const resp = await api.deleteDataEntries([$store.selectedItems[0].id])
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
+
+  async function onPublishDeletion () {
+    const resp = await api.publishDeleteData([$store.selectedItems[0].id])
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
+
+  async function onUndeleteData () {
+    const resp = await api.undeleteData([$store.selectedItems[0].id])
+    if (resp.success) store.refresh()
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={getActions($store.selectedItems)}>
   <Tree {store} headers={[
-    { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => getPathIcon(item.type), get: 'name' },
-    { label: 'Status', id: 'status', defaultWidth: '5em', icon: item => item.type === DataTreeNodeType.DATA ? statusIcon[item.status] : undefined, class: item => item.type === DataTreeNodeType.DATA ? item.status : '' },
+    { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => getPathIcon(item), get: 'name' },
+    { label: 'Status', id: 'status', defaultWidth: '5em', icon: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? trashSimpleFill : statusIcon[item.status]) : undefined, class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
     { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
     { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
   ]}></Tree>
@@ -495,4 +517,31 @@
       </SubForm>
     {/if}
   </FormDialog>
+{:else if modal === 'deletedata'}
+  <Dialog
+    title='Delete'
+    continueText='Delete'
+    cancelText='Cancel'
+    on:continue={onDeleteData}
+    on:escape={() => { modal = undefined }}>
+    Delete this data?
+  </Dialog>
+{:else if modal === 'publishdeletedata'}
+  <Dialog
+    title='Publish Deletion'
+    continueText='Delete'
+    cancelText='Cancel'
+    on:continue={onPublishDeletion}
+    on:escape={() => { modal = undefined }}>
+    Publish this deletion? The selected data will no longer appear in sites.
+  </Dialog>
+{:else if modal === 'undeletedata'}
+  <Dialog
+      title='Restore Deleted Data'
+      continueText='Restore'
+      cancelText='Cancel'
+      on:continue={onUndeleteData}
+      on:escape={() => { modal = undefined }}>
+      Restore this deleted data?
+  </Dialog>
 {/if}

@@ -30,7 +30,7 @@ import {
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
   GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
   PUBLISH_DELETION, UNDELETE_PAGES, SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES,
-  PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage
+  PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -434,6 +434,21 @@ class API {
   async unpublishDataEntries (dataIds: string[]) {
     const { unpublishDataEntries } = await this.query<{ unpublishDataEntries: MutationResponse }>(UNPUBLISH_DATA_ENTRIES, { dataIds })
     return unpublishDataEntries
+  }
+
+  async deleteDataEntries (dataIds: string[]) {
+    const { deleteDataEntries } = await this.query<{ deleteDataEntries: MutationResponse & { data: DataItem[] }}>(DELETE_DATA, { dataIds })
+    return deleteDataEntries
+  }
+
+  async publishDeleteData (dataIds: string[]) {
+    const { publishDataEntryDeletions } = await this.query<{ publishDataEntryDeletions: MutationResponse & { data: DataItem[] }}>(PUBLISH_DATA_DELETION, { dataIds })
+    return publishDataEntryDeletions
+  }
+
+  async undeleteData (dataIds: string[]) {
+    const { undeleteDataEntries } = await this.query<{ undeleteDataEntries: MutationResponse & { data: DataItem[] }}>(UNDELETE_DATA, { dataIds })
+    return undeleteDataEntries
   }
 
   async getRoleList () {

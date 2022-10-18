@@ -7,3 +7,6 @@
 .status.unpublished {
   color: var(--dosgato-red, #9a3332);
 }
+.status.deleted {
+  color: #555;
+}
