@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { afterNavigate, beforeNavigate, goto } from '$app/navigation'
+  import { base } from '$app/paths'
   import { Icon } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import historyIcon from '@iconify-icons/mdi/history'
@@ -11,10 +13,10 @@
   export let data: { temptoken: string }
 
   let iframe: HTMLIFrameElement
-  let selectedPath: string
+  let selectedPath: string | undefined
   $: editable = $editorStore.page.permissions.update
 
-  function getActions (selectedPath: string) {
+  function getActions (selectedPath?: string) {
     return (selectedPath
       ? [
           { label: 'Edit', onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
@@ -26,7 +28,7 @@
         ]) as ActionPanelAction[]
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string }) {
     if (message.action === 'scroll') {
       $editorStore.scrollY = message.scrollTop!
       return
@@ -67,6 +69,10 @@
     } else if (message.action === 'drop') {
       pageEditorStore.moveComponent(message.from!, message.to!)
         .then(refreshIframe)
+    } else if (message.action === 'deselect') {
+      selectedPath = undefined
+    } else if (message.action === 'jump') {
+      goto(base + '/pages/' + message.pageId!)
     }
   }
 
@@ -139,13 +145,23 @@
   // if user refreshes the iframe manually, it's possible the temporary token will have
   // expired, so we need to watch for refresh errors and load in a new token
   async function iframeload () {
-    iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0 }, '*')
+    iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath }, '*')
     data.temptoken = await getTempToken($editorStore.page)
   }
 
-  $: iframesrc = editable
-    ? `${environmentConfig.renderBase}/.edit/${$pageStore.pagetree.id}${$pageStore.path}?token=${data.temptoken}`
-    : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/latest${$pageStore.path}?token=${data.temptoken}`
+  let pauseiframe = false
+  beforeNavigate(() => { pauseiframe = true; selectedPath = undefined })
+  afterNavigate(() => { pauseiframe = false; calcIframeSrc() })
+
+  let iframesrc: string
+  function calcIframeSrc (..._: any) {
+    iframesrc = editable
+      ? `${environmentConfig.renderBase}/.edit/${$pageStore.pagetree.id}${$pageStore.path}?token=${data.temptoken}`
+      : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/latest${$pageStore.path}?token=${data.temptoken}`
+  }
+
+  $: if (!pauseiframe) calcIframeSrc(editable, $pageStore.pagetree.id, $pageStore.path, data.temptoken)
+
 </script>
 
 <ActionPanel actions={getActions(selectedPath)}>
