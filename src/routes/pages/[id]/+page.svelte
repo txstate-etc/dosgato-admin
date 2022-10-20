@@ -11,7 +11,8 @@
   import { getTempToken } from './+page'
 
   export let data: { temptoken: string, page: PageEditorPage }
-  $: pageEditorStore.open(data.page)
+  $: ({ page, temptoken } = data)
+  $: pageEditorStore.open(page)
 
   let iframe: HTMLIFrameElement
   $: editable = $editorStore.page.permissions.update
@@ -82,10 +83,10 @@
 
   async function refreshIframe () {
     const newTempToken = await getTempToken($editorStore!.page)
-    if (newTempToken === data.temptoken) {
+    if (newTempToken === temptoken) {
       iframe.src = iframe.src // force refresh the iframe
     } else {
-      data.temptoken = newTempToken // if there's a new token, setting it will alter the iframe src and therefore refresh it
+      temptoken = newTempToken // if there's a new token, setting it will alter the iframe src and therefore refresh it
     }
   }
 
@@ -146,7 +147,7 @@
   // expired, so we need to watch for refresh errors and load in a new token
   async function iframeload () {
     iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath: $editorStore.selectedPath }, '*')
-    data.temptoken = await getTempToken($editorStore.page)
+    temptoken = await getTempToken($editorStore.page)
   }
 
   $: iframesrc = editable
