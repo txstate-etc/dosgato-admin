@@ -753,6 +753,9 @@ class API {
     if (!Array.isArray(toObj)) {
       toParent = toParts.slice(0, -1).join('.')
       toIdx = Number(toParts[toParts.length - 1])
+
+      // when they dragged to the item directly below, reorder below that item
+      if (fromParent === toParent && toIdx === fromIdx + 1) toIdx++
     } else {
       toIdx = toObj.length
     }
