@@ -34,6 +34,7 @@ services:
     volumes:
       - ../dosgato/src:/usr/app/src
       - ../dosgato/testserver:/usr/app/testserver
+      - ../dosgato/bootstrap:/bootstrap
     depends_on:
       - mysql
   dosgato-render:
