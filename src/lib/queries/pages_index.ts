@@ -6,6 +6,7 @@ path
 name
 title
 template {
+  key
   name
 }
 modifiedAt
@@ -35,6 +36,7 @@ export interface TreePage {
   name: string
   title?: string
   template?: {
+    key: string
     name: string
   }
   modifiedAt: string

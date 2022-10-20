@@ -1,8 +1,8 @@
 import { base } from '$app/paths'
 import type { AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
-import { MessageType } from '@txstate-mws/svelte-forms'
-import { get, isBlank, keyby, set, splice, toArray } from 'txstate-utils'
+import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
+import { get, isBlank, keyby, omit, set, splice, toArray } from 'txstate-utils'
 import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
@@ -36,6 +36,7 @@ import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
 import { environmentConfig } from './stores'
 import { DateTime } from 'luxon'
+import { messageForDialog } from './helpers'
 
 export interface MutationResponse {
   success: boolean
@@ -723,7 +724,7 @@ class API {
     const msgPrefix = `data.${path}.${area.length}`
     return {
       ...updatePage,
-      messages: updatePage.messages.map(m => ({ type: m.type, message: m.message, path: m.arg.startsWith(msgPrefix) ? m.arg.substring(msgPrefix.length) : '' })),
+      messages: messageForDialog(updatePage.messages, msgPrefix),
       data: get(updatePage.page.data, path)?.slice(-1)[0]
     }
   }
@@ -734,8 +735,19 @@ class API {
     const msgPrefix = `data.${path}`
     return {
       ...updatePage,
-      messages: updatePage.messages.map(m => ({ type: m.type, message: m.message, path: m.arg.startsWith(msgPrefix) ? m.arg.substring(msgPrefix.length) : '' })),
+      messages: messageForDialog(updatePage.messages, msgPrefix),
       data: get(updatePage.page.data, path)
+    }
+  }
+
+  async changeTemplate (pageId: string, templateKey: string, validateOnly?: boolean) {
+    const page = await this.getEditorPage(pageId)
+    if (!page) return { success: false, messages: [{ type: 'error', message: 'Page not found.' }] as Feedback[], data: {} }
+    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: { ...page.data, templateKey }, dataVersion: page.version.version, validateOnly })
+    return {
+      ...omit(updatePage, 'page'),
+      messages: updatePage.messages.map<Feedback>(m => ({ type: m.type, message: m.message })),
+      data: {}
     }
   }
 

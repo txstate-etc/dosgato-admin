@@ -5,6 +5,7 @@
   import archiveLight from '@iconify-icons/ph/archive-light'
   import sandboxIcon from '@iconify-icons/file-icons/sandbox'
   import circleIcon from '@iconify-icons/mdi/circle'
+  import layoutLight from '@iconify-icons/ph/layout-light'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import publishIcon from '@iconify-icons/mdi/publish'
@@ -26,10 +27,10 @@
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { store, type TypedPageItem } from './+page'
   import './index.css'
-  import { FieldText } from '@dosgato/dialog'
+  import { FieldSelect, FieldText } from '@dosgato/dialog'
   import { isNull } from 'txstate-utils'
 
-  let modal: 'addpage' | 'deletepage' | 'renamepage' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | undefined = undefined
+  let modal: 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | undefined = undefined
 
   const statusIcon = {
     published: triangleIcon,
@@ -53,6 +54,7 @@
     }
     actions.push(
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
+      { label: 'Change Template', icon: layoutLight, disabled: !page.permissions.update, onClick: onClickTemplateChange },
       { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move, onClick: () => { modal = 'renamepage' } },
       { label: 'Duplicate', icon: duplicateIcon, disabled: !page.parent?.permissions.create, onClick: () => { modal = 'duplicatepage' } },
       { label: 'Move', icon: cursorMove, disabled: !page.permissions.move, onClick: () => {} },
@@ -192,6 +194,22 @@
     store.openAndRefresh($store.selectedItems[0])
     modal = undefined
   }
+
+  async function onClickTemplateChange () {
+    availableTemplates = await api.getTemplatesByPage($store.selectedItems[0].id)
+    modal = 'changetemplate'
+  }
+  async function onChangeTemplateSubmit (data: { templateKey: string }) {
+    return await api.changeTemplate($store.selectedItems[0].id, data.templateKey)
+  }
+  async function validateChangeTemplate (data: { templateKey: string }) {
+    const resp = await api.changeTemplate($store.selectedItems[0].id, data.templateKey, true)
+    return resp.messages
+  }
+  function onChangeTemplateSaved () {
+    store.refresh($store.selectedItems[0].parent)
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
@@ -224,6 +242,16 @@
     on:escape={() => { modal = undefined }}
     on:saved={onRenamePageComplete}>
     <FieldText path='name' label='Name' required />
+  </FormDialog>
+{:else if modal === 'changetemplate'}
+  <FormDialog
+    submit={onChangeTemplateSubmit}
+    validate={validateChangeTemplate}
+    title='Change Page Template'
+    preload={{ templateKey: $store.selectedItems[0].template?.key }}
+    on:escape={() => { modal = undefined }}
+    on:saved={onChangeTemplateSaved}>
+    <FieldSelect notNull path="templateKey" choices={availableTemplates} />
   </FormDialog>
 {:else if modal === 'duplicatepage'}
   <Dialog
