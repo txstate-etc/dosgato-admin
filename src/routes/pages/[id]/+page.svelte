@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { afterNavigate, beforeNavigate, goto } from '$app/navigation'
+  import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { Icon } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
@@ -7,13 +7,13 @@
   import type { ComponentData } from '@dosgato/templating'
   import { FormStore } from '@txstate-mws/svelte-forms'
   import { get } from 'txstate-utils'
-  import { ActionPanel, Dialog, editorStore, environmentConfig, FormDialog, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry } from '$lib'
+  import { ActionPanel, Dialog, editorStore, environmentConfig, FormDialog, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage } from '$lib'
   import { getTempToken } from './+page'
 
-  export let data: { temptoken: string }
+  export let data: { temptoken: string, page: PageEditorPage }
+  $: pageEditorStore.open(data.page)
 
   let iframe: HTMLIFrameElement
-  let selectedPath: string | undefined
   $: editable = $editorStore.page.permissions.update
 
   function getActions (selectedPath?: string) {
@@ -59,7 +59,7 @@
       }
       iframe.contentWindow?.postMessage({ validdrops }, '*')
     } else if (message.action === 'select') {
-      selectedPath = message.path
+      pageEditorStore.select(message.path)
     } else if (message.action === 'edit') {
       pageEditorStore.editComponentShowModal(message.path)
     } else if (message.action === 'create') {
@@ -70,7 +70,7 @@
       pageEditorStore.moveComponent(message.from!, message.to!)
         .then(refreshIframe)
     } else if (message.action === 'deselect') {
-      selectedPath = undefined
+      pageEditorStore.select(undefined)
     } else if (message.action === 'jump') {
       goto(base + '/pages/' + message.pageId!)
     }
@@ -145,26 +145,16 @@
   // if user refreshes the iframe manually, it's possible the temporary token will have
   // expired, so we need to watch for refresh errors and load in a new token
   async function iframeload () {
-    iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath }, '*')
+    iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath: $editorStore.selectedPath }, '*')
     data.temptoken = await getTempToken($editorStore.page)
   }
 
-  let pauseiframe = false
-  beforeNavigate(() => { pauseiframe = true; selectedPath = undefined })
-  afterNavigate(() => { pauseiframe = false; calcIframeSrc() })
-
-  let iframesrc: string
-  function calcIframeSrc (..._: any) {
-    iframesrc = editable
-      ? `${environmentConfig.renderBase}/.edit/${$pageStore.pagetree.id}${$pageStore.path}?token=${data.temptoken}`
-      : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/latest${$pageStore.path}?token=${data.temptoken}`
-  }
-
-  $: if (!pauseiframe) calcIframeSrc(editable, $pageStore.pagetree.id, $pageStore.path, data.temptoken)
-
+  $: iframesrc = editable
+    ? `${environmentConfig.renderBase}/.edit/${$pageStore.pagetree.id}${$pageStore.path}?token=${data.temptoken}`
+    : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/latest${$pageStore.path}?token=${data.temptoken}`
 </script>
 
-<ActionPanel actions={getActions(selectedPath)}>
+<ActionPanel actions={getActions($editorStore.selectedPath)}>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
   to steal credentials from other editors! -->
   <iframe use:messages sandbox="allow-scripts" src={iframesrc} title="page preview for editing" on:load={iframeload}></iframe>

@@ -25,10 +25,9 @@ export const load: Load<{ id: string }> = async ({ params, fetch }) => {
   const page = await api.getEditorPage(params.id)
   if (!page) throw error(404)
   const temptoken = await getTempToken(page, fetch)
-  pageEditorStore.open(page)
   subnavStore.open('pages', { href: `${base}/pages/${page.id}`, label: page.name, icon: applicationEditOutline, pageId: page.id, onClose: free })
   toBeFreed.delete(page.id)
   for (const pageId of toBeFreed.values()) pageEditorStore.free(pageId)
   toBeFreed.clear()
-  return { temptoken }
+  return { temptoken, page }
 }

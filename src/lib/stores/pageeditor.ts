@@ -11,6 +11,7 @@ export interface IPageEditorStore {
 export interface EditorState {
   page: PageEditorPage
   modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties'
+  selectedPath?: string
   editing?: {
     path: string
     data: any
@@ -192,6 +193,16 @@ class PageEditorStore extends Store<IPageEditorStore> {
       if (!v.active) return v
       const editorState = v.editors[v.active]
       return set(v, `editors["${v.active}"]`, { ...editorState, modal: undefined, editing: undefined, creating: undefined })
+    })
+  }
+
+  select (path?: string) {
+    this.update(v => {
+      if (!v.active) return v
+      const editorState = v.editors[v.active]
+      if (!editorState) return v
+      const newEditorState: EditorState = { ...editorState, selectedPath: path }
+      return set(v, `editors["${v.active}"]`, newEditorState)
     })
   }
 }
