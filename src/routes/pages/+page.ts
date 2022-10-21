@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { api, TreeStore, type RootTreePage, type TreePage, type TypedTreeItem } from '$lib'
+import { api, mutationResponse, TreeStore, type RootTreePage, type TreePage, type TypedTreeItem } from '$lib'
 
 export interface PageItem extends Omit<Omit<Omit<TreePage, 'modifiedAt'>, 'publishedAt'>, 'children'> {
   modifiedAt: DateTime
@@ -30,7 +30,12 @@ async function fetchChildren (item?: TypedPageItem) {
 }
 
 async function dropHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
-  return true
+  const resp = await api.query(`mutation movePages ($pageIds: [ID!]!, $targetId: ID!, $above: Boolean) {
+    movePages (pageIds: $pageIds, targetId: $targetId, above: $above) {
+      ${mutationResponse}
+    }
+  }`, { pageIds: selectedItems.map(itm => itm.id), targetId: dropTarget.id, above })
+  return resp.success
 }
 function dragEligible (items: TypedPageItem[]) {
   // sites cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites
