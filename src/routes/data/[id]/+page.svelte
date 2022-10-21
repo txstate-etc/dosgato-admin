@@ -227,6 +227,12 @@
     }
   }
 
+  function publishMultipleDeletionDisabled (items: TypedTreeItem<TreeDataItem>[]) {
+    if (items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.delete)) return true
+    if (items.some((item: TypedTreeItem<TreeDataItem>) => item.deleteState === DeleteState.NOTDELETED)) return true
+    return false
+  }
+
   function multipleActions (items: TypedDataTreeItem[]) {
     // the only data/datafolder actions available for sites are Adding data and datafolders
     // and that doesn't make sense in the context of multiple selections
@@ -240,10 +246,11 @@
     if (items.every((item) => item.type === DataTreeNodeType.DATA)) {
       return [
         { label: 'Move', icon: cursorMove, disabled: false, onClick: () => {} },
-        { label: 'Publish', icon: publishIcon, disabled: false, onClick: () => {} },
-        { label: 'Unpublish', icon: publishOffIcon, disabled: false, onClick: () => {} },
-        { label: 'Delete', icon: deleteOutline, disabled: false, onClick: () => {} },
-        { label: 'Undelete', icon: deleteRestore, disabled: false, onClick: () => {} }
+        { label: 'Publish', icon: publishIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.publish), onClick: () => { modal = 'publishdata' } },
+        { label: 'Unpublish', icon: publishOffIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.unpublish), onClick: () => { modal = 'unpublishdata' } },
+        { label: 'Delete', icon: deleteOutline, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.delete), onClick: () => { modal = 'deletedata' } },
+        { label: 'Publish Deletion', icon: deleteOutline, disabled: publishMultipleDeletionDisabled(items as TypedTreeItem<TreeDataItem>[]), onClick: () => { modal = 'publishdeletedata' } },
+        { label: 'Restore Data', icon: deleteRestore, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.undelete), onClick: () => { modal = 'undeletedata' } }
       ]
     }
     return []
@@ -402,19 +409,19 @@
   }
 
   async function onDeleteData () {
-    const resp = await api.deleteDataEntries([$store.selectedItems[0].id])
+    const resp = await api.deleteDataEntries($store.selectedItems.map(d => d.id))
     if (resp.success) store.refresh()
     modal = undefined
   }
 
   async function onPublishDeletion () {
-    const resp = await api.publishDeleteData([$store.selectedItems[0].id])
+    const resp = await api.publishDeleteData($store.selectedItems.map(d => d.id))
     if (resp.success) store.refresh()
     modal = undefined
   }
 
   async function onUndeleteData () {
-    const resp = await api.undeleteData([$store.selectedItems[0].id])
+    const resp = await api.undeleteData($store.selectedItems.map(d => d.id))
     if (resp.success) store.refresh()
     modal = undefined
   }
