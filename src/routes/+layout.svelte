@@ -86,12 +86,16 @@
   <main>
     <slot />
   </main>
-  {#if $toasts.length}
+  {#if $toasts.length > 1}
     <ul class="toasts" aria-live="assertive">
       {#each $toasts as toast}
-        <InlineMessage message={{ message: toast.message, type: toast.type }} />
+        <li><InlineMessage message={{ message: toast.message, type: toast.type }} /></li>
       {/each}
     </ul>
+  {:else if $toasts.length}
+    <div class="toasts" aria-live="assertive">
+      <InlineMessage message={{ message: $toasts[0].message, type: $toasts[0].type }} />
+    </div>
   {/if}
 {/if}
 
@@ -184,7 +188,12 @@
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 50%;
-    min-width: 10em;
+    width: 50vw;
+    min-width: 300px;
+    max-width: 900px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    z-index: var(--toast-z, calc(var(--modal-z, 3000) + 1));
   }
 </style>
