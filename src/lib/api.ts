@@ -34,7 +34,7 @@ import {
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
-import { environmentConfig } from './stores'
+import { environmentConfig, toast } from './stores'
 import { DateTime } from 'luxon'
 import { messageForDialog } from './helpers'
 
@@ -147,7 +147,10 @@ class API {
       else throw error(response.status, response.statusText)
     }
     const gqlresponse = await response.json()
-    if (gqlresponse.errors?.length) throw new Error(JSON.stringify(gqlresponse.errors))
+    if (gqlresponse.errors?.length) {
+      toast(gqlresponse.errors[0].message)
+      throw new Error(JSON.stringify(gqlresponse.errors))
+    }
     return gqlresponse.data
   }
 

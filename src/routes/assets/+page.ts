@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import { sortby } from 'txstate-utils'
-import { type TreeAsset, type TypedTreeItem, type TreeAssetFolder, api, TreeStore } from '$lib'
+import { type TreeAsset, type TypedTreeItem, type TreeAssetFolder, api, TreeStore, mutationResponse } from '$lib'
 
 export interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
   kind: 'asset'
@@ -32,7 +32,16 @@ async function fetchChildren (item?: TypedAssetFolderItem) {
 }
 
 async function dropHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean) {
-  return true
+  const resp = await api.query(`mutation movePages ($assetIds: [ID!]!, $folderIds: [ID!]!, $targetFolderId: ID!) {
+    moveAssetsAndFolders (assetIds: $assetIds, folderIds: $folderIds, targetFolderId: $targetFolderId) {
+      ${mutationResponse}
+    }
+  }`, {
+    assetIds: selectedItems.filter(itm => itm.kind === 'asset').map(itm => itm.id),
+    folderIds: selectedItems.filter(itm => itm.kind === 'folder').map(itm => itm.id),
+    targetFolderId: dropTarget.id
+  })
+  return resp.success
 }
 
 function dragEligible (items: (TypedAssetFolderItem | TypedAssetItem)[]) {

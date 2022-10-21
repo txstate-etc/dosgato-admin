@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Icon } from '@dosgato/dialog'
+  import { Icon, InlineMessage } from '@dosgato/dialog'
   import usersLight from '@iconify-icons/ph/users-light'
   import closeThick from '@iconify-icons/mdi/close-thick'
   import dotsThree from '@iconify-icons/ph/dots-three'
@@ -11,7 +11,7 @@
   import { PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
-  import { globalStore, subnavStore, currentSubNav } from '$lib'
+  import { currentSubNav, globalStore, subnavStore, toasts } from '$lib'
   import LabeledIcon from '$lib/components/LabeledIcon.svelte'
   import { goto } from '$app/navigation'
 
@@ -86,6 +86,13 @@
   <main>
     <slot />
   </main>
+  {#if $toasts.length}
+    <ul class="toasts" aria-live="assertive">
+      {#each $toasts as toast}
+        <InlineMessage message={{ message: toast.message, type: toast.type }} />
+      {/each}
+    </ul>
+  {/if}
 {/if}
 
 <style>
@@ -170,5 +177,14 @@
 
   main {
     padding: 1em;
+  }
+
+  .toasts {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    min-width: 10em;
   }
 </style>

@@ -259,7 +259,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     this.trigger()
   }
 
-  drop (item: TypedTreeItem<T>, above: boolean) {
+  async drop (item: TypedTreeItem<T>, above: boolean) {
     if (!this.dropHandler) return false
     this.value.dragging = false
     if (!this.dropEligible(item, above)) return false
@@ -268,12 +268,14 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     const commonparent = this.findCommonParent([...this.value.selectedItems, item])
     const result = this.dropHandler(this.value.selectedItems, item, above)
     if (result === false || result === true) return result
-    result
-      .then(async result => {
-        this.update(v => ({ ...v, loading: false }))
-        await this.refresh(commonparent)
-      })
-      .catch(console.error)
+    try {
+      await result
+    } catch (e: any) {
+      console.error(e)
+    } finally {
+      this.update(v => ({ ...v, loading: false }))
+      await this.refresh(commonparent)
+    }
     return true
   }
 
