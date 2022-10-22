@@ -70,7 +70,7 @@
       const el = document.getElementById(hashid($store.focused.id))
       if (el && hadFocus) {
         if (el !== document.activeElement) el.focus()
-      } else if (hadFocus) store.focus($store.viewItems[0])
+      } else store.focus($store.viewItems[0])
     } else store.focus($store.viewItems[0])
   })
 </script>
@@ -88,7 +88,7 @@
 <div class="tree-header" aria-hidden="true">
   <div class="checkbox">&nbsp;</div>
   {#each headers as header, i (header.label)}
-    <div id={header.id} style:width={header.defaultWidth}>{header.label}</div>
+    <div id={header.id} class={header.id} style:width={header.defaultWidth}>{header.label}</div>
   {/each}
 </div>
 {#if $viewItems.length}

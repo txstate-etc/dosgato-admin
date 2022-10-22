@@ -35,7 +35,7 @@
 
 </script>
 
-<ActionPanel actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : []}>
+<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Templates'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : []}>
   <Tree singleSelect {store} headers={[
     { id: 'name', label: 'Name', get: 'name', defaultWidth: '25%', icon: itm => templateRegistry.getTemplate(itm.key)?.icon ?? boundingBoxLight },
     { id: 'key', label: 'Key', get: 'key', defaultWidth: '25%' },

@@ -155,7 +155,7 @@
     : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/latest${$pageStore.path}?token=${data.temptoken}`
 </script>
 
-<ActionPanel actions={getActions($editorStore.selectedPath)}>
+<ActionPanel actionsTitle={$editorStore.selectedPath ? '' : 'Page Actions'} actions={getActions($editorStore.selectedPath)}>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
   to steal credentials from other editors! -->
   <iframe use:messages sandbox="allow-scripts" src={iframesrc} title="page preview for editing" on:load={iframeload}></iframe>

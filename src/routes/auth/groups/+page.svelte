@@ -66,7 +66,7 @@
 
 </script>
 
-<ActionPanel actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
+<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Groups'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/groups/' + detail.id)} headers ={[
     { id: 'name', label: 'Name', get: 'name', defaultWidth: '35%', icon: usersThreeLight },
     { id: 'members', label: 'Members', render: item => String(item.users.length), defaultWidth: '15%' },

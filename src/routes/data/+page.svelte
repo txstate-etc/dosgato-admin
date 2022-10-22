@@ -7,7 +7,7 @@
   export let data: { templates: TemplateListTemplate[] }
 </script>
 
-<ActionPanel actions={[]}>
+<ActionPanel actionsTitle="Data Types" actions={[]}>
   <div class="grid-wrapper">
     <div class="template-grid">
       {#each data.templates as template (template.key)}

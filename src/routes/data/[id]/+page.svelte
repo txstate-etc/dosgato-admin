@@ -427,7 +427,7 @@
   }
 </script>
 
-<ActionPanel actions={getActions($store.selectedItems)}>
+<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Data'} actions={getActions($store.selectedItems)}>
   <Tree {store} headers={[
     { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => getPathIcon(item), get: 'name' },
     { label: 'Status', id: 'status', defaultWidth: '5em', icon: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? trashSimpleFill : statusIcon[item.status]) : undefined, class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
@@ -493,7 +493,7 @@
     <!-- TODO: Need some description text explaining this field -->
     <FieldText path='name' label='Data Name' required></FieldText>
     {@const reg = templateRegistry.getTemplate($templateStore.id)}
-    {#if reg}
+    {#if reg?.dialog}
       <SubForm path='data'>
         <svelte:component this={reg.dialog}></svelte:component>
       </SubForm>
@@ -518,7 +518,7 @@
     on:saved={onSaved}
     preload={{ data: itemEditing ? itemEditing.data : {} }}>
     {@const reg = templateRegistry.getTemplate($templateStore.id)}
-    {#if reg}
+    {#if reg?.dialog}
       <SubForm path='data'>
         <svelte:component this={reg.dialog}></svelte:component>
       </SubForm>

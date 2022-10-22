@@ -89,7 +89,7 @@
 
   $: actions = $store.selected.size ? ($store.selected.size === 1 ? singleactions($store.selectedItems[0]) : multiactions($store.selectedItems)) : emptyactions
 </script>
-<ActionPanel {actions}>
+<ActionPanel {actions} actionsTitle={$store.selected.size ? $store.selectedItems[0].id : 'Users'}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/users/' + detail.id)} headers={[
     { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', defaultWidth: '25%', icon: u => u.disabled ? accountOff : accountIcon },
     { id: 'fullname', label: 'Full Name', get: 'name', defaultWidth: '25%' },
