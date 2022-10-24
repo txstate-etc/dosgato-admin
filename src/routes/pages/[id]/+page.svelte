@@ -132,8 +132,6 @@
     return resp!
   }
 
-  const pagePropertiesStore = new FormStore<any>(onEditPagePropertiesSubmit, onEditPagePropertiesValidate)
-
   function messages (el: HTMLIFrameElement) {
     iframe = el
     const handler = e => { if (e.source === el.contentWindow) onMessage(e.data) }
@@ -199,10 +197,10 @@
     Are you sure you want to delete the {template?.name ?? 'unrecognized'}?
   </Dialog>
 {:else if $editorStore.modal === 'properties' && $editorStore.editing}
-  <FormDialog store={pagePropertiesStore} title="Edit Page Properties" submit={onEditPagePropertiesSubmit} on:escape={cancelModal} preload={$editorStore.editing.data}>
+  <FormDialog title="Edit Page Properties" submit={onEditPagePropertiesSubmit} on:escape={cancelModal} preload={$editorStore.editing.data} let:data>
     {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
     {#if template && template.dialog}
-      <svelte:component this={template.dialog} store={pagePropertiesStore}/>
+      <svelte:component this={template.dialog} creating={false} {data} templateProperties={template.templateProperties} {environmentConfig} />
     {:else}
       <span>This content uses an unrecognized template. Please contact support for assistance.</span>
     {/if}

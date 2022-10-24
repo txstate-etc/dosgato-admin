@@ -1,8 +1,9 @@
 <script lang="ts">
   import FormDialog from '$lib/components/FormDialog.svelte'
-  import { templateRegistry } from '$lib'
+  import { environmentConfig, templateRegistry } from '$lib'
   import { FieldSelect, FieldText } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
+  import { derivedStore } from '@txstate-mws/svelte-store'
   import { type SubmitResponse, type Feedback, FormStore, SubForm } from '@txstate-mws/svelte-forms'
   import type { CreateWithPageState } from './createwithpage'
   import { createEventDispatcher } from 'svelte'
@@ -16,7 +17,11 @@
   export let templateChoices: PopupMenuItem[]
 
   const store: FormStore = new FormStore<CreateWithPageState>(submit, validate)
-
+  const tkey = derivedStore<string>(store, 'data.templateKey')
+  function reactToTemplateKey (..._) {
+    store.update(v => ({ ...v, data: { ...v.data, data: { ...v.data.data, areas: templateRegistry.getTemplate(v.data.templateKey)?.defaultContent } } }))
+  }
+  $: reactToTemplateKey($tkey)
   function escape () {
     store.reset()
     dispatch('escape')
@@ -29,7 +34,7 @@
   <SubForm path='data' conditional={isNotNull($store.data?.templateKey)}>
     {@const template = templateRegistry.getTemplate($store.data.templateKey)}
     {#if template && template.dialog}
-      <svelte:component this={template.dialog} {store}/>
+      <svelte:component this={template.dialog} creating={true} data={{}} templateProperties={template.templateProperties} {environmentConfig} />
     {:else}
       <span>This content uses an unrecognized template. Please contact support for assistance.</span>
     {/if}
