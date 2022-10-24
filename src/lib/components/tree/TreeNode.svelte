@@ -4,7 +4,7 @@
   import checkboxBlankOutline from '@iconify-icons/mdi/checkbox-blank-outline'
   import menuDown from '@iconify-icons/mdi/menu-down'
   import menuRight from '@iconify-icons/mdi/menu-right'
-  import { modifierKey } from '@txstate-mws/svelte-components'
+  import { modifierKey, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { createEventDispatcher, getContext } from 'svelte'
   import { hashid, isNotBlank, toArray } from 'txstate-utils'
   import { type TreeStore, TREE_STORE_CONTEXT, type TypedTreeItem, type TreeItemFromDB, type TreeHeader } from './treestore'
@@ -237,6 +237,8 @@
     on:mousedown={e => { if (e.shiftKey) e.preventDefault() }}
     on:dblclick={onDblClick}
   >
+    <!-- keyboard users have modifier keys, they don't ever focus the checkbox -->
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div class="checkbox" on:click={onCheckClick}>
       <Icon icon={isSelected ? checkboxOutline : checkboxBlankOutline } width="1.15em" inline />
     </div>
@@ -256,6 +258,9 @@
         {/if}
       </div>
     {/each}
+    <ScreenReaderOnly>
+      command enter select multiple, shift enter select all from last selection
+    </ScreenReaderOnly>
   </div>
   {#if showChildren && item.children}
     <ul role="group">

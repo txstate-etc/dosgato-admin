@@ -29,7 +29,7 @@
         ]) as ActionPanelAction[]
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string }) {
     if (message.action === 'scroll') {
       $editorStore.scrollY = message.scrollTop!
       return
@@ -60,7 +60,7 @@
       }
       iframe.contentWindow?.postMessage({ validdrops }, '*')
     } else if (message.action === 'select') {
-      pageEditorStore.select(message.path)
+      pageEditorStore.select(message.path, message.label)
     } else if (message.action === 'edit') {
       pageEditorStore.editComponentShowModal(message.path)
     } else if (message.action === 'create') {
@@ -153,7 +153,7 @@
     : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/latest${$pageStore.path}?token=${data.temptoken}`
 </script>
 
-<ActionPanel actionsTitle={$editorStore.selectedPath ? '' : 'Page Actions'} actions={getActions($editorStore.selectedPath)}>
+<ActionPanel actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($editorStore.selectedPath)}>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
   to steal credentials from other editors! -->
   <iframe use:messages sandbox="allow-scripts" src={iframesrc} title="page preview for editing" on:load={iframeload}></iframe>
@@ -197,7 +197,7 @@
     Are you sure you want to delete the {template?.name ?? 'unrecognized'}?
   </Dialog>
 {:else if $editorStore.modal === 'properties' && $editorStore.editing}
-  <FormDialog title="Edit Page Properties" submit={onEditPagePropertiesSubmit} on:escape={cancelModal} preload={$editorStore.editing.data} let:data>
+  <FormDialog title="Edit Page Properties" submit={onEditPagePropertiesSubmit} validate={onEditPagePropertiesValidate} on:escape={cancelModal} preload={$editorStore.editing.data} let:data>
     {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
     {#if template && template.dialog}
       <svelte:component this={template.dialog} creating={false} {data} templateProperties={template.templateProperties} {environmentConfig} />

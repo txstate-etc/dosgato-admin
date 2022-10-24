@@ -12,6 +12,7 @@ export interface EditorState {
   page: PageEditorPage
   modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties'
   selectedPath?: string
+  selectedLabel?: string
   editing?: {
     path: string
     data: any
@@ -196,12 +197,12 @@ class PageEditorStore extends Store<IPageEditorStore> {
     })
   }
 
-  select (path?: string) {
+  select (path?: string, label?: string) {
     this.update(v => {
       if (!v.active) return v
       const editorState = v.editors[v.active]
       if (!editorState) return v
-      const newEditorState: EditorState = { ...editorState, selectedPath: path }
+      const newEditorState: EditorState = { ...editorState, selectedPath: path, selectedLabel: label }
       return set(v, `editors["${v.active}"]`, newEditorState)
     })
   }
