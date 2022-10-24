@@ -16,6 +16,7 @@
   }
 
   export let headers: TreeHeader<T>[]
+  export let nodeClass: ((itm: T) => string) | undefined = undefined
   export let singleSelect: boolean|undefined = undefined
   export let fetchChildren: FetchChildrenFn<T>|undefined = undefined
   export let dragEligible: DragEligibleFn<T>|undefined = undefined
@@ -97,6 +98,7 @@
       <TreeNode
         {item}
         {headers}
+        {nodeClass}
         posinset={i + 1}
         setsize={$viewItems.length}
         level={item.level}

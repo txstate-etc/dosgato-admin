@@ -6,7 +6,7 @@
   import menuRight from '@iconify-icons/mdi/menu-right'
   import { modifierKey } from '@txstate-mws/svelte-components'
   import { createEventDispatcher, getContext } from 'svelte'
-  import { hashid, toArray } from 'txstate-utils'
+  import { hashid, isNotBlank, toArray } from 'txstate-utils'
   import { type TreeStore, TREE_STORE_CONTEXT, type TypedTreeItem, type TreeItemFromDB, type TreeHeader } from './treestore'
   import LoadIcon from '../LoadIcon.svelte'
   import TreeCell from './TreeCell.svelte'
@@ -14,6 +14,7 @@
   type T = $$Generic<TreeItemFromDB>
 
   export let headers: TreeHeader<T>[]
+  export let nodeClass: ((itm: T) => string) | undefined = undefined
   export let item: TypedTreeItem<T>
   export let posinset: number
   export let setsize: number
@@ -212,7 +213,7 @@
   <div
     id={hashedId}
     bind:this={nodeelement}
-    class="tree-node"
+    class={['tree-node', nodeClass?.(item)].filter(isNotBlank).join(' ')}
     class:selected={isSelected}
     class:dragOver
     class:dropDisabled
@@ -262,6 +263,7 @@
         <svelte:self
           item={child}
           {headers}
+          {nodeClass}
           posinset={i + 1}
           setsize={item.children.length}
           level={child.level}

@@ -59,7 +59,7 @@
       { label: 'Duplicate', icon: duplicateIcon, disabled: !page.parent?.permissions.create, onClick: () => { modal = 'duplicatepage' } },
       { label: 'Move', icon: cursorMove, disabled: !page.permissions.move, onClick: () => {} },
       { label: 'Copy', icon: contentCopy, disabled: false, onClick: onCopyPage },
-      { label: 'Paste', icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage }
+      { label: 'Paste', hiddenLabel: `${$store.itemsById[copiedPageId as string]?.path ?? ''} into ${page.name}`, icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage }
     )
     if (page.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => { modal = 'publishpages' } })
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) actions.push({ label: 'Publish Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'publishdelete' } })
@@ -133,7 +133,7 @@
     }
   }
 
-  let copiedPageId: string | undefined = undefined
+  let copiedPageId: string | undefined
 
   function onCopyPage () {
     copiedPageId = $store.selectedItems[0].id
@@ -146,6 +146,7 @@
     if (resp.success) {
       store.openAndRefresh($store.selectedItems[0])
     }
+    copiedPageId = undefined
   }
 
   async function onPublishPages () {
@@ -222,6 +223,7 @@
       { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
       { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
     ]}
+    nodeClass={itm => copiedPageId === itm.id ? 'copied' : ''}
   />
 </ActionPanel>
 {#if modal === 'addpage'}

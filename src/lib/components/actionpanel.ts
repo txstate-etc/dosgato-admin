@@ -4,6 +4,7 @@ export interface ActionPanelAction {
   // where one is always hidden and the other is shown
   id?: string
   label: string
+  hiddenLabel?: string
   icon?: IconifyIcon
   disabled?: boolean
   onClick: () => void | Promise<void>

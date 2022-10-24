@@ -57,7 +57,7 @@
     {#if actions.length}
       <ul>
         {#each actions as action (action.id || action.label)}
-          <li class:enabled={!action.disabled}><button class="reset" disabled={action.disabled} on:click={action.onClick}><Icon width="1.2em" icon={action.icon} />{action.label}</button></li>
+          <li class:enabled={!action.disabled}><button class="reset" disabled={action.disabled} on:click={action.onClick}><Icon width="1.2em" icon={action.icon} />{action.label}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly></button></li>
         {/each}
       </ul>
     {/if}
