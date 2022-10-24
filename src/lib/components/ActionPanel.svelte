@@ -38,7 +38,7 @@
 </script>
 
 <svelte:window bind:scrollY />
-<div class="action-panel" class:hidden={$hidden} use:eq={{ store: eqstore }} use:offset={{ store: offsetStore }} style:height>
+<div class="action-panel" class:hidden={$hidden} class:empty={actions.length === 0} use:eq={{ store: eqstore }} use:offset={{ store: offsetStore }} style:height>
   <section use:eq class="work" on:transitionend={() => elementqueries.refresh()}>
     <slot />
   </section>
@@ -121,13 +121,17 @@
     right: auto;
   }
 
+  .action-panel.empty .work {
+    width: 100%;
+  }
+
   .action-panel:global([data-eq~="800px"]) .actions header {
     cursor: pointer;
   }
-  .action-panel:global([data-eq~="500px"]):not(.hidden) .actions {
+  .action-panel:global([data-eq~="500px"]):not(.hidden):not(.empty) .actions {
     margin-left: -11em;
   }
-  .action-panel:global([data-eq~="500px"]) .work {
+  .action-panel:global([data-eq~="500px"]):not(.empty) .work {
     width: calc(100% - 2.7em);
   }
 
