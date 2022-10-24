@@ -70,8 +70,8 @@
       const el = document.getElementById(hashid($store.focused.id))
       if (el && hadFocus) {
         if (el !== document.activeElement) el.focus()
-      } else store.focus($store.viewItems[0])
-    } else store.focus($store.viewItems[0])
+      }
+    }
   })
 </script>
 

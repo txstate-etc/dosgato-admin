@@ -70,7 +70,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
   public dropEffectHandler?: DropEffectFn<T>
   public singleSelect?: boolean
 
-  private refreshPromise: Promise<void>
+  private refreshPromise?: Promise<void>
 
   constructor (
     public fetchChildren: FetchChildrenFn<T>,
@@ -144,38 +144,44 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     if (item) item.loading = true
     else this.value.loading = true
     this.trigger()
-    const children = await this.fetch(item)
-    // re-open any open children
-    await Promise.all(children.map(async (child: TypedTreeItem<T>) => await this.visit(child, async (child) => {
-      child.open = this.value.itemsById[child.id]?.open
-      if (child.open) {
-        child.children = await this.fetch(child)
-        child.hasChildren = child.children.length > 0
-        if (!child.hasChildren) child.open = false
-      }
-    })))
+    try {
+      const children = await this.fetch(item)
+      // re-open any open children
+      await Promise.all(children.map(async (child: TypedTreeItem<T>) => await this.visit(child, async (child) => {
+        child.open = this.value.itemsById[child.id]?.open
+        if (child.open) {
+          child.children = await this.fetch(child)
+          child.hasChildren = child.children.length > 0
+          if (!child.hasChildren) child.open = false
+        }
+      })))
 
-    if (item) {
-      this.visitSync(item, itm => { if (itm.id !== item.id) this.value.itemsById[itm.id] = undefined })
-      item.children = children
-      item.hasChildren = children.length > 0
-      if (!item.hasChildren) item.open = false
-    } else {
-      this.value.itemsById = {}
-      for (const child of children) (child as unknown as TypedTreeItem<T>).level = 1
-      this.value.rootItems = children
+      if (item) {
+        this.visitSync(item, itm => { if (itm.id !== item.id) this.value.itemsById[itm.id] = undefined })
+        item.children = children
+        item.hasChildren = children.length > 0
+        if (!item.hasChildren) item.open = false
+      } else {
+        this.value.itemsById = {}
+        for (const child of children) (child as unknown as TypedTreeItem<T>).level = 1
+        this.value.rootItems = children
+      }
+      this.addLookup(children)
+
+      // if the focused item disappeared in the refresh, we need to replace it,
+      // as without a focus the tree becomes invisible to keyboard nav
+      if (!this.value.itemsById[this.value.focused?.id as string]) this.focus(this.value.selectedItems.slice(-1)[0] ?? this.value.viewItems[0], true)
+    } finally {
+      if (item) item.loading = false
+      this.value.loading = false
+      if (!skipNotify) this.trigger()
     }
-    this.addLookup(children)
-    if (item) item.loading = false
-    this.value.loading = false
-    if (!skipNotify) this.trigger()
   }
 
   async refresh (item?: TypedTreeItem<T>, skipNotify = false) {
-    if (item || !this.value.loading) {
-      this.refreshPromise = this.#refresh(item, skipNotify)
-    }
-    return await this.refreshPromise
+    this.refreshPromise ??= this.#refresh(item, skipNotify)
+    await this.refreshPromise
+    this.refreshPromise = undefined
   }
 
   focus (item: TypedTreeItem<T>, notify = true) {
