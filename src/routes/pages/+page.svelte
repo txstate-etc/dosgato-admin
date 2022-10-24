@@ -44,7 +44,7 @@
     ARCHIVE: archiveLight
   }
 
-  function singlepageactions (page: TypedPageItem) {
+  function singlepageactions (page: TypedPageItem, ..._: any) {
     const actions: ActionPanelAction[] = [{ label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: onClickAddPage }]
     if (page.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'deletepage' } })
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) {
@@ -57,9 +57,9 @@
       { label: 'Change Template', icon: layoutLight, disabled: !page.permissions.update, onClick: onClickTemplateChange },
       { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move, onClick: () => { modal = 'renamepage' } },
       { label: 'Duplicate', icon: duplicateIcon, disabled: !page.parent?.permissions.create, onClick: () => { modal = 'duplicatepage' } },
-      { label: 'Move', icon: cursorMove, disabled: !page.permissions.move, onClick: () => {} },
-      { label: 'Copy', icon: contentCopy, disabled: false, onClick: onCopyPage },
-      { label: 'Paste', hiddenLabel: `${$store.itemsById[copiedPageId as string]?.path ?? ''} into ${page.name}`, icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage }
+      { label: 'Move', icon: cursorMove, disabled: !page.permissions.move, onClick: () => { copiedPageId = page.id; pasteWillCut = true } },
+      { label: 'Copy', icon: contentCopy, disabled: false, onClick: () => { copiedPageId = page.id; pasteWillCut = false } },
+      { label: pasteWillCut ? 'Paste (move)' : 'Paste', hiddenLabel: `${$store.itemsById[copiedPageId as string]?.path ?? ''} into ${page.name}`, icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage }
     )
     if (page.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => { modal = 'publishpages' } })
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) actions.push({ label: 'Publish Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'publishdelete' } })
@@ -100,10 +100,10 @@
     }
   }
 
-  function onAddPageComplete () {
+  async function onAddPageComplete () {
     availableTemplates = []
-    store.openAndRefresh($store.selectedItems[0])
     modal = undefined
+    await store.openAndRefresh($store.selectedItems[0])
   }
 
   async function validateRename (state) {
@@ -134,66 +134,75 @@
   }
 
   let copiedPageId: string | undefined
-
-  function onCopyPage () {
-    copiedPageId = $store.selectedItems[0].id
-    modal = 'copiedpage'
-  }
+  let pasteWillCut = false
 
   async function onPastePage () {
     if (!copiedPageId) return
-    const resp = await api.pastePage(copiedPageId, $store.selectedItems[0].id)
-    if (resp.success) {
-      store.openAndRefresh($store.selectedItems[0])
+    try {
+      const copiedItem = $store.itemsById[copiedPageId]
+      if (pasteWillCut && copiedItem) {
+        const success = await api.movePages([copiedItem.id], $store.selectedItems[0].id, false)
+        if (success) {
+          await store.refresh(copiedItem.parent, true)
+          await store.openAndRefresh($store.selectedItems[0])
+        }
+      } else {
+        const resp = await api.pastePage(copiedPageId, $store.selectedItems[0].id)
+        if (resp.success) {
+          await store.openAndRefresh($store.selectedItems[0])
+        }
+      }
+    } finally {
+      copiedPageId = undefined
+      pasteWillCut = false
     }
-    copiedPageId = undefined
   }
 
   async function onPublishPages () {
     const resp = await api.publishPages($store.selectedItems.map(d => d.id), false)
-    if (resp.success) store.refresh()
     modal = undefined
+    if (resp.success) await store.refresh()
   }
 
   async function onPublishPagesWithSubpages () {
     const resp = await api.publishPages($store.selectedItems.map(d => d.id), true)
-    if (resp.success) store.refresh()
     modal = undefined
+    if (resp.success) await store.refresh()
   }
 
   async function onUnpublishPages () {
     const resp = await api.unpublishPages($store.selectedItems.map(d => d.id))
-    if (resp.success) store.refresh()
     modal = undefined
+    if (resp.success) await store.refresh()
   }
 
   async function onDeletePage () {
     const resp = await api.deletePages([$store.selectedItems[0].id])
-    if (resp.success) store.refresh()
     modal = undefined
+    if (resp.success) await store.refresh()
   }
 
   async function onPublishDeletion () {
     const resp = await api.publishDeletion([$store.selectedItems[0].id])
-    if (resp.success) store.refresh()
     modal = undefined
+    if (resp.success) await store.refresh()
   }
 
   async function onUndeletePage () {
     const resp = await api.undeletePages([$store.selectedItems[0].id])
-    if (resp.success) store.refresh()
     modal = undefined
+    if (resp.success) await store.refresh()
   }
 
   async function onUndeletePageWithChildren () {
     const resp = await api.undeletePages([$store.selectedItems[0].id], true)
-    if (resp.success) store.refresh()
     modal = undefined
+    if (resp.success) await store.refresh()
   }
 
   async function onImportSaved () {
-    store.openAndRefresh($store.selectedItems[0])
     modal = undefined
+    await store.openAndRefresh($store.selectedItems[0])
   }
 
   async function onClickTemplateChange () {
@@ -207,13 +216,13 @@
     const resp = await api.changeTemplate($store.selectedItems[0].id, data.templateKey, true)
     return resp.messages
   }
-  function onChangeTemplateSaved () {
-    store.refresh($store.selectedItems[0].parent)
+  async function onChangeTemplateSaved () {
     modal = undefined
+    await store.refresh($store.selectedItems[0].parent)
   }
 </script>
 
-<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
+<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0], copiedPageId) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) goto(base + '/pages/' + detail.id) }}
     headers={[
       { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmtpy : item.parent ? applicationOutline : siteIcon[item.type], get: 'name' },

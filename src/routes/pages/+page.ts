@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { api, mutationResponse, TreeStore, type RootTreePage, type TreePage, type TypedTreeItem } from '$lib'
+import { api, toast, TreeStore, type RootTreePage, type TreePage, type TypedTreeItem } from '$lib'
 
 export interface PageItem extends Omit<Omit<Omit<TreePage, 'modifiedAt'>, 'publishedAt'>, 'children'> {
   modifiedAt: DateTime
@@ -29,13 +29,23 @@ async function fetchChildren (item?: TypedPageItem) {
   })
 }
 
+function root (page: TypedPageItem) {
+  let root = page
+  while (root.parent) root = root.parent
+  return root
+}
+
 async function dropHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
-  const resp = await api.query(`mutation movePages ($pageIds: [ID!]!, $targetId: ID!, $above: Boolean) {
-    movePages (pageIds: $pageIds, targetId: $targetId, above: $above) {
-      ${mutationResponse}
-    }
-  }`, { pageIds: selectedItems.map(itm => itm.id), targetId: dropTarget.id, above })
-  return resp.success
+  const dropRoot = root(dropTarget)
+  const commonRoot = selectedItems.filter(p => root(p).id === dropRoot.id)
+  if (commonRoot.length === selectedItems.length) {
+    return await api.movePages(selectedItems.map(itm => itm.id), dropTarget.id, above)
+  } else if (commonRoot.length) {
+    toast('Some pages being moved are from the target\'s page tree, but some are not. Mixing the two doesn\'t make much sense. Try moving fewer pages at a time.')
+    return false
+  } else {
+    return await api.copyPages(selectedItems.map(itm => itm.id), dropTarget.id, above)
+  }
 }
 function dragEligible (items: TypedPageItem[]) {
   // sites cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites

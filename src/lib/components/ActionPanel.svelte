@@ -43,6 +43,7 @@
     <slot />
   </section>
   <section class="actions">
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
     <header on:click={allowCollapse ? onClick : undefined}>
       {#if $hidden}<ScreenReaderOnly>{actionsTitle}</ScreenReaderOnly>{:else}{actionsTitle}{/if}
       {#if allowCollapse}<button class="reset" on:click|stopPropagation={onClick}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
