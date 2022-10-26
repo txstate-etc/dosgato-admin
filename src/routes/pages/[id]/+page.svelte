@@ -2,11 +2,16 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { Icon } from '@dosgato/dialog'
-  import pencilIcon from '@iconify-icons/mdi/pencil'
-  import historyIcon from '@iconify-icons/mdi/history'
   import type { ComponentData } from '@dosgato/templating'
-  import { FormStore } from '@txstate-mws/svelte-forms'
-  import { get } from 'txstate-utils'
+  import clipboardTextLight from '@iconify-icons/ph/clipboard-text-light'
+  import copyLight from '@iconify-icons/ph/copy-light'
+  import fileXLight from '@iconify-icons/ph/file-x-light'
+  import historyIcon from '@iconify-icons/mdi/history'
+  import pencilIcon from '@iconify-icons/mdi/pencil'
+  import scissorsLight from '@iconify-icons/ph/scissors-light'
+  import trashLight from '@iconify-icons/ph/trash-light'
+  import { derivedStore } from '@txstate-mws/svelte-store'
+  import { get, printIf } from 'txstate-utils'
   import { ActionPanel, Dialog, editorStore, environmentConfig, FormDialog, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage } from '$lib'
   import { getTempToken } from './+page'
 
@@ -15,21 +20,75 @@
   $: pageEditorStore.open(page)
 
   let iframe: HTMLIFrameElement
+  let panelelement: HTMLElement
   $: editable = $editorStore.page.permissions.update
 
-  function getActions (selectedPath?: string) {
-    return (selectedPath
-      ? [
-          { label: 'Edit', onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
-          { label: 'Delete', onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) }
-        ]
-      : [
-          { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
-          { label: 'Show Versions', icon: historyIcon, onClick: () => {} }
-        ]) as ActionPanelAction[]
+  const actionsStore = derivedStore(pageEditorStore, v => ({ clipboardData: v.clipboardData, clipboardPath: v.active === v.clipboardPage ? v.clipboardPath : undefined, clipboardPage: v.clipboardPage, clipboardLabel: v.clipboardLabel, selectedPath: v.editors[v.active!]?.selectedPath, clipboardActive: v.clipboardData || (v.clipboardPath && v.clipboardPage === v.active) }))
+
+  function validMove (from: string, to: string) {
+    if (to === from) return false // no dragging onto yourself
+    const draggingParentPath = from.split('.').slice(0, -1).join('.')
+    if (to === draggingParentPath) return false // no dragging onto your own new bar
+    const draggingKey = get<ComponentData>($editorStore.page.data, from).templateKey
+    return validCopy(draggingKey, to)
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string }) {
+  function validCopy (templateKey: string, to: string) {
+    const d = get<ComponentData | ComponentData[]>($editorStore.page.data, to) ?? []
+    if (Array.isArray(d)) {
+      const parts = to.split('.')
+      const cpath = parts.slice(0, -2).join('.')
+      const aname = parts[parts.length - 1]
+      const tkey = get<ComponentData>($editorStore.page.data, cpath).templateKey
+      return !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(templateKey)
+    } else {
+      const parts = to.split('.')
+      const cpath = parts.slice(0, -3).join('.')
+      const aname = parts[parts.length - 2]
+      const tkey = get<ComponentData>($editorStore.page.data, cpath).templateKey
+      return !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(templateKey)
+    }
+  }
+
+  function pasteDisabled (selectedPath: string) {
+    if (!$editorStore.selectedDroppable || !$actionsStore.clipboardActive) return true
+    if ($actionsStore.clipboardPath) return !validMove($actionsStore.clipboardPath, selectedPath)
+    if ($actionsStore.clipboardData) return !validCopy($actionsStore.clipboardData.templateKey, selectedPath)
+    return true
+  }
+
+  function getActions (selectedPath?: string): ActionPanelAction[] {
+    if (!selectedPath) {
+      // nothing selected
+      return [
+        { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
+        { label: 'Show Versions', icon: historyIcon, onClick: () => {} }
+      ]
+    } else if (/\.\d+$/.test(selectedPath)) {
+      // edit bar selected
+      return [
+        { label: 'Edit', icon: pencilIcon, onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
+        { label: 'Delete', icon: trashLight, onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) },
+        ...($actionsStore.clipboardActive
+          ? [
+              { label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, icon: fileXLight, onClick: () => pageEditorStore.clearClipboard() }
+            ]
+          : [
+              { label: 'Cut', icon: scissorsLight, onClick: () => pageEditorStore.cutComponent(selectedPath) },
+              { label: 'Copy', icon: copyLight, onClick: () => pageEditorStore.copyComponent(selectedPath) }
+            ]),
+        { label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardTextLight, disabled: pasteDisabled(selectedPath), onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) }
+      ]
+    } else {
+      // new bar selected
+      const actions: ActionPanelAction[] = []
+      if ($actionsStore.clipboardActive) actions.push({ label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, onClick: () => pageEditorStore.clearClipboard() })
+      actions.push({ label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardTextLight, disabled: pasteDisabled(selectedPath), onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) })
+      return actions
+    }
+  }
+
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean }) {
     if (message.action === 'scroll') {
       $editorStore.scrollY = message.scrollTop!
       return
@@ -37,30 +96,12 @@
     console.log('received message', message)
     if (message.action === 'drag') {
       const validdrops = new Set<string>()
-      const pageData = $editorStore.page.data
-      const draggingKey = get<ComponentData>(pageData, message.path).templateKey
       for (const p of message.allpaths ?? []) {
-        if (p === message.path) continue
-        const d = get<ComponentData | ComponentData[]>(pageData, p) ?? []
-        let draggable = false
-        if (Array.isArray(d)) {
-          const parts = p.split('.')
-          const cpath = parts.slice(0, -2).join('.')
-          const aname = parts[parts.length - 1]
-          const tkey = get<ComponentData>(pageData, cpath).templateKey
-          draggable = !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(draggingKey)
-        } else {
-          const parts = p.split('.')
-          const cpath = parts.slice(0, -3).join('.')
-          const aname = parts[parts.length - 2]
-          const tkey = get<ComponentData>(pageData, cpath).templateKey
-          draggable = !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(draggingKey)
-        }
-        if (draggable) validdrops.add(p)
+        if (validMove(message.path, p)) validdrops.add(p)
       }
       iframe.contentWindow?.postMessage({ validdrops }, '*')
     } else if (message.action === 'select') {
-      pageEditorStore.select(message.path, message.label)
+      pageEditorStore.select(message.path, message.label, message.maxreached)
     } else if (message.action === 'edit') {
       pageEditorStore.editComponentShowModal(message.path)
     } else if (message.action === 'create') {
@@ -74,6 +115,8 @@
       pageEditorStore.select(undefined)
     } else if (message.action === 'jump') {
       goto(base + '/pages/' + message.pageId!)
+    } else if (message.action === 'menu') {
+      panelelement.querySelector<HTMLElement>('.actions li button')?.focus()
     }
   }
 
@@ -141,6 +184,10 @@
     }
   }
 
+  function onReturnFocus () {
+    iframe.contentWindow?.postMessage({ focus: $editorStore.selectedPath }, '*')
+  }
+
   // if user refreshes the iframe manually, it's possible the temporary token will have
   // expired, so we need to watch for refresh errors and load in a new token
   async function iframeload () {
@@ -153,7 +200,7 @@
     : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/latest${$pageStore.path}?token=${data.temptoken}`
 </script>
 
-<ActionPanel actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($editorStore.selectedPath)}>
+<ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath)} on:returnfocus={onReturnFocus}>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
   to steal credentials from other editors! -->
   <iframe use:messages sandbox="allow-scripts" src={iframesrc} title="page preview for editing" on:load={iframeload}></iframe>

@@ -808,6 +808,25 @@ class API {
     return updatePage
   }
 
+  async insertComponent (pageId: string, dataVersion: number, pageData: PageData, to: string, componentData: ComponentData) {
+    const toParts = to.split('.')
+    const toObj = get<ComponentData | ComponentData[]>(pageData, to)
+    let toParent = to
+    let toIdx: number
+    if (!Array.isArray(toObj)) {
+      toParent = toParts.slice(0, -1).join('.')
+      toIdx = Number(toParts[toParts.length - 1])
+    } else {
+      toIdx = toObj.length
+    }
+
+    const toComponents = get<ComponentData[]>(pageData, toParent)
+    pageData = set(pageData, toParent, toIdx === toComponents.length ? [...toComponents, componentData] : toComponents.flatMap((c, i) => i === toIdx ? [componentData, c] : c))
+
+    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: pageData, dataVersion })
+    return updatePage
+  }
+
   async removeComponent (pageId: string, dataVersion: number, page: PageData, path: string, opts?: { comment?: string }) {
     const { comment } = opts ?? {}
     const m = path.match(/^(.*)\.(\d+)$/)

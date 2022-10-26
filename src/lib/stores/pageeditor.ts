@@ -1,11 +1,15 @@
 import type { ComponentData, UITemplate } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
 import { get, isNotBlank, set } from 'txstate-utils'
-import { api, type PageEditorPage, templateRegistry } from '$lib'
+import { api, type PageEditorPage, templateRegistry, toast } from '$lib'
 
 export interface IPageEditorStore {
   editors: Record<string, EditorState | undefined>
   active?: string
+  clipboardPage?: string
+  clipboardPath?: string
+  clipboardData?: ComponentData
+  clipboardLabel?: string
 }
 
 export interface EditorState {
@@ -13,6 +17,7 @@ export interface EditorState {
   modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties'
   selectedPath?: string
   selectedLabel?: string
+  selectedDroppable?: boolean
   editing?: {
     path: string
     data: any
@@ -33,11 +38,27 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   open (page: PageEditorPage) {
-    this.update(v => ({ editors: { ...v.editors, [page.id]: { ...v.editors[page.id], page } }, active: page.id }))
+    this.update(v => ({ ...v, editors: { ...v.editors, [page.id]: { ...v.editors[page.id], page } }, active: page.id }))
   }
 
   free (pageId: string) {
     this.update(v => ({ ...v, editors: { ...v.editors, [pageId]: undefined } }))
+  }
+
+  /**
+   * convenience function to replace the editor state of the active editor
+   *
+   * also accepts clipboard data for the page editor state (for cross-page pastes), set
+   * to null to clear out the clipboard
+   */
+  updateEditorState (transform: (editorState: EditorState) => EditorState, resetClipboard?: boolean) {
+    this.update(v => {
+      if (!v.active) return v
+      const editorState = v.editors[v.active]
+      if (!editorState) return v
+      const newEditorState = transform(editorState)
+      return set({ ...v, ...(resetClipboard ? { clipboardData: undefined, clipboardLabel: undefined, clipboardPage: undefined, clipboardPath: undefined } : {}) }, `editors["${v.active}"]`, newEditorState)
+    })
   }
 
   async addComponentShowModal (path: string) {
@@ -55,22 +76,10 @@ class PageEditorStore extends Store<IPageEditorStore> {
 
   async addComponentChooseTemplate (templateKey: string, refreshIframe: () => Promise<void>) {
     const def = templateRegistry.getTemplate(templateKey)
-    this.update(v => {
-      if (!v.active) return v
-      const editorState = v.editors[v.active]
-      const newEditorState = { ...editorState, creating: { ...editorState?.creating, templateKey, data: { areas: def?.defaultContent } } }
-      return set(v, `editors["${v.active}"]`, newEditorState)
-    })
+    this.updateEditorState(editorState => ({ ...editorState, creating: { ...editorState.creating!, templateKey, data: { areas: def?.defaultContent } } }))
     if (def && def.dialog == null) {
       const resp = await this.addComponentSubmit({ areas: def.defaultContent })
       if (resp?.success) await refreshIframe()
-    } else {
-      this.update(v => {
-        if (!v.active) return v
-        const editorState = v.editors[v.active]
-        const newEditorState = set(editorState, 'creating.templateKey', templateKey)
-        return set(v, `editors["${v.active}"]`, newEditorState)
-      })
     }
   }
 
@@ -81,24 +90,15 @@ class PageEditorStore extends Store<IPageEditorStore> {
     if (!editorState?.creating?.templateKey) return
     const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey }, { validateOnly })
     if (!validateOnly && resp.success) {
-      this.update(v => {
-        const editorState = v.editors[pageId]
-        const newEditorState = { ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }
-        return set(v, `editors["${pageId}"]`, newEditorState)
-      })
+      this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
     }
     return resp
   }
 
   editComponentShowModal (path: string) {
-    this.update(v => {
-      if (!v.active) return v
-      const editorState = v.editors[v.active]
-      if (!editorState) return v
+    this.updateEditorState(editorState => {
       const data = get<ComponentData>(editorState.page.data, path)
-      const templateKey = data.templateKey
-      const newEditorState: EditorState = { ...editorState, modal: 'edit', editing: { path, data, templateKey }, creating: undefined }
-      return set(v, `editors["${v.active}"]`, newEditorState)
+      return { ...editorState, modal: 'edit', editing: { path, data, templateKey: data.templateKey }, creating: undefined }
     })
   }
 
@@ -109,24 +109,15 @@ class PageEditorStore extends Store<IPageEditorStore> {
     if (!editorState?.editing) return
     const resp = await api.editComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.editing.path, data, { validateOnly })
     if (!validateOnly && resp.success) {
-      this.update(v => {
-        const editorState = v.editors[pageId]
-        const newEditorState = { ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }
-        return set(v, `editors["${pageId}"]`, newEditorState)
-      })
+      this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
     }
     return resp
   }
 
   removeComponentShowModal (path: string) {
-    this.update(v => {
-      if (!v.active) return v
-      const editorState = v.editors[v.active]
-      if (!editorState) return v
+    this.updateEditorState(editorState => {
       const data = get<ComponentData>(editorState.page.data, path)
-      const templateKey = data.templateKey
-      const newEditorState: EditorState = { ...editorState, modal: 'delete', editing: { path, data, templateKey }, creating: undefined }
-      return set(v, `editors["${v.active}"]`, newEditorState)
+      return { ...editorState, modal: 'delete', editing: { path, data, templateKey: data.templateKey }, creating: undefined }
     })
   }
 
@@ -137,11 +128,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     if (!editorState?.editing) return
     const resp = await api.removeComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.editing.path)
     if (resp.success) {
-      this.update(v => {
-        const editorState = v.editors[pageId]
-        const newEditorState = { ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }
-        return set(v, `editors["${pageId}"]`, newEditorState)
-      })
+      this.updateEditorState(editorState => ({ ...editorState, page: resp.page!, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
     } else {
       this.cancelModal()
     }
@@ -149,13 +136,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   editPropertiesShowModal () {
-    this.update(v => {
-      if (!v.active) return v
-      const editorState = v.editors[v.active]
-      if (!editorState) return v
-      const newEditorState: EditorState = { ...editorState, modal: 'properties', editing: { path: '', data: editorState.page.data, templateKey: editorState.page.data.templateKey }, creating: undefined }
-      return set(v, `editors["${v.active}"]`, newEditorState)
-    })
+    this.updateEditorState(editorState => ({ ...editorState, modal: 'properties', editing: { path: '', data: editorState.page.data, templateKey: editorState.page.data.templateKey }, creating: undefined }))
   }
 
   async editPropertiesSubmit (data: any, validateOnly?: boolean) {
@@ -165,11 +146,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     if (!editorState?.editing) return
     const resp = await api.editPageProperties(pageId, editorState.page.version.version, data, { validateOnly })
     if (!validateOnly && resp.success) {
-      this.update(v => {
-        const editorState = v.editors[pageId]
-        const newEditorState = { ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }
-        return set(v, `editors["${pageId}"]`, newEditorState)
-      })
+      this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }))
     }
     return resp
   }
@@ -181,30 +158,43 @@ class PageEditorStore extends Store<IPageEditorStore> {
     if (!editorState) return
     const resp = await api.moveComponent(pageId, editorState.page.version.version, editorState.page.data, from, to)
     if (resp.success) {
-      this.update(v => {
-        const editorState = v.editors[pageId]
-        const newEditorState = { ...editorState, page: resp.page }
-        return set(v, `editors["${pageId}"]`, newEditorState)
-      })
+      this.updateEditorState(editorState => ({ ...editorState, page: resp.page }), true)
     }
   }
 
   cancelModal () {
-    this.update(v => {
-      if (!v.active) return v
-      const editorState = v.editors[v.active]
-      return set(v, `editors["${v.active}"]`, { ...editorState, modal: undefined, editing: undefined, creating: undefined })
-    })
+    this.updateEditorState(editorState => ({ ...editorState, modal: undefined, editing: undefined, creating: undefined }))
   }
 
-  select (path?: string, label?: string) {
-    this.update(v => {
-      if (!v.active) return v
-      const editorState = v.editors[v.active]
-      if (!editorState) return v
-      const newEditorState: EditorState = { ...editorState, selectedPath: path, selectedLabel: label }
-      return set(v, `editors["${v.active}"]`, newEditorState)
-    })
+  select (path?: string, label?: string, maxreached?: boolean) {
+    this.updateEditorState(editorState => ({ ...editorState, selectedPath: path, selectedLabel: label, selectedDroppable: !maxreached }))
+  }
+
+  cutComponent (path: string, cut = true) {
+    this.update(v => ({ ...v, clipboardData: undefined, clipboardLabel: v.editors[v.active!]!.selectedLabel, clipboardPath: path, clipboardPage: v.active }))
+    toast(`${this.value.clipboardLabel ?? 'Component'} cut initiated. Paste somewhere to complete the move.`, 'success')
+  }
+
+  copyComponent (path: string) {
+    this.update(v => ({ ...v, clipboardData: get(v.editors[v.active!]!.page.data, path), clipboardLabel: v.editors[v.active!]!.selectedLabel, clipboardPath: undefined, clipboardPage: v.active }))
+    toast(`${this.value.clipboardLabel ?? 'Component'} copied.`, 'success')
+  }
+
+  clearClipboard () {
+    this.updateEditorState(es => es, true)
+  }
+
+  async pasteComponent (path: string) {
+    const editorState = this.value.editors[this.value.active!]!
+    if (this.value.clipboardPath) { // move
+      if (this.value.active === this.value.clipboardPage) await this.moveComponent(this.value.clipboardPath, path)
+    } else if (this.value.clipboardData) { // copy
+      // copy, potentially from another page
+      const resp = await api.insertComponent(editorState.page.id, editorState.page.version.version, editorState.page.data, path, this.value.clipboardData)
+      if (resp.success) {
+        this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }), true)
+      }
+    }
   }
 }
 

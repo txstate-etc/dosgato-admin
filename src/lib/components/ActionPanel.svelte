@@ -5,14 +5,20 @@
   import { Icon } from '@dosgato/dialog'
   import arrowCircleLeftLight from '@iconify-icons/ph/arrow-circle-left-light'
   import arrowCircleRightLight from '@iconify-icons/ph/arrow-circle-right-light'
-  import { elementqueries, eq, offset, OffsetStore, ScreenReaderOnly } from '@txstate-mws/svelte-components'
+  import { elementqueries, eq, modifierKey, offset, OffsetStore, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { Store } from '@txstate-mws/svelte-store'
-  import { onMount } from 'svelte'
+  import { createEventDispatcher, onMount } from 'svelte'
   import { writable } from 'svelte/store'
   import type { ActionPanelAction } from './actionpanel'
 
   export let actionsTitle: string|undefined = ''
   export let actions: ActionPanelAction[]
+  export let panelelement: HTMLElement | undefined = undefined
+
+  interface $$Events {
+    returnfocus: CustomEvent
+  }
+  const dispatch = createEventDispatcher()
 
   $: enabled = actions.filter(a => !a.disabled)
   $: disabledCount = actions.length - enabled.length
@@ -21,6 +27,15 @@
   $: allowCollapse = $eqstore.width <= 900
   function onClick () {
     $hidden = !$hidden
+  }
+
+  function onKeydown (e: KeyboardEvent) {
+    if (modifierKey(e)) return
+    if (e.key === 'm') {
+      e.preventDefault()
+      e.stopPropagation()
+      dispatch('returnfocus')
+    }
   }
 
   function reactToScreenWidth (..._: any) {
@@ -38,7 +53,7 @@
 </script>
 
 <svelte:window bind:scrollY />
-<div class="action-panel" class:hidden={$hidden} class:empty={actions.length === 0} use:eq={{ store: eqstore }} use:offset={{ store: offsetStore }} style:height>
+<div bind:this={panelelement} class="action-panel" class:hidden={$hidden} class:empty={actions.length === 0} use:eq={{ store: eqstore }} use:offset={{ store: offsetStore }} style:height>
   <section use:eq class="work" on:transitionend={() => elementqueries.refresh()}>
     <slot />
   </section>
@@ -46,7 +61,7 @@
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <header on:click={allowCollapse ? onClick : undefined}>
       {#if $hidden}<ScreenReaderOnly>{actionsTitle}</ScreenReaderOnly>{:else}{actionsTitle}{/if}
-      {#if allowCollapse}<button class="reset" on:click|stopPropagation={onClick}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
+      {#if allowCollapse}<button class="reset" on:click|stopPropagation={onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
     </header>
     <ScreenReaderOnly {arialive}>
       {#if actions.length}
@@ -58,7 +73,7 @@
     {#if actions.length}
       <ul>
         {#each actions as action (action.id || action.label)}
-          <li class:enabled={!action.disabled}><button class="reset" disabled={action.disabled} on:click={action.onClick}><Icon width="1.2em" icon={action.icon} />{action.label}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly></button></li>
+          <li class:enabled={!action.disabled} class={action.class}><button class="reset" disabled={action.disabled} on:click={action.onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={action.icon} />{action.label}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly></button></li>
         {/each}
       </ul>
     {/if}
