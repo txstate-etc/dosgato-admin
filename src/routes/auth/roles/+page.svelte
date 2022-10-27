@@ -1,5 +1,7 @@
 <script lang="ts">
   import keyLight from '@iconify-icons/ph/key-light'
+  import plusIcon from '@iconify-icons/mdi/plus'
+  import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type RoleListRole, FormDialog, messageForDialog, Dialog } from '$lib'
@@ -16,14 +18,14 @@
 
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [
-      { label: 'Add Role', disabled: false, onClick: () => { modal = 'addrole' } }
+      { label: 'Add Role', icon: plusIcon, disabled: false, onClick: () => { modal = 'addrole' } }
     ]
     return actions
   }
 
   function singleactions (role: TypedRoleItem) {
     const actions: ActionPanelAction[] = [
-      { label: 'Delete', disabled: !role.permissions.delete, onClick: () => { modal = 'deleterole' } }
+      { label: 'Delete', icon: deleteOutline, disabled: !role.permissions.delete, onClick: () => { modal = 'deleterole' } }
     ]
     return actions
   }

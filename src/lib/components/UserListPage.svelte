@@ -4,6 +4,7 @@
   import accountCheck from '@iconify-icons/mdi/account-check'
   import accountCancel from '@iconify-icons/mdi/account-cancel'
   import accountOff from '@iconify-icons/mdi/account-off'
+  import accountPlus from '@iconify-icons/mdi/account-plus'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import { sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
@@ -46,7 +47,7 @@
   }
 
   const emptyactions: ActionPanelAction[] = [
-    { label: 'Create', disabled: !$globalStore.access.createUsers, onClick: () => { modal = 'create' } }
+    { label: 'Create', icon: accountPlus, disabled: !$globalStore.access.createUsers, onClick: () => { modal = 'create' } }
   ]
 
   async function onDisable () {
