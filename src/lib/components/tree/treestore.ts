@@ -300,7 +300,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     const [first, ...rest] = items
     const ancestors = [first, ...this.collectAncestors(first)]
     const lookup = keyby(ancestors, 'id')
-    const depthById = ancestors.reduce((depthById, a, i) => ({ ...depthById, [a.id]: i }), {})
+    const depthById = ancestors.reduce((depthById, a, i) => { depthById[a.id] = i; return depthById }, {})
     let idx = -1
     for (const item of rest) {
       const itemAncestors = this.collectAncestors(item)
