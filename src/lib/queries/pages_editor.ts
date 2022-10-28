@@ -20,6 +20,11 @@ permissions {
 version {
   version
 }
+versions {
+  version
+  date
+  user { id }
+}
 `
 
 export const GET_EDITOR_PAGE = `
@@ -47,6 +52,13 @@ export interface PageEditorPage {
   version: {
     version: number
   }
+  versions: {
+    version: number
+    date: string
+    user: {
+      id
+    }
+  }[]
 }
 
 export const GET_AVAILABLE_COMPONENTS = `

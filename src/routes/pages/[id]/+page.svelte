@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { Icon } from '@dosgato/dialog'
+  import { FieldSelect, Icon } from '@dosgato/dialog'
   import type { ComponentData } from '@dosgato/templating'
   import clipboardTextLight from '@iconify-icons/ph/clipboard-text-light'
   import copyLight from '@iconify-icons/ph/copy-light'
@@ -12,7 +12,7 @@
   import trashLight from '@iconify-icons/ph/trash-light'
   import { derivedStore } from '@txstate-mws/svelte-store'
   import { get, printIf } from 'txstate-utils'
-  import { ActionPanel, Dialog, editorStore, environmentConfig, FormDialog, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage } from '$lib'
+  import { ActionPanel, Dialog, editorStore, environmentConfig, FormDialog, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp } from '$lib'
   import { getTempToken } from './+page'
 
   export let data: { temptoken: string, page: PageEditorPage }
@@ -62,7 +62,7 @@
       // nothing selected
       return [
         { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
-        { label: 'Show Versions', icon: historyIcon, onClick: () => {} }
+        { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.versions.length === 0 }
       ]
     } else if (/\.\d+$/.test(selectedPath)) {
       // edit bar selected
@@ -175,6 +175,12 @@
     return resp!
   }
 
+  async function onSelectVersionSubmit (data: any) {
+    // TODO: it needs to open the selected version of the page.
+    // The user should then have the option to restore that version
+    return { success: true, messages: [], data }
+  }
+
   function messages (el: HTMLIFrameElement) {
     iframe = el
     const handler = e => { if (e.source === el.contentWindow) onMessage(e.data) }
@@ -251,6 +257,10 @@
     {:else}
       <span>This content uses an unrecognized template. Please contact support for assistance.</span>
     {/if}
+  </FormDialog>
+{:else if $editorStore.modal === 'versions'}
+  <FormDialog title="Page Versions" submit={onSelectVersionSubmit} on:escape={cancelModal}>
+    <FieldSelect path="version" label="Version" choices={page.versions.map(v => ({ value: String(v.version), label: `${v.version}: ${dateStamp(v.date)} (${v.user.id})` }))}/>
   </FormDialog>
 {/if}
 

@@ -14,7 +14,7 @@ export interface IPageEditorStore {
 
 export interface EditorState {
   page: PageEditorPage
-  modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties'
+  modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties' | 'versions'
   selectedPath?: string
   selectedLabel?: string
   selectedDroppable?: boolean
@@ -149,6 +149,10 @@ class PageEditorStore extends Store<IPageEditorStore> {
       this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }))
     }
     return resp
+  }
+
+  versionsShowModal () {
+    this.updateEditorState(editorState => ({ ...editorState, modal: 'versions' }))
   }
 
   async moveComponent (from: string, to: string) {
