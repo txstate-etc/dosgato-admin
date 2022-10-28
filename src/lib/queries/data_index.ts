@@ -243,6 +243,17 @@ export const RENAME_DATA_FOLDER = `
   }
 `
 
+export const MOVE_DATA_FOLDERS = `
+  mutation moveDataFolders ($folderIds: [ID!]!, $siteId: ID) {
+    moveDataFolders (folderIds: $folderIds, siteId: $siteId) {
+      ${mutationResponse}
+      dataFolders {
+        ${dataFolderDetails}
+      }
+    }
+  }
+`
+
 export const PUBLISH_DATA_ENTRIES = `
   mutation publishDataEntries ($dataIds: [ID!]!) {
     publishDataEntries (dataIds: $dataIds) {
@@ -330,6 +341,23 @@ export const PUBLISH_DATA_DELETION = `
 export const UNDELETE_DATA = `
   mutation undeleteDataEntries ($dataIds: [ID!]!) {
     undeleteDataEntries (dataIds: $dataIds) {
+      ${mutationResponse}
+      data {
+        ${dataDetails}
+      }
+    }
+  }
+`
+
+export interface MoveDataTarget {
+  aboveTarget?: string
+  siteId?: string
+  folderId?: string
+}
+
+export const MOVE_DATA = `
+  mutation moveDataEntries ($dataIds: [ID!]!, $target: MoveDataTarget!) {
+    moveDataEntries (dataIds: $dataIds, target: $target) {
       ${mutationResponse}
       data {
         ${dataDetails}

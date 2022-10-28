@@ -18,7 +18,7 @@
   import { FieldText } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
-  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import '../index.css'
@@ -144,7 +144,27 @@
   }
 
   async function dropHandler (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
-    // TODO: call move mutation here
+    const ids = selectedItems.map(d => d.id)
+    if (selectedItems[0].type === DataTreeNodeType.DATA) {
+      let target: MoveDataTarget = {}
+      if (above) {
+        if (dropTarget.type === DataTreeNodeType.FOLDER) {
+          if (!dropTarget.parent!.id.includes('global-')) target = { siteId: dropTarget.parent!.id }
+        } else {
+          target = { aboveTarget: dropTarget.id }
+        }
+      } else {
+        if (dropTarget.type === DataTreeNodeType.FOLDER) {
+          target = { folderId: dropTarget.id }
+        } else {
+          if (!dropTarget.id.includes('global-')) target = { siteId: dropTarget.id }
+        }
+      }
+      await api.moveData(ids, target)
+    } else if (selectedItems[0].type === DataTreeNodeType.FOLDER) {
+      const siteId = dropTarget.id.includes('global-') ? undefined : (dropTarget as TreeDataSite).siteId
+      await api.moveDataFolders(ids, siteId)
+    }
     return true
   }
 
@@ -157,35 +177,28 @@
     if (unique(selectedItems.map(i => i.type)).length > 1) return false
     if (selectedItems[0].type === DataTreeNodeType.FOLDER) {
       if (dropTarget.type !== DataTreeNodeType.SITE) return false
-      if (above) {
-        return data.mayManageGlobalData
-      } else {
-        return dropTarget.permissions.create
-      }
+      return above ? false : dropTarget.permissions.create
     } else {
       // Data item(s) moving
       if (above) {
-        if (dropTarget.type === DataTreeNodeType.SITE) return data.mayManageGlobalData
+        // can't move anything above a site
+        if (dropTarget.type === DataTreeNodeType.SITE) return false
         else if (dropTarget.type === DataTreeNodeType.FOLDER) {
-          // this could be global data or data in a site, not in a folder
-          if (dropTarget.level === 1) return data.mayManageGlobalData
-          else {
-            return dropTarget.permissions.create
-          }
+          // moving it above a folder means moving it into a site
+          const parent = dropTarget.parent as TreeDataSite
+          return parent.permissions.create
         } else {
-          // moving data above another data item
-          if (!dropTarget.parent) return data.mayManageGlobalData
-          else {
-            // dropTarget is in a folder or site-level
-            // TODO: TypeScript thinks the parent is a DataItem but it's a Site or Folder. WHY
-            return (dropTarget.parent as TreeDataFolder|TreeDataSite).permissions.create
-          }
+          // moving it above another data item
+          const parent = dropTarget.parent!.type === DataTreeNodeType.SITE ? dropTarget.parent as TreeDataSite : dropTarget.parent as TreeDataFolder
+          return parent.permissions.create
         }
       } else {
-        if (dropTarget.type === DataTreeNodeType.DATA) {
-          // data items can't contain other data items
-          return false
-        } else {
+        // data items can't contain other data items
+        if (dropTarget.type === DataTreeNodeType.DATA) return false
+        else {
+          // It doesn't make sense to drag something into its own parent
+          const parents = selectedItems.map(i => i.parent!.id)
+          if (parents.includes(dropTarget.id)) return false
           return dropTarget.permissions.create
         }
       }

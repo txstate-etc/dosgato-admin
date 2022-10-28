@@ -30,7 +30,7 @@ import {
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
   GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
   PUBLISH_DELETION, UNDELETE_PAGES, SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES,
-  PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES
+  PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES, type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -402,6 +402,11 @@ class API {
     return renameDataFolder
   }
 
+  async moveDataFolders (folderIds: string[], siteId?: string) {
+    const { moveDataFolders } = await this.query<{ moveDataFolders: MutationResponse & { dataFolders: DataFolder[] } }>(MOVE_DATA_FOLDERS, { folderIds, siteId })
+    return moveDataFolders
+  }
+
   async addDataEntry (name: string, data: any, templateKey: string, siteId?: string, folderId?: string, validateOnly?: boolean) {
     const resp = validateRequired<{ data: undefined }>({ name }, ['name'])
     if (resp) return resp
@@ -453,6 +458,11 @@ class API {
   async undeleteData (dataIds: string[]) {
     const { undeleteDataEntries } = await this.query<{ undeleteDataEntries: MutationResponse & { data: DataItem[] }}>(UNDELETE_DATA, { dataIds })
     return undeleteDataEntries
+  }
+
+  async moveData (dataIds: string[], target: MoveDataTarget) {
+    const { moveDataEntries } = await this.query<{ moveDataEntries: MutationResponse & { data: DataItem[] }}>(MOVE_DATA, { dataIds, target })
+    return moveDataEntries
   }
 
   async getRoleList () {
