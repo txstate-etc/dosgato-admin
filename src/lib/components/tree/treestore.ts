@@ -27,6 +27,8 @@ export interface ITreeStore<T extends TreeItemFromDB> {
   focused?: TypedTreeItem<T>
   selected: Map<string, TypedTreeItem<T>>
   selectedItems: TypedTreeItem<T>[]
+  copied: Map<string, TypedTreeItem<T>>
+  cut?: boolean
   viewUnder?: TypedTreeItem<T>
   viewItems: TypedTreeItem<T>[]
   viewDepth: number
@@ -36,10 +38,10 @@ export interface ITreeStore<T extends TreeItemFromDB> {
 }
 
 export type FetchChildrenFn<T extends TreeItemFromDB> = (item?: TypedTreeItem<T>) => Promise<T[]>
-export type DragEligibleFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[]) => boolean
-export type DropEligibleFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => boolean
-export type DropEffectFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => 'move' | 'copy'
-export type DropHandlerFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => boolean | Promise<boolean>
+export type DragEligibleFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], userWantsCopy: boolean) => boolean
+export type DropEffectFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean, userWantsCopy: boolean) => 'move' | 'copy' | 'none'
+export type MoveHandlerFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean) => boolean | Promise<boolean>
+export type CopyHandlerFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeItem<T>[], dropTarget: TypedTreeItem<T>, above: boolean, userWantsRecursive: boolean | undefined) => boolean | Promise<boolean>
 
 export interface TreeHeader<T extends TreeItemFromDB> {
   id: string
@@ -63,10 +65,11 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
   public viewUnderStore = derivedStore(this, 'viewUnder')
   public viewDepth = derivedStore(this, 'viewDepth')
   public viewItems = derivedStore(this, 'viewItems')
+  public copied = derivedStore(this, 'copied')
 
-  public dropHandler?: DropHandlerFn<T>
+  public moveHandler?: MoveHandlerFn<T>
+  public copyHandler?: CopyHandlerFn<T>
   public dragEligibleHandler?: DragEligibleFn<T>
-  public dropEligibleHandler?: DropEligibleFn<T>
   public dropEffectHandler?: DropEffectFn<T>
   public singleSelect?: boolean
 
@@ -74,18 +77,18 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
 
   constructor (
     public fetchChildren: FetchChildrenFn<T>,
-    { dropHandler, dragEligible, dropEligible, dropEffect, singleSelect }: {
-      dropHandler?: DropHandlerFn<T>
+    { moveHandler, copyHandler, dragEligible, dropEffect, singleSelect }: {
+      moveHandler?: MoveHandlerFn<T>
+      copyHandler?: CopyHandlerFn<T>
       dragEligible?: DragEligibleFn<T>
-      dropEligible?: DropEligibleFn<T>
       dropEffect?: DropEffectFn<T>
       singleSelect?: boolean
     } = {}
   ) {
-    super({ itemsById: {}, viewItems: [], viewDepth: Infinity, selected: new Map(), selectedItems: [], dragging: false, draggable: !!dropHandler })
-    this.dropHandler = dropHandler
+    super({ itemsById: {}, viewItems: [], viewDepth: Infinity, selected: new Map(), selectedItems: [], copied: new Map(), dragging: false, draggable: !!moveHandler })
+    this.moveHandler = moveHandler
+    this.copyHandler = copyHandler
     this.dragEligibleHandler = dragEligible
-    this.dropEligibleHandler = dropEligible
     this.dropEffectHandler = dropEffect
     this.singleSelect = singleSelect
   }
@@ -119,7 +122,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
 
   determineDraggable () {
     this.value.selectedItems = Array.from(this.value.selected.values())
-    this.value.selectedUndraggable = !this.dragEligible(this.value.selectedItems)
+    this.value.selectedUndraggable = !this.dragEligible(this.value.selectedItems, true) && !this.dragEligible(this.value.selectedItems, false)
   }
 
   set (state: ITreeStore<T>) {
@@ -219,6 +222,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
 
   deselect (notify = true) {
     this.value.selected.clear()
+    this.determineDraggable()
     if (notify) this.trigger()
   }
 
@@ -265,24 +269,32 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     this.trigger()
   }
 
-  async drop (item: TypedTreeItem<T>, above: boolean) {
-    if (!this.dropHandler) return false
+  protected async _drop (item: TypedTreeItem<T>, droppedItems: Map<string, TypedTreeItem<T>>, above: boolean, userWantsCopy: boolean, userWantsRecursive: boolean | undefined) {
+    const dropEffect = this._dropEffect(item, droppedItems, above, userWantsCopy)
+    if (dropEffect === 'none') return false
     this.value.dragging = false
-    if (!this.dropEligible(item, above)) return false
     this.value.loading = true
     this.trigger()
-    const commonparent = this.findCommonParent([...this.value.selectedItems, item])
-    const result = this.dropHandler(this.value.selectedItems, item, above)
-    if (result === false || result === true) return result
+    const selectedItems = Array.from(droppedItems.values())
+    const commonparent = this.findCommonParent([...selectedItems, item])
     try {
-      await result
+      const result = dropEffect === 'move'
+        ? await this.moveHandler!(selectedItems, item, above)
+        : await this.copyHandler!(selectedItems, item, above, userWantsRecursive)
+      await this.open(item)
+      await this.refresh(commonparent)
+      return result
     } catch (e: any) {
       console.error(e)
     } finally {
       this.update(v => ({ ...v, loading: false }))
-      await this.refresh(commonparent)
     }
     return true
+  }
+
+  async drop (item: TypedTreeItem<T>, above: boolean, userWantsCopy) {
+    const ret = await this._drop(item, this.value.selected, above, userWantsCopy, undefined)
+    return ret
   }
 
   collectAncestors (item: TypedTreeItem<T>) {
@@ -293,6 +305,12 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
       itm = itm.parent
     }
     return ret
+  }
+
+  root (item: TypedTreeItem<T>) {
+    let root = item
+    while (root.parent) root = root.parent
+    return root
   }
 
   findCommonParent (items: TypedTreeItem<T>[]) {
@@ -312,20 +330,74 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     return ancestors[idx]
   }
 
-  dragEligible (selectedItems: TypedTreeItem<T>[]) {
-    return !this.dragEligibleHandler || this.dragEligibleHandler(selectedItems)
+  dragEligible (selectedItems: TypedTreeItem<T>[], userWantsCopy: boolean) {
+    return !this.dragEligibleHandler || this.dragEligibleHandler(selectedItems, userWantsCopy)
   }
 
-  dropEligible (item: TypedTreeItem<T>, above: boolean) {
-    if (this.value.selected.has(item.id)) return false
-    for (const ancestor of this.collectAncestors(item)) {
-      if (this.value.selected.has(ancestor.id)) return false
+  protected _dropEffect (item: TypedTreeItem<T>, droppedItems: Map<string, TypedTreeItem<T>>, above: boolean, userWantsCopy: boolean) {
+    const handlerAnswer = this.dropEffectHandler?.(Array.from(droppedItems.values()), item, above, userWantsCopy) ?? 'move'
+    if (handlerAnswer === 'none') return 'none'
+    if (handlerAnswer === 'move') {
+      // I could make the user's dropEffectHandler check this, but it's pretty universal that you
+      // can't move a thing into itself or one of its own descendants
+      // and it would be super weird to just automagically turn it into a copy, not to mention it would
+      // mean placing it back on itself would feel like canceling the move but make a copy instead
+      if (droppedItems.has(item.id)) return 'none'
+      for (const ancestor of this.collectAncestors(item)) {
+        if (droppedItems.has(ancestor.id)) return 'none'
+      }
     }
-    return !this.dropEligibleHandler || this.dropEligibleHandler(this.value.selectedItems, item, above)
+    if (handlerAnswer === 'move' && !this.moveHandler) return 'none'
+    if (handlerAnswer === 'copy' && !this.copyHandler) return 'none'
+    return handlerAnswer
   }
 
-  dropEffect (item: TypedTreeItem<T>, above: boolean) {
-    if (!this.dropEffectHandler) return 'move'
-    return this.dropEffectHandler(this.value.selectedItems, item, above)
+  dropEffect (item: TypedTreeItem<T>, above: boolean, userWantsCopy: boolean) {
+    return this._dropEffect(item, this.value.selected, above, userWantsCopy)
+  }
+
+  cut () {
+    if (!this.cutEligible()) return
+    this.value.copied = new Map(this.value.selected)
+    this.value.cut = true
+    this.trigger()
+  }
+
+  copy () {
+    if (!this.copyEligible()) return
+    this.value.copied = new Map(this.value.selected)
+    this.value.cut = false
+    this.trigger()
+  }
+
+  cutEligible () {
+    return this.dragEligible(this.value.selectedItems, false)
+  }
+
+  copyEligible () {
+    return this.dragEligible(this.value.selectedItems, true)
+  }
+
+  cancelCopy () {
+    this.value.copied = new Map()
+    this.value.cut = undefined
+    this.trigger()
+  }
+
+  pasteEligible (above = false) {
+    return this.value.copied.size && this.pasteEffect(above) !== 'none'
+  }
+
+  pasteEffect (above = false) {
+    return this._dropEffect(this.value.selectedItems[0], this.value.copied, above, !this.value.cut)
+  }
+
+  async paste (above = false, userWantsRecursive = false) {
+    if (this.pasteEffect(above) === 'none') return
+    const copied = this.value.copied
+    const cut = this.value.cut
+    this.value.copied = new Map()
+    this.value.cut = undefined
+    return await this._drop(this.value.selectedItems[0], copied, above, !cut, userWantsRecursive)
   }
 }

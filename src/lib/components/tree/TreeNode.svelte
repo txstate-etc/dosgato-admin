@@ -24,21 +24,35 @@
   export let parent: TypedTreeItem<T>|undefined = undefined
 
   const store = getContext<TreeStore<T>>(TREE_STORE_CONTEXT)
-  const { dragging, draggable, selectedUndraggable, viewUnderStore, selected, focused, viewDepth } = store
+  const { dragging, draggable, selectedUndraggable, viewUnderStore, selected, focused, viewDepth, copied } = store
 
   const dispatch = createEventDispatcher()
   let nodeelement: HTMLElement
 
+  let userWantsCopy = false
   $: isSelected = $selected.has(item.id)
   $: leftLevel = ($viewUnderStore?.level ?? 0) + 1
   $: showChildren = !!item.open && !!item.children?.length && item.level - leftLevel < $viewDepth - 1
   $: hashedId = hashid(item.id)
-  $: isDraggable = $draggable && ((isSelected && !$selectedUndraggable) || store.dragEligible([item]))
-  $: dropZone = $dragging && store.dropEligible(item, false)
+  $: isDraggable = $draggable && ((isSelected && !$selectedUndraggable) || store.dragEligible([item], true) || store.dragEligible([item], false))
+  $: dropZone = $dragging && store.dropEffect(item, false, userWantsCopy) !== 'none'
   $: dropDisabled = $dragging && !dropZone
-  $: dropAbove = $dragging && store.dropEligible(item, true)
+  $: dropAbove = $dragging && store.dropEffect(item, true, userWantsCopy) !== 'none'
+  $: inClipboard = $copied.has(item.id)
 
   function onKeyDown (e: KeyboardEvent) {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'x') {
+        store.cut()
+      } else if (e.key === 'c') {
+        store.copy()
+      } else if (e.key === 'v') {
+        store.paste()
+      }
+    } else if (e.key === 'Escape') {
+      store.cancelCopy()
+    }
+
     if (modifierKey(e) && !['Enter', ' '].includes(e.key)) return
     if (['Enter', ' '].includes(e.key)) {
       e.preventDefault()
@@ -150,20 +164,24 @@
     if ($store.selected.size <= 1) dispatch('choose', item)
   }
   function onDragStart (e: DragEvent) {
+    userWantsCopy = e.dataTransfer!.dropEffect === 'copy'
     e.dataTransfer!.effectAllowed = 'copyMove'
+    e.dataTransfer!.setData('text/plain', item.id)
     store.dragStart(item)
   }
   function onDragOver (e: DragEvent) {
+    userWantsCopy = e.dataTransfer!.dropEffect === 'copy'
     if (dropZone) {
       e.preventDefault()
-      e.dataTransfer!.dropEffect = store.dropEffect(item, false)
+      e.dataTransfer!.dropEffect = store.dropEffect(item, false, userWantsCopy)
     }
     return !dropZone
   }
   function onDragOverAbove (e: DragEvent) {
+    userWantsCopy = e.dataTransfer!.dropEffect === 'copy'
     if (dropAbove) {
       e.preventDefault()
-      e.dataTransfer!.dropEffect = store.dropEffect(item, true)
+      e.dataTransfer!.dropEffect = store.dropEffect(item, true, userWantsCopy)
     }
     return !dropAbove
   }
@@ -172,19 +190,22 @@
   function onDrop (e: DragEvent) {
     e.preventDefault()
     dragOver = 0
-    return store.drop(item, false)
+    return store.drop(item, false, e.dataTransfer!.dropEffect === 'copy')
   }
   function onDropAbove (e: DragEvent) {
+    e.preventDefault()
     dragOverAbove = 0
-    return store.drop(item, true)
+    return store.drop(item, true, e.dataTransfer!.dropEffect === 'copy')
   }
   function onDragEnter (e: DragEvent) {
     if (!dropZone) dragOver = 0
     else dragOver++
+    onDragOver(e)
   }
   function onDragEnterAbove (e: DragEvent) {
     if (!dropAbove) dragOverAbove = 0
     else dragOverAbove++
+    onDragOverAbove(e)
   }
   function onDragLeave (e: DragEvent) {
     if (!dropZone) dragOver = 0
@@ -194,6 +215,7 @@
     if (!dropAbove) dragOverAbove = 0
     else dragOverAbove--
   }
+
   $: if ($dragging) {
     dragOver = 0
     dragOverAbove = 0
@@ -217,6 +239,7 @@
     class:selected={isSelected}
     class:dragOver
     class:dropDisabled
+    class:inClipboard
     role="treeitem"
     data-id={item.id}
     draggable={isDraggable}
@@ -337,5 +360,25 @@
     padding: 0;
     margin: 0;
     list-style: none;
+  }
+  .inClipboard {
+    background-image: linear-gradient(90deg, #999999 50%, transparent 50%), linear-gradient(90deg, #999999 50%, transparent 50%), linear-gradient(0deg, #999999 50%, transparent 50%), linear-gradient(0deg, #999999 50%, transparent 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 15px 1px, 15px 1px, 1px 15px, 1px 15px;
+    background-position: left top, right bottom, left bottom, right   top;
+    animation: border-dance 1s infinite linear;
+  }
+  @keyframes border-dance {
+    0% {
+      background-position: left top, right bottom, left bottom, right   top;
+    }
+    100% {
+      background-position: left 15px top, right 15px bottom , left bottom 15px , right   top 15px;
+    }
+  }
+  @media (prefers-reduced-motion) {
+    .inClipboard {
+      animation: none;
+    }
   }
 </style>

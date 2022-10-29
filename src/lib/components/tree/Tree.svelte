@@ -6,7 +6,7 @@
   import { hashid } from 'txstate-utils'
   import TreeNode from './TreeNode.svelte'
   import { TreeStore, TREE_STORE_CONTEXT } from './treestore'
-  import type { DragEligibleFn, DropEligibleFn, DropHandlerFn, DropEffectFn, FetchChildrenFn, TreeHeader, TreeItemFromDB, TypedTreeItem } from './treestore'
+  import type { DragEligibleFn, CopyHandlerFn, DropEffectFn, FetchChildrenFn, MoveHandlerFn, TreeHeader, TreeItemFromDB, TypedTreeItem } from './treestore'
   import TreeCell from './TreeCell.svelte'
 
   type T = $$Generic<TreeItemFromDB>
@@ -20,10 +20,10 @@
   export let singleSelect: boolean|undefined = undefined
   export let fetchChildren: FetchChildrenFn<T>|undefined = undefined
   export let dragEligible: DragEligibleFn<T>|undefined = undefined
-  export let dropEligible: DropEligibleFn<T>|undefined = undefined
-  export let dropHandler: DropHandlerFn<T>|undefined = undefined
+  export let moveHandler: MoveHandlerFn<T>|undefined = undefined
+  export let copyHandler: CopyHandlerFn<T>|undefined = undefined
   export let dropEffect: DropEffectFn<T>|undefined = undefined
-  export let store = new TreeStore<T>(fetchChildren!, { dropHandler, dragEligible, dropEligible, dropEffect })
+  export let store = new TreeStore<T>(fetchChildren!, { copyHandler, dragEligible, dropEffect, moveHandler })
   setContext(TREE_STORE_CONTEXT, store)
   const { viewUnderStore, viewItems } = store
 

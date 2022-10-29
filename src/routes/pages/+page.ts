@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { api, toast, TreeStore, type RootTreePage, type TreePage, type TypedTreeItem } from '$lib'
+import { api, TreeStore, type RootTreePage, type TreePage, type TypedTreeItem } from '$lib'
 
 export interface PageItem extends Omit<Omit<Omit<TreePage, 'modifiedAt'>, 'publishedAt'>, 'children'> {
   modifiedAt: DateTime
@@ -29,45 +29,31 @@ async function fetchChildren (item?: TypedPageItem) {
   })
 }
 
-function root (page: TypedPageItem) {
-  let root = page
-  while (root.parent) root = root.parent
-  return root
+async function moveHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
+  return await api.movePages(selectedItems.map(itm => itm.id), dropTarget.id, above)
 }
-
-async function dropHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
-  const dropRoot = root(dropTarget)
-  const commonRoot = selectedItems.filter(p => root(p).id === dropRoot.id)
-  if (commonRoot.length === selectedItems.length) {
-    return await api.movePages(selectedItems.map(itm => itm.id), dropTarget.id, above)
-  } else if (commonRoot.length) {
-    toast('Some pages being moved are from the target\'s page tree, but some are not. Mixing the two doesn\'t make much sense. Try moving fewer pages at a time.')
-    return false
+async function copyHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
+  return await api.copyPages(selectedItems.map(itm => itm.id), dropTarget.id, above)
+}
+function dragEligible (items: TypedPageItem[], userWantsCopy: boolean) {
+  // site roots cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites
+  // move permission is required for moves but you can copy things you can't move
+  return items.every(item => !!item.parent && (userWantsCopy || item.permissions.move))
+}
+function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean, userWantsCopy: boolean) {
+  const actualTargetParent = above ? dropTarget.parent : dropTarget
+  if (!actualTargetParent?.permissions.create) return 'none'
+  // if we don't have permission to move one of the selected items then the user needs to request a copy operation
+  if (selectedItems.some(p => !p.permissions.move)) return userWantsCopy ? 'copy' : 'none'
+  const dropRoot = store.root(actualTargetParent)
+  const selectedItemsInSameSiteAsTarget = selectedItems.filter(p => store.root(p).id === dropRoot.id)
+  if (selectedItemsInSameSiteAsTarget.length === selectedItems.length) {
+    return userWantsCopy ? 'copy' : 'move' // if within the site the user can do whatever they are requesting
+  } else if (selectedItemsInSameSiteAsTarget.length) {
+    return 'none' // mixing pages from target site and some other site - weird, how about no
   } else {
-    return await api.copyPages(selectedItems.map(itm => itm.id), dropTarget.id, above)
+    return 'copy' // if dragging to another site the operation will be forced into a copy
   }
-}
-function dragEligible (items: TypedPageItem[]) {
-  // sites cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites
-  return items.every(item => !!item.parent && item.permissions.move)
-}
-function dropEligible (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
-  // cannot place an item at the root: instead create a new site in the site management UI
-  if (!dropTarget.parent && above) return false
-  return above ? dropTarget.parent!.permissions.create : dropTarget.permissions.create
-}
-function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
-  const selectedSites = new Set<string>()
-  let noMovePerm = false
-  for (const slctd of selectedItems) {
-    const ancestors = store.collectAncestors(slctd)
-    selectedSites.add((ancestors[ancestors.length - 1] ?? slctd).id)
-    if (!slctd.permissions.move) noMovePerm = true
-  }
-  if (selectedSites.size > 1 || noMovePerm) return 'copy'
-  const anc = store.collectAncestors(dropTarget)
-  const targetSite = (anc[anc.length - 1] ?? dropTarget).id
-  return selectedSites.has(targetSite) ? 'move' : 'copy'
 }
 
-export const store: TreeStore<PageItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
+export const store: TreeStore<PageItem> = new TreeStore(fetchChildren, { copyHandler, dragEligible, dropEffect, moveHandler })

@@ -1,14 +1,17 @@
 <script lang="ts">
   import { iconForMime, bytesToHuman, FieldText } from '@dosgato/dialog'
-  import arrowsOutCardinalLight from '@iconify-icons/ph/arrows-out-cardinal-light'
+  import cursorMove from '@iconify-icons/mdi/cursor-move'
+  import contentCopy from '@iconify-icons/mdi/content-copy'
+  import contentPaste from '@iconify-icons/mdi/content-paste'
   import downloadLight from '@iconify-icons/ph/download-light'
+  import fileXLight from '@iconify-icons/ph/file-x-light'
   import folderLight from '@iconify-icons/ph/folder-light'
   import folderPlusLight from '@iconify-icons/ph/folder-plus-light'
   import folderNotchOpenLight from '@iconify-icons/ph/folder-notch-open-light'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import uploadLight from '@iconify-icons/ph/upload-light'
   import { goto } from '$app/navigation'
-  import { api, ActionPanel, Tree, environmentConfig, FormDialog, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog } from '$lib'
+  import { api, ActionPanel, Tree, environmentConfig, FormDialog, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction } from '$lib'
   import { base } from '$app/paths'
   import { store, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
   import './index.css'
@@ -17,25 +20,42 @@
   let selectedFolder: TypedAssetFolderItem | undefined
 
   function singlepageactions (item: TypedAnyAssetItem) {
-    return item.kind === 'asset'
+    const actions: ActionPanelAction[] = item.kind === 'asset'
       ? [
           { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: () => goto(base + '/assets/' + item.id) },
-          { label: 'Download', icon: downloadLight, onClick: () => { goto(`${environmentConfig.apiBase}/assets/${item.id}/${item.filename}?admin=1`) } },
-          { label: 'Move', icon: arrowsOutCardinalLight, onClick: () => { /* TODO */ } }
+          { label: 'Download', icon: downloadLight, onClick: () => { goto(`${environmentConfig.apiBase}/assets/${item.id}/${item.filename}?admin=1`) } }
         ]
       : [
           { label: 'Upload', icon: uploadLight, disabled: !item.permissions.create, onClick: () => { modal = 'upload'; selectedFolder = item as TypedAssetFolderItem } },
           { label: 'Rename Folder', icon: pencilIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { modal = 'rename'; selectedFolder = item as TypedAssetFolderItem } },
           { label: 'Create Folder', icon: folderPlusLight, disabled: !item.permissions.create, onClick: () => { modal = 'create'; selectedFolder = item as TypedAssetFolderItem } }
         ]
+    if ($store.copied.size) {
+      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+    } else {
+      actions.push(
+        { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
+        { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() }
+      )
+    }
+    actions.push(
+      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste() } }
+    )
+    return actions
   }
 
   function multipageactions (pages: TypedAnyAssetItem[]) {
     if (!pages?.length) return []
-    return [
-      // { label: 'Move', disabled: pages.some(p => !p.permissions.move), onClick: () => {} },
-      // { label: 'Publish', disabled: pages.some(p => !p.permissions.publish), onClick: () => {} }
-    ]
+    const actions: ActionPanelAction[] = []
+    if ($store.copied.size) {
+      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+    } else {
+      actions.push(
+        { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
+        { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() }
+      )
+    }
+    return actions
   }
 
   async function onChildSaved () {

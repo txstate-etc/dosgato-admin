@@ -31,8 +31,21 @@ async function fetchChildren (item?: TypedAssetFolderItem) {
   return [...sortby(typedfolders, 'name'), ...sortby(typedassets, 'name')]
 }
 
-async function dropHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean) {
-  const resp = await api.query(`mutation movePages ($assetIds: [ID!]!, $folderIds: [ID!]!, $targetFolderId: ID!) {
+async function copyHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean) {
+  const resp = await api.query(`mutation copyAssetsAndFolders ($assetIds: [ID!]!, $folderIds: [ID!]!, $targetFolderId: ID!) {
+    copyAssetsAndFolders (assetIds: $assetIds, folderIds: $folderIds, targetFolderId: $targetFolderId) {
+      ${mutationResponse}
+    }
+  }`, {
+    assetIds: selectedItems.filter(itm => itm.kind === 'asset').map(itm => itm.id),
+    folderIds: selectedItems.filter(itm => itm.kind === 'folder').map(itm => itm.id),
+    targetFolderId: dropTarget.id
+  })
+  return resp.success
+}
+
+async function moveHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean) {
+  const resp = await api.query(`mutation moveAssetsAndFolders ($assetIds: [ID!]!, $folderIds: [ID!]!, $targetFolderId: ID!) {
     moveAssetsAndFolders (assetIds: $assetIds, folderIds: $folderIds, targetFolderId: $targetFolderId) {
       ${mutationResponse}
     }
@@ -49,25 +62,14 @@ function dragEligible (items: (TypedAssetFolderItem | TypedAssetItem)[]) {
   return items.every(item => !!item.parent)
 }
 
-function dropEligible (selectedItems: (TypedAssetFolderItem | TypedAssetItem)[], dropTarget: TypedAnyAssetItem, above: boolean) {
-  // cannot place an item at the root: instead create a new site in the site management UI
-  if (!dropTarget.parent && above) return false
-  if (dropTarget.kind === 'asset' && !above) return false
-  return above ? (dropTarget.parent! as TypedAssetFolderItem).permissions.create : (dropTarget as TypedAssetFolderItem).permissions.create
+function dropEffect (selectedItems: (TypedAssetFolderItem | TypedAssetItem)[], dropTarget: TypedAnyAssetItem, above: boolean, userWantsCopy: boolean) {
+  // assets are alphabetical, so `above` isn't allowed since it's only for controlling ordering
+  if (above) return 'none'
+  if (dropTarget.kind === 'asset' || !dropTarget.permissions.create) return 'none'
+
+  // if we don't have permission to move one of the selected items then the user needs to request a copy operation
+  if (selectedItems.some(p => !p.permissions.move)) return userWantsCopy ? 'copy' : 'none'
+  return userWantsCopy ? 'copy' : 'move'
 }
 
-function dropEffect (selectedItems: (TypedAssetFolderItem | TypedAssetItem)[], dropTarget: TypedAnyAssetItem, above: boolean) {
-  const selectedSites = new Set<string>()
-  let noMovePerm = false
-  for (const slctd of selectedItems) {
-    const ancestors = store.collectAncestors(slctd)
-    selectedSites.add((ancestors[ancestors.length - 1] ?? slctd).id)
-    if (!slctd.permissions.move) noMovePerm = true
-  }
-  if (selectedSites.size > 1 || noMovePerm) return 'copy'
-  const anc = store.collectAncestors(dropTarget)
-  const targetSite = (anc[anc.length - 1] ?? dropTarget).id
-  return selectedSites.has(targetSite) ? 'move' : 'copy'
-}
-
-export const store: TreeStore<AssetItem | AssetFolderItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible, dropEffect })
+export const store: TreeStore<AssetItem | AssetFolderItem> = new TreeStore(fetchChildren, { copyHandler, moveHandler, dragEligible, dropEffect })

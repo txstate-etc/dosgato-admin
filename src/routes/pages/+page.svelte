@@ -5,6 +5,7 @@
   import archiveLight from '@iconify-icons/ph/archive-light'
   import sandboxIcon from '@iconify-icons/file-icons/sandbox'
   import circleIcon from '@iconify-icons/mdi/circle'
+  import fileXLight from '@iconify-icons/ph/file-x-light'
   import layoutLight from '@iconify-icons/ph/layout-light'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
@@ -56,10 +57,18 @@
       { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
       { label: 'Change Template', icon: layoutLight, disabled: !page.permissions.update, onClick: onClickTemplateChange },
       { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move, onClick: () => { modal = 'renamepage' } },
-      { label: 'Duplicate', icon: duplicateIcon, disabled: !page.parent?.permissions.create, onClick: () => { modal = 'duplicatepage' } },
-      { label: 'Move', icon: cursorMove, disabled: !page.permissions.move, onClick: () => { copiedPageId = page.id; pasteWillCut = true } },
-      { label: 'Copy', icon: contentCopy, disabled: false, onClick: () => { copiedPageId = page.id; pasteWillCut = false } },
-      { label: pasteWillCut ? 'Paste (move)' : 'Paste', hiddenLabel: `${$store.itemsById[copiedPageId as string]?.path ?? ''} into ${page.name}`, icon: contentPaste, disabled: !page.permissions.create || isNull(copiedPageId), onClick: onPastePage }
+      { label: 'Duplicate', icon: duplicateIcon, disabled: !page.parent?.permissions.create, onClick: () => { modal = 'duplicatepage' } }
+    )
+    if ($store.copied.size) {
+      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+    } else {
+      actions.push(
+        { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
+        { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() }
+      )
+    }
+    actions.push(
+      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste() } }
     )
     if (page.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => { modal = 'publishpages' } })
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) actions.push({ label: 'Publish Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'publishdelete' } })
@@ -72,11 +81,19 @@
   }
   function multipageactions (pages: TypedPageItem[]) {
     if (!pages?.length) return []
-    return [
-      { label: 'Move', icon: cursorMove, disabled: pages.some(p => !p.permissions.move), onClick: () => {} },
+    const actions: ActionPanelAction[] = [
       { label: 'Publish', icon: publishIcon, disabled: pages.some(p => !p.permissions.publish), onClick: () => { modal = 'publishpages' } },
       { label: 'Unpublish', icon: publishOffIcon, disabled: pages.some(p => !p.permissions.unpublish), onClick: () => { modal = 'unpublishpages' } }
     ]
+    if ($store.copied.size) {
+      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+    } else {
+      actions.push(
+        { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
+        { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() }
+      )
+    }
+    return actions
   }
 
   let availableTemplates: PopupMenuItem[] = []
@@ -130,31 +147,6 @@
     if (resp.success) {
       store.refresh()
       modal = undefined
-    }
-  }
-
-  let copiedPageId: string | undefined
-  let pasteWillCut = false
-
-  async function onPastePage () {
-    if (!copiedPageId) return
-    try {
-      const copiedItem = $store.itemsById[copiedPageId]
-      if (pasteWillCut && copiedItem) {
-        const success = await api.movePages([copiedItem.id], $store.selectedItems[0].id, false)
-        if (success) {
-          await store.refresh(copiedItem.parent, true)
-          await store.openAndRefresh($store.selectedItems[0])
-        }
-      } else {
-        const resp = await api.pastePage(copiedPageId, $store.selectedItems[0].id)
-        if (resp.success) {
-          await store.openAndRefresh($store.selectedItems[0])
-        }
-      }
-    } finally {
-      copiedPageId = undefined
-      pasteWillCut = false
     }
   }
 
@@ -222,7 +214,7 @@
   }
 </script>
 
-<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0], copiedPageId) : multipageactions($store.selectedItems)}>
+<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) goto(base + '/pages/' + detail.id) }}
     headers={[
       { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmtpy : item.parent ? applicationOutline : siteIcon[item.type], get: 'name' },
@@ -232,7 +224,6 @@
       { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
       { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
     ]}
-    nodeClass={itm => copiedPageId === itm.id ? 'copied' : ''}
   />
 </ActionPanel>
 {#if modal === 'addpage'}
