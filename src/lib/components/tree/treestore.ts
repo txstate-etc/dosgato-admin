@@ -281,7 +281,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
       const result = dropEffect === 'move'
         ? await this.moveHandler!(selectedItems, item, above)
         : await this.copyHandler!(selectedItems, item, above, userWantsRecursive)
-      await this.open(item)
+      await this.openAndRefresh(item)
       await this.refresh(commonparent)
       return result
     } catch (e: any) {

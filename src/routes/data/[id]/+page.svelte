@@ -1,24 +1,27 @@
 <script lang="ts">
-  import folderOutline from '@iconify-icons/mdi/folder-outline'
   import applicationOutline from '@iconify-icons/mdi/application-outline'
-  import cubeLight from '@iconify-icons/ph/cube-light'
-  import triangleIcon from '@iconify-icons/mdi/triangle'
   import circleIcon from '@iconify-icons/mdi/circle'
-  import squareIcon from '@iconify-icons/mdi/square'
-  import pencilIcon from '@iconify-icons/mdi/pencil'
-  import publishIcon from '@iconify-icons/mdi/publish'
-  import publishOffIcon from '@iconify-icons/mdi/publish-off'
-  import plusIcon from '@iconify-icons/mdi/plus'
-  import folderPlusOutline from '@iconify-icons/mdi/folder-plus-outline'
+  import contentCopy from '@iconify-icons/mdi/content-copy'
+  import contentPaste from '@iconify-icons/mdi/content-paste'
+  import cubeLight from '@iconify-icons/ph/cube-light'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import deleteEmpty from '@iconify-icons/mdi/delete-empty'
+  import fileXLight from '@iconify-icons/ph/file-x-light'
+  import folderOutline from '@iconify-icons/mdi/folder-outline'
+  import folderPlusOutline from '@iconify-icons/mdi/folder-plus-outline'
+  import pencilIcon from '@iconify-icons/mdi/pencil'
+  import publishIcon from '@iconify-icons/mdi/publish'
+  import publishOffIcon from '@iconify-icons/mdi/publish-off'
+  import plusIcon from '@iconify-icons/mdi/plus'
+  import squareIcon from '@iconify-icons/mdi/square'
   import trashSimpleFill from '@iconify-icons/ph/trash-simple-fill'
+  import triangleIcon from '@iconify-icons/mdi/triangle'
   import { FieldText } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
-  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import '../index.css'
@@ -143,13 +146,14 @@
     else return applicationOutline
   }
 
-  async function dropHandler (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
+  async function moveHandler (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
+    console.log(dropTarget)
     const ids = selectedItems.map(d => d.id)
     if (selectedItems[0].type === DataTreeNodeType.DATA) {
       let target: MoveDataTarget = {}
       if (above) {
         if (dropTarget.type === DataTreeNodeType.FOLDER) {
-          if (!dropTarget.parent!.id.includes('global-')) target = { siteId: dropTarget.parent!.id }
+          if (!dropTarget.parent!.id.includes('global-')) target = { siteId: (dropTarget.parent! as TreeDataSite).siteId }
         } else {
           target = { aboveTarget: dropTarget.id }
         }
@@ -157,7 +161,7 @@
         if (dropTarget.type === DataTreeNodeType.FOLDER) {
           target = { folderId: dropTarget.id }
         } else {
-          if (!dropTarget.id.includes('global-')) target = { siteId: dropTarget.id }
+          if (!dropTarget.id.includes('global-')) target = { siteId: (dropTarget as TreeDataSite).siteId }
         }
       }
       await api.moveData(ids, target)
@@ -172,48 +176,52 @@
     return items.every(itm => itm.type !== DataTreeNodeType.SITE && itm.permissions.move)
   }
 
-  function dropEligible (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
+  function dropEffect (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
     // only want to drop items if they are the same type of item
-    if (unique(selectedItems.map(i => i.type)).length > 1) return false
+    if (unique(selectedItems.map(i => i.type)).length > 1) return 'none'
     if (selectedItems[0].type === DataTreeNodeType.FOLDER) {
-      if (dropTarget.type !== DataTreeNodeType.SITE) return false
-      return above ? false : dropTarget.permissions.create
+      if (dropTarget.type !== DataTreeNodeType.SITE) return 'none'
+      return above || !dropTarget.permissions.create ? 'none' : 'move'
     } else {
       // Data item(s) moving
       if (above) {
         // can't move anything above a site
-        if (dropTarget.type === DataTreeNodeType.SITE) return false
+        if (dropTarget.type === DataTreeNodeType.SITE) return 'none'
         else if (dropTarget.type === DataTreeNodeType.FOLDER) {
           // moving it above a folder means moving it into a site
           const parent = dropTarget.parent as TreeDataSite
-          return parent.permissions.create
+          return parent.permissions.create ? 'move' : 'none'
         } else {
           // moving it above another data item
           const parent = dropTarget.parent!.type === DataTreeNodeType.SITE ? dropTarget.parent as TreeDataSite : dropTarget.parent as TreeDataFolder
-          return parent.permissions.create
+          return parent.permissions.create ? 'move' : 'none'
         }
       } else {
         // data items can't contain other data items
-        if (dropTarget.type === DataTreeNodeType.DATA) return false
+        if (dropTarget.type === DataTreeNodeType.DATA) return 'none'
         else {
           // It doesn't make sense to drag something into its own parent
           const parents = selectedItems.map(i => i.parent!.id)
-          if (parents.includes(dropTarget.id)) return false
-          return dropTarget.permissions.create
+          if (parents.includes(dropTarget.id)) return 'none'
+          return dropTarget.permissions.create ? 'move' : 'none'
         }
       }
     }
   }
 
-  const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren, { dropHandler, dragEligible, dropEligible })
+  const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren, { moveHandler, dragEligible, dropEffect })
 
   function singleActions (item: TypedDataTreeItem) {
     if (item.type === DataTreeNodeType.DATA) {
-      const actions = [
+      const actions: ActionPanelAction[] = [
         { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { onClickEdit() } },
-        { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamedata' } },
-        { label: 'Move', icon: cursorMove, disabled: !item.permissions?.move, onClick: () => {} }
+        { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamedata' } }
       ]
+      if ($store.copied.size) {
+        actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+      } else {
+        actions.push({ label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() })
+      }
       if (item.deleteState === DeleteState.NOTDELETED) {
         actions.push({ label: 'Publish', icon: publishIcon, disabled: !item.permissions?.publish, onClick: () => { modal = 'publishdata' } })
       } else if (item.deleteState === DeleteState.MARKEDFORDELETE) {
@@ -230,7 +238,8 @@
         { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamefolder' } },
         { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => { modal = 'adddata' } },
         { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => { modal = 'deletefolder' } },
-        { label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} }
+        { label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} },
+        { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste() } }
       ]
     } else {
       return [
@@ -257,14 +266,19 @@
       ]
     }
     if (items.every((item) => item.type === DataTreeNodeType.DATA)) {
-      return [
-        { label: 'Move', icon: cursorMove, disabled: false, onClick: () => {} },
+      const actions: ActionPanelAction[] = [
         { label: 'Publish', icon: publishIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.publish), onClick: () => { modal = 'publishdata' } },
         { label: 'Unpublish', icon: publishOffIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.unpublish), onClick: () => { modal = 'unpublishdata' } },
         { label: 'Delete', icon: deleteOutline, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.delete), onClick: () => { modal = 'deletedata' } },
         { label: 'Publish Deletion', icon: deleteOutline, disabled: publishMultipleDeletionDisabled(items as TypedTreeItem<TreeDataItem>[]), onClick: () => { modal = 'publishdeletedata' } },
         { label: 'Restore Data', icon: deleteRestore, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.undelete), onClick: () => { modal = 'undeletedata' } }
       ]
+      if ($store.copied.size) {
+        actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+      } else {
+        actions.push({ label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() })
+      }
+      return actions
     }
     return []
   }
