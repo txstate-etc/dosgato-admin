@@ -1,23 +1,24 @@
 <script lang="ts">
   import { Icon, InlineMessage } from '@dosgato/dialog'
-  import usersLight from '@iconify-icons/ph/users-light'
   import closeThick from '@iconify-icons/mdi/close-thick'
+  import copySimpleLight from '@iconify-icons/ph/copy-simple-light'
   import dotsThree from '@iconify-icons/ph/dots-three'
   import databaseLight from '@iconify-icons/ph/database-light'
   import fileCodeLight from '@iconify-icons/ph/file-code-light'
-  import copySimpleLight from '@iconify-icons/ph/copy-simple-light'
-  import menuDown from '@iconify-icons/mdi/menu-down'
   import globeLight from '@iconify-icons/ph/globe-light'
+  import menuDown from '@iconify-icons/mdi/menu-down'
+  import userCircleLight from '@iconify-icons/ph/user-circle-light'
+  import usersLight from '@iconify-icons/ph/users-light'
   import { PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
+  import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
-  import { currentSubNav, globalStore, subnavStore, toasts } from '$lib'
-  import LabeledIcon from '$lib/components/LabeledIcon.svelte'
-  import { goto } from '$app/navigation'
+  import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton } from '$lib'
 
   export let data: { errObj: any }
 
-  let buttonelement: HTMLElement
+  let buttonelement: HTMLButtonElement
+  let profileelement: HTMLButtonElement
 
   const profileItems: PopupMenuItem[] = [
     { value: 'Logout' }
@@ -60,7 +61,10 @@
         {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={usersLight} label="Access" /></li>{/if}
         {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings/templates" icon={dotsThree} label="More" /></li>{/if}
       </ul>
-      <button bind:this={buttonelement} class="login-status reset">
+      <div class="profile-compact">
+        <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
+      </div>
+      <button bind:this={profileelement} class="login-status reset">
         {$globalStore.me.name || 'Unauthorized User'}
         <Icon icon={menuDown} inline />
       </button>
@@ -83,6 +87,7 @@
     {/if}
   </nav>
   <PopupMenu {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
+  <PopupMenu buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
   <main>
     <slot />
   </main>
@@ -104,14 +109,11 @@
   @import url(../app.css);
   .topbar {
     display: flex;
-    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #444444;
     background-color: #501214;
     padding: 0.5em;
-  }
-  .topbar {
     color: white;
   }
   nav ul {
@@ -195,5 +197,22 @@
     margin: 0;
     list-style: none;
     z-index: var(--toast-z, calc(var(--modal-z, 3000) + 1));
+  }
+
+  @media (max-width: 30em) {
+    .topbar .logo {
+      display: none;
+    }
+    .topnav li, .profile-compact {
+      font-size: 0.85rem;
+    }
+    button.login-status {
+      display: none;
+    }
+  }
+  @media (min-width: 30em) {
+    .profile-compact {
+      display: none;
+    }
   }
 </style>
