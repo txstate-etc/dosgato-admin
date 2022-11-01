@@ -863,3 +863,4 @@ class API {
 }
 
 export const api = new API()
+if (typeof window !== 'undefined') (window as any).api = api

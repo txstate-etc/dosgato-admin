@@ -1,6 +1,5 @@
 import type { MutationResponse } from '$lib/api'
-import type { PageData } from '@dosgato/templating'
-import type { PagetreeTypes } from './pages_index'
+import type { DialogPageProp } from '@dosgato/templating'
 
 export const EDITOR_PAGE_DETAILS = `
 id
@@ -34,11 +33,8 @@ export const GET_EDITOR_PAGE = `
     }
   }
 `
-export interface PageEditorPage {
-  id: string
-  path: string
+export interface PageEditorPage extends DialogPageProp {
   name: string
-  data: PageData
   title?: string
   pagetree: {
     id: string

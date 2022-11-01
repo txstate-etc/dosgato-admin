@@ -21,7 +21,7 @@
   import { FieldText } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
-  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig } from '$lib'
   import Dialog from '$lib/components/Dialog.svelte'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import '../index.css'
@@ -522,7 +522,7 @@
     {@const reg = templateRegistry.getTemplate($templateStore.id)}
     {#if reg?.dialog}
       <SubForm path='data'>
-        <svelte:component this={reg.dialog}></svelte:component>
+        <svelte:component this={reg.dialog} creating={true} {environmentConfig} />
       </SubForm>
     {/if}
   </FormDialog>
@@ -547,7 +547,7 @@
     {@const reg = templateRegistry.getTemplate($templateStore.id)}
     {#if reg?.dialog}
       <SubForm path='data'>
-        <svelte:component this={reg.dialog}></svelte:component>
+        <svelte:component this={reg.dialog} creating={false} {data} {environmentConfig} />
       </SubForm>
     {/if}
   </FormDialog>

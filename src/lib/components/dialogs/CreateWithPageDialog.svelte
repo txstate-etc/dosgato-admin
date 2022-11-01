@@ -34,7 +34,7 @@
   <SubForm path='data' conditional={isNotNull($store.data?.templateKey)}>
     {@const template = templateRegistry.getTemplate($store.data.templateKey)}
     {#if template && template.dialog}
-      <svelte:component this={template.dialog} creating={true} data={{}} templateProperties={template.templateProperties} {environmentConfig} />
+      <svelte:component this={template.dialog} creating={true} templateProperties={template.templateProperties} {environmentConfig} />
     {:else}
       <span>This content uses an unrecognized template. Please contact support for assistance.</span>
     {/if}
