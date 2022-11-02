@@ -76,7 +76,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
 
   async addComponentChooseTemplate (templateKey: string, refreshIframe: () => Promise<void>) {
     const def = templateRegistry.getTemplate(templateKey)
-    this.updateEditorState(editorState => ({ ...editorState, creating: { ...editorState.creating!, templateKey, data: { areas: def?.defaultContent } } }))
+    this.updateEditorState(editorState => ({ ...editorState, creating: { ...editorState.creating!, templateKey, data: undefined } }))
     if (def && def.dialog == null) {
       const resp = await this.addComponentSubmit({ areas: def.defaultContent })
       if (resp?.success) await refreshIframe()
@@ -88,7 +88,8 @@ class PageEditorStore extends Store<IPageEditorStore> {
     if (!pageId) return
     const editorState = this.value.editors[pageId]
     if (!editorState?.creating?.templateKey) return
-    const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey }, { validateOnly })
+    const def = templateRegistry.getTemplate(editorState.creating.templateKey)
+    const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey, areas: def?.defaultContent }, { validateOnly })
     if (!validateOnly && resp.success) {
       this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
     }
