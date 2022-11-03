@@ -1,6 +1,6 @@
 import type { ComponentData, UITemplate } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
-import { get, isNotBlank, set } from 'txstate-utils'
+import { get, isBlank, isNotBlank, set } from 'txstate-utils'
 import { api, type PageEditorPage, templateRegistry, toast } from '$lib'
 
 export interface IPageEditorStore {
@@ -25,6 +25,7 @@ export interface EditorState {
   }
   creating?: {
     path: string
+    componentEventualPath: string
     data: any
     availableComponents: (UITemplate & { name: string })[]
     templateKey?: string
@@ -69,9 +70,10 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const m = path.match(/(.*)\.?areas\.(\w+)$/)
     if (!m) return
     const [_, componentPath, area] = Array.from(m)
-    const templateKey = get<string>(editorState.page.data, [componentPath, 'templateKey'].filter(isNotBlank).join('.'))
+    const parentData = isBlank(componentPath) ? editorState.page.data : get<ComponentData>(editorState.page.data, componentPath)
+    const templateKey = parentData.templateKey
     const availableComponents = await api.getAvailableComponents(templateKey, area, pageId)
-    this.update(v => set(v, `editors["${pageId}"]`, { ...editorState, modal: 'create', editing: undefined, creating: { path, data: undefined, availableComponents } }))
+    this.update(v => set(v, `editors["${pageId}"]`, { ...editorState, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + (String(parentData.areas?.[area]?.length) ?? '0'), data: undefined, availableComponents } }))
   }
 
   async addComponentChooseTemplate (templateKey: string, refreshIframe: () => Promise<void>) {
