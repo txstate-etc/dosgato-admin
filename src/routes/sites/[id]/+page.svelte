@@ -6,6 +6,7 @@
   import applicationExport from '@iconify-icons/mdi/application-export'
   import checkIcon from '@iconify-icons/mdi/check'
   import minusIcon from '@iconify-icons/mdi/minus'
+  import prohibitIcon from '@iconify-icons/ph/prohibit'
   import { Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete } from '@dosgato/dialog'
   import FormDialog from '$lib/components/FormDialog.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
@@ -13,37 +14,26 @@
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { keyby } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, templateListStore } from '$lib'
   import { base } from '$app/paths'
   import { store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
 
-  export let data: { organizations: Organization[], users: UserListUser[], pageTemplates: TemplateListTemplate[], componentTemplates: TemplateListTemplate[] }
+  export let data: { organizations: Organization[], users: UserListUser[], allPageTemplates: TemplateListTemplate[], allComponentTemplates: TemplateListTemplate[] }
 
-  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'|
+  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'| 'authorizetemplate' |
     'promotepagetree'|'archivepagetree'|'edittemplates'|'addpagetemplates'|'addcomponenttemplates'|'deletetemplateauth'|undefined = undefined
 
   const pagetreesByName = keyby($store.site.pagetrees, 'name')
+  $: authorizedPageTemplatesByKey = keyby($store.pageTemplates, 'key')
+  $: authorizedComponentTemplatesByKey = keyby($store.componentTemplates, 'key')
+  let showAllTemplates = false
 
   async function searchUsers (search) {
     const query = search.toLowerCase()
     return data.users.filter(u => {
       return u.name.toLowerCase().includes(query) || u.id.includes(query)
     }).map(u => ({ label: u.name, value: u.id }))
-  }
-
-  function getAvailablePageTemplates () {
-    const assignedPageTemplateKeys = $store.pageTemplates.map(p => p.key)
-    return data.pageTemplates.filter(t => {
-      return !t.universal && !assignedPageTemplateKeys.includes(t.key)
-    }).map(t => ({ label: t.name, value: t.key }))
-  }
-
-  function getAvailableComponentTemplates () {
-    const assignedComponentTemplateKeys = $store.componentTemplates.map(c => c.key)
-    return data.componentTemplates.filter(t => {
-      return !t.universal && !assignedComponentTemplateKeys.includes(t.key)
-    }).map(t => ({ label: t.name, value: t.key }))
   }
 
   async function searchPagetrees (term) {
@@ -190,31 +180,36 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
-  async function updateTemplates (state) {
-    const localMessages = ensureRequiredNotNull(state, ['template'])
-    if (!localMessages.length) {
-      if (state.pagetrees.length === 0) {
-        // no pagetrees selected, authorize template at site level
-        const resp = await api.authorizeTemplateForSite(state.template, $store.site.id)
-        if (resp.success) {
-          store.refresh($store.site.id)
-          modal = undefined
-        }
-        return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
-      } else {
-        const resp = await api.authorizeTemplateForPagetrees(state.template, state.pagetrees)
-        if (resp.success) {
-          store.refresh($store.site.id)
-          modal = undefined
-        }
-        return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
-      }
-    }
-    return { success: false, messages: localMessages, data: state }
+  function onClickAuthorizeTemplate (key: string, name: string, pagetrees: string[]) {
+    store.setTemplateAuthEditing(key, name, pagetrees)
+    modal = 'authorizetemplate'
   }
 
+  async function authorizeTemplate (state) {
+    if (!$store.templateAuthEditing) {
+      const error: Feedback = { message: 'Something went wrong. Please contact support for assistance', type: MessageType.ERROR }
+      return { success: false, messages: [error], data: state }
+    }
+    if (state.pagetrees.length === 0) {
+      // no pagetrees selected, authorize template at site level
+      const resp = await api.authorizeTemplateForSite($store.templateAuthEditing.key, $store.site.id)
+      if (resp.success) {
+        store.refresh($store.site.id)
+        modal = undefined
+      }
+      return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+    } else {
+      const resp = await api.authorizeTemplateForPagetrees($store.templateAuthEditing.key, state.pagetrees)
+      if (resp.success) {
+        store.refresh($store.site.id)
+        modal = undefined
+      }
+      return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+    }
+  }
 
-  async function onClickEditTemplateAuth (key, name, pagetrees) {
+  async function onClickEditTemplateAuth (key: string, name: string, pagetrees: string[]) {
+    console.log(pagetrees.map((p: string) => pagetreesByName[p].id))
     store.setTemplateAuthEditing(key, name, pagetrees.map((p: string) => pagetreesByName[p].id))
     modal = 'edittemplates'
   }
@@ -238,7 +233,7 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
-  async function onClickDeleteTemplateAuth (key, name, pagetrees) {
+  async function onClickDeleteTemplateAuth (key: string, name: string, pagetrees: string[]) {
     store.setTemplateAuthEditing(key, name, pagetrees.map((p: string) => pagetreesByName[p].id))
     modal = 'deletetemplateauth'
   }
@@ -387,8 +382,13 @@
   </table>
 </DetailPanel>
 
-<DetailPanel header="Available Page Templates"  button={{ icon: plusIcon, hiddenLabel: 'add page template', onClick: () => { modal = 'addpagetemplates' } }}>
-  <table>
+<DetailPanel header="Manage Authorized Templates">
+  <div class="showall">
+    <input type="checkbox" bind:checked={showAllTemplates} id="showalltemplates"/>
+    <label for="showalltemplates">Show All</label>
+  </div>
+  <table class="templates">
+    <caption>Page Templates</caption>
     <thead>
       <tr>
         <th>Name</th>
@@ -397,26 +397,36 @@
       </tr>
     </thead>
     <tbody>
-      {#each $store.pageTemplates as template (template.key)}
-        <tr>
-          <td>{template.name}</td>
-          <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
-          <td>
-            {#if template.universal}
-              <div>Universal</div>
-            {:else}
-              <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-              <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
-            {/if}
-          </td>
-        </tr>
+      {#each data.allPageTemplates as template}
+        {@const authorized = Object.keys(authorizedPageTemplatesByKey).includes(template.key)}
+        {#if (authorized && !authorizedPageTemplatesByKey[template.key].universal) || showAllTemplates}
+          <tr>
+            <td>{template.name}</td>
+            <td>
+              {#if authorized}
+                {authorizedPageTemplatesByKey[template.key].pagetrees.length ? authorizedPageTemplatesByKey[template.key].pagetrees.join(', ') : 'All Pagetrees'}
+              {:else}
+                <div>None</div>
+              {/if}
+            <td>
+              {#if !authorized}
+                <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={plusIcon} width="1.5em"/><ScreenReaderOnly>Authorize {template.name} for site</ScreenReaderOnly></button>
+              {:else}
+                {#if authorizedPageTemplatesByKey[template.key].universal}
+                  <div>Universal</div>
+                {:else}
+                  <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, authorizedPageTemplatesByKey[template.key].pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
+                  <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, authorizedPageTemplatesByKey[template.key].pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
+                {/if}
+              {/if}
+            </td>
+          </tr>
+        {/if}
       {/each}
     </tbody>
   </table>
-</DetailPanel>
-
-<DetailPanel header="Available Component Templates" button={{ icon: plusIcon, hiddenLabel: 'add component template', onClick: () => { modal = 'addcomponenttemplates' } }}>
-  <table>
+  <table class="templates">
+    <caption>Component Types</caption>
     <thead>
       <tr>
         <th>Name</th>
@@ -425,19 +435,34 @@
       </tr>
     </thead>
     <tbody>
-      {#each $store.componentTemplates as template (template.key)}
-        <tr>
-          <td>{template.name}</td>
-          <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
-          <td>
-            {#if template.universal}
-              <div>Universal</div>
-            {:else}
-              <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-              <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
-            {/if}
-          </td>
-        </tr>
+      {#each data.allComponentTemplates as template}
+        {@const authorized = Object.keys(authorizedComponentTemplatesByKey).includes(template.key)}
+        {#if (authorized && !authorizedComponentTemplatesByKey[template.key].universal) || showAllTemplates}
+          <tr>
+            <td>{template.name}</td>
+            <td>
+              {#if authorized}
+                {authorizedComponentTemplatesByKey[template.key].pagetrees.length ? authorizedComponentTemplatesByKey[template.key].pagetrees.join(', ') : 'All Pagetrees'}
+              {:else}
+              <div>None</div>
+              {/if}
+            </td>
+            <td>
+              {#if !authorized}
+                <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={plusIcon} width="1.5em"/><ScreenReaderOnly>Authorize {template.name} for site</ScreenReaderOnly></button>
+              {:else}
+                {#if authorizedComponentTemplatesByKey[template.key].universal}
+                  <div>Universal</div>
+                {:else}
+                  <div class="actions">
+                    <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, authorizedComponentTemplatesByKey[template.key].pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
+                    <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, authorizedComponentTemplatesByKey[template.key].pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
+                  </div>
+                {/if}
+              {/if}
+            </td>
+          </tr>
+        {/if}
       {/each}
     </tbody>
   </table>
@@ -544,31 +569,22 @@
     on:continue={onArchivePagetree}>
     Archive this pagetree?
   </Dialog>
-{:else if modal === 'addpagetemplates'}
+{:else if modal === 'authorizetemplate'}
   <FormDialog
-    name='addpagetemplates'
-    title='Authorize Page Templates'
+    name="authorizetemplate"
+    title="Authorize Template"
     on:escape={() => { modal = undefined }}
-    submit={updateTemplates}>
-    <FieldAutocomplete path='template' label='Page Template' choices={getAvailablePageTemplates()} required/>
-    <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
-  </FormDialog>
-{:else if modal === 'addcomponenttemplates'}
-  <FormDialog
-    name='addcomponenttemplates'
-    title='Authorize Component Templates'
-    on:escape={() => { modal = undefined }}
-    submit={updateTemplates}>
-    <FieldAutocomplete path='template' label='Component Template' choices={getAvailableComponentTemplates()} required/>
+    submit={authorizeTemplate}>
+    <div>Authorize for use in specific pagetrees, or leave blank to authorize for all pagetrees in the site.</div>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
   </FormDialog>
 {:else if modal === 'edittemplates'}
-<!-- preload={{ pagetrees: $store.templateAuthEditing?.pagetrees ?? [] }} -->
   <FormDialog
     name='edittemplates'
     title='Edit Authorized Pagetrees'
     on:escape={() => { store.cancelEditTemplateAuth(); modal = undefined }}
     validate={async () => { return [] }}
+    preload={{ pagetrees: $store.templateAuthEditing?.pagetrees ?? [] }}
     submit={editTemplateAuthorizations}>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
   </FormDialog>
@@ -636,9 +652,21 @@
   [data-eq~="400px"] li.comment-card div span {
     width: auto;
   }
+  .showall {
+    text-align: right;
+  }
   table {
     width: 100%;
     border-collapse: collapse;
+    margin-bottom: 1em;
+  }
+
+  table caption {
+    color: #AD0057;
+    font-weight: bold;
+    font-size: 16px;
+    text-align: left;
+    margin-bottom: 1em;
   }
 
   table tr td, table tr th {
@@ -651,6 +679,13 @@
   table tr { border-bottom: 1px dashed #ebebeb }
   table tr:nth-child(even) { background-color: #f6f7f9 }
   .pagetree-buttons {
+    text-align: right;
+  }
+  table.templates td:nth-child(1), table.templates td:nth-child(2) {
+    width: 40%;
+  }
+  table.templates td:nth-child(3) {
+    width: 20%;
     text-align: right;
   }
   td button {
