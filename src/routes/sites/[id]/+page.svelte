@@ -202,6 +202,7 @@
       const resp = await api.authorizeTemplateForPagetrees($store.templateAuthEditing.key, state.pagetrees)
       if (resp.success) {
         store.refresh($store.site.id)
+        store.cancelEditTemplateAuth()
         modal = undefined
       }
       return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
@@ -209,7 +210,6 @@
   }
 
   async function onClickEditTemplateAuth (key: string, name: string, pagetrees: string[]) {
-    console.log(pagetrees.map((p: string) => pagetreesByName[p].id))
     store.setTemplateAuthEditing(key, name, pagetrees.map((p: string) => pagetreesByName[p].id))
     modal = 'edittemplates'
   }
