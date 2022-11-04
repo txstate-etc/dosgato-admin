@@ -24,6 +24,8 @@ export const load: Load<{ id: string }> = async ({ params, fetch }) => {
   await templateRegistry.enhanceInfo()
   const page = await api.getEditorPage(params.id)
   if (!page) throw error(404)
+  const pagetemplate = templateRegistry.getTemplate(page.data.templateKey)
+  if (!pagetemplate) throw error(500, 'Unrecognized Page Template')
   const temptoken = await getTempToken(page, fetch)
   subnavStore.open('pages', { href: `${base}/pages/${page.id}`, label: page.name, icon: applicationEditOutline, pageId: page.id, onClose: free })
   toBeFreed.delete(page.id)
@@ -31,5 +33,5 @@ export const load: Load<{ id: string }> = async ({ params, fetch }) => {
     for (const pageId of toBeFreed.values()) pageEditorStore.free(pageId)
     toBeFreed.clear()
   }, 500)
-  return { temptoken, page }
+  return { temptoken, page, pagetemplate }
 }

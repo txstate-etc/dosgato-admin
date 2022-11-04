@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { FieldSelect, Icon } from '@dosgato/dialog'
-  import type { ComponentData } from '@dosgato/templating'
+  import type { ComponentData, UITemplate } from '@dosgato/templating'
   import clipboardTextLight from '@iconify-icons/ph/clipboard-text-light'
   import copyLight from '@iconify-icons/ph/copy-light'
   import fileXLight from '@iconify-icons/ph/file-x-light'
@@ -12,11 +12,11 @@
   import trashLight from '@iconify-icons/ph/trash-light'
   import { derivedStore } from '@txstate-mws/svelte-store'
   import { get, printIf } from 'txstate-utils'
-  import { ActionPanel, Dialog, editorStore, environmentConfig, FormDialog, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp } from '$lib'
+  import { ActionPanel, Dialog, editorStore, environmentConfig, FormDialog, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate } from '$lib'
   import { getTempToken } from './+page'
 
-  export let data: { temptoken: string, page: PageEditorPage }
-  $: ({ page, temptoken } = data)
+  export let data: { temptoken: string, page: PageEditorPage, pagetemplate: EnhancedUITemplate }
+  $: ({ page, temptoken, pagetemplate } = data)
   $: pageEditorStore.open(page)
 
   let iframe: HTMLIFrameElement
@@ -181,6 +181,12 @@
     return { success: true, messages: [], data }
   }
 
+  function onUserButtonClick (button: NonNullable<UITemplate['pageBarButtons']>[0]) {
+    return () => {
+      iframe.contentWindow?.postMessage({ action: 'pagebar', label: button.label }, '*')
+    }
+  }
+
   function messages (el: HTMLIFrameElement) {
     iframe = el
     const handler = e => { if (e.source === el.contentWindow) onMessage(e.data) }
@@ -207,6 +213,14 @@
 </script>
 
 <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath)} on:returnfocus={onReturnFocus}>
+  <div class="page-bar"><span>{$editorStore.page.path}</span>
+    {#each pagetemplate.pageBarButtons ?? [] as button}
+      <button class="user-button" on:click={onUserButtonClick(button)}>
+        <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
+        {#if !button.hideLabel}{button.label}{/if}
+      </button>
+    {/each}
+  </div>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
   to steal credentials from other editors! -->
   <iframe use:messages sandbox="allow-scripts" src={iframesrc} title="page preview for editing" on:load={iframeload}></iframe>
@@ -216,7 +230,7 @@
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
   {#if template && template.dialog}
     <FormDialog title={template.name} preload={$editorStore.editing.data} submit={onEditComponentSubmit} validate={onEditComponentValidate} on:escape={cancelModal} let:data>
-      <svelte:component this={template.dialog} creating={false} page={$editorStore.page} path={$editorStore.editing.path} {data} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
+      <svelte:component this={template.dialog} creating={false} page={$editorStore.page} path={$editorStore.editing.path} {data} templateProperties={pagetemplate.templateProperties} {environmentConfig} />
     </FormDialog>
   {:else}
     <Dialog title="Unrecognized Template" on:continue={cancelModal} on:escape={cancelModal}>This content uses an unrecognized template. Please contact support for assistance.</Dialog>
@@ -227,7 +241,7 @@
     {#if template}
       {#if template.dialog}
         <FormDialog title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} validate={onAddComponentValidate} on:escape={cancelModal}>
-          <svelte:component this={template.dialog} creating={true} page={$editorStore.page} path={$editorStore.creating.componentEventualPath} templateProperties={templateRegistry.getTemplate($editorStore.page.data.templateKey)?.templateProperties} {environmentConfig} />
+          <svelte:component this={template.dialog} creating={true} page={$editorStore.page} path={$editorStore.creating.componentEventualPath} templateProperties={pagetemplate.templateProperties} {environmentConfig} />
         </FormDialog>
       {/if}
     {:else}
@@ -270,7 +284,7 @@
     display: block;
     border: 0;
     width: 100%;
-    height: 100%;
+    height: calc(100% - 2em);
   }
 
   .component-chooser {
@@ -283,5 +297,15 @@
   .component-chooser button {
     aspect-ratio: 1;
     cursor: pointer;
+  }
+  .page-bar {
+    background-color: var(--dg-page-bar-bg, #00507A);
+    color: var(--dg-page-bar-text, white);
+    padding: 0.2em 0.5em;
+    display: flex;
+    align-items: center;
+  }
+  .page-bar span {
+    margin-right: auto;
   }
 </style>
