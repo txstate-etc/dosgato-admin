@@ -573,7 +573,7 @@
   <FormDialog
     name="authorizetemplate"
     title="Authorize Template"
-    on:escape={() => { modal = undefined }}
+    on:escape={() => { store.cancelEditTemplateAuth(); modal = undefined }}
     submit={authorizeTemplate}>
     <div>Authorize for use in specific pagetrees, or leave blank to authorize for all pagetrees in the site.</div>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>

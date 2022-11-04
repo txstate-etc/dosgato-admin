@@ -28,13 +28,13 @@
   }
 </script>
 
-<FormDialog {title} {submit} {validate} {store} on:escape={escape} on:saved>
+<FormDialog {title} {submit} {validate} {store} on:escape={escape} on:saved let:data>
   <FieldText path='name' label='Name' required/>
   <FieldSelect path='templateKey' label='Page Template' placeholder='Select' choices={templateChoices}/>
-  <SubForm path='data' conditional={isNotNull($store.data?.templateKey)}>
+  <SubForm path='data' conditional={isNotNull($store.data?.templateKey)} let:value>
     {@const template = templateRegistry.getTemplate($store.data.templateKey)}
     {#if template && template.dialog}
-      <svelte:component this={template.dialog} creating={true} templateProperties={template.templateProperties} {environmentConfig} />
+      <svelte:component this={template.dialog} creating={true} data={value} templateProperties={template.templateProperties} {environmentConfig} />
     {:else}
       <span>This content uses an unrecognized template. Please contact support for assistance.</span>
     {/if}

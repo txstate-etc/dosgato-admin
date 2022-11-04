@@ -1,10 +1,9 @@
 <script lang="ts">
   import { FieldText, FieldCheckbox, FieldSelect, FieldMultiple, Icon, FieldChooserLink } from '@dosgato/dialog'
-  import type { FormStore } from '@txstate-mws/svelte-forms'
   import { isNotBlank, randomid } from 'txstate-utils'
   import chevronRightIcon from '@iconify-icons/mdi/chevron-right'
   import chevronDownIcon from '@iconify-icons/mdi/chevron-down'
-  export let store: FormStore
+  export let data
 
   let showAdvanced: boolean = false
   const advancedFieldsId: string = randomid()
@@ -53,7 +52,7 @@
     <div>If someone makes a social post about this page, the below details will be used for the post.</div>
       <FieldText path="socialtitle" label="Title" />
       <FieldChooserLink path="socialimage" label="Image" assets />
-      <FieldText path="socialimagealt" label="Alt. Text" required conditional={isNotBlank($store.data.socialimage)}/>
+      <FieldText path="socialimagealt" label="Alt. Text" required conditional={isNotBlank(data.socialimage)}/>
       <FieldText path="socialdescription" label="Description"/>
   </div>
 </div>
