@@ -9,10 +9,11 @@
   import { Store } from '@txstate-mws/svelte-store'
   import { createEventDispatcher, onMount } from 'svelte'
   import { writable } from 'svelte/store'
-  import type { ActionPanelAction } from './actionpanel'
+  import { randomid } from 'txstate-utils'
+  import type { ActionPanelAction, ActionPanelGroup } from './actionpanel'
 
   export let actionsTitle: string|undefined = ''
-  export let actions: ActionPanelAction[]
+  export let actions: (ActionPanelAction | ActionPanelGroup)[]
   export let panelelement: HTMLElement | undefined = undefined
 
   interface $$Events {
@@ -20,8 +21,15 @@
   }
   const dispatch = createEventDispatcher()
 
-  $: enabled = actions.filter(a => !a.disabled)
-  $: disabledCount = actions.length - enabled.length
+  $: grouped = actions.reduce((grouped: ActionPanelGroup[], a) => {
+    if ('actions' in a) grouped.push(a)
+    else if (grouped.length && grouped[grouped.length - 1].id.startsWith('group_')) grouped[grouped.length - 1].actions.push(a)
+    else grouped.push({ id: 'group_' + a.id, actions: [a] })
+    return grouped
+  }, []).filter(g => g.actions.length)
+  $: allactions = grouped.flatMap(a => a.actions)
+  $: enabled = allactions.filter(a => !a.disabled)
+  $: disabledCount = allactions.length - enabled.length
 
   const eqstore = new Store({ width: 900 })
   $: allowCollapse = $eqstore.width <= 900
@@ -70,13 +78,13 @@
         no actions available
       {/if}
     </ScreenReaderOnly>
-    {#if actions.length}
+    {#each grouped as group, idx (group.id)}
       <ul>
-        {#each actions as action (action.id || action.label)}
+        {#each group.actions as action (action.id || action.label)}
           <li class:enabled={!action.disabled} class={action.class}><button class="reset" disabled={action.disabled} on:click={action.onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={action.icon} />{action.label}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly></button></li>
         {/each}
       </ul>
-    {/if}
+    {/each}
   </section>
 </div>
 
@@ -153,12 +161,16 @@
 
   .actions ul {
     overflow-y: auto;
-    padding: 0;
+    padding: 0.3em 0;
     margin: 0;
     list-style: none;
+    border-bottom: 2px solid var(--action-panel-divider, #999999);
   }
   .actions li {
     border-bottom: 1px dashed var(--action-panel-accent, #666666);
+  }
+  .actions li:last-child {
+    border: 0;
   }
   .actions li :global(svg) {
     margin-right: 0.3em;

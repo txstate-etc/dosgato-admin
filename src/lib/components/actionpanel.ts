@@ -10,3 +10,8 @@ export interface ActionPanelAction {
   disabled?: boolean
   onClick: () => void | Promise<void>
 }
+
+export interface ActionPanelGroup {
+  id: string
+  actions: ActionPanelAction[]
+}

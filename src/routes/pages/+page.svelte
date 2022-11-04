@@ -24,12 +24,11 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, Tree, FormDialog, messageForDialog, Dialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort } from '$lib'
+  import { api, ActionPanel, Tree, FormDialog, messageForDialog, Dialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { store, type TypedPageItem } from './+page'
   import './index.css'
   import { FieldSelect, FieldText } from '@dosgato/dialog'
-  import { isNull } from 'txstate-utils'
 
   let modal: 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | undefined = undefined
 
@@ -46,38 +45,65 @@
   }
 
   function singlepageactions (page: TypedPageItem, ..._: any) {
-    const actions: ActionPanelAction[] = [{ label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: onClickAddPage }]
-    if (page.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'deletepage' } })
+    const createDestroy: ActionPanelGroup = {
+      id: 'createdestroy',
+      actions: []
+    }
+    createDestroy.actions.push({ label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: onClickAddPage })
+    if (page.deleteState === DeleteState.NOTDELETED) createDestroy.actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'deletepage' } })
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) {
-      actions.push(
+      createDestroy.actions.push(
         { label: 'Restore Page', icon: deleteRestore, disabled: !page.permissions.undelete, onClick: () => { modal = 'undeletepage' } },
         { label: 'Restore incl. Subpages', icon: deleteRestore, disabled: !page.permissions.undelete || !page.hasChildren, onClick: () => { modal = 'undeletewithsubpages' } })
     }
-    actions.push(
-      { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
-      { label: 'Change Template', icon: layoutLight, disabled: !page.permissions.update, onClick: onClickTemplateChange },
-      { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move, onClick: () => { modal = 'renamepage' } },
-      { label: 'Duplicate', icon: duplicateIcon, disabled: !page.parent?.permissions.create, onClick: () => { modal = 'duplicatepage' } }
-    )
+
+    const simple: ActionPanelGroup = {
+      id: 'simple',
+      actions: [
+        { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
+        { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move, onClick: () => { modal = 'renamepage' } },
+        { label: 'Change Template', icon: layoutLight, disabled: !page.permissions.update, onClick: onClickTemplateChange }
+      ]
+    }
+
+    const movement: ActionPanelGroup = {
+      id: 'movement',
+      actions: [
+        { label: 'Duplicate', icon: duplicateIcon, disabled: !page.parent?.permissions.create, onClick: () => { modal = 'duplicatepage' } }
+      ]
+    }
+
     if ($store.copied.size) {
-      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+      movement.actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
     } else {
-      actions.push(
+      movement.actions.push(
         { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
         { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() }
       )
     }
-    actions.push(
+    movement.actions.push(
       { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste() } }
     )
-    if (page.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => { modal = 'publishpages' } })
-    else if (page.deleteState === DeleteState.MARKEDFORDELETE) actions.push({ label: 'Publish Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'publishdelete' } })
-    actions.push(
+
+    const publishing: ActionPanelGroup = {
+      id: 'publishing',
+      actions: []
+    }
+    if (page.deleteState === DeleteState.NOTDELETED) publishing.actions.push({ label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => { modal = 'publishpages' } })
+    else if (page.deleteState === DeleteState.MARKEDFORDELETE) publishing.actions.push({ label: 'Publish Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'publishdelete' } })
+    publishing.actions.push(
       { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages' } },
-      { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => { modal = 'unpublishpages' } },
-      { label: 'Export', icon: exportIcon, disabled: false, onClick: () => goto(`${environmentConfig.apiBase}/pages/${page.id}`) },
-      { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => { modal = 'import' } })
-    return actions
+      { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => { modal = 'unpublishpages' } }
+    )
+
+    const exportimport: ActionPanelGroup = {
+      id: 'exportimport',
+      actions: [
+        { label: 'Export', icon: exportIcon, disabled: false, onClick: () => goto(`${environmentConfig.apiBase}/pages/${page.id}`) },
+        { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => { modal = 'import' } }
+      ]
+    }
+    return [createDestroy, simple, movement, publishing, exportimport]
   }
   function multipageactions (pages: TypedPageItem[]) {
     if (!pages?.length) return []
