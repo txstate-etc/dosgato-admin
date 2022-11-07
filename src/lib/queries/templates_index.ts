@@ -4,6 +4,10 @@ const templateDetails = `
   name
   key
   universal
+  permissions {
+    setUniversal
+    assign
+  }
 `
 export interface TemplateListTemplate {
   id: string
@@ -12,18 +16,14 @@ export interface TemplateListTemplate {
   universal: boolean
   permissions: {
     setUniversal: boolean
+    assign: boolean
   }
 }
 
 export const GET_ALL_TEMPLATES = `
   query getAllTemplates {
     templates {
-      name
-      key
-      universal
-      permissions {
-        setUniversal
-      }
+      ${templateDetails}
     }
   }
 `

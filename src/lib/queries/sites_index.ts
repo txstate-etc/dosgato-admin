@@ -34,6 +34,13 @@ export const sitePagetreeDetails = `
     type
     universal
   }
+  permissions {
+    rename
+    delete
+    undelete
+    promote
+    archive
+  }
 `
 
 export interface SitePagetree {
@@ -52,6 +59,13 @@ export interface SitePagetree {
     type: string
     universal: boolean
   }[]
+  permissions: {
+    rename: boolean
+    delete: boolean
+    undelete: boolean
+    promote: boolean
+    archive: boolean
+  }
 }
 
 export const siteDetails = `

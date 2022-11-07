@@ -20,7 +20,6 @@
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
 
   export let data: { organizations: Organization[], users: UserListUser[], allPageTemplates: TemplateListTemplate[], allComponentTemplates: TemplateListTemplate[] }
-
   let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'| 'authorizetemplate' |
     'promotepagetree'|'archivepagetree'|'edittemplates'|'addpagetemplates'|'addcomponenttemplates'|'deletetemplateauth'|undefined = undefined
 
@@ -283,14 +282,16 @@
         <td>{pagetree.name}</td>
         <td>{pagetree.type}</td>
         <td class="pagetree-buttons">
-          <button title="Edit" on:click={() => { onClickEditPagetree(pagetree.id, pagetree.name) }}><Icon icon={pencilIcon}/><ScreenReaderOnly>rename page tree</ScreenReaderOnly></button>
-          {#if pagetree.type === 'SANDBOX'}
+          {#if pagetree.permissions.rename}
+            <button title="Edit" on:click={() => { onClickEditPagetree(pagetree.id, pagetree.name) }}><Icon icon={pencilIcon}/><ScreenReaderOnly>rename page tree</ScreenReaderOnly></button>
+          {/if}
+          {#if pagetree.type === 'SANDBOX' && pagetree.permissions.promote}
             <button title="Promote to Primary" on:click={() => { onClickPromotePagetree(pagetree.id, pagetree.name) }}><Icon icon={applicationExport}/><ScreenReaderOnly>promote page tree</ScreenReaderOnly></button>
           {/if}
-          {#if pagetree.type === 'SANDBOX'}
+          {#if pagetree.type === 'SANDBOX' && pagetree.permissions.archive}
             <button title="Archive" on:click={() => { onClickArchivePagetree(pagetree.id, pagetree.name) }}><Icon icon={archiveOutline}/><ScreenReaderOnly>archive page tree</ScreenReaderOnly></button>
           {/if}
-          {#if pagetree.type !== 'PRIMARY'}
+          {#if pagetree.type !== 'PRIMARY' && pagetree.permissions.delete}
             <button title="Delete" on:click={() => { onClickDeletePagetree(pagetree.id, pagetree.name) }}><Icon icon={deleteOutline}/><ScreenReaderOnly>delete page tree</ScreenReaderOnly></button>
           {/if}
         </td>
@@ -410,13 +411,21 @@
               {/if}
             <td>
               {#if !authorized}
-                <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={plusIcon} width="1.5em"/><ScreenReaderOnly>Authorize {template.name} for site</ScreenReaderOnly></button>
+                {#if template.permissions.assign}
+                  <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={plusIcon} width="1.5em"/><ScreenReaderOnly>Authorize {template.name} for site</ScreenReaderOnly></button>
+                {:else}
+                  &nbsp; <!-- TODO: show something here? -->
+                {/if}
               {:else}
                 {#if authorizedPageTemplatesByKey[template.key].universal}
                   <div>Universal</div>
                 {:else}
-                  <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, authorizedPageTemplatesByKey[template.key].pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-                  <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, authorizedPageTemplatesByKey[template.key].pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
+                  {#if template.permissions.assign}
+                    <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, authorizedPageTemplatesByKey[template.key].pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
+                    <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, authorizedPageTemplatesByKey[template.key].pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
+                  {:else}
+                    &nbsp; <!-- TODO: show something here? -->
+                  {/if}
                 {/if}
               {/if}
             </td>
@@ -449,15 +458,23 @@
             </td>
             <td>
               {#if !authorized}
-                <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={plusIcon} width="1.5em"/><ScreenReaderOnly>Authorize {template.name} for site</ScreenReaderOnly></button>
+                {#if template.permissions.assign}
+                  <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={plusIcon} width="1.5em"/><ScreenReaderOnly>Authorize {template.name} for site</ScreenReaderOnly></button>
+                {:else}
+                  &nbsp; <!-- TODO: show something here? -->
+                {/if}
               {:else}
                 {#if authorizedComponentTemplatesByKey[template.key].universal}
                   <div>Universal</div>
                 {:else}
-                  <div class="actions">
-                    <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, authorizedComponentTemplatesByKey[template.key].pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-                    <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, authorizedComponentTemplatesByKey[template.key].pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
-                  </div>
+                  {#if template.permissions.assign}
+                    <div class="actions">
+                      <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, authorizedComponentTemplatesByKey[template.key].pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
+                      <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, authorizedComponentTemplatesByKey[template.key].pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
+                    </div>
+                  {:else}
+                    &nbsp; <!-- TODO: show something here? -->
+                  {/if}
                 {/if}
               {/if}
             </td>

@@ -315,7 +315,7 @@ class API {
 
   async getTemplatesByType (type: string, universal?: boolean) {
     const { templates } = await this.query<{ templates: TemplateListTemplate[] }>(GET_TEMPLATES_BY_TYPE, { type, universal })
-    return templates.map((template) => ({ id: template.key, name: template.name, key: template.key }))
+    return templates.map((template) => ({ id: template.key, name: template.name, key: template.key, permissions: template.permissions }))
   }
 
   async getTemplatesByPage (pageId: string) {
