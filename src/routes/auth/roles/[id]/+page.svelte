@@ -349,7 +349,7 @@
     siteChoices={siteOptions}
     on:escape={() => { modal = undefined }}
     on:saved={onSaved}
-    preload={$store.editing ? $store.editing.data : {} }/>
+    preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id } : undefined }/>
 {:else if modal === 'addtemplaterule'}
   <TemplateRuleDialog roleId={$store.role.id} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'deleterule'}
