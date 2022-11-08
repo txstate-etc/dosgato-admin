@@ -12,6 +12,7 @@ export const GET_GLOBAL_SELF = `
       viewSiteManager
       createSites
       createUsers
+      manageTemplates
     }
   }
 `
@@ -29,6 +30,7 @@ export interface GlobalSelf {
     viewSiteManager: boolean
     createSites: boolean
     createUsers: boolean
+    manageTemplates: boolean
   }
 }
 

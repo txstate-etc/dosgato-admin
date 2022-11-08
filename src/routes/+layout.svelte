@@ -59,7 +59,7 @@
         {#if $globalStore.access.viewDataManager}<li><LabeledIcon href="{base}/data" icon={databaseLight} label="Data" /></li>{/if}
         {#if $globalStore.access.viewSiteManager}<li class="separator"><LabeledIcon href="{base}/sites" icon={globeLight} label="Sites" /></li>{/if}
         {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={usersLight} label="Access" /></li>{/if}
-        {#if $globalStore.access.viewSiteManager}<li><LabeledIcon href="{base}/settings/templates" icon={dotsThree} label="More" /></li>{/if}
+        {#if $globalStore.access.manageTemplates}<li><LabeledIcon href="{base}/settings/templates" icon={dotsThree} label="More" /></li>{/if}
       </ul>
       <div class="profile-compact">
         <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
