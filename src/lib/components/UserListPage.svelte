@@ -120,6 +120,6 @@
     <FieldText path="userId" label="Login"></FieldText>
     <FieldText path="name" label="Full Name"></FieldText>
     <FieldText path="email" label="E-mail"></FieldText>
-    <FieldCheckbox path="trained" label="Training" boxLabel="This user successfully completed editor training."></FieldCheckbox>
+    <FieldCheckbox path="trained" label="Training" boxLabel="This user successfully completed editor training." defaultValue={false}></FieldCheckbox>
   </FormDialog>
 {/if}
