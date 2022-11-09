@@ -5,7 +5,7 @@ import { isNull, isNotBlank, omit } from 'txstate-utils'
 
 export function messageForDialog (messages: MessageFromAPI[], prefix?: string) {
   return messages.map(m => {
-    return { ...omit(m, 'arg'), path: isNotBlank(prefix) ? m.arg.replace(RegExp('^' + prefix + '\\.'), '') : m.arg }
+    return { ...omit(m, 'arg'), path: isNull(m.arg) ? null : isNotBlank(prefix) ? m.arg.replace(RegExp('^' + prefix + '\\.'), '') : m.arg }
   }) as Feedback[]
 }
 
