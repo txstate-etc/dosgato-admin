@@ -29,20 +29,19 @@
     const resp = await api.addSiteRule({ ...state, roleId })
     return {
       success: resp.success,
-      messages: [...resp.messages.filter(m => isNull(m.arg)), ...messageForDialog(resp.messages, 'args')],
+      messages: messageForDialog(resp.messages, ''),
       data: resp.success
         ? {
             siteId: resp.siteRule.site?.id,
             grants: resp.siteRule.grants
           }
-        : undefined
+        : state
     }
   }
 
   async function validateAdd (state: SiteRuleDialogState) {
     const resp = await api.addSiteRule({ ...state, roleId }, true)
-    const wholeDialogMessages = resp.messages.filter(m => isNull(m.arg))
-    return [...messageForDialog(resp.messages, 'args'), ...wholeDialogMessages]
+    return messageForDialog(resp.messages, '')
   }
 
   async function onEditSiteRule (state: SiteRuleDialogState) {

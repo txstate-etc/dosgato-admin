@@ -36,7 +36,7 @@
     const resp = await api.addAssetRule({ ...state, roleId })
     return {
       success: resp.success,
-      messages: messageForDialog(resp.messages, 'args'),
+      messages: messageForDialog(resp.messages, ''),
       data: resp.success
         ? {
             siteId: resp.assetRule.site?.id,
@@ -44,13 +44,13 @@
             mode: resp.assetRule.mode,
             grants: resp.assetRule.grants
           }
-        : undefined
+        : state
     }
   }
 
   async function validateAdd (state: AssetRuleDialogState) {
     const resp = await api.addAssetRule({ ...state, roleId }, true)
-    return messageForDialog(resp.messages, 'args')
+    return messageForDialog(resp.messages, '')
   }
 
   async function onEditAssetRule (state: AssetRuleDialogState) {

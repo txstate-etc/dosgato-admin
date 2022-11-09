@@ -77,7 +77,7 @@
     const resp = await api.editDataRule(args)
     return {
       success: resp.success,
-      messages: messageForDialog(resp.messages, 'args'),
+      messages: messageForDialog(resp.messages, ''),
       data: resp.success
         ? {
             siteId: resp.dataRule.site?.id,
@@ -85,12 +85,11 @@
             template: resp.dataRule.template?.key,
             grants: resp.dataRule.grants
           }
-        : undefined
+        : state
     }
   }
 
   async function validateEdit (state: DataRuleDialogState) {
-    console.log(state)
     if (!ruleId) return [{ type: MessageType.ERROR, message: 'Something went wrong' }]
     const args = {
       ruleId,
@@ -107,9 +106,8 @@
         undelete: state.grants.undelete
       }
     }
-    console.log(args)
     const resp = await api.editDataRule(args, true)
-    return messageForDialog(resp.messages, 'args')
+    return messageForDialog(resp.messages, '')
   }
 </script>
 

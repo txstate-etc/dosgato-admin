@@ -45,7 +45,7 @@
     const resp = await api.addPageRule({ ...state, roleId })
     return {
       success: resp.success,
-      messages: messageForDialog(resp.messages, 'args'),
+      messages: messageForDialog(resp.messages, ''),
       data: resp.success
         ? {
             siteId: resp.pageRule.site?.id,
@@ -54,13 +54,13 @@
             mode: resp.pageRule.mode,
             grants: resp.pageRule.grants
           }
-        : undefined
+        : state
     }
   }
 
   async function validateAdd (state: PageRuleDialogState) {
     const resp = await api.addPageRule({ ...state, roleId }, true)
-    return messageForDialog(resp.messages, 'args')
+    return messageForDialog(resp.messages, '')
   }
 
   async function onEditPageRule (state: PageRuleDialogState) {

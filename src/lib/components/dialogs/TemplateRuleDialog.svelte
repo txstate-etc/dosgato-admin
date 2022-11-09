@@ -26,20 +26,19 @@
     const resp = await api.addTemplateRule({ ...state, roleId })
     return {
       success: resp.success,
-      messages: [...resp.messages.filter(m => isNull(m.arg)), ...messageForDialog(resp.messages, 'args')],
+      messages: messageForDialog(resp.messages, ''),
       data: resp.success
         ? {
             templateId: resp.templateRule.template?.key,
             grants: resp.templateRule.grants
           }
-        : undefined
+        : state
     }
   }
 
   async function validateAdd (state: TemplateRuleDialogState) {
     const resp = await api.addTemplateRule({ ...state, roleId }, true)
-    const wholeDialogMessages = resp.messages.filter(m => isNull(m.arg))
-    return [...messageForDialog(resp.messages, 'args'), ...wholeDialogMessages]
+    return messageForDialog(resp.messages, '')
   }
 
   onMount(async () => {
