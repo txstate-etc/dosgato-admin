@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { FieldCheckbox } from '@dosgato/dialog'
-  import FormDialog from '$lib/components/FormDialog.svelte'
+  import { FieldCheckbox, FormDialog } from '@dosgato/dialog'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { api, messageForDialog } from '$lib'
   export let roleId: string

@@ -1,7 +1,6 @@
 <script lang="ts">
-  import FormDialog from '$lib/components/FormDialog.svelte'
   import { environmentConfig, templateRegistry } from '$lib'
-  import { FieldSelect, FieldText } from '@dosgato/dialog'
+  import { FieldSelect, FieldText, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { derivedStore } from '@txstate-mws/svelte-store'
   import { type SubmitResponse, type Feedback, FormStore, SubForm } from '@txstate-mws/svelte-forms'

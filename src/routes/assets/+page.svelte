@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { iconForMime, bytesToHuman, FieldText } from '@dosgato/dialog'
+  import { iconForMime, bytesToHuman, FieldText, FormDialog } from '@dosgato/dialog'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
@@ -9,9 +9,10 @@
   import folderPlusLight from '@iconify-icons/ph/folder-plus-light'
   import folderNotchOpenLight from '@iconify-icons/ph/folder-notch-open-light'
   import pencilIcon from '@iconify-icons/mdi/pencil'
+  import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import uploadLight from '@iconify-icons/ph/upload-light'
   import { goto } from '$app/navigation'
-  import { api, ActionPanel, Tree, environmentConfig, FormDialog, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction } from '$lib'
+  import { api, ActionPanel, Tree, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction } from '$lib'
   import { base } from '$app/paths'
   import { store, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
   import './index.css'
@@ -40,6 +41,9 @@
     }
     actions.push(
       { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste() } }
+    )
+    actions.push(
+      { label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => {} }
     )
     return actions
   }
@@ -99,7 +103,7 @@
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Assets'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
-  <Tree {store} on:choose={({ detail }) => detail.kind === 'asset' && goto(base + '/assets/' + detail.id)}
+  <Tree {store} on:choose={({ detail }) => detail.kind === 'asset' && detail.permissions.update && goto(base + '/assets/' + detail.id)}
     headers={[
       { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight), render: itm => 'filename' in itm ? itm.filename : itm.name },
       { label: 'Size', id: 'template', defaultWidth: '8.5em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },

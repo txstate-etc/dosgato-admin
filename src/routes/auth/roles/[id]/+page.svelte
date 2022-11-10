@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FieldAutocomplete, FieldText, Icon } from '@dosgato/dialog'
+  import { Dialog, FieldAutocomplete, FieldText, FormDialog, Icon } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import checkIcon from '@iconify-icons/mdi/check'
@@ -8,9 +8,7 @@
   import { unique } from 'txstate-utils'
   import { base } from '$app/paths'
   import { api, DetailPanel, StyledList, ResponsiveTable, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog } from '$lib'
-  import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
-  import FormDialog from '$lib/components/FormDialog.svelte'
   import { MessageType } from '@txstate-mws/svelte-forms'
 
   export let data: { siteOptions: { value: string, label: string }[], userOptions: { value: string, label: string }[] }

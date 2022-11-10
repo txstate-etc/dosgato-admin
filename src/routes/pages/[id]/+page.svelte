@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { FieldSelect, Icon } from '@dosgato/dialog'
+  import { Dialog, FieldSelect, FormDialog, Icon } from '@dosgato/dialog'
   import type { ComponentData, UITemplate } from '@dosgato/templating'
   import clipboardTextLight from '@iconify-icons/ph/clipboard-text-light'
   import copyLight from '@iconify-icons/ph/copy-light'
@@ -12,7 +12,7 @@
   import trashLight from '@iconify-icons/ph/trash-light'
   import { derivedStore } from '@txstate-mws/svelte-store'
   import { get, printIf } from 'txstate-utils'
-  import { ActionPanel, Dialog, editorStore, environmentConfig, FormDialog, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate } from '$lib'
+  import { ActionPanel, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate } from '$lib'
   import { getTempToken } from './+page'
 
   export let data: { temptoken: string, page: PageEditorPage, pagetemplate: EnhancedUITemplate }

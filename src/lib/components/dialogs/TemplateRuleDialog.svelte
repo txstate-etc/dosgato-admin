@@ -1,11 +1,9 @@
 <script lang='ts'>
   import { api, messageForDialog } from '$lib'
-  import FormDialog from '$lib/components/FormDialog.svelte'
-  import { FieldCheckbox, FieldSelect } from '@dosgato/dialog'
+  import { FieldCheckbox, FieldSelect, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { SubForm } from '@txstate-mws/svelte-forms'
   import { onMount } from 'svelte'
-  import { isNull } from 'txstate-utils'
 
   export let roleId: string
   export let preload: TemplateRuleDialogState|undefined = undefined

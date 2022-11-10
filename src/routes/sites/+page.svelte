@@ -7,8 +7,8 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { api, ActionPanel, Tree, TreeStore, globalStore, type TypedTreeItem, type SiteListSite, type ActionPanelAction, type CreateWithPageState, ensureRequiredNotNull, messageForDialog } from '$lib'
-  import Dialog from '$lib/components/Dialog.svelte'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
+  import { Dialog } from '@dosgato/dialog'
 
   type TypedSiteItem = TypedTreeItem<SiteListSite>
 

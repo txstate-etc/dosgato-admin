@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { FileIcon, Icon } from '@dosgato/dialog'
+  import { Dialog, FileIcon, Icon } from '@dosgato/dialog'
   import trashLight from '@iconify-icons/ph/trash-light'
   import { roundTo, unique } from 'txstate-utils'
   import { api, uploadWithProgress } from '$lib'
-  import Dialog from './Dialog.svelte'
   import { createEventDispatcher } from 'svelte'
 
   export let title: string

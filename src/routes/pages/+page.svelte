@@ -1,6 +1,6 @@
 <script lang="ts">
   import applicationOutline from '@iconify-icons/mdi/application-outline'
-  import deleteEmtpy from '@iconify-icons/mdi/delete-empty'
+  import deleteEmpty from '@iconify-icons/mdi/delete-empty'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import archiveLight from '@iconify-icons/ph/archive-light'
   import sandboxIcon from '@iconify-icons/file-icons/sandbox'
@@ -24,11 +24,11 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, Tree, FormDialog, messageForDialog, Dialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup } from '$lib'
+  import { api, ActionPanel, Tree, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { store, type TypedPageItem } from './+page'
   import './index.css'
-  import { FieldSelect, FieldText } from '@dosgato/dialog'
+  import { Dialog, FieldSelect, FieldText, FormDialog } from '@dosgato/dialog'
 
   let modal: 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | undefined = undefined
 
@@ -243,7 +243,7 @@
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) goto(base + '/pages/' + detail.id) }}
     headers={[
-      { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmtpy : item.parent ? applicationOutline : siteIcon[item.type], get: 'name' },
+      { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : item.parent ? applicationOutline : siteIcon[item.type], get: 'name' },
       { label: 'Title', id: 'title', defaultWidth: 'calc(40% - 10.75em)', get: 'title' },
       { label: 'Template', id: 'template', defaultWidth: '8.5em', get: 'template.name' },
       { label: 'Status', id: 'status', defaultWidth: '4em', icon: item => item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : trashSimpleFill, class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },

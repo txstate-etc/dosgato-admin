@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FieldCheckbox, FieldText } from '@dosgato/dialog'
+  import { FieldCheckbox, FieldText, FormDialog, Dialog } from '@dosgato/dialog'
   import accountIcon from '@iconify-icons/mdi/account'
   import accountCheck from '@iconify-icons/mdi/account-check'
   import accountCancel from '@iconify-icons/mdi/account-cancel'
@@ -9,7 +9,7 @@
   import { sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, Dialog, FormDialog, globalStore, Tree, TreeStore, type TypedTreeItem, type UserListUser } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, Tree, TreeStore, type TypedTreeItem, type UserListUser } from '$lib'
 
   export let system: boolean
 

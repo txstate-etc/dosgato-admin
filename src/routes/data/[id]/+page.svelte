@@ -18,12 +18,10 @@
   import squareIcon from '@iconify-icons/mdi/square'
   import trashSimpleFill from '@iconify-icons/ph/trash-simple-fill'
   import triangleIcon from '@iconify-icons/mdi/triangle'
-  import { FieldText } from '@dosgato/dialog'
+  import { Dialog, FieldText, FormDialog } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
   import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig } from '$lib'
-  import Dialog from '$lib/components/Dialog.svelte'
-  import FormDialog from '$lib/components/FormDialog.svelte'
   import '../index.css'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
 

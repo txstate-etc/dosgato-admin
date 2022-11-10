@@ -1,7 +1,6 @@
 <script lang='ts'>
   import { api, messageForDialog } from '$lib'
-  import FormDialog from '$lib/components/FormDialog.svelte'
-  import { FieldAutocomplete, FieldCheckbox } from '@dosgato/dialog'
+  import { FieldAutocomplete, FieldCheckbox, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { isNull } from 'txstate-utils'

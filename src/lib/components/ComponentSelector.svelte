@@ -1,7 +1,6 @@
 <script lang="ts">
-  import FormDialog from './FormDialog.svelte'
   import cubeOutline from '@iconify-icons/mdi/cube-outline'
-  import { Icon } from '@dosgato/dialog'
+  import { FormDialog, Icon } from '@dosgato/dialog'
   import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { templateRegistry } from '$lib/registry'
   import { api } from '$lib'

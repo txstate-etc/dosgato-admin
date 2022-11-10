@@ -4,8 +4,8 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type RoleListRole, FormDialog, messageForDialog, Dialog } from '$lib'
-  import { FieldText } from '@dosgato/dialog'
+  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type RoleListRole, messageForDialog } from '$lib'
+  import { Dialog, FieldText, FormDialog } from '@dosgato/dialog'
 
   type TypedRoleItem = TypedTreeItem<RoleListRole>
 

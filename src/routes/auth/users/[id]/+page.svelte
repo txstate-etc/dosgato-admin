@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Icon, FieldText, FieldMultiselect, FieldCheckbox } from '@dosgato/dialog'
+  import { Dialog, Icon, FieldText, FieldMultiselect, FieldCheckbox, FormDialog } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import arrowLeft from '@iconify-icons/mdi/arrow-left'
@@ -7,8 +7,6 @@
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
   import { api, DetailPanel, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser } from '$lib'
-  import FormDialog from '$lib/components/FormDialog.svelte'
-  import Dialog from '$lib/components/Dialog.svelte'
   import { store } from './+page'
 
   export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
