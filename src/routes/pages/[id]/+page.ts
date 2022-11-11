@@ -11,7 +11,7 @@ const toBeFreed = new Set<string>()
 function free (link: PageSubNavLink) { toBeFreed.add(link.pageId) }
 
 export async function getTempToken (page: PageEditorPage, skfetch = fetch) {
-  const resp = await skfetch(environmentConfig.renderBase + '/token' + page.path, {
+  const resp = await skfetch(environmentConfig.renderBase + '/.token' + page.path, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${api.token ?? ''}`

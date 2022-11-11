@@ -11,9 +11,9 @@ export const load: Load = async (input) => {
     if (!me) throw error(403, 'You are not authorized to use this system.')
     globalStore.update(v => ({ ...v, me, access }))
     const redirectUrl = getRedirect(input)
-    if (redirectUrl && redirectUrl !== location.origin + location.pathname) throw redirect(301, redirectUrl)
+    if (redirectUrl && redirectUrl !== location.origin + location.pathname) throw redirect(302, redirectUrl)
   } catch (e: any) {
-    if (e.status === 301) throw e
+    if (e.status === 302 || e.status === 301) throw e
     errObj = e
   }
   return { errObj }

@@ -5,6 +5,7 @@
   import type { ComponentData, UITemplate } from '@dosgato/templating'
   import clipboardTextLight from '@iconify-icons/ph/clipboard-text-light'
   import copyLight from '@iconify-icons/ph/copy-light'
+  import copySimpleLight from '@iconify-icons/ph/copy-simple-light'
   import fileXLight from '@iconify-icons/ph/file-x-light'
   import historyIcon from '@iconify-icons/mdi/history'
   import pencilIcon from '@iconify-icons/mdi/pencil'
@@ -62,6 +63,7 @@
       // nothing selected
       return [
         { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
+        { label: 'Preview in new window', icon: copySimpleLight, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${$editorStore.page.pagetree.id}/latest${$editorStore.page.path}.html`), '_blank') } },
         { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.versions.length === 0 }
       ]
     } else if (/\.\d+$/.test(selectedPath)) {
