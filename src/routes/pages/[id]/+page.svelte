@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { Dialog, FieldSelect, FormDialog, Icon } from '@dosgato/dialog'
-  import type { ComponentData, UITemplate } from '@dosgato/templating'
+  import type { UITemplate } from '@dosgato/templating'
   import clipboardTextLight from '@iconify-icons/ph/clipboard-text-light'
   import copyLight from '@iconify-icons/ph/copy-light'
   import copySimpleLight from '@iconify-icons/ph/copy-simple-light'
@@ -11,9 +11,8 @@
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import scissorsLight from '@iconify-icons/ph/scissors-light'
   import trashLight from '@iconify-icons/ph/trash-light'
-  import { derivedStore } from '@txstate-mws/svelte-store'
-  import { get, printIf } from 'txstate-utils'
-  import { ActionPanel, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate } from '$lib'
+  import { printIf } from 'txstate-utils'
+  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate, toast } from '$lib'
   import { getTempToken } from './+page'
 
   export let data: { temptoken: string, page: PageEditorPage, pagetemplate: EnhancedUITemplate }
@@ -23,40 +22,6 @@
   let iframe: HTMLIFrameElement
   let panelelement: HTMLElement
   $: editable = $editorStore.page.permissions.update
-
-  const actionsStore = derivedStore(pageEditorStore, v => ({ clipboardData: v.clipboardData, clipboardPath: v.active === v.clipboardPage ? v.clipboardPath : undefined, clipboardPage: v.clipboardPage, clipboardLabel: v.clipboardLabel, selectedPath: v.editors[v.active!]?.selectedPath, clipboardActive: v.clipboardData || (v.clipboardPath && v.clipboardPage === v.active) }))
-
-  function validMove (from: string, to: string) {
-    if (to === from) return false // no dragging onto yourself
-    const draggingParentPath = from.split('.').slice(0, -1).join('.')
-    if (to === draggingParentPath) return false // no dragging onto your own new bar
-    const draggingKey = get<ComponentData>($editorStore.page.data, from).templateKey
-    return validCopy(draggingKey, to)
-  }
-
-  function validCopy (templateKey: string, to: string) {
-    const d = get<ComponentData | ComponentData[]>($editorStore.page.data, to) ?? []
-    if (Array.isArray(d)) {
-      const parts = to.split('.')
-      const cpath = parts.slice(0, -2).join('.')
-      const aname = parts[parts.length - 1]
-      const tkey = get<ComponentData>($editorStore.page.data, cpath).templateKey
-      return !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(templateKey)
-    } else {
-      const parts = to.split('.')
-      const cpath = parts.slice(0, -3).join('.')
-      const aname = parts[parts.length - 2]
-      const tkey = get<ComponentData>($editorStore.page.data, cpath).templateKey
-      return !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(templateKey)
-    }
-  }
-
-  function pasteDisabled (selectedPath: string) {
-    if (!$editorStore.selectedDroppable || !$actionsStore.clipboardActive) return true
-    if ($actionsStore.clipboardPath) return !validMove($actionsStore.clipboardPath, selectedPath)
-    if ($actionsStore.clipboardData) return !validCopy($actionsStore.clipboardData.templateKey, selectedPath)
-    return true
-  }
 
   function getActions (selectedPath?: string): ActionPanelAction[] {
     if (!selectedPath) {
@@ -79,13 +44,13 @@
               { label: 'Cut', icon: scissorsLight, onClick: () => pageEditorStore.cutComponent(selectedPath) },
               { label: 'Copy', icon: copyLight, onClick: () => pageEditorStore.copyComponent(selectedPath) }
             ]),
-        { label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardTextLight, disabled: pasteDisabled(selectedPath), onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) }
+        { label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardTextLight, disabled: !$editorStore.pasteAllowed, onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) }
       ]
     } else {
       // new bar selected
       const actions: ActionPanelAction[] = []
       if ($actionsStore.clipboardActive) actions.push({ label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, onClick: () => pageEditorStore.clearClipboard() })
-      actions.push({ label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardTextLight, disabled: pasteDisabled(selectedPath), onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) })
+      actions.push({ label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardTextLight, disabled: !$editorStore.pasteAllowed, onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) })
       return actions
     }
   }
@@ -99,13 +64,24 @@
     if (message.action === 'drag') {
       const validdrops = new Set<string>()
       for (const p of message.allpaths ?? []) {
-        if (validMove(message.path, p)) validdrops.add(p)
+        if (pageEditorStore.validMove($editorStore.page.data, message.path, p)) validdrops.add(p)
       }
       iframe.contentWindow?.postMessage({ validdrops }, '*')
     } else if (message.action === 'select') {
       pageEditorStore.select(message.path, message.label, message.maxreached)
     } else if (message.action === 'edit') {
       pageEditorStore.editComponentShowModal(message.path)
+    } else if (message.action === 'cut') {
+      pageEditorStore.cutComponent($editorStore.selectedPath)
+    } else if (message.action === 'copy') {
+      pageEditorStore.copyComponent($editorStore.selectedPath!)
+    } else if (message.action === 'paste') {
+      if ($editorStore.pasteAllowed) {
+        pageEditorStore.pasteComponent($editorStore.selectedPath)
+          .then(refreshIframe)
+      }
+    } else if (message.action === 'cancelCopy') {
+      pageEditorStore.clearClipboard()
     } else if (message.action === 'create') {
       pageEditorStore.addComponentShowModal(message.path)
     } else if (message.action === 'del') {
@@ -206,12 +182,13 @@
   // expired, so we need to watch for refresh errors and load in a new token
   async function iframeload () {
     iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath: $editorStore.selectedPath }, '*')
-    temptoken = await getTempToken($editorStore.page)
+    const newtemptoken = await getTempToken($editorStore.page)
+    if (newtemptoken !== temptoken) temptoken = newtemptoken
   }
 
   $: iframesrc = editable
-    ? `${environmentConfig.renderBase}/.edit/${$pageStore.pagetree.id}${$pageStore.path}?token=${data.temptoken}`
-    : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/latest${$pageStore.path}?token=${data.temptoken}`
+    ? `${environmentConfig.renderBase}/.edit/${$pageStore.pagetree.id}${$pageStore.path}?token=${temptoken}`
+    : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/latest${$pageStore.path}?token=${temptoken}`
 </script>
 
 <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath)} on:returnfocus={onReturnFocus}>

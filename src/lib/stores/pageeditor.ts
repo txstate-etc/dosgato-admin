@@ -1,6 +1,6 @@
-import type { ComponentData, UITemplate } from '@dosgato/templating'
+import type { ComponentData, PageData, UITemplate } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
-import { get, isBlank, isNotBlank, set } from 'txstate-utils'
+import { get, isBlank, set } from 'txstate-utils'
 import { api, type PageEditorPage, templateRegistry, toast } from '$lib'
 
 export interface IPageEditorStore {
@@ -17,7 +17,10 @@ export interface EditorState {
   modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties' | 'versions'
   selectedPath?: string
   selectedLabel?: string
-  selectedDroppable?: boolean
+  selectedMaxReached?: boolean
+  cutAllowed?: boolean
+  copyAllowed?: boolean
+  pasteAllowed?: boolean
   editing?: {
     path: string
     data: any
@@ -38,12 +41,62 @@ class PageEditorStore extends Store<IPageEditorStore> {
     super({ editors: {} })
   }
 
+  set (v: IPageEditorStore) {
+    if (v.active) {
+      const editorState = v.editors[v.active]
+      if (editorState) {
+        const editBarSelected = editorState.selectedPath && /\.\d+$/.test(editorState.selectedPath)
+        editorState.copyAllowed = !!editBarSelected
+        editorState.cutAllowed = !!editBarSelected
+        editorState.pasteAllowed = !!editorState.selectedPath && !this.pasteDisabled(editorState.selectedPath, v)
+      }
+    }
+    super.set(v)
+  }
+
   open (page: PageEditorPage) {
     this.update(v => ({ ...v, editors: { ...v.editors, [page.id]: { ...v.editors[page.id], page } }, active: page.id }))
   }
 
   free (pageId: string) {
     this.update(v => ({ ...v, editors: { ...v.editors, [pageId]: undefined } }))
+  }
+
+  validMove (pageData: PageData, from: string, to: string) {
+    if (to === from) return false // no dragging onto yourself
+    const draggingParentPath = from.split('.').slice(0, -1).join('.')
+    if (to === draggingParentPath) return false // no dragging onto your own new bar
+    const draggingKey = get<ComponentData>(pageData, from).templateKey
+    return this.validCopy(pageData, draggingKey, to)
+  }
+
+  validCopy (pageData: PageData, templateKey: string, to: string) {
+    const d = get<ComponentData | ComponentData[]>(pageData, to) ?? []
+    if (Array.isArray(d)) {
+      const parts = to.split('.')
+      const cpath = parts.slice(0, -2).join('.')
+      const aname = parts[parts.length - 1]
+      const tkey = get<ComponentData>(pageData, cpath).templateKey
+      return !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(templateKey)
+    } else {
+      const parts = to.split('.')
+      const cpath = parts.slice(0, -3).join('.')
+      const aname = parts[parts.length - 2]
+      const tkey = get<ComponentData>(pageData, cpath).templateKey
+      return !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(templateKey)
+    }
+  }
+
+  pasteDisabled (selectedPath: string, v: IPageEditorStore) {
+    const editorState = v.editors[v.active!]
+    if (!editorState?.selectedPath) return true
+    const targetParentPath = editorState.selectedPath.split('.').slice(0, -1).join('.')
+    const targetOnSamePage = v.clipboardPage === v.active
+    const targetIsSibling = targetOnSamePage && v.clipboardPath?.split('.').slice(0, -1).join('.') === targetParentPath
+    if ((editorState?.selectedMaxReached && !targetIsSibling) || !(v.clipboardData || (v.clipboardPath && targetOnSamePage))) return true
+    if (v.active && v.clipboardPath) return !this.validMove(editorState.page.data, v.clipboardPath, selectedPath)
+    if (v.clipboardData) return !this.validCopy(editorState.page.data, v.clipboardData.templateKey, selectedPath)
+    return true
   }
 
   /**
@@ -174,15 +227,17 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   select (path?: string, label?: string, maxreached?: boolean) {
-    this.updateEditorState(editorState => ({ ...editorState, selectedPath: path, selectedLabel: label, selectedDroppable: !maxreached }))
+    this.updateEditorState(editorState => ({ ...editorState, selectedPath: path, selectedLabel: label, selectedMaxReached: maxreached }))
   }
 
-  cutComponent (path: string, cut = true) {
+  cutComponent (path?: string) {
+    if (!path || !this.value.editors[this.value.active!]?.cutAllowed) return
     this.update(v => ({ ...v, clipboardData: undefined, clipboardLabel: v.editors[v.active!]!.selectedLabel, clipboardPath: path, clipboardPage: v.active }))
     toast(`${this.value.clipboardLabel ?? 'Component'} cut initiated. Paste somewhere to complete the move.`, 'success')
   }
 
-  copyComponent (path: string) {
+  copyComponent (path?: string) {
+    if (!path || !this.value.editors[this.value.active!]?.copyAllowed) return
     this.update(v => ({ ...v, clipboardData: get(v.editors[v.active!]!.page.data, path), clipboardLabel: v.editors[v.active!]!.selectedLabel, clipboardPath: undefined, clipboardPage: v.active }))
     toast(`${this.value.clipboardLabel ?? 'Component'} copied.`, 'success')
   }
@@ -191,8 +246,9 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.updateEditorState(es => es, true)
   }
 
-  async pasteComponent (path: string) {
-    const editorState = this.value.editors[this.value.active!]!
+  async pasteComponent (path?: string) {
+    const editorState = this.value.editors[this.value.active!]
+    if (!path || !editorState?.pasteAllowed) return
     if (this.value.clipboardPath) { // move
       if (this.value.active === this.value.clipboardPage) await this.moveComponent(this.value.clipboardPath, path)
     } else if (this.value.clipboardData) { // copy
@@ -210,3 +266,4 @@ export const pageEditorStore = new PageEditorStore()
 // hacked these together to never be undefined, only to be used on the page detail page
 export const editorStore = derivedStore(pageEditorStore, s => (s.active ? s.editors[s.active] : undefined)!)
 export const pageStore = derivedStore(editorStore, 'page')
+export const actionsStore = derivedStore(pageEditorStore, v => ({ clipboardData: v.clipboardData, clipboardPath: v.active === v.clipboardPage ? v.clipboardPath : undefined, clipboardPage: v.clipboardPage, clipboardLabel: v.clipboardLabel, selectedPath: v.editors[v.active!]?.selectedPath, clipboardActive: v.clipboardData || (v.clipboardPath && v.clipboardPage === v.active) }))
