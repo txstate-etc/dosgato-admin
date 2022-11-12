@@ -208,7 +208,7 @@
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
   {#if template && template.dialog}
-    <FormDialog title={template.name} preload={$editorStore.editing.data} submit={onEditComponentSubmit} validate={onEditComponentValidate} on:escape={cancelModal} let:data>
+    <FormDialog icon={template.icon} title={template.name} preload={$editorStore.editing.data} submit={onEditComponentSubmit} validate={onEditComponentValidate} on:escape={cancelModal} let:data>
       <svelte:component this={template.dialog} creating={false} page={$editorStore.page} path={$editorStore.editing.path} {data} templateProperties={pagetemplate.templateProperties} {environmentConfig} />
     </FormDialog>
   {:else}
@@ -219,7 +219,7 @@
     {@const template = templateRegistry.getTemplate($editorStore.creating.templateKey)}
     {#if template}
       {#if template.dialog}
-        <FormDialog title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} validate={onAddComponentValidate} on:escape={cancelModal}>
+        <FormDialog icon={template.icon} title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} validate={onAddComponentValidate} on:escape={cancelModal}>
           <svelte:component this={template.dialog} creating={true} page={$editorStore.page} path={$editorStore.creating.componentEventualPath} templateProperties={pagetemplate.templateProperties} {environmentConfig} />
         </FormDialog>
       {/if}
@@ -239,12 +239,12 @@
   {/if}
 {:else if $editorStore.modal === 'delete' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
-  <Dialog title="Delete {template?.name ?? 'Content'}" cancelText="Cancel" continueText="Delete" on:escape={cancelModal} on:continue={onDeleteComponentSubmit}>
-    Are you sure you want to delete the {template?.name ?? 'unrecognized'}?
+  <Dialog icon={template?.icon} title="Delete {template?.name ?? 'Content'}" cancelText="Cancel" continueText="Delete" on:escape={cancelModal} on:continue={onDeleteComponentSubmit}>
+    Are you sure you want to delete the {template?.name ?? 'unrecognized content'}?
   </Dialog>
 {:else if $editorStore.modal === 'properties' && $editorStore.editing}
-  <FormDialog title="Edit Page Properties" submit={onEditPagePropertiesSubmit} validate={onEditPagePropertiesValidate} on:escape={cancelModal} preload={$editorStore.editing.data} let:data>
-    {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
+  {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
+  <FormDialog icon={template?.icon} title="Edit Page Properties" submit={onEditPagePropertiesSubmit} validate={onEditPagePropertiesValidate} on:escape={cancelModal} preload={$editorStore.editing.data} let:data>
     {#if template && template.dialog}
       <svelte:component this={template.dialog} creating={false} page={$editorStore.page} {data} templateProperties={template.templateProperties} {environmentConfig} />
     {:else}
