@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { environmentConfig, templateRegistry } from '$lib'
+  import { chooserClient, environmentConfig, templateRegistry } from '$lib'
   import { FieldSelect, FieldText, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { derivedStore } from '@txstate-mws/svelte-store'
@@ -27,7 +27,7 @@
   }
 </script>
 
-<FormDialog {title} {submit} {validate} {store} on:escape={escape} on:saved let:data>
+<FormDialog {chooserClient} {title} {submit} {validate} {store} on:escape={escape} on:saved let:data>
   <FieldText path='name' label='Name' required/>
   <FieldSelect path='templateKey' label='Page Template' placeholder='Select' choices={templateChoices}/>
   <SubForm path='data' conditional={isNotNull($store.data?.templateKey)} let:value>
