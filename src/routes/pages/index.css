@@ -3,9 +3,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.name, .title {
-  flex-grow: 1;
-}
 li .status {
   text-align: center;
 }
@@ -28,7 +25,7 @@ li .modified span {
   display: none;
 }
 [data-eq~="600px"] .modified span.full {
-    display: none;
+  display: none;
 }
 [data-eq~="600px"] .modified span.short {
   display: block;
