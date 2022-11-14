@@ -1,5 +1,6 @@
+import { environmentConfig } from '$lib/stores'
 import type { Asset, Folder } from '@dosgato/dialog'
-import { omit, pick } from 'txstate-utils'
+import { omit, pick, stringify } from 'txstate-utils'
 
 const chooserPageDetails = `
 id
@@ -22,6 +23,8 @@ extension
 path
 size
 mime
+checksum
+site { id }
 box { width height }
 thumbnail { id extension }
 `
@@ -33,6 +36,10 @@ export interface ChooserAssetDetails {
   path: string
   size: number
   mime: string
+  checksum: string
+  site: {
+    id: string
+  }
   box?: {
     width: number
     height: number
@@ -64,6 +71,7 @@ export const GET_SUBFOLDERS_AND_ASSETS_BY_PATH = `
       id
       name
       path
+      site { id }
       permissions {
         create
       }
@@ -74,6 +82,7 @@ export interface ChooserFolderDetails {
   id: string
   name: string
   path: string
+  site: { id: string }
   permissions: {
     create: boolean
   }
@@ -111,13 +120,19 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
   if (!asset) return undefined
   return {
     type: 'asset',
-    ...pick(asset, 'id', 'name', 'path', 'mime'),
+    ...pick(asset, 'name', 'path', 'mime'),
+    id: stringify({ id: asset.id, source: 'assets', type: 'asset', checksum: asset.checksum, siteId: asset.site.id, path: asset.path }),
     bytes: asset.size,
     url: `/assets/${asset.id}/${asset.name}.${asset.extension}`,
-    image: asset.box ? { ...asset.box, thumbnailUrl: asset.thumbnail ? `/resizes/${asset.thumbnail.id}/${asset.name}.${asset.thumbnail.extension}` : undefined } : undefined
+    image: asset.box ? { ...asset.box, thumbnailUrl: asset.thumbnail ? `${environmentConfig.apiBase}/resize/${asset.thumbnail.id}/${asset.name}.${asset.thumbnail.extension}` : undefined } : undefined
   }
 }
 
 export function apiAssetFolderToChooserFolder (f: ChooserFolderDetails): Folder {
-  return { ...omit(f, 'permissions'), type: 'folder' as 'folder', acceptsUpload: f.permissions.create }
+  return {
+    type: 'folder' as const,
+    ...omit(f, 'permissions', 'id'),
+    id: stringify({ id: f.id, siteId: f.site.id, path: f.path, source: 'assets', type: 'folder' }),
+    acceptsUpload: f.permissions.create
+  }
 }
