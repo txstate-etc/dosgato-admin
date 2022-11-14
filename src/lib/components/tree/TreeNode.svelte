@@ -5,6 +5,7 @@
   import menuDown from '@iconify-icons/mdi/menu-down'
   import menuRight from '@iconify-icons/mdi/menu-right'
   import { modifierKey, ScreenReaderOnly } from '@txstate-mws/svelte-components'
+  import type { Store } from '@txstate-mws/svelte-store'
   import { createEventDispatcher, getContext } from 'svelte'
   import { hashid, isNotBlank, toArray } from 'txstate-utils'
   import { type TreeStore, TREE_STORE_CONTEXT, type TypedTreeItem, type TreeItemFromDB, type TreeHeader } from './treestore'
@@ -14,6 +15,7 @@
   type T = $$Generic<TreeItemFromDB>
 
   export let headers: TreeHeader<T>[]
+  export let headerSizes: Store<string[]>
   export let nodeClass: ((itm: T) => string) | undefined = undefined
   export let item: TypedTreeItem<T>
   export let posinset: number
@@ -24,15 +26,14 @@
   export let parent: TypedTreeItem<T>|undefined = undefined
 
   const store = getContext<TreeStore<T>>(TREE_STORE_CONTEXT)
-  const { dragging, draggable, selectedUndraggable, viewUnderStore, selected, focused, viewDepth, copied } = store
+  const { dragging, draggable, selectedUndraggable, selected, focused, copied, headerOverride } = store
 
   const dispatch = createEventDispatcher()
   let nodeelement: HTMLElement
 
   let userWantsCopy = false
   $: isSelected = $selected.has(item.id)
-  $: leftLevel = ($viewUnderStore?.level ?? 0) + 1
-  $: showChildren = !!item.open && !!item.children?.length && item.level - leftLevel < $viewDepth - 1
+  $: showChildren = !!item.open && !!item.children?.length
   $: hashedId = hashid(item.id)
   $: isDraggable = $draggable && ((isSelected && !$selectedUndraggable) || store.dragEligible([item], true) || store.dragEligible([item], false))
   $: dropZone = $dragging && store.dropEffect(item, false, userWantsCopy) !== 'none'
@@ -104,7 +105,7 @@
     } else if (e.key === '*') {
       e.preventDefault()
       e.stopPropagation()
-      const toOpen = parent ? parent.children! : $store.viewItems
+      const toOpen = (parent ? parent.children : $store.rootItems) ?? []
       for (const child of toOpen) {
         store.open(child).catch(console.error)
       }
@@ -268,12 +269,13 @@
     {#each headers as header, i (header.id)}
       <div
         class={(header.class ? toArray(header.class(item)) : []).concat([header.id]).join(' ')}
-        style:width={header.defaultWidth}
-        style:padding-left={i === 0 ? `${level + 0.3}em` : undefined}
+        style:width={$headerSizes?.[i] ?? '1px'}
+        style:padding-left={i === 0 ? `calc(min(${(level - 1) * 1.6}em, ${(level - 1) * 2.7}cqw) + 1.4em)` : undefined}
         class:left={i === 0}
       >
         {#if i === 0 && item.hasChildren}
-          <span class="arrow"><Icon icon={item.open ? menuDown : menuRight} inline /></span>
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
+          <span class="arrow" on:click={onClick}><Icon icon={item.open ? menuDown : menuRight} width="1.5em" inline /></span>
         {/if}
         <TreeCell {header} {item} />
         {#if i === 0 && item.loading}
@@ -291,6 +293,7 @@
         <svelte:self
           item={child}
           {headers}
+          {headerSizes}
           {nodeClass}
           posinset={i + 1}
           setsize={item.children.length}
@@ -309,14 +312,17 @@
   .tree-node {
     cursor: pointer;
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     border-bottom: var(--tree-border, 1px dashed #aaaaaa);
     width: 100%;
     overflow: hidden;
   }
+  :global(.resizing) .tree-node {
+    cursor: col-resize;
+  }
   .tree-node .checkbox {
-    width: 1.3em;
+    min-width: 1.5em;
+    max-width: 1.5em;
   }
   .tree-node > div {
     padding: 0.6em 0.3em;
@@ -326,7 +332,7 @@
     align-items: center;
   }
   .tree-node > div.left .arrow {
-    margin-left: -1.1em;
+    margin-left: -1.6em;
     margin-right: 0.1em;
   }
   .tree-node > div.left :global(.icon) {

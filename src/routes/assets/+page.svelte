@@ -12,8 +12,8 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import uploadLight from '@iconify-icons/ph/upload-light'
   import { goto } from '$app/navigation'
-  import { api, ActionPanel, Tree, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction } from '$lib'
   import { base } from '$app/paths'
+  import { api, ActionPanel, Tree, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort } from '$lib'
   import { store, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
   import './index.css'
 
@@ -105,11 +105,11 @@
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Assets'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={({ detail }) => detail.kind === 'asset' && detail.permissions.update && goto(base + '/assets/' + detail.id)}
     headers={[
-      { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight), render: itm => 'filename' in itm ? itm.filename : itm.name },
-      { label: 'Size', id: 'template', defaultWidth: '8.5em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },
-      { label: 'Type', id: 'title', defaultWidth: 'calc(40% - 10.75em)', render: itm => itm.kind === 'asset' ? itm.mime.split(';')[0] : '' },
-      { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => item.kind === 'asset' ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
-      { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
+      { label: 'Path', id: 'name', grow: 5, icon: item => item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight), render: itm => 'filename' in itm ? itm.filename : itm.name },
+      { label: 'Size', id: 'size', fixed: '6em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },
+      { label: 'Type', id: 'type', fixed: '10em', render: itm => itm.kind === 'asset' ? itm.mime.split(';')[0] : '' },
+      { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.kind === 'asset' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
+      { label: 'By', id: 'modifiedBy', fixed: '3em', get: 'modifiedBy.id' }
     ]}
   />
 </ActionPanel>

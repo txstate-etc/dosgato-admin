@@ -243,12 +243,12 @@
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) goto(base + '/pages/' + detail.id) }}
     headers={[
-      { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : item.parent ? applicationOutline : siteIcon[item.type], get: 'name' },
-      { label: 'Title', id: 'title', defaultWidth: 'calc(40% - 10.75em)', get: 'title' },
-      { label: 'Template', id: 'template', defaultWidth: '8.5em', get: 'template.name' },
-      { label: 'Status', id: 'status', defaultWidth: '4em', icon: item => item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : trashSimpleFill, class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
-      { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
-      { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
+      { label: 'Path', id: 'name', grow: 4, icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : item.parent ? applicationOutline : siteIcon[item.type], get: 'name' },
+      { label: 'Title', id: 'title', grow: 3, get: 'title' },
+      { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
+      { label: 'Status', id: 'status', fixed: '4em', icon: item => item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : trashSimpleFill, class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
+      { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
+      { label: 'By', id: 'modifiedBy', fixed: '3em', get: 'modifiedBy.id' }
     ]}
   />
 </ActionPanel>

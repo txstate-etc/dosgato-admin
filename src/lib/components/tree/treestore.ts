@@ -29,12 +29,10 @@ export interface ITreeStore<T extends TreeItemFromDB> {
   selectedItems: TypedTreeItem<T>[]
   copied: Map<string, TypedTreeItem<T>>
   cut?: boolean
-  viewUnder?: TypedTreeItem<T>
-  viewItems: TypedTreeItem<T>[]
-  viewDepth: number
   draggable: boolean
   selectedUndraggable?: boolean
   dragging: boolean
+  headerWidthOverrides: Record<string, string>
 }
 
 export type FetchChildrenFn<T extends TreeItemFromDB> = (item?: TypedTreeItem<T>) => Promise<T[]>
@@ -46,7 +44,8 @@ export type CopyHandlerFn<T extends TreeItemFromDB> = (selectedItems: TypedTreeI
 export interface TreeHeader<T extends TreeItemFromDB> {
   id: string
   label: string
-  defaultWidth: string
+  fixed?: string
+  grow?: number
   icon?: IconifyIcon | ((item: TypedTreeItem<T>) => IconifyIcon | undefined)
   get?: string
   render?: (item: TypedTreeItem<T>) => string
@@ -57,15 +56,14 @@ export interface TreeHeader<T extends TreeItemFromDB> {
 export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<T>> {
   public treeElement?: HTMLElement
 
-  public draggable = derivedStore(this, 'draggable')
+  public rootItems = derivedStore(this, 'rootItems')
+  public draggable = derivedStore(this, v => v.draggable && !v.loading)
   public dragging = derivedStore(this, 'dragging')
   public selectedUndraggable = derivedStore(this, 'selectedUndraggable')
   public selected = derivedStore(this, 'selected')
   public focused = derivedStore(this, 'focused')
-  public viewUnderStore = derivedStore(this, 'viewUnder')
-  public viewDepth = derivedStore(this, 'viewDepth')
-  public viewItems = derivedStore(this, 'viewItems')
   public copied = derivedStore(this, 'copied')
+  public headerOverride = derivedStore(this, 'headerWidthOverrides')
 
   public moveHandler?: MoveHandlerFn<T>
   public copyHandler?: CopyHandlerFn<T>
@@ -85,7 +83,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
       singleSelect?: boolean
     } = {}
   ) {
-    super({ itemsById: {}, viewItems: [], viewDepth: Infinity, selected: new Map(), selectedItems: [], copied: new Map(), dragging: false, draggable: !!moveHandler })
+    super({ itemsById: {}, selected: new Map(), selectedItems: [], copied: new Map(), dragging: false, draggable: !!moveHandler, headerWidthOverrides: {} })
     this.moveHandler = moveHandler
     this.copyHandler = copyHandler
     this.dragEligibleHandler = dragEligible
@@ -123,11 +121,6 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
   determineDraggable () {
     this.value.selectedItems = Array.from(this.value.selected.values())
     this.value.selectedUndraggable = !this.dragEligible(this.value.selectedItems, true) && !this.dragEligible(this.value.selectedItems, false)
-  }
-
-  set (state: ITreeStore<T>) {
-    state.viewItems = state.viewUnder?.children ?? state.rootItems ?? []
-    super.set(state)
   }
 
   trigger () {
@@ -173,7 +166,7 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
 
       // if the focused item disappeared in the refresh, we need to replace it,
       // as without a focus the tree becomes invisible to keyboard nav
-      if (!this.value.itemsById[this.value.focused?.id as string]) this.focus(this.value.selectedItems.slice(-1)[0] ?? this.value.viewItems[0], true)
+      if (!this.value.itemsById[this.value.focused?.id as string]) this.focus(this.value.selectedItems.slice(-1)[0] ?? this.value.rootItems?.[0], true)
     } finally {
       if (item) item.loading = false
       this.value.loading = false
@@ -187,17 +180,8 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     this.refreshPromise = undefined
   }
 
-  focus (item: TypedTreeItem<T>, notify = true) {
+  focus (item: TypedTreeItem<T> | undefined, notify = true) {
     this.value.focused = item
-    if (!item) return
-    const leftLevel = (this.value.viewUnder?.level ?? 0) + 1
-    const viewLevel = 1 + item.level - leftLevel
-    if (viewLevel >= this.value.viewDepth || viewLevel === Math.floor(Math.floor(this.value.viewDepth / 2))) {
-      const seekBack = Math.floor(this.value.viewDepth / 2) + 1
-      let p = item as TypedTreeItem<T> | undefined
-      for (let i = 0; i < seekBack; i++) p = p?.parent
-      this.value.viewUnder = p
-    }
     if (notify) this.trigger()
   }
 
@@ -256,7 +240,6 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
 
   async viewUnder (item?: TypedTreeItem<T>) {
     if (item) await this.open(item)
-    this.value.viewUnder = item
     this.trigger()
   }
 
@@ -399,5 +382,15 @@ export class TreeStore<T extends TreeItemFromDB> extends ActiveStore<ITreeStore<
     this.value.copied = new Map()
     this.value.cut = undefined
     return await this._drop(this.value.selectedItems[0], copied, above, !cut, userWantsRecursive)
+  }
+
+  setHeaderOverride (id: string, width: string) {
+    this.value.headerWidthOverrides[id] = `max(20px, ${width})`
+    this.trigger()
+  }
+
+  resetHeaderOverride () {
+    this.value.headerWidthOverrides = {}
+    this.trigger()
   }
 }

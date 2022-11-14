@@ -21,7 +21,7 @@
   import { Dialog, FieldText, FormDialog } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
-  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, chooserClient } from '$lib'
   import '../index.css'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
 
@@ -454,10 +454,10 @@
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Data'} actions={getActions($store.selectedItems)}>
   <Tree {store} headers={[
-    { label: 'Path', id: 'name', defaultWidth: 'calc(60% - 16.15em)', icon: item => getPathIcon(item), get: 'name' },
-    { label: 'Status', id: 'status', defaultWidth: '5em', icon: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? trashSimpleFill : statusIcon[item.status]) : undefined, class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
-    { label: 'Modified', id: 'modified', defaultWidth: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
-    { label: 'By', id: 'modifiedBy', defaultWidth: '3em', get: 'modifiedBy.id' }
+    { label: 'Path', id: 'name', grow: 1, icon: item => getPathIcon(item), get: 'name' },
+    { label: 'Status', id: 'status', fixed: '5em', icon: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? trashSimpleFill : statusIcon[item.status]) : undefined, class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
+    { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
+    { label: 'By', id: 'modifiedBy', fixed: '3em', get: 'modifiedBy.id' }
   ]}></Tree>
 </ActionPanel>
 {#if modal === 'addfolder'}
@@ -510,6 +510,7 @@
   </Dialog>
 {:else if modal === 'adddata'}
   <FormDialog
+    {chooserClient}
     submit={onAddData}
     validate={validateAddData}
     title='Add Data'
@@ -536,6 +537,7 @@
   </FormDialog>
 {:else if modal === 'editdata'}
   <FormDialog
+    {chooserClient}
     submit={onEditData}
     validate={validateEdit}
     title='Edit Data'
