@@ -49,6 +49,7 @@ services:
       DOSGATO_RENDER_JWT_SECRET: rendertoken
       DOSGATO_API_URL: http://dosgato-api/graphql
       DOSGATO_ADMIN_BASE: http://localhost:3000/admin
+      DOSGATO_API_BASE: http://localhost
     volumes:
       - ../dosgato-render/src:/usr/app/src
       - ../dosgato-render/test:/usr/app/test

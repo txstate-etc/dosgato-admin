@@ -1,8 +1,8 @@
 <script lang="ts">
 
-  import { FieldText } from '@dosgato/dialog'
+  import { FieldChooserLink, FieldText } from '@dosgato/dialog'
 
 </script>
 
 <FieldText path="text" label="Text" required/>
-<FieldText path="link" label="Link" required/>
+<FieldChooserLink path="link" label="Link" required/>
