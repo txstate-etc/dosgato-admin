@@ -11,9 +11,9 @@
 
 <div class="panel" use:eq>
   <div class="header">
-    <div>{header}</div>
+    <h2>{header}</h2>
     {#each buttons as button, i}
-      <button class="reset" class:leftmost={i === 0} on:click={button.onClick}><Icon icon={button.icon} hiddenLabel={button.hiddenLabel} width="1.3em" /></button>
+      <button class="reset" class:leftmost={i === 0} on:click={button.onClick}><Icon icon={button.icon} hiddenLabel={button.hiddenLabel} width="1.5em" /></button>
     {/each}
   </div>
   <div class="body">
@@ -33,10 +33,14 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    padding: 0.8em 1em;
-    font-weight: bold;
-    border-top-left-radius: 3px;
-    border-top-right-radius: 3px;
+    padding: 0.8em 1.6em;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .header h2 {
+    font-size: 1.3em;
+    font-weight: normal;
+    margin: 0;
   }
   .header button {
     color: white;
@@ -50,8 +54,8 @@
   .body {
     border: 1px solid #666;
     border-top-width: 0;
-    padding: 0.8em 1em;
-    border-bottom-left-radius: 3px;
-    border-bottom-right-radius: 3px;
+    padding: 0.8em 1.6em;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
   }
 </style>

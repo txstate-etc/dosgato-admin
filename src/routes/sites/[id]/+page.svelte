@@ -1,18 +1,17 @@
 <script lang="ts">
-  import pencilIcon from '@iconify-icons/mdi/pencil'
+  import pencilIcon from '@iconify-icons/ph/pencil-light'
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import archiveOutline from '@iconify-icons/mdi/archive-outline'
   import applicationExport from '@iconify-icons/mdi/application-export'
   import checkIcon from '@iconify-icons/mdi/check'
   import minusIcon from '@iconify-icons/mdi/minus'
-  import prohibitIcon from '@iconify-icons/ph/prohibit'
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog } from '@dosgato/dialog'
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { keyby } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, templateListStore } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate } from '$lib'
   import { base } from '$app/paths'
   import { store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
@@ -250,22 +249,57 @@
   }
 </script>
 
-<DetailPanel header='Basic Information' button={$store.site.permissions.rename ? { icon: pencilIcon, hiddenLabel: 'edit basic information', onClick: () => { modal = 'editbasic' } } : undefined}>
-  <div class="row">
-    <div class="label">Name:</div>
-    <div class="value">{$store.site.name}</div>
+<DetailPanel header="Site Information">
+  <div class="detail-section">
+    <dl>
+      <dt>Name:</dt>
+      <dd>
+        <span>{$store.site.name}</span>
+        {#if $store.site.permissions.rename}
+          <button on:click={() => { modal = 'editbasic' }}>
+            <Icon icon={pencilIcon} hiddenLabel="Edit basic information" width="1.3em" inline/>
+          </button>
+        {/if}
+      </dd>
+      <dt>URL:</dt>
+      <dd>
+        {#if $store.site.url}
+          {$store.site.url.prefix}
+        {:else}
+          This site is not launched.
+        {/if}
+        {#if $store.site.permissions.launch}
+          <button on:click={() => { modal = 'editlaunch' }}>
+            <Icon icon={pencilIcon} hiddenLabel="Edit URL or launch site" inline width="1.3em"/>
+          </button>
+        {/if}
+      </dd>
+    </dl>
   </div>
-</DetailPanel>
-
-<DetailPanel header='Launch Information' button={$store.site.permissions.launch ? { icon: pencilIcon, hiddenLabel: 'edit launch URL', onClick: () => { modal = 'editlaunch' } } : undefined}>
-  {#if $store.site.url}
-  <div class="row">
-    <div class="label">URL:</div>
-    <div class="value">{$store.site.url.prefix}</div>
+  <div class="detail-area-head">
+    <h3>Site Management</h3>
+    {#if $store.site.permissions.manageGovernance}
+      <button on:click={() => { modal = 'editsitemanagement' }}>
+        <Icon icon={pencilIcon} hiddenLabel="Edit site management" inline width="1.3em"/>
+      </button>
+    {/if}
   </div>
-  {:else}
-    <span>This site is not launched.</span>
-  {/if}
+  <dl>
+    <dt>Organization:</dt>
+    <dd>{$store.site.organization.name}</dd>
+    <dt>Owner:</dt>
+    <dd>
+      {#if $store.site.owner}{$store.site.owner.name} ({$store.site.owner.id}){/if}
+    </dd>
+    <dt>Manager(s):</dt>
+    <dd>
+      <ul class='manager-list'>
+        {#each $store.site.managers as manager (manager.id)}
+        <li>{manager.name} ({manager.id})</li>
+        {/each}
+      </ul>
+    </dd>
+  </dl>
 </DetailPanel>
 
 <DetailPanel header='Page Trees' button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => { modal = 'addpagetree' } } : undefined}>
@@ -623,6 +657,36 @@
     font-weight: bold;
     width: 25%;
   }
+  .detail-section {
+    margin-bottom: 4em;
+  }
+  dl {
+    display: grid;
+    grid-template-columns: min-content auto;
+    grid-gap: 10px;
+    align-items: baseline;
+  }
+  dl dt {
+    font-weight: bold;
+  }
+  dd {
+    display: flex;
+    align-items: center;
+  }
+  button {
+    background-color: transparent;
+    border: 0px;
+    cursor: pointer;
+    margin-left: 0.5em;
+  }
+  .detail-area-head {
+    display: flex;
+  }
+  h3 {
+    margin: 0;
+    font-weight: normal;
+    font-size: 1.3em;
+  }
   .manager-list {
     padding-left: 0;
     margin: 0;
@@ -634,7 +698,7 @@
   }
   li {
     border-bottom: 1px dashed #aaa;
-    padding: 0.6em 0.3em;
+    padding: 0.6em 0em;
   }
   li:first-child {
     padding-top: 0;
