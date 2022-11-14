@@ -78,7 +78,7 @@
         no actions available
       {/if}
     </ScreenReaderOnly>
-    {#each grouped as group, idx (group.id)}
+    {#each grouped as group (group.id)}
       <ul>
         {#each group.actions as action (action.id || action.label)}
           <li class:enabled={!action.disabled} class={action.class}><button class="reset" disabled={action.disabled} on:click={action.onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={action.icon} />{action.label}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly></button></li>
@@ -92,7 +92,7 @@
   header {
     position: relative;
     padding: 0.4em 0.4em;
-    height: 2em;
+    min-height: 2em;
     font-weight: bold;
     border-bottom: 1px solid var(--action-panel-divider, #999999);
   }
