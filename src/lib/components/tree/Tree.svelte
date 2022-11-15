@@ -29,7 +29,7 @@
   let checkboxelement: HTMLElement
   const headerelements: HTMLElement[] = []
   const treeWidth = new Store<ElementSize>({})
-  const headerSizes = derivedStore([headerOverride, treeWidth], stores => {
+  function calcHeaderSizes () {
     const headerSizes: string[] = []
     let totalFixed = checkboxelement?.offsetWidth ?? 0
     for (let i = 0; i < headers.length; i++) {
@@ -49,7 +49,8 @@
       }
     }
     return headerSizes
-  })
+  }
+  const headerSizes = derivedStore([headerOverride, treeWidth], calcHeaderSizes)
 
   $: store.singleSelect = singleSelect
 
@@ -104,6 +105,7 @@
       const el = document.getElementById(hashid($store.focused.id))
       el?.scrollIntoView({ block: 'center' })
     }
+    headerSizes.set(calcHeaderSizes()) // seems to need a kick on first mount
   })
   onDestroy(() => {
     document.removeEventListener('dragend', onDragEnd)
