@@ -3,15 +3,15 @@
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import archiveOutline from '@iconify-icons/mdi/archive-outline'
-  import applicationExport from '@iconify-icons/mdi/application-export'
   import checkIcon from '@iconify-icons/mdi/check'
   import minusIcon from '@iconify-icons/mdi/minus'
+  import launchIcon from '@iconify-icons/ph/rocket-launch-light'
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog } from '@dosgato/dialog'
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
-  import { keyby } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate } from '$lib'
+  import { keyby, titleCase } from 'txstate-utils'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, templateListStore, siteDetails } from '$lib'
   import { base } from '$app/paths'
   import { store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
@@ -302,7 +302,7 @@
   </dl>
 </DetailPanel>
 
-<DetailPanel header='Page Trees' button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => { modal = 'addpagetree' } } : undefined}>
+<DetailPanel header='Site Stages' button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => { modal = 'addpagetree' } } : undefined}>
   <table>
     <tr class='headers'>
       <th>Name</th>
@@ -312,19 +312,16 @@
     {#each $store.site.pagetrees as pagetree (pagetree.id)}
       <tr>
         <td>{pagetree.name}</td>
-        <td>{pagetree.type}</td>
+        <td>{titleCase(pagetree.type)}</td>
         <td class="pagetree-buttons">
-          {#if pagetree.permissions.rename}
-            <button title="Edit" on:click={() => { onClickEditPagetree(pagetree.id, pagetree.name) }}><Icon icon={pencilIcon}/><ScreenReaderOnly>rename page tree</ScreenReaderOnly></button>
-          {/if}
           {#if pagetree.type === 'SANDBOX' && pagetree.permissions.promote}
-            <button title="Promote to Primary" on:click={() => { onClickPromotePagetree(pagetree.id, pagetree.name) }}><Icon icon={applicationExport}/><ScreenReaderOnly>promote page tree</ScreenReaderOnly></button>
+            <button title="Promote to Primary" on:click={() => { onClickPromotePagetree(pagetree.id, pagetree.name) }}><Icon icon={launchIcon} width="1.3em"/><ScreenReaderOnly>promote page tree</ScreenReaderOnly></button>
           {/if}
           {#if pagetree.type === 'SANDBOX' && pagetree.permissions.archive}
-            <button title="Archive" on:click={() => { onClickArchivePagetree(pagetree.id, pagetree.name) }}><Icon icon={archiveOutline}/><ScreenReaderOnly>archive page tree</ScreenReaderOnly></button>
+            <button title="Archive" on:click={() => { onClickArchivePagetree(pagetree.id, pagetree.name) }}><Icon icon={archiveOutline} width="1.3em"/><ScreenReaderOnly>archive page tree</ScreenReaderOnly></button>
           {/if}
           {#if pagetree.type !== 'PRIMARY' && pagetree.permissions.delete}
-            <button title="Delete" on:click={() => { onClickDeletePagetree(pagetree.id, pagetree.name) }}><Icon icon={deleteOutline}/><ScreenReaderOnly>delete page tree</ScreenReaderOnly></button>
+            <button title="Delete" on:click={() => { onClickDeletePagetree(pagetree.id, pagetree.name) }}><Icon icon={deleteOutline} width="1.3em"/><ScreenReaderOnly>delete page tree</ScreenReaderOnly></button>
           {/if}
         </td>
       </tr>
@@ -332,86 +329,65 @@
   </table>
 </DetailPanel>
 
-<DetailPanel header='Site Management' button={$store.site.permissions.manageGovernance ? { icon: pencilIcon, hiddenLabel: 'edit site management', onClick: () => { modal = 'editsitemanagement' } } : undefined}>
-  <div class="row">
-    <div class="label">Organization:</div>
-    {#if $store.site.organization}
-      <div class="value">{$store.site.organization.name}</div>
-    {/if}
-  </div>
-  <div class="row">
-    <div class="label">Owner:</div>
-    {#if $store.site.owner}
-      <div class="value">{$store.site.owner.name} ({$store.site.owner.id})</div>
-    {/if}
-  </div>
-  <div class="row">
-    <div class="label">Manager(s):</div>
-    <div class="value">
-      <ul class='manager-list'>
-        {#each $store.site.managers as manager (manager.id)}
-        <li>{manager.name} ({manager.id})</li>
+<DetailPanel header="User Access">
+  <table class="access">
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th class="read-only">Read-Only</th>
+        <th class="universal">Universal</th>
+      </tr>
+    </thead>
+    <tbody>
+      {#each $store.siteRoles as role (role.id)}
+        <tr>
+          <td><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
+          <td><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+          <td class="col3"><Icon icon={minusIcon} hiddenLabel={`${role.name} is a site-specific role`}/></td>
+        </tr>
+      {/each}
+      {#each $store.globalRoles as role (role.id)}
+        <tr>
+          <td><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
+          <td><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+          <td class="col3"><Icon icon={checkIcon} hiddenLabel={`${role.name} applies to all sites`}/></td>
+        </tr>
+      {/each}
+    </tbody>
+    {#if $store.groups.length}
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th class="read-only">Read-Only</th>
+          <th class="source-roles">Source Role(s)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each $store.groups as group (group.id)}
+          <tr>
+            <td><a href={`${base}/auth/groups/${group.id}`}>{group.name}</a></td>
+            <td><Icon icon={group.readonly ? checkIcon : minusIcon} hiddenLabel={`${group.name} has ${group.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+            <td>{group.roles}</td>
+          </tr>
         {/each}
-      </ul>
-    </div>
-  </div>
-</DetailPanel>
-
-<DetailPanel header="Roles">
-  <table>
-    <tr>
-      <th>Name</th>
-      <th>Read-Only</th>
-      <th>Universal</th>
-    </tr>
-    {#each $store.siteRoles as role (role.id)}
+      </tbody>
+    {/if}
+    <thead>
       <tr>
-        <td><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
-        <td><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-        <td><Icon icon={minusIcon} hiddenLabel={`${role.name} is a site-specific role`}/></td>
+        <th>Name</th>
+        <th class="read-only">Read-Only</th>
+        <th class="source-roles">Source Role(s)</th>
       </tr>
-    {/each}
-    {#each $store.globalRoles as role (role.id)}
-      <tr>
-        <td><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
-        <td><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-        <td><Icon icon={checkIcon} hiddenLabel={`${role.name} applies to all sites`}/></td>
-      </tr>
-    {/each}
-  </table>
-</DetailPanel>
-
-<DetailPanel header="Users">
-  <table>
-    <tr>
-      <th>Name</th>
-      <th>Read-Only</th>
-      <th>Source Role(s)</th>
-    </tr>
-    {#each $store.users as user (user.id)}
-      <tr>
-        <td><a href={`${base}/auth/users/${user.id}`}>{user.name}</a></td>
-        <td><Icon icon={user.readonly ? checkIcon : minusIcon} hiddenLabel={`${user.name} has ${user.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-        <td>{user.roles}</td>
-      </tr>
-    {/each}
-  </table>
-</DetailPanel>
-
-<DetailPanel header="Groups">
-  <table>
-    <tr>
-      <th>Name</th>
-      <th>Read-Only</th>
-      <th>Source Role(s)</th>
-    </tr>
-    {#each $store.groups as group (group.id)}
-      <tr>
-        <td><a href={`${base}/auth/groups/${group.id}`}>{group.name}</a></td>
-        <td><Icon icon={group.readonly ? checkIcon : minusIcon} hiddenLabel={`${group.name} has ${group.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-        <td>{group.roles}</td>
-      </tr>
-    {/each}
+    </thead>
+    <tbody>
+      {#each $store.users as user (user.id)}
+        <tr>
+          <td><a href={`${base}/auth/users/${user.id}`}>{user.name}</a></td>
+          <td><Icon icon={user.readonly ? checkIcon : minusIcon} hiddenLabel={`${user.name} has ${user.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+          <td>{user.roles}</td>
+        </tr>
+      {/each}
+    </tbody>
   </table>
 </DetailPanel>
 
@@ -649,16 +625,16 @@
   </Dialog>
 {/if}
 <style>
-  .row {
-    display: flex;
-    padding: 0.5rem 0;
-  }
-  .label {
-    font-weight: bold;
-    width: 25%;
-  }
   .detail-section {
     margin-bottom: 4em;
+  }
+  .detail-area-head {
+    display: flex;
+  }
+  h3 {
+    margin: 0;
+    font-weight: normal;
+    font-size: 1.3em;
   }
   dl {
     display: grid;
@@ -679,14 +655,6 @@
     cursor: pointer;
     margin-left: 0.5em;
   }
-  .detail-area-head {
-    display: flex;
-  }
-  h3 {
-    margin: 0;
-    font-weight: normal;
-    font-size: 1.3em;
-  }
   .manager-list {
     padding-left: 0;
     margin: 0;
@@ -703,6 +671,80 @@
   li:first-child {
     padding-top: 0;
   }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+  }
+  table tr td, table tr th {
+    text-align: left;
+    padding: 0.4em 0;
+  }
+  table tr.headers {
+    border-bottom: 1px solid #ebebeb;
+  }
+  table tr { border-bottom: 1px dashed #ebebeb }
+  table tr:nth-child(even) { background-color: #f6f7f9 }
+
+  .pagetree-buttons {
+    text-align: right;
+  }
+
+  table.access th {
+    width: calc(100%/3);
+  }
+
+  table.access th.read-only{
+    text-align: center;
+  }
+
+  table.access td:nth-child(2) {
+    text-align: center;
+  }
+
+  table.access td.col3 {
+    padding-left: 1.5em;
+  }
+
+  table.access thead:not(:first-child):before {
+    content: "";
+    display: block;
+    height: 3.5em;
+    width: 100%;
+    background: transparent;
+  }
+
+
+  .showall {
+    text-align: right;
+  }
+
+
+  table caption {
+    color: #AD0057;
+    font-weight: bold;
+    font-size: 16px;
+    text-align: left;
+    margin-bottom: 1em;
+  }
+
+  table.templates td:nth-child(1), table.templates td:nth-child(2) {
+    width: 40%;
+  }
+  table.templates td:nth-child(3) {
+    width: 20%;
+    text-align: right;
+  }
+  td button {
+    border: 0;
+    padding: 0;
+    background-color: transparent;
+  }
+  td button:not(:last-child) {
+    margin-right: 0.5em;
+  }
+  /* Audit */
   li.comment-card {
     display: flex;
     flex-direction: column;
@@ -730,49 +772,5 @@
   }
   [data-eq~="400px"] li.comment-card div span {
     width: auto;
-  }
-  .showall {
-    text-align: right;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1em;
-  }
-
-  table caption {
-    color: #AD0057;
-    font-weight: bold;
-    font-size: 16px;
-    text-align: left;
-    margin-bottom: 1em;
-  }
-
-  table tr td, table tr th {
-    text-align: left;
-    padding: 0.4em 0;
-  }
-  table tr.headers {
-    border-bottom: 1px solid #ebebeb;
-  }
-  table tr { border-bottom: 1px dashed #ebebeb }
-  table tr:nth-child(even) { background-color: #f6f7f9 }
-  .pagetree-buttons {
-    text-align: right;
-  }
-  table.templates td:nth-child(1), table.templates td:nth-child(2) {
-    width: 40%;
-  }
-  table.templates td:nth-child(3) {
-    width: 20%;
-    text-align: right;
-  }
-  td button {
-    border: 0;
-    padding: 0;
-    background-color: transparent;
-  }
-  td button:not(:last-child) {
-    margin-right: 0.5em;
   }
 </style>
