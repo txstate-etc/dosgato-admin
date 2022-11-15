@@ -16,7 +16,7 @@ const config = {
 			entries: []
 		},
 		paths: {
-			base: '/admin'
+			base: '/.admin'
 		}
 	}
 };
