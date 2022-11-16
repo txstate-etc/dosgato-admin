@@ -182,7 +182,7 @@
   // expired, so we need to watch for refresh errors and load in a new token
   async function iframeload () {
     iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath: $editorStore.selectedPath }, '*')
-    const newtemptoken = await getTempToken($editorStore.page)
+    const newtemptoken = await getTempToken($editorStore.page, temptoken)
     if (newtemptoken !== temptoken) temptoken = newtemptoken
   }
 

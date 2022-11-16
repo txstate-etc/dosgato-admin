@@ -10,8 +10,8 @@ interface PageSubNavLink extends SubNavLink {
 const toBeFreed = new Set<string>()
 function free (link: PageSubNavLink) { toBeFreed.add(link.pageId) }
 
-export async function getTempToken (page: PageEditorPage, skfetch = fetch) {
-  const resp = await skfetch(environmentConfig.renderBase + '/.token' + page.path, {
+export async function getTempToken (page: PageEditorPage, currentToken?: string, skfetch = fetch) {
+  const resp = await skfetch(environmentConfig.renderBase + '/.token' + page.path + (currentToken ? `?currentToken=${currentToken}` : ''), {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${api.token ?? ''}`
@@ -26,7 +26,7 @@ export const load: Load<{ id: string }> = async ({ params, fetch }) => {
   if (!page) throw error(404)
   const pagetemplate = templateRegistry.getTemplate(page.data.templateKey)
   if (!pagetemplate) throw error(500, 'Unrecognized Page Template')
-  const temptoken = await getTempToken(page, fetch)
+  const temptoken = await getTempToken(page, undefined, fetch)
   subnavStore.open('pages', { href: `${base}/pages/${page.id}`, label: page.name, icon: applicationEditOutline, pageId: page.id, onClose: free })
   toBeFreed.delete(page.id)
   setTimeout(() => {
