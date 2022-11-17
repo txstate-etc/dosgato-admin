@@ -2,7 +2,7 @@
   import { resize, type ElementSize } from '@txstate-mws/svelte-components'
   import { derivedStore, Store } from '@txstate-mws/svelte-store'
   import { afterUpdate, beforeUpdate, onDestroy, onMount, setContext } from 'svelte'
-  import { hashid } from 'txstate-utils'
+  import { hashid, roundTo } from 'txstate-utils'
   import TreeNode from './TreeNode.svelte'
   import { TreeStore, TREE_STORE_CONTEXT } from './treestore'
   import type { DragEligibleFn, CopyHandlerFn, DropEffectFn, FetchChildrenFn, MoveHandlerFn, TreeHeader, TreeItemFromDB } from './treestore'
@@ -98,6 +98,7 @@
     store.resetHeaderOverride()
   }
 
+  let mounted = false
   onMount(async () => {
     document.addEventListener('dragend', onDragEnd)
     await store.refresh()
@@ -106,6 +107,7 @@
       el?.scrollIntoView({ block: 'center' })
     }
     headerSizes.set(calcHeaderSizes()) // seems to need a kick on first mount
+    mounted = true
   })
   onDestroy(() => {
     document.removeEventListener('dragend', onDragEnd)
@@ -126,7 +128,7 @@
 
 <svelte:window on:mouseup={headerDragEnd} />
 
-<div class="tree-header" class:resizing={!!dragheaderid} use:resize={{ store: treeWidth }} aria-hidden="true" on:mouseup={headerDragEnd} on:touchend={headerDragEnd} on:mousemove={dragheaderid ? headerDrag : undefined} on:touchmove={dragheaderid ? headerDrag : undefined}>
+<div class="tree-header" class:mounted class:resizing={!!dragheaderid} use:resize={{ store: treeWidth }} aria-hidden="true" on:mouseup={headerDragEnd} on:touchend={headerDragEnd} on:mousemove={dragheaderid ? headerDrag : undefined} on:touchmove={dragheaderid ? headerDrag : undefined}>
   <div class="checkbox" bind:this={checkboxelement}>&nbsp;</div>
   {#each headers as header, i (header.label)}
     <div bind:this={headerelements[i]} id={header.id} class="tree-header-cell {header.id}" style:width={$headerOverride[header.id] ?? $headerSizes?.[i]}>{header.label}</div>
@@ -134,7 +136,7 @@
   {/each}
 </div>
 {#if $rootItems?.length}
-  <ul bind:this={store.treeElement} role="tree" class:resizing={!!dragheaderid} on:mousemove={dragheaderid ? headerDrag : undefined} on:touchmove={dragheaderid ? headerDrag : undefined} on:mouseup={headerDragEnd} on:touchend={headerDragEnd}>
+  <ul bind:this={store.treeElement} class:mounted role="tree" class:resizing={!!dragheaderid} on:mousemove={dragheaderid ? headerDrag : undefined} on:touchmove={dragheaderid ? headerDrag : undefined} on:mouseup={headerDragEnd} on:touchend={headerDragEnd}>
     {#each $rootItems as item, i (item.id)}
       <TreeNode
         {item}
@@ -163,6 +165,10 @@
     left: 0;
     z-index: 1;
     font-size: 0.9em;
+    opacity: 0;
+  }
+  .tree-header.mounted {
+    opacity: 1;
   }
   .tree-header.resizing {
     cursor: col-resize;
@@ -198,6 +204,10 @@
     margin: 0;
     list-style: none;
     font-size: 0.9em;
+    opacity: 0;
+  }
+  ul.mounted {
+    opacity: 1;
   }
   :global([data-eq~="650px"]) ul {
     font-size: 0.8em;
