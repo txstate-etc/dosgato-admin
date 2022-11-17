@@ -270,7 +270,7 @@
       <div
         class={(header.class ? toArray(header.class(item)) : []).concat([header.id]).join(' ')}
         style:width={$headerSizes?.[i] ?? '1px'}
-        style:padding-left={i === 0 ? `calc(min(${(level - 1) * 1.6}em, ${(level - 1) * 2.7}cqw) + 1.4em)` : undefined}
+        style:padding-left={i === 0 ? `calc(min(${(level - 1) * 1.6}em, ${(level - 1) * 2.7}vw) + 1.4em)` : undefined}
         class:left={i === 0}
       >
         {#if i === 0 && item.hasChildren}

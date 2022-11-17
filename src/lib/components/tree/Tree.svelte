@@ -198,7 +198,6 @@
     margin: 0;
     list-style: none;
     font-size: 0.9em;
-    container-type: inline-size;
   }
   :global([data-eq~="650px"]) ul {
     font-size: 0.8em;
