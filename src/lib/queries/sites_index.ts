@@ -22,17 +22,23 @@ export const sitePagetreeDetails = `
   id
   name
   type
-  pageTemplates: templates(filter: {types: [PAGE]}) {
+  pageTemplates: templates(filter: {types: [PAGE], universal: false}) {
     key
     name
     type
     universal
+    permissions {
+      assign
+    }
   }
-  componentTemplates: templates(filter: {types: [COMPONENT]}) {
+  componentTemplates: templates(filter: {types: [COMPONENT], universal: false}) {
     key
     name
     type
     universal
+    permissions {
+      assign
+    }
   }
   permissions {
     rename
@@ -52,12 +58,18 @@ export interface SitePagetree {
     name: string
     type: string
     universal: boolean
+    permissions: {
+      assign: boolean
+    }
   }[]
   componentTemplates: {
     key: string
     name: string
     type: string
     universal: boolean
+    permissions: {
+      assign: boolean
+    }
   }[]
   permissions: {
     rename: boolean
@@ -139,17 +151,23 @@ export const fullSiteDetails = `
   pagetrees {
     ${sitePagetreeDetails}
   }
-  pageTemplates: templates(filter: {types: [PAGE]}) {
+  pageTemplates: templates(filter: {types: [PAGE], universal: false}) {
     key
     name
     type
     universal
+    permissions {
+      assign
+    }
   }
-  componentTemplates: templates(filter: {types: [COMPONENT]}) {
+  componentTemplates: templates(filter: {types: [COMPONENT], universal: false}) {
     key
     name
     type
     universal
+    permissions {
+      assign
+    }
   }
   comments {
     ${commentDetails}
@@ -235,12 +253,18 @@ export interface FullSite {
     name: string
     type: string
     universal: boolean
+    permissions: {
+      assign: boolean
+    }
   }[]
   componentTemplates: {
     key: string
     name: string
     type: string
     universal: boolean
+    permissions: {
+      assign: boolean
+    }
   }[]
   comments: SiteComment[]
   roles: {

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ResponsiveTableHeader, ResponsiveTableRowAction } from './responsivetable'
-  import { isNotBlank } from 'txstate-utils'
+  import { isNotBlank, isNotNull } from 'txstate-utils'
   import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import ResponsiveTableCell from './ResponsiveTableCell.svelte'
   import { Icon } from '@dosgato/dialog'
@@ -8,9 +8,13 @@
   export let items: any[]
   export let headers: (ResponsiveTableHeader)[]
   export let rowActions: ResponsiveTableRowAction[] = []
+  export let caption: string | undefined = undefined
 </script>
 
 <table>
+  {#if isNotNull(caption)}
+    <caption>{caption}</caption>
+  {/if}
   <thead>
     <tr class="headers">
       {#each headers as header (header.id) }

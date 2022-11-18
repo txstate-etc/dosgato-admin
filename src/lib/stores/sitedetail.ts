@@ -47,6 +47,9 @@ interface SiteTemplate {
   name: string
   universal: boolean
   pagetrees: string[]
+  permissions: {
+    assign
+  }
 }
 
 const initialValue: FullSite = {
@@ -108,29 +111,29 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
       return { id: k, name: userRoles[k].name, roles: userRoles[k].roles.join(', '), readonly }
     })
     const sitePageTemplateKeys = site.pageTemplates.map(t => t.key)
-    const pageTemplates: SiteTemplate[] = site.pageTemplates.map(t => ({ id: t.key, key: t.key, name: t.name, universal: t.universal, pagetrees: [] }))
-    const pagetreePageTemplates: Record<string, { name: string, universal: boolean, pagetrees: string[] }> = {}
+    const pageTemplates: SiteTemplate[] = site.pageTemplates.map(t => ({ ...t, id: t.key, pagetrees: [] }))
+    const pagetreePageTemplates: Record<string, SiteTemplate> = {}
     const siteComponentTemplateKeys = site.componentTemplates.map(t => t.key)
-    const componentTemplates: SiteTemplate[] = site.componentTemplates.map(t => ({ id: t.key, key: t.key, name: t.name, universal: t.universal, pagetrees: [] }))
-    const pagetreeComponentTemplates: Record<string, { name: string, universal: boolean, pagetrees: string[] }> = {}
+    const componentTemplates: SiteTemplate[] = site.componentTemplates.map(t => ({ ...t, id: t.key, pagetrees: [] }))
+    const pagetreeComponentTemplates: Record<string, SiteTemplate> = {}
 
     for (const ptree of site.pagetrees) {
       for (const temp of ptree.pageTemplates) {
         if (sitePageTemplateKeys.includes(temp.key)) continue
-        pagetreePageTemplates[temp.key] ||= { name: temp.name, universal: temp.universal, pagetrees: [] }
+        pagetreePageTemplates[temp.key] ||= { ...temp, id: temp.key, pagetrees: [] }
         pagetreePageTemplates[temp.key].pagetrees.push(ptree.name)
       }
       for (const temp of ptree.componentTemplates) {
         if (siteComponentTemplateKeys.includes(temp.key)) continue
-        pagetreeComponentTemplates[temp.key] ||= { name: temp.name, universal: temp.universal, pagetrees: [] }
+        pagetreeComponentTemplates[temp.key] ||= { ...temp, id: temp.key, pagetrees: [] }
         pagetreeComponentTemplates[temp.key].pagetrees.push(ptree.name)
       }
     }
     for (const key in pagetreePageTemplates) {
-      pageTemplates.push({ id: key, key, name: pagetreePageTemplates[key].name, universal: pagetreePageTemplates[key].universal, pagetrees: pagetreePageTemplates[key].pagetrees })
+      pageTemplates.push(pagetreePageTemplates[key])
     }
     for (const key in pagetreeComponentTemplates) {
-      componentTemplates.push({ id: key, key, name: pagetreeComponentTemplates[key].name, universal: pagetreeComponentTemplates[key].universal, pagetrees: pagetreeComponentTemplates[key].pagetrees })
+      componentTemplates.push(pagetreeComponentTemplates[key])
     }
     this.set({ site, globalRoles: sortby(globalRoles, 'name'), siteRoles: sortby(siteRoles, 'name'), groups, users, pageTemplates: sortby(pageTemplates, 'universal', 'name'), componentTemplates: sortby(componentTemplates, 'universal', 'name') })
 

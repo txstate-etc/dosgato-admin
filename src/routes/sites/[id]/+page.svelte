@@ -1,17 +1,19 @@
 <script lang="ts">
   import pencilIcon from '@iconify-icons/ph/pencil-light'
-  import plusIcon from '@iconify-icons/mdi/plus'
-  import deleteOutline from '@iconify-icons/mdi/delete-outline'
-  import archiveOutline from '@iconify-icons/mdi/archive-outline'
-  import checkIcon from '@iconify-icons/mdi/check'
-  import minusIcon from '@iconify-icons/mdi/minus'
+  import plusIcon from '@iconify-icons/ph/plus-light'
+  import deleteOutline from '@iconify-icons/ph/trash-light'
+  import archiveOutline from '@iconify-icons/ph/archive-light'
+  import checkIcon from '@iconify-icons/ph/check-light'
+  import minusIcon from '@iconify-icons/ph/minus-light'
   import launchIcon from '@iconify-icons/ph/rocket-launch-light'
+  import deauthorizeIcon from '@iconify-icons/ph/minus-circle-light'
+  import authorizeIcon from '@iconify-icons/ph/plus-circle-light'
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog } from '@dosgato/dialog'
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { keyby, titleCase } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, templateListStore, siteDetails } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, templateListStore, siteDetails, Accordion } from '$lib'
   import { base } from '$app/paths'
   import { store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
@@ -21,9 +23,10 @@
     'promotepagetree'|'archivepagetree'|'edittemplates'|'addpagetemplates'|'addcomponenttemplates'|'deletetemplateauth'|undefined = undefined
 
   const pagetreesByName = keyby($store.site.pagetrees, 'name')
-  $: authorizedPageTemplatesByKey = keyby($store.pageTemplates, 'key')
-  $: authorizedComponentTemplatesByKey = keyby($store.componentTemplates, 'key')
-  let showAllTemplates = false
+  $: authorizedPageTemplateKeys = new Set($store.pageTemplates.map(t => t.key))
+  $: authorizedComponentTemplateKeys = new Set($store.componentTemplates.map(t => t.key))
+  $: universalComponentTemplates = data.allComponentTemplates.filter(t => t.universal && !authorizedComponentTemplateKeys.has(t.key))
+  $: universalPageTemplates = data.allPageTemplates.filter(t => t.universal && !authorizedPageTemplateKeys.has(t.key))
 
   async function searchUsers (search) {
     const query = search.toLowerCase()
@@ -247,6 +250,15 @@
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
+
+  function hasBackground (total, index) {
+    const inFirstColumn = index < total / 2
+    if (inFirstColumn) return index % 2 === 0
+    else {
+      const secondColStartIndex = Math.ceil(total / 2)
+      return (index - secondColStartIndex) % 2 === 0
+    }
+  }
 </script>
 
 <DetailPanel header="Site Information">
@@ -330,31 +342,60 @@
 </DetailPanel>
 
 <DetailPanel header="User Access">
-  <table class="access">
-    <thead>
-      <tr>
-        <th>Role</th>
-        <th class="read-only">Read-Only</th>
-        <th class="universal">Universal</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each $store.siteRoles as role (role.id)}
+  <div class="detail-section">
+    <table class="access">
+      <caption><h3>Roles</h3></caption>
+      <thead>
         <tr>
-          <td><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
-          <td><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-          <td class="col3"><Icon icon={minusIcon} hiddenLabel={`${role.name} is a site-specific role`}/></td>
+          <th>Role</th>
+          <th class="read-only">Read-Only</th>
+          <th class="universal">Universal</th>
         </tr>
-      {/each}
-      {#each $store.globalRoles as role (role.id)}
+      </thead>
+      <tbody>
+        {#each $store.siteRoles as role (role.id)}
+          <tr>
+            <td><div class="carded-label">Role:</div><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
+            <td><div class="carded-label">Read-Only:</div><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+            <td class="col3"><div class="carded-label">Universal:</div><Icon icon={minusIcon} hiddenLabel={`${role.name} is a site-specific role`}/></td>
+          </tr>
+        {/each}
+        {#each $store.globalRoles as role (role.id)}
+          <tr>
+            <td><div class="carded-label">Role:</div><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
+            <td><div class="carded-label">Read-Only:</div><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+            <td class="col3"><div class="carded-label">Universal:</div><Icon icon={checkIcon} hiddenLabel={`${role.name} applies to all sites`}/></td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
+  {#if $store.groups.length}
+  <div class="detail-section">
+    <table class="access">
+      <caption><h3>Groups</h3></caption>
+      <thead>
         <tr>
-          <td><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
-          <td><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-          <td class="col3"><Icon icon={checkIcon} hiddenLabel={`${role.name} applies to all sites`}/></td>
+          <th>Group</th>
+          <th class="read-only">Read-Only</th>
+          <th class="source-roles">Source Role(s)</th>
         </tr>
-      {/each}
-    </tbody>
-    {#if $store.groups.length}
+      </thead>
+      <tbody>
+        {#each $store.groups as group (group.id)}
+          <tr>
+            <td><div class="carded-label">Group:</div><a href={`${base}/auth/groups/${group.id}`}>{group.name}</a></td>
+            <td><div class="carded-label">Read-Only:</div><Icon icon={group.readonly ? checkIcon : minusIcon} hiddenLabel={`${group.name} has ${group.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+            <td><div class="carded-label">Source Role(s):</div>{group.roles}</td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
+  {/if}
+  <div class="detail-section">
+    <table class="access">
+      <caption><h3>Users</h3></caption>
       <thead>
         <tr>
           <th>Name</th>
@@ -363,134 +404,131 @@
         </tr>
       </thead>
       <tbody>
-        {#each $store.groups as group (group.id)}
+        {#each $store.users as user (user.id)}
           <tr>
-            <td><a href={`${base}/auth/groups/${group.id}`}>{group.name}</a></td>
-            <td><Icon icon={group.readonly ? checkIcon : minusIcon} hiddenLabel={`${group.name} has ${group.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-            <td>{group.roles}</td>
+            <td><div class="carded-label">Name:</div><a href={`${base}/auth/users/${user.id}`}>{user.name}</a></td>
+            <td><div class="carded-label">Read-Only:</div><Icon icon={user.readonly ? checkIcon : minusIcon} hiddenLabel={`${user.name} has ${user.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+            <td><div class="carded-label">Source Role(s):</div>{user.roles}</td>
           </tr>
         {/each}
       </tbody>
-    {/if}
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th class="read-only">Read-Only</th>
-        <th class="source-roles">Source Role(s)</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each $store.users as user (user.id)}
-        <tr>
-          <td><a href={`${base}/auth/users/${user.id}`}>{user.name}</a></td>
-          <td><Icon icon={user.readonly ? checkIcon : minusIcon} hiddenLabel={`${user.name} has ${user.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-          <td>{user.roles}</td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+    </table>
+  </div>
 </DetailPanel>
 
-<DetailPanel header="Manage Authorized Templates">
-  <div class="showall">
-    <input type="checkbox" bind:checked={showAllTemplates} id="showalltemplates"/>
-    <label for="showalltemplates">Show All</label>
+<DetailPanel header="Authorized Templates">
+  <div class="template-section">
+    <div class="detail-area-head">
+      <h3>Page Templates</h3>
+    </div>
+    {#if $store.pageTemplates.length}
+      <table class="authorized-templates">
+        <tr>
+          <th>Template Name</th>
+          <th>Authorized Pagetree(s)</th>
+          <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
+        </tr>
+        {#each $store.pageTemplates as template (template.key)}
+          <tr>
+            <td>{template.name}</td>
+            <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
+            <td>
+              {#if template.permissions.assign}
+                <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
+                <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deauthorizeIcon} width="1.5em"/></button>
+              {/if}
+            </td>
+          </tr>
+        {/each}
+      </table>
+    {/if}
+    <div class="template-accordion-wrapper">
+      <Accordion title="Universal Page Templates">
+        <div class="wrapper">
+          <ul class="universal-templates" style={`grid-template-rows: repeat(${Math.ceil(universalPageTemplates.length / 2)}, 1fr)`}>
+            {#each universalPageTemplates as template, index}
+              <li class={hasBackground(universalPageTemplates.length, index) ? 'bg' : ''}>
+                {template.name}
+              </li>
+            {/each}
+          </ul>
+        </div>
+      </Accordion>
+    </div>
+    <div class="template-accordion-wrapper">
+      <Accordion title="Non-authorized Page Templates">
+        <ul class="forbidden-templates">
+          {#each data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key)) as template}
+            <li>
+              {template.name}
+              {#if template.permissions.assign}
+                <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={authorizeIcon} width="1.5em"/>
+                  <ScreenReaderOnly>{`deauthorize ${template.name}`}</ScreenReaderOnly>
+                </button>
+              {/if}
+            </li>
+          {/each}
+        </ul>
+      </Accordion>
+    </div>
   </div>
-  <table class="templates">
-    <caption>Page Templates</caption>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Pagetrees</th>
-        <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
-      </tr>
-    </thead>
-    <tbody>
-      {#each data.allPageTemplates as template}
-        {@const authorized = Object.keys(authorizedPageTemplatesByKey).includes(template.key)}
-        {#if (authorized && !authorizedPageTemplatesByKey[template.key].universal) || showAllTemplates}
+  <div class="template-section">
+    <div class="detail-area-head">
+      <h3>Component Templates</h3>
+    </div>
+    {#if $store.componentTemplates.length}
+      <table class="authorized-templates">
+        <tr>
+          <th>Template Name</th>
+          <th>Authorized Pagetree(s)</th>
+          <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
+        </tr>
+        {#each $store.componentTemplates as template (template.key)}
           <tr>
             <td>{template.name}</td>
+            <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
             <td>
-              {#if authorized}
-                {authorizedPageTemplatesByKey[template.key].pagetrees.length ? authorizedPageTemplatesByKey[template.key].pagetrees.join(', ') : 'All Pagetrees'}
+              {#if template.universal}
+                <div>Universal</div>
               {:else}
-                <div>None</div>
-              {/if}
-            <td>
-              {#if !authorized}
-                {#if template.permissions.assign}
-                  <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={plusIcon} width="1.5em"/><ScreenReaderOnly>Authorize {template.name} for site</ScreenReaderOnly></button>
-                {:else}
-                  &nbsp; <!-- TODO: show something here? -->
-                {/if}
-              {:else}
-                {#if authorizedPageTemplatesByKey[template.key].universal}
-                  <div>Universal</div>
-                {:else}
-                  {#if template.permissions.assign}
-                    <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, authorizedPageTemplatesByKey[template.key].pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-                    <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, authorizedPageTemplatesByKey[template.key].pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
-                  {:else}
-                    &nbsp; <!-- TODO: show something here? -->
-                  {/if}
-                {/if}
+                <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
+                <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deauthorizeIcon} width="1.5em"/></button>
               {/if}
             </td>
           </tr>
-        {/if}
-      {/each}
-    </tbody>
-  </table>
-  <table class="templates">
-    <caption>Component Types</caption>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Pagetrees</th>
-        <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
-      </tr>
-    </thead>
-    <tbody>
-      {#each data.allComponentTemplates as template}
-        {@const authorized = Object.keys(authorizedComponentTemplatesByKey).includes(template.key)}
-        {#if (authorized && !authorizedComponentTemplatesByKey[template.key].universal) || showAllTemplates}
-          <tr>
-            <td>{template.name}</td>
-            <td>
-              {#if authorized}
-                {authorizedComponentTemplatesByKey[template.key].pagetrees.length ? authorizedComponentTemplatesByKey[template.key].pagetrees.join(', ') : 'All Pagetrees'}
-              {:else}
-              <div>None</div>
-              {/if}
-            </td>
-            <td>
-              {#if !authorized}
-                {#if template.permissions.assign}
-                  <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={plusIcon} width="1.5em"/><ScreenReaderOnly>Authorize {template.name} for site</ScreenReaderOnly></button>
-                {:else}
-                  &nbsp; <!-- TODO: show something here? -->
-                {/if}
-              {:else}
-                {#if authorizedComponentTemplatesByKey[template.key].universal}
-                  <div>Universal</div>
-                {:else}
-                  {#if template.permissions.assign}
-                    <div class="actions">
-                      <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, authorizedComponentTemplatesByKey[template.key].pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-                      <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, authorizedComponentTemplatesByKey[template.key].pagetrees) }}><Icon icon={deleteOutline} width="1.5em"/></button>
-                    </div>
-                  {:else}
-                    &nbsp; <!-- TODO: show something here? -->
-                  {/if}
-                {/if}
-              {/if}
-            </td>
-          </tr>
-        {/if}
-      {/each}
-    </tbody>
-  </table>
+        {/each}
+      </table>
+    {/if}
+    <div class="template-accordion-wrapper">
+      <Accordion title="Universal Components">
+        <div class="wrapper">
+          <ul class="universal-templates" style={`grid-template-rows: repeat(${Math.ceil(universalComponentTemplates.length / 2)}, 1fr)`}>
+            {#each universalComponentTemplates as template, index}
+              <li class={hasBackground(universalComponentTemplates.length, index) ? 'bg' : ''}>
+                {template.name}
+              </li>
+            {/each}
+          </ul>
+        </div>
+      </Accordion>
+    </div>
+    <div class="template-accordion-wrapper">
+      <Accordion title="Non-authorized Components">
+        <ul class="forbidden-templates">
+          {#each data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key)) as template}
+          <li>
+            {template.name}
+            {#if template.permissions.assign}
+                <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={authorizeIcon} width="1.5em"/>
+                  <ScreenReaderOnly>{`deauthorize ${template.name}`}</ScreenReaderOnly>
+                </button>
+            {/if}
+          </li>
+          {/each}
+        </ul>
+      </Accordion>
+    </div>
+  </div>
 </DetailPanel>
 
 <DetailPanel header="Audit" button={{ icon: plusIcon, hiddenLabel: 'add comment', onClick: () => { modal = 'addcomment' } }}>
@@ -625,11 +663,12 @@
   </Dialog>
 {/if}
 <style>
-  .detail-section {
+  .detail-section:not(:last-child) {
     margin-bottom: 4em;
   }
   .detail-area-head {
     display: flex;
+    margin-bottom: 1.5em;
   }
   h3 {
     margin: 0;
@@ -641,6 +680,7 @@
     grid-template-columns: min-content auto;
     grid-gap: 10px;
     align-items: baseline;
+    margin-block-start: 0;
   }
   dl dt {
     font-weight: bold;
@@ -668,9 +708,6 @@
     border-bottom: 1px dashed #aaa;
     padding: 0.6em 0em;
   }
-  li:first-child {
-    padding-top: 0;
-  }
 
   table {
     width: 100%;
@@ -679,7 +716,7 @@
   }
   table tr td, table tr th {
     text-align: left;
-    padding: 0.4em 0;
+    padding: 0.2em 0;
   }
   table tr.headers {
     border-bottom: 1px solid #ebebeb;
@@ -691,12 +728,22 @@
     text-align: right;
   }
 
+  /* User Access */
+  table.access caption {
+    display: none;
+  }
+
   table.access th {
     width: calc(100%/3);
   }
 
   table.access th.read-only{
     text-align: center;
+  }
+
+  table.access td .carded-label {
+    display: none;
+    font-weight: bold;
   }
 
   table.access td:nth-child(2) {
@@ -707,35 +754,79 @@
     padding-left: 1.5em;
   }
 
-  table.access thead:not(:first-child):before {
-    content: "";
-    display: block;
-    height: 3.5em;
-    width: 100%;
-    background: transparent;
-  }
-
-
-  .showall {
-    text-align: right;
-  }
-
-
-  table caption {
-    color: #AD0057;
-    font-weight: bold;
-    font-size: 16px;
+  [data-eq~="600px"] table.access caption {
+    display: table-caption;
     text-align: left;
+  }
+
+  [data-eq~="600px"] .detail-section table.access {
+    border-collapse: separate;
+    border-spacing: 0 1em;
+  }
+  [data-eq~="600px"] table.access tr {
+    background-color: #f6f7f9;
+  }
+  [data-eq~="600px"] table.access thead {
+    display: none;
+  }
+  [data-eq~="600px"] table.access tr td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5em;
+  }
+  [data-eq~="600px"] table.access tr td:not(:last-child) {
+    border-bottom: 1px dashed #ebebeb;
+  }
+  [data-eq~="600px"] table.access td .carded-label {
+    display: block;
+  }
+
+  .template-section:not(:last-child) {
+    margin-bottom: 4em;
+  }
+
+  table.authorized-templates, .template-accordion-wrapper {
     margin-bottom: 1em;
   }
 
-  table.templates td:nth-child(1), table.templates td:nth-child(2) {
-    width: 40%;
+  .universal-templates {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 20%;
   }
-  table.templates td:nth-child(3) {
-    width: 20%;
-    text-align: right;
+
+  .universal-templates li.bg {
+    background-color: #f6f7f9;
   }
+
+
+  [data-eq~="600px"] .wrapper .universal-templates {
+    display: flex;
+    flex-direction: column;
+  }
+  [data-eq~="600px"] .universal-templates li.bg {
+    background-color: unset;
+  }
+  [data-eq~="600px"] .universal-templates li:nth-child(odd) {
+    background-color: #f6f7f9;
+  }
+
+
+  .forbidden-templates {
+    width: 50%;
+  }
+
+  .forbidden-templates li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .forbidden-templates li:nth-child(odd) {
+    background-color: #f6f7f9;
+  }
+
   td button {
     border: 0;
     padding: 0;
