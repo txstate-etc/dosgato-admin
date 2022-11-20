@@ -203,7 +203,7 @@ class API {
   }
 
   protected async getSubFoldersAndAssetsBatch (folderIds: string | string[]) {
-    const { assetfolders } = await this.query<{ assetfolders: { id: string, folders: TreeAssetFolder[], assets: TreeAsset[] }[]}>(GET_ASSETFOLDER_CHILDREN, { ids: toArray(folderIds) })
+    const { assetfolders } = await this.query<{ assetfolders: { id: string, folders: TreeAssetFolder[], assets: TreeAsset[] }[] }>(GET_ASSETFOLDER_CHILDREN, { ids: toArray(folderIds) })
     return assetfolders
   }
 
@@ -237,7 +237,7 @@ class API {
   }
 
   async getUserById (userId: string) {
-    const { users } = await this.query<{ users: FullUser[]}>(GET_USER_BY_ID, { userId })
+    const { users } = await this.query<{ users: FullUser[] }>(GET_USER_BY_ID, { userId })
     return users[0]
   }
 
@@ -284,12 +284,12 @@ class API {
   }
 
   async setUserGroups (userId: string, groupIds: string[]) {
-    const { setUserGroups } = await this.query< {setUserGroups: MutationResponse }>(SET_USER_GROUPS, { userId, groupIds })
+    const { setUserGroups } = await this.query< { setUserGroups: MutationResponse }>(SET_USER_GROUPS, { userId, groupIds })
     return setUserGroups
   }
 
   async removeMemberFromGroup (groupId: string, userId: string) {
-    const { removeUserFromGroups } = await this.query<{ removeUserFromGroups: MutationResponse}>(REMOVE_USER_FROM_GROUPS, { groupIds: [groupId], userId })
+    const { removeUserFromGroups } = await this.query<{ removeUserFromGroups: MutationResponse }>(REMOVE_USER_FROM_GROUPS, { groupIds: [groupId], userId })
     return removeUserFromGroups
   }
 
@@ -349,7 +349,7 @@ class API {
   }
 
   async setTemplateUniversal (templateKey: string, universal: boolean) {
-    const { setTemplateUniversal } = await this.query<{ setTemplateUniversal: MutationResponse}>(SET_TEMPLATE_UNIVERSAL, { templateKey, universal })
+    const { setTemplateUniversal } = await this.query<{ setTemplateUniversal: MutationResponse }>(SET_TEMPLATE_UNIVERSAL, { templateKey, universal })
     return setTemplateUniversal
   }
 
@@ -369,7 +369,7 @@ class API {
   }
 
   async getGlobalDataAccessByTemplateKey (key: string) {
-    const { access } = await this.query<{ access: { createGlobalData: boolean} }>(GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, { key })
+    const { access } = await this.query<{ access: { createGlobalData: boolean } }>(GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, { key })
     return access.createGlobalData
   }
 
@@ -412,14 +412,14 @@ class API {
     if (resp) return resp
     // TODO: Get actual schema version
     const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-    const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem }}>(CREATE_DATA_ITEM, { args: { name, data: dataToSave, siteId, folderId }, validateOnly })
+    const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem } }>(CREATE_DATA_ITEM, { args: { name, data: dataToSave, siteId, folderId }, validateOnly })
     return createDataEntry
   }
 
   async renameDataEntry (dataId: string, name: string, validateOnly?: boolean) {
     const resp = validateRequired<{ data: undefined }>({ name }, ['name'])
     if (resp) return resp
-    const { renameDataEntry } = await this.query<{ renameDataEntry: MutationResponse & { data: DataItem }}>(RENAME_DATA, { dataId, name, validateOnly })
+    const { renameDataEntry } = await this.query<{ renameDataEntry: MutationResponse & { data: DataItem } }>(RENAME_DATA, { dataId, name, validateOnly })
     return renameDataEntry
   }
 
@@ -431,7 +431,7 @@ class API {
   async editDataEntry (dataId: string, data: DataData, templateKey: string, dataVersion: number, validateOnly?: boolean) {
     // TODO: Get actual schema version
     const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-    const { updateDataEntry } = await this.query<{ updateDataEntry: MutationResponse & { data: DataItem }}>(UPDATE_DATA, { dataId, args: { data: dataToSave, dataVersion }, validateOnly })
+    const { updateDataEntry } = await this.query<{ updateDataEntry: MutationResponse & { data: DataItem } }>(UPDATE_DATA, { dataId, args: { data: dataToSave, dataVersion }, validateOnly })
     return updateDataEntry
   }
 
@@ -446,22 +446,22 @@ class API {
   }
 
   async deleteDataEntries (dataIds: string[]) {
-    const { deleteDataEntries } = await this.query<{ deleteDataEntries: MutationResponse & { data: DataItem[] }}>(DELETE_DATA, { dataIds })
+    const { deleteDataEntries } = await this.query<{ deleteDataEntries: MutationResponse & { data: DataItem[] } }>(DELETE_DATA, { dataIds })
     return deleteDataEntries
   }
 
   async publishDeleteData (dataIds: string[]) {
-    const { publishDataEntryDeletions } = await this.query<{ publishDataEntryDeletions: MutationResponse & { data: DataItem[] }}>(PUBLISH_DATA_DELETION, { dataIds })
+    const { publishDataEntryDeletions } = await this.query<{ publishDataEntryDeletions: MutationResponse & { data: DataItem[] } }>(PUBLISH_DATA_DELETION, { dataIds })
     return publishDataEntryDeletions
   }
 
   async undeleteData (dataIds: string[]) {
-    const { undeleteDataEntries } = await this.query<{ undeleteDataEntries: MutationResponse & { data: DataItem[] }}>(UNDELETE_DATA, { dataIds })
+    const { undeleteDataEntries } = await this.query<{ undeleteDataEntries: MutationResponse & { data: DataItem[] } }>(UNDELETE_DATA, { dataIds })
     return undeleteDataEntries
   }
 
   async moveData (dataIds: string[], target: MoveDataTarget) {
-    const { moveDataEntries } = await this.query<{ moveDataEntries: MutationResponse & { data: DataItem[] }}>(MOVE_DATA, { dataIds, target })
+    const { moveDataEntries } = await this.query<{ moveDataEntries: MutationResponse & { data: DataItem[] } }>(MOVE_DATA, { dataIds, target })
     return moveDataEntries
   }
 
@@ -473,7 +473,7 @@ class API {
   async addRole (name: string, validateOnly?: boolean) {
     const resp = validateRequired<{ role: undefined }>({ name }, ['name'])
     if (resp) return resp
-    const { createRole } = await this.query<{ createRole: MutationResponse & { role: RoleListRole }}>(CREATE_ROLE, { name, validateOnly })
+    const { createRole } = await this.query<{ createRole: MutationResponse & { role: RoleListRole } }>(CREATE_ROLE, { name, validateOnly })
     return createRole
   }
 
@@ -498,7 +498,7 @@ class API {
   }
 
   async getGroupById (groupId: string) {
-    const { groups } = await this.query<{ groups: FullGroup[]}>(GET_GROUP_BY_ID, { groupId })
+    const { groups } = await this.query<{ groups: FullGroup[] }>(GET_GROUP_BY_ID, { groupId })
     return groups[0]
   }
 
@@ -522,7 +522,7 @@ class API {
   }
 
   async getRoleById (roleId: string) {
-    const { roles } = await this.query<{ roles: FullRole[]}>(GET_ROLE_BY_ID, { roleId })
+    const { roles } = await this.query<{ roles: FullRole[] }>(GET_ROLE_BY_ID, { roleId })
     return roles[0]
   }
 
@@ -532,12 +532,12 @@ class API {
   }
 
   async getSiteList () {
-    const { sites } = await this.query<{ sites: SiteListSite[]}>(GET_SITE_LIST)
+    const { sites } = await this.query<{ sites: SiteListSite[] }>(GET_SITE_LIST)
     return sites
   }
 
   async getSiteById (siteId: string) {
-    const { sites } = await this.query<{ sites: FullSite[]}>(GET_SITE_BY_ID, { siteId })
+    const { sites } = await this.query<{ sites: FullSite[] }>(GET_SITE_BY_ID, { siteId })
     return sites[0]
   }
 
@@ -546,7 +546,7 @@ class API {
     if (resp) return resp
     // TODO: Get actual schema version
     const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-    const { createSite } = await this.query<{ createSite: MutationResponse & {site: SiteListSite } }>(ADD_SITE, { name, data: pageData, validateOnly })
+    const { createSite } = await this.query<{ createSite: MutationResponse & { site: SiteListSite } }>(ADD_SITE, { name, data: pageData, validateOnly })
     return createSite
   }
 
@@ -580,92 +580,92 @@ class API {
     if (resp) return resp
     // TODO: Get actual schema version
     const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-    const { createPagetree } = await this.query<{ createPagetree: MutationResponse & { pagetree: SitePagetree }}>(ADD_PAGETREE, { siteId, name, data: pageData, validateOnly })
+    const { createPagetree } = await this.query<{ createPagetree: MutationResponse & { pagetree: SitePagetree } }>(ADD_PAGETREE, { siteId, name, data: pageData, validateOnly })
     return createPagetree
   }
 
   async updatePagetree (pagetreeId: string, name: string, validateOnly?: boolean) {
-    const { updatePagetree } = await this.query<{ updatePagetree: MutationResponse & { pagetree: SitePagetree }}>(UPDATE_PAGETREE, { pagetreeId, name, validateOnly })
+    const { updatePagetree } = await this.query<{ updatePagetree: MutationResponse & { pagetree: SitePagetree } }>(UPDATE_PAGETREE, { pagetreeId, name, validateOnly })
     return updatePagetree
   }
 
   async deletePagetree (pagetreeId: string) {
-    const { deletePagetree } = await this.query<{ deletePagetree: MutationResponse & { pagetree: SitePagetree }}>(DELETE_PAGETREE, { pagetreeId })
+    const { deletePagetree } = await this.query<{ deletePagetree: MutationResponse & { pagetree: SitePagetree } }>(DELETE_PAGETREE, { pagetreeId })
     return deletePagetree
   }
 
   async promotePagetree (pagetreeId: string) {
-    const { promotePagetree } = await this.query<{ promotePagetree: MutationResponse & { pagetree: SitePagetree }}>(PROMOTE_PAGETREE, { pagetreeId })
+    const { promotePagetree } = await this.query<{ promotePagetree: MutationResponse & { pagetree: SitePagetree } }>(PROMOTE_PAGETREE, { pagetreeId })
     return promotePagetree
   }
 
   async archivePagetree (pagetreeId: string) {
-    const { archivePagetree } = await this.query<{ archivePagetree: MutationResponse & { pagetree: SitePagetree }}>(ARCHIVE_PAGETREE, { pagetreeId })
+    const { archivePagetree } = await this.query<{ archivePagetree: MutationResponse & { pagetree: SitePagetree } }>(ARCHIVE_PAGETREE, { pagetreeId })
     return archivePagetree
   }
 
   async setLaunchURL (siteId: string, host?: string, path?: string, enabled?: boolean, validateOnly?: boolean) {
-    const { setLaunchURL } = await this.query<{ setLaunchURL: MutationResponse & {site: FullSite } }>(SET_LAUNCH_URL, { siteId, host, path, enabled, validateOnly })
+    const { setLaunchURL } = await this.query<{ setLaunchURL: MutationResponse & { site: FullSite } }>(SET_LAUNCH_URL, { siteId, host, path, enabled, validateOnly })
     return setLaunchURL
   }
 
   async addAssetRule (args: CreateAssetRuleInput, validateOnly?: boolean) {
-    const { createAssetRule } = await this.query<{ createAssetRule: MutationResponse & { assetRule: AssetRule }}>(ADD_ASSET_RULE, { args, validateOnly })
+    const { createAssetRule } = await this.query<{ createAssetRule: MutationResponse & { assetRule: AssetRule } }>(ADD_ASSET_RULE, { args, validateOnly })
     return createAssetRule
   }
 
   async editAssetRule (args: UpdateAssetRuleInput, validateOnly?: boolean) {
-    const { updateAssetRule } = await this.query<{ updateAssetRule: MutationResponse & { assetRule: AssetRule }}>(UPDATE_ASSET_RULE, { args, validateOnly })
+    const { updateAssetRule } = await this.query<{ updateAssetRule: MutationResponse & { assetRule: AssetRule } }>(UPDATE_ASSET_RULE, { args, validateOnly })
     return updateAssetRule
   }
 
   async addDataRule (args: CreateDataRuleInput, validateOnly?: boolean) {
-    const { createDataRule } = await this.query<{ createDataRule: MutationResponse & { dataRule: DataRule }}>(ADD_DATA_RULE, { args, validateOnly })
+    const { createDataRule } = await this.query<{ createDataRule: MutationResponse & { dataRule: DataRule } }>(ADD_DATA_RULE, { args, validateOnly })
     return createDataRule
   }
 
   async editDataRule (args: UpdateDataRuleInput, validateOnly?: boolean) {
-    const { updateDataRule } = await this.query<{ updateDataRule: MutationResponse & { dataRule: DataRule }}>(UPDATE_DATA_RULE, { args, validateOnly })
+    const { updateDataRule } = await this.query<{ updateDataRule: MutationResponse & { dataRule: DataRule } }>(UPDATE_DATA_RULE, { args, validateOnly })
     return updateDataRule
   }
 
   async addGlobalRule (args: CreateGlobalRuleInput, validateOnly?: boolean) {
-    const { createGlobalRule } = await this.query<{ createGlobalRule: MutationResponse & { globalRule: GlobalRule }}>(ADD_GLOBAL_RULE, { args, validateOnly })
+    const { createGlobalRule } = await this.query<{ createGlobalRule: MutationResponse & { globalRule: GlobalRule } }>(ADD_GLOBAL_RULE, { args, validateOnly })
     return createGlobalRule
   }
 
   async editGlobalRule (args: UpdateGlobalRuleInput, validateOnly?: boolean) {
-    const { updateGlobalRule } = await this.query<{ updateGlobalRule: MutationResponse & { globalRule: GlobalRule }}>(UPDATE_GLOBAL_RULE, { args, validateOnly })
+    const { updateGlobalRule } = await this.query<{ updateGlobalRule: MutationResponse & { globalRule: GlobalRule } }>(UPDATE_GLOBAL_RULE, { args, validateOnly })
     return updateGlobalRule
   }
 
   async addPageRule (args: CreatePageRuleInput, validateOnly?: boolean) {
-    const { createPageRule } = await this.query<{ createPageRule: MutationResponse & { pageRule: PageRule }}>(ADD_PAGE_RULE, { args, validateOnly })
+    const { createPageRule } = await this.query<{ createPageRule: MutationResponse & { pageRule: PageRule } }>(ADD_PAGE_RULE, { args, validateOnly })
     return createPageRule
   }
 
   async editPageRule (args: UpdatePageRuleInput, validateOnly?: boolean) {
-    const { updatePageRule } = await this.query<{ updatePageRule: MutationResponse & { pageRule: PageRule }}>(UPDATE_PAGE_RULE, { args, validateOnly })
+    const { updatePageRule } = await this.query<{ updatePageRule: MutationResponse & { pageRule: PageRule } }>(UPDATE_PAGE_RULE, { args, validateOnly })
     return updatePageRule
   }
 
   async addSiteRule (args: CreateSiteRuleInput, validateOnly?: boolean) {
-    const { createSiteRule } = await this.query<{ createSiteRule: MutationResponse & { siteRule: SiteRule }}>(ADD_SITE_RULE, { args, validateOnly })
+    const { createSiteRule } = await this.query<{ createSiteRule: MutationResponse & { siteRule: SiteRule } }>(ADD_SITE_RULE, { args, validateOnly })
     return createSiteRule
   }
 
   async editSiteRule (args: UpdateSiteRuleInput, validateOnly?: boolean) {
-    const { updateSiteRule } = await this.query<{ updateSiteRule: MutationResponse & { siteRule: SiteRule }}>(UPDATE_SITE_RULE, { args, validateOnly })
+    const { updateSiteRule } = await this.query<{ updateSiteRule: MutationResponse & { siteRule: SiteRule } }>(UPDATE_SITE_RULE, { args, validateOnly })
     return updateSiteRule
   }
 
   async addTemplateRule (args: CreateTemplateRuleInput, validateOnly?: boolean) {
-    const { createTemplateRule } = await this.query<{ createTemplateRule: MutationResponse & { templateRule: TemplateRule }}>(ADD_TEMPLATE_RULE, { args, validateOnly })
+    const { createTemplateRule } = await this.query<{ createTemplateRule: MutationResponse & { templateRule: TemplateRule } }>(ADD_TEMPLATE_RULE, { args, validateOnly })
     return createTemplateRule
   }
 
   async editTemplateRule (args: UpdateTemplateRuleInput, validateOnly?: boolean) {
-    const { updateTemplateRule } = await this.query<{ updateTemplateRule: MutationResponse & { templateRule: TemplateRule }}>(UPDATE_TEMPLATE_RULE, { args, validateOnly })
+    const { updateTemplateRule } = await this.query<{ updateTemplateRule: MutationResponse & { templateRule: TemplateRule } }>(UPDATE_TEMPLATE_RULE, { args, validateOnly })
     return updateTemplateRule
   }
 
@@ -675,7 +675,7 @@ class API {
   }
 
   async getOrganizationList () {
-    const { organizations } = await this.query<{ organizations: Organization[]}>(GET_ORGANIZATION_LIST)
+    const { organizations } = await this.query<{ organizations: Organization[] }>(GET_ORGANIZATION_LIST)
     return organizations
   }
 
@@ -684,14 +684,14 @@ class API {
     if (resp) return resp
     // TODO: Get actual schema version
     const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-    const { createPage } = await this.query<{ createPage: MutationResponse & { page: PageEditorPage }}>(CREATE_PAGE, { name, data: pageData, targetId, validateOnly })
+    const { createPage } = await this.query<{ createPage: MutationResponse & { page: PageEditorPage } }>(CREATE_PAGE, { name, data: pageData, targetId, validateOnly })
     return createPage
   }
 
   async renamePage (pageId: string, name: string, validateOnly?: boolean) {
     const resp = validateRequired<{ page: undefined }>({ name }, ['name'])
     if (resp) return resp
-    const { renamePage } = await this.query<{ renamePage: MutationResponse & { page: PageEditorPage }}>(RENAME_PAGE, { pageId, name, validateOnly })
+    const { renamePage } = await this.query<{ renamePage: MutationResponse & { page: PageEditorPage } }>(RENAME_PAGE, { pageId, name, validateOnly })
     return renamePage
   }
 
@@ -701,17 +701,17 @@ class API {
   }
 
   async copyPages (pageIds: string[], targetId: string, above: boolean) {
-    const { copyPages } = await this.query<{ copyPages: MutationResponse}>(COPY_PAGES, { pageIds, targetId, above })
+    const { copyPages } = await this.query<{ copyPages: MutationResponse }>(COPY_PAGES, { pageIds, targetId, above })
     return copyPages.success
   }
 
   async duplicatePage (pageId: string, parentId: string) {
-    const { copyPages } = await this.query<{ copyPages: MutationResponse}>(COPY_PAGES, { pageIds: [pageId], targetId: parentId, above: false, includeChildren: true })
+    const { copyPages } = await this.query<{ copyPages: MutationResponse }>(COPY_PAGES, { pageIds: [pageId], targetId: parentId, above: false, includeChildren: true })
     return copyPages
   }
 
   async pastePage (pageId: string, targetId: string) {
-    const { copyPages } = await this.query<{ copyPages: MutationResponse}>(COPY_PAGES, { pageIds: [pageId], targetId, above: false, includeChildren: false })
+    const { copyPages } = await this.query<{ copyPages: MutationResponse }>(COPY_PAGES, { pageIds: [pageId], targetId, above: false, includeChildren: false })
     return copyPages
   }
 
@@ -726,17 +726,17 @@ class API {
   }
 
   async deletePages (pageIds: string[]) {
-    const { deletePages } = await this.query<{ deletePages: MutationResponse & { pages: PageEditorPage }}>(DELETE_PAGES, { pageIds })
+    const { deletePages } = await this.query<{ deletePages: MutationResponse & { pages: PageEditorPage } }>(DELETE_PAGES, { pageIds })
     return deletePages
   }
 
   async publishDeletion (pageIds: string[]) {
-    const { publishPageDeletions } = await this.query<{ publishPageDeletions: MutationResponse & { pages: PageEditorPage }}>(PUBLISH_DELETION, { pageIds })
+    const { publishPageDeletions } = await this.query<{ publishPageDeletions: MutationResponse & { pages: PageEditorPage } }>(PUBLISH_DELETION, { pageIds })
     return publishPageDeletions
   }
 
   async undeletePages (pageIds: string[], includeChildren = false) {
-    const { undeletePages } = await this.query<{ undeletePages: MutationResponse & { pages: PageEditorPage }}>(UNDELETE_PAGES, { pageIds, includeChildren })
+    const { undeletePages } = await this.query<{ undeletePages: MutationResponse & { pages: PageEditorPage } }>(UNDELETE_PAGES, { pageIds, includeChildren })
     return undeletePages
   }
 
