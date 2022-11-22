@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { chooserClient, environmentConfig, templateRegistry } from '$lib'
+  import { ChooserClient, environmentConfig, templateRegistry } from '$lib'
   import { FieldSelect, FieldText, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { derivedStore } from '@txstate-mws/svelte-store'
@@ -14,7 +14,8 @@
   export let submit: (state: CreateWithPageState) => Promise<SubmitResponse<CreateWithPageState>>
   export let validate: undefined|((state: CreateWithPageState) => Promise<Feedback[]>) = undefined
   export let templateChoices: PopupMenuItem[]
-
+  export let pagetreeId: string
+  const chooserClient = new ChooserClient(pagetreeId)
   const store: FormStore = new FormStore<CreateWithPageState>(submit, validate)
   const tkey = derivedStore<string>(store, 'data.templateKey')
   function reactToTemplateKey (..._) {

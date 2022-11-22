@@ -19,6 +19,7 @@ deleteState
 children {
   id
 }
+pagetree { id }
 permissions {
   create
   update
@@ -49,6 +50,7 @@ export interface TreePage {
   children: {
     id: string
   }[]
+  pagetree: { id: string }
   permissions: {
     create: boolean
     update: boolean
@@ -64,6 +66,7 @@ export type PagetreeTypes = 'PRIMARY' | 'SANDBOX' | 'ARCHIVE'
 
 export interface RootTreePage extends TreePage {
   pagetree: {
+    id: string
     type: PagetreeTypes
     name: string
   }

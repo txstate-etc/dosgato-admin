@@ -12,13 +12,13 @@
   import scissorsLight from '@iconify-icons/ph/scissors-light'
   import trashLight from '@iconify-icons/ph/trash-light'
   import { printIf } from 'txstate-utils'
-  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate, chooserClient } from '$lib'
+  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate, ChooserClient } from '$lib'
   import { getTempToken } from './+page'
 
   export let data: { temptoken: string, page: PageEditorPage, pagetemplate: EnhancedUITemplate }
   $: ({ page, temptoken, pagetemplate } = data)
   $: pageEditorStore.open(page)
-
+  $: chooserClient = new ChooserClient(page.pagetree.id)
   let iframe: HTMLIFrameElement
   let panelelement: HTMLElement
   $: editable = $editorStore.page.permissions.update

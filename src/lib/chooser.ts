@@ -11,12 +11,15 @@ function processPage (p: ChooserPageDetails): Page {
   return { type: 'page', id: p.id, url: p.path, path: p.path, title: p.title ?? p.name, name: p.name }
 }
 
-export const chooserClient: Client = {
-  getSources: async function (type: ChooserType): Promise<Source[]> {
+export class ChooserClient implements Client {
+  constructor (public pagetreeId?: string) {}
+
+  async getSources (type: ChooserType): Promise<Source[]> {
     if (type === 'page') return [{ type: 'page', name: 'pages', label: 'Pages' }]
     return [{ type: 'asset', name: 'assets', label: 'Assets' }]
-  },
-  getChildren: async function (source: string, path: string): Promise<AnyItem[]> {
+  }
+
+  async getChildren (source: string, path: string): Promise<AnyItem[]> {
     if (source === 'pages') {
       const pages = path === '/' ? await api.getRootPages() : await api.getSubPagesByPath(path)
       return pages.map(processPage)
@@ -24,22 +27,25 @@ export const chooserClient: Client = {
       const assetsFolders = await api.chooserSubFoldersAndAssetsByPath(path)
       return assetsFolders.map<Folder | Asset>(a => ({ ...a, url: a.path }))
     }
-  },
-  find: async function (source: string, path: string, searchstring: string): Promise<AnyItem[]> {
+  }
+
+  async find (source: string, path: string, searchstring: string): Promise<AnyItem[]> {
     throw new Error('Function not implemented.')
-  },
-  findById: async function (id: string): Promise<AnyItem | undefined> {
+  }
+
+  async findById (id: string): Promise<AnyItem | undefined> {
     const link = parseLink(id)
     if (link.type === 'asset') {
       return await api.chooserAssetByLink(link)
     } else if (link.type === 'assetfolder') {
       return {} as any // await api.assetFolderByLink(link)
     } else if (link.type === 'page') {
-      const page = await api.chooserPageByLink(link)
+      const page = await api.chooserPageByLink(link, this.pagetreeId)
       return processPage(page)
     }
-  },
-  upload: async function (source: string, path: string, files: FileList): Promise<void> {
+  }
+
+  async upload (source: string, path: string, files: FileList): Promise<void> {
     throw new Error('Function not implemented.')
   }
 }

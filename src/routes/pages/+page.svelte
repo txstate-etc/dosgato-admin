@@ -257,6 +257,7 @@
     submit={onAddPage}
     validate={validateAddPage}
     title="Add New Page"
+    pagetreeId={$store.selectedItems[0].pagetree.id}
     templateChoices={availableTemplates}
     on:escape={() => { modal = undefined }}
     on:saved={onAddPageComplete}/>

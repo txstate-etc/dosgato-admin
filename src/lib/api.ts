@@ -2,7 +2,7 @@ import { base } from '$app/paths'
 import type { AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
 import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
-import { get, isBlank, keyby, omit, set, splice, toArray } from 'txstate-utils'
+import { get, isBlank, keyby, omit, pick, set, splice, toArray } from 'txstate-utils'
 import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
@@ -183,8 +183,8 @@ class API {
     return pages
   }
 
-  async chooserPageByLink (link: PageLink) {
-    const { pages } = await this.query<GetPageByLink>(GET_PAGE_BY_LINK, { linkId: link.linkId, path: link.path })
+  async chooserPageByLink (link: PageLink, pagetreeId?: string) {
+    const { pages } = await this.query<GetPageByLink>(GET_PAGE_BY_LINK, { pageLink: { ...pick(link, 'linkId', 'siteId', 'path'), context: pagetreeId ? { pagetreeId } : undefined } })
     return pages[0]
   }
 
@@ -194,7 +194,7 @@ class API {
   }
 
   async chooserAssetByLink (link: AssetLink) {
-    const { assets } = await this.query<GetAssetByLink>(GET_ASSET_BY_LINK, { link })
+    const { assets } = await this.query<GetAssetByLink>(GET_ASSET_BY_LINK, { link: pick(link, 'id', 'siteId', 'path', 'checksum') })
     return apiAssetToChooserAsset(assets[0])
   }
 

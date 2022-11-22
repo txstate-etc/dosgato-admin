@@ -21,7 +21,7 @@
   import { Dialog, FieldText, FormDialog } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
-  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, chooserClient } from '$lib'
+  import { api, ActionPanel, Tree, TreeStore, DataTreeNodeType, messageForDialog, type TypedTreeItem, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient } from '$lib'
   import '../index.css'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
 
@@ -31,6 +31,8 @@
 
   $: templateKey = $templateStore?.id
   $: if ($templateStore) store.refresh()
+
+  const chooserClient = new ChooserClient()
 
   const statusIcon = {
     published: triangleIcon,
