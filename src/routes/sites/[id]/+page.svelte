@@ -298,7 +298,7 @@
   </div>
   <dl>
     <dt>Organization:</dt>
-    <dd>{$store.site.organization.name}</dd>
+    <dd>{$store.site.organization?.name ?? ''}</dd>
     <dt>Owner:</dt>
     <dd>
       {#if $store.site.owner}{$store.site.owner.name} ({$store.site.owner.id}){/if}
