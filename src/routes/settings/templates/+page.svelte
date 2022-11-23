@@ -37,9 +37,9 @@
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Templates'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : []}>
   <Tree singleSelect {store} headers={[
-    { id: 'name', label: 'Name', get: 'name', defaultWidth: '25%', icon: itm => templateRegistry.getTemplate(itm.key)?.icon ?? boundingBoxLight },
-    { id: 'key', label: 'Key', get: 'key', defaultWidth: '25%' },
-    { id: 'universal', label: 'Universal', icon: item => item.universal ? checkIcon : undefined, defaultWidth: '25%' }
+    { id: 'name', label: 'Name', get: 'name', grow: 5, icon: itm => templateRegistry.getTemplate(itm.key)?.icon ?? boundingBoxLight },
+    { id: 'key', label: 'Key', get: 'key', grow: 4 },
+    { id: 'universal', label: 'Universal', icon: item => item.universal ? checkIcon : undefined, fixed: '6em' }
   ]}/>
 </ActionPanel>
 {#if modal === 'setuniversal'}

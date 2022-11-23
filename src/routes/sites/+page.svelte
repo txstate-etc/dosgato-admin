@@ -79,10 +79,10 @@
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Sites'} actions={getActions($store.selectedItems)}>
   <Tree singleSelect {store}  on:choose={({ detail }) => goto(base + '/sites/' + detail.id)} headers={[
-     { id: 'name', label: 'Site Name', get: 'name', defaultWidth: '20%', icon: globeLight },
-     { id: 'url', label: 'URL', get: 'url.prefix', defaultWidth: '20%' },
-     { id: 'organization', label: 'Organization', get: 'organization.name', defaultWidth: '20%' },
-     { id: 'owner', label: 'Owner', render: renderOwner, defaultWidth: '20%' }
+     { id: 'name', label: 'Site Name', get: 'name', grow: 10, icon: globeLight },
+     { id: 'url', label: 'URL', get: 'url.prefix', grow: 10 },
+     { id: 'organization', label: 'Organization', get: 'organization.name', grow: 8 },
+     { id: 'owner', label: 'Owner', render: renderOwner, grow: 7 }
   ]}>
   </Tree>
 </ActionPanel>

@@ -64,7 +64,7 @@
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Roles'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/roles/' + detail.id)} headers={[
-    { id: 'name', label: 'Name', get: 'name', defaultWidth: '30%', icon: keyLight }
+    { id: 'name', label: 'Name', get: 'name', grow: 4, icon: keyLight }
   ]}>
   </Tree>
 </ActionPanel>

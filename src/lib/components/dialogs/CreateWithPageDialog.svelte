@@ -14,7 +14,7 @@
   export let submit: (state: CreateWithPageState) => Promise<SubmitResponse<CreateWithPageState>>
   export let validate: undefined|((state: CreateWithPageState) => Promise<Feedback[]>) = undefined
   export let templateChoices: PopupMenuItem[]
-  export let pagetreeId: string
+  export let pagetreeId: string | undefined = undefined
   const chooserClient = new ChooserClient(pagetreeId)
   const store: FormStore = new FormStore<CreateWithPageState>(submit, validate)
   const tkey = derivedStore<string>(store, 'data.templateKey')
