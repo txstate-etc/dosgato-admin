@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Dialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
   import globeLight from '@iconify-icons/ph/globe-light'
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
@@ -6,9 +7,7 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, Tree, TreeStore, globalStore, type TypedTreeItem, type SiteListSite, type ActionPanelAction, type CreateWithPageState, ensureRequiredNotNull, messageForDialog } from '$lib'
-  import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
-  import { Dialog } from '@dosgato/dialog'
+  import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog } from '$lib'
 
   type TypedSiteItem = TypedTreeItem<SiteListSite>
 

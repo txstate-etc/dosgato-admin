@@ -1,11 +1,11 @@
 <script lang="ts">
+  import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
   import keyLight from '@iconify-icons/ph/key-light'
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type RoleListRole, messageForDialog } from '$lib'
-  import { Dialog, FieldText, FormDialog } from '@dosgato/dialog'
+  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog } from '$lib'
 
   type TypedRoleItem = TypedTreeItem<RoleListRole>
 

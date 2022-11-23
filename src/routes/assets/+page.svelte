@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { iconForMime, bytesToHuman, FieldText, FormDialog } from '@dosgato/dialog'
+  import { iconForMime, bytesToHuman, FieldText, FormDialog, Tree } from '@dosgato/dialog'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
@@ -13,8 +13,8 @@
   import uploadLight from '@iconify-icons/ph/upload-light'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, Tree, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort } from '$lib'
-  import { store, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
+  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort } from '$lib'
+  import { store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
   import './index.css'
 
   let modal: 'upload' | 'create' | 'rename' | undefined
@@ -100,10 +100,14 @@
     const { success, messages } = await api.renameAssetFolder(selectedFolder.id, data.name, true)
     return messageForDialog(messages)
   }
+
+  function onChoose ({ detail }: CustomEvent<AssetItem | AssetFolderItem>) {
+    if (detail.kind === 'asset' && detail.permissions.update) goto(base + '/assets/' + detail.id)
+  }
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Assets'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
-  <Tree {store} on:choose={({ detail }) => detail.kind === 'asset' && detail.permissions.update && goto(base + '/assets/' + detail.id)}
+  <Tree {store} on:choose={onChoose}
     headers={[
       { label: 'Path', id: 'name', grow: 5, icon: item => item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight), render: itm => 'filename' in itm ? itm.filename : itm.name },
       { label: 'Size', id: 'size', fixed: '6em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },

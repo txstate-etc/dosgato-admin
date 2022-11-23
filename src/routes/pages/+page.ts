@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
-import { api, TreeStore, type RootTreePage, type TreePage, type TypedTreeItem } from '$lib'
+import { TreeStore, type TypedTreeItem } from '@dosgato/dialog'
+import { api, type RootTreePage, type TreePage } from '$lib'
 
 export interface PageItem extends Omit<Omit<Omit<TreePage, 'modifiedAt'>, 'publishedAt'>, 'children'> {
   modifiedAt: DateTime

@@ -1,6 +1,7 @@
+import { type TypedTreeItem, TreeStore } from '@dosgato/dialog'
 import { DateTime } from 'luxon'
 import { sortby } from 'txstate-utils'
-import { type TreeAsset, type TypedTreeItem, type TreeAssetFolder, api, TreeStore, mutationResponse } from '$lib'
+import { type TreeAsset, type TreeAssetFolder, api, mutationResponse } from '$lib'
 
 export interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
   kind: 'asset'

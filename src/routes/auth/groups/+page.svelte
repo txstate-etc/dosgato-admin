@@ -4,8 +4,8 @@
   import usersThreeLight from '@iconify-icons/ph/users-three-light'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { Dialog, FieldText, FormDialog } from '@dosgato/dialog'
-  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type GroupListGroup, messageForDialog } from '$lib'
+  import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
+  import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog } from '$lib'
 
   type TypedGroupItem = TypedTreeItem<GroupListGroup>
 

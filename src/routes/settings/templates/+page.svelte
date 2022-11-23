@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { ActionPanel, type ActionPanelAction, api, Tree, TreeStore, type TypedTreeItem, type TemplateListTemplate, templateRegistry } from '$lib'
-  import { Dialog } from '@dosgato/dialog'
+  import { ActionPanel, type ActionPanelAction, api, type TemplateListTemplate, templateRegistry } from '$lib'
+  import { Dialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
   import checkIcon from '@iconify-icons/mdi/check'
   import earthIcon from '@iconify-icons/mdi/earth'
   import earthOffIcon from '@iconify-icons/mdi/earth-off'
