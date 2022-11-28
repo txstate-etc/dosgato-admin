@@ -29,7 +29,7 @@ async function fetchChildren (item?: TypedAssetFolderItem) {
     modifiedAt: DateTime.fromISO(a.modifiedAt),
     hasChildren: false
   }))
-  return [...sortby(typedfolders, 'name'), ...sortby(typedassets, 'name')]
+  return sortby([...typedfolders, ...typedassets], 'name')
 }
 
 async function copyHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean) {

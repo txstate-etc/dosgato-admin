@@ -7,6 +7,7 @@ id
 name
 path
 title
+children { id }
 `
 
 export interface ChooserPageDetails {
@@ -14,6 +15,7 @@ export interface ChooserPageDetails {
   name: string
   path: string
   title?: string
+  children: { id: string }[]
 }
 
 const chooserAssetDetails = `
@@ -72,6 +74,8 @@ export const GET_SUBFOLDERS_AND_ASSETS_BY_PATH = `
       name
       path
       site { id }
+      assets { id }
+      folders { id }
       permissions {
         create
       }
@@ -83,6 +87,8 @@ export interface ChooserFolderDetails {
   name: string
   path: string
   site: { id: string }
+  assets: { id: string }[]
+  folders: { id: string }[]
   permissions: {
     create: boolean
   }
@@ -120,6 +126,7 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
   if (!asset) return undefined
   return {
     type: 'asset',
+    source: 'assets',
     ...pick(asset, 'name', 'path', 'mime'),
     id: stringify({ id: asset.id, source: 'assets', type: 'asset', checksum: asset.checksum, siteId: asset.site.id, path: asset.path }),
     bytes: asset.size,
@@ -131,8 +138,10 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
 export function apiAssetFolderToChooserFolder (f: ChooserFolderDetails): Folder {
   return {
     type: 'folder' as const,
+    source: 'assets',
     ...omit(f, 'permissions', 'id'),
     id: stringify({ id: f.id, siteId: f.site.id, path: f.path, source: 'assets', type: 'folder' }),
-    acceptsUpload: f.permissions.create
+    acceptsUpload: f.permissions.create,
+    hasChildren: (f.assets.length + f.folders.length) > 0
   }
 }

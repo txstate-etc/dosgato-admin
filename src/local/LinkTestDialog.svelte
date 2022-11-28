@@ -5,4 +5,4 @@
 </script>
 
 <FieldText path="text" label="Text" required/>
-<FieldChooserLink path="link" label="Link" required/>
+<FieldChooserLink path="link" label="Link" required pages assets />

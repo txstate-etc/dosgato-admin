@@ -580,7 +580,7 @@ class API {
     if (resp) return resp
     // TODO: Get actual schema version
     const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-    const { createPagetree } = await this.query<{ createPagetree: MutationResponse & { pagetree: SitePagetree }}>(ADD_PAGETREE, { siteId, data: pageData, validateOnly })
+    const { createPagetree } = await this.query<{ createPagetree: MutationResponse & { pagetree: SitePagetree } }>(ADD_PAGETREE, { siteId, data: pageData, validateOnly })
     return createPagetree
   }
 

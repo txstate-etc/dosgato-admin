@@ -1,5 +1,6 @@
 import type { AnyItem, Asset, ChooserType, Client, Folder, Page, Source } from '@dosgato/dialog'
 import type { LinkDefinition } from '@dosgato/templating'
+import { sortby } from 'txstate-utils'
 import { api } from './api.js'
 import type { ChooserPageDetails } from './queries/chooser.js'
 
@@ -8,7 +9,7 @@ function parseLink (link: string) {
 }
 
 function processPage (p: ChooserPageDetails): Page {
-  return { type: 'page', id: p.id, url: p.path, path: p.path, title: p.title ?? p.name, name: p.name }
+  return { type: 'page', source: 'pages', id: p.id, url: p.path, path: p.path, title: p.title ?? p.name, name: p.name, hasChildren: p.children.length > 0 }
 }
 
 export class ChooserClient implements Client {
@@ -25,7 +26,7 @@ export class ChooserClient implements Client {
       return pages.map(processPage)
     } else {
       const assetsFolders = await api.chooserSubFoldersAndAssetsByPath(path)
-      return assetsFolders.map<Folder | Asset>(a => ({ ...a, url: a.path }))
+      return sortby(assetsFolders.map<Folder | Asset>(a => ({ ...a, url: a.path })), 'name')
     }
   }
 

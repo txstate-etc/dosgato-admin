@@ -20,10 +20,11 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-unused-vars': 'off', // typescript does this better
 		'@typescript-eslint/prefer-nullish-coalescing': ['error', { ignoreConditionalTests: true }],
-    '@typescript-eslint/prefer-readonly': ['off'],
+    '@typescript-eslint/prefer-readonly': 'off',
     '@typescript-eslint/require-await': 'off',
     '@typescript-eslint/return-await': ['error', 'always'],
-    '@typescript-eslint/strict-boolean-expressions': 'off'
+    '@typescript-eslint/strict-boolean-expressions': 'off',
+		'@typescript-eslint/no-throw-literal': 'off' // sveltekit error() function does not return an Error :/
   },
 	parserOptions: {
 		project: './tsconfig.json',
