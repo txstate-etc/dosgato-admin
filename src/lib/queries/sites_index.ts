@@ -415,8 +415,8 @@ export const ADD_SITE_COMMENT = `
 `
 
 export const ADD_PAGETREE = `
-  mutation createPagetree ($siteId: ID!, $name: UrlSafeString!, $data: JsonData!, $validateOnly: Boolean) {
-    createPagetree (siteId: $siteId, name: $name, data: $data, validateOnly: $validateOnly) {
+  mutation createPagetree ($siteId: ID!, $data: JsonData!, $validateOnly: Boolean) {
+    createPagetree (siteId: $siteId, data: $data, validateOnly: $validateOnly) {
       ${mutationResponse}
       pagetree {
         ${sitePagetreeDetails}

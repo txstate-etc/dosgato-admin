@@ -575,12 +575,12 @@ class API {
     return createSiteComment
   }
 
-  async addPagetree (siteId: string, name: string, templateKey: string, data: any, validateOnly?: boolean) {
-    const resp = validateRequired<{ pagetree: undefined }>({ name, templateKey, data }, ['name', 'templateKey'])
+  async addPagetree (siteId: string, templateKey: string, data: any, validateOnly?: boolean) {
+    const resp = validateRequired<{ pagetree: undefined }>({ templateKey, data }, ['templateKey'])
     if (resp) return resp
     // TODO: Get actual schema version
     const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
-    const { createPagetree } = await this.query<{ createPagetree: MutationResponse & { pagetree: SitePagetree } }>(ADD_PAGETREE, { siteId, name, data: pageData, validateOnly })
+    const { createPagetree } = await this.query<{ createPagetree: MutationResponse & { pagetree: SitePagetree }}>(ADD_PAGETREE, { siteId, data: pageData, validateOnly })
     return createPagetree
   }
 

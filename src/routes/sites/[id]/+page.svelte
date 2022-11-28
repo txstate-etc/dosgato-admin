@@ -85,12 +85,12 @@
   }
 
   async function validateAddPagetree (state) {
-    const resp = await api.addPagetree($store.site.id, state.name, state.templateKey, state.data, true)
+    const resp = await api.addPagetree($store.site.id, state.templateKey, state.data, true)
     return resp.messages.map(m => ({ ...m, path: m.arg }))
   }
 
   async function onAddPagetree (state: CreateWithPageState) {
-    const resp = await api.addPagetree($store.site.id, state.name, state.templateKey, state.data)
+    const resp = await api.addPagetree($store.site.id, state.templateKey, state.data)
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
@@ -593,6 +593,7 @@
     submit={onAddPagetree}
     validate={validateAddPagetree}
     title="Add Pagetree"
+    addName={false}
     templateChoices={$store.site.pageTemplates.map(t => ({ label: t.name, value: t.key }))}
     on:escape={() => { modal = undefined }}
     on:saved={onAddPagetreeComplete}/>
@@ -621,7 +622,13 @@
     cancelText="Cancel"
     title="Promote Pagetree"
     on:continue={onPromotePagetree}>
-    Promote this pagetree to primary? The current primary pagetree will be archived.
+    <div>Promote this pagetree to primary? The current primary pagetree will be archived.</div>
+    {#if !$store.site.url?.enabled}
+      <br/>
+      <div>This site is not currently launched. You can promote this page tree, but the site will not
+        be launched until it has a URL and is set to be live.
+      </div>
+    {/if}
   </Dialog>
 {:else if modal === 'archivepagetree'}
   <Dialog

@@ -15,6 +15,7 @@
   export let validate: undefined|((state: CreateWithPageState) => Promise<Feedback[]>) = undefined
   export let templateChoices: PopupMenuItem[]
   export let pagetreeId: string | undefined = undefined
+  export let addName: boolean = true
   const chooserClient = new ChooserClient(pagetreeId)
   const store: FormStore = new FormStore<CreateWithPageState>(submit, validate)
   const tkey = derivedStore<string>(store, 'data.templateKey')
@@ -29,8 +30,10 @@
 </script>
 
 <FormDialog {chooserClient} {title} {submit} {validate} {store} on:escape={escape} on:saved let:data>
-  <FieldText path='name' label='Name' required/>
-  <FieldSelect path='templateKey' label='Page Template' placeholder='Select' choices={templateChoices}/>
+  {#if addName}
+    <FieldText path='name' label='Name' required/>
+  {/if}
+  <FieldSelect path='templateKey' label='Root Page Template' placeholder='Select' choices={templateChoices}/>
   <SubForm path='data' conditional={isNotNull($store.data?.templateKey)} let:value>
     {@const template = templateRegistry.getTemplate($store.data.templateKey)}
     {#if template && template.dialog}
