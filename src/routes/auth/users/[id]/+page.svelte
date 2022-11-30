@@ -42,7 +42,7 @@
   }
 
   async function validateBasicInfo (state) {
-    const localMessages = ensureRequiredNotNull(state, ['name', 'email'])
+    const localMessages = ensureRequiredNotNull(state, ['lastname', 'email'])
     if (!localMessages.length) {
       const resp = await api.updateUserInfo($store.user.id, state, true)
       return messageForDialog(resp.messages, 'args')
@@ -113,9 +113,15 @@
     <div class="label">Login:</div>
     <div class="value">{$store.user.id}</div>
   </div>
+  {#if !$store.user.system}
   <div class="row">
-    <div class="label">Name:</div>
-    <div class="value">{$store.user.name}</div>
+    <div class="label">First Name:</div>
+    <div class="value">{$store.user.firstname}</div>
+  </div>
+  {/if}
+  <div class="row">
+    <div class="label">{#if $store.user.system}Name{:else}Last Name{/if}:</div>
+    <div class="value">{$store.user.lastname}</div>
   </div>
   <div class="row">
     <div class="label">Email:</div>
@@ -208,9 +214,12 @@
     validate={validateBasicInfo}
     name='editbasicinfo'
     title= {`Edit ${$store.user.id}`}
-    preload={{ name: $store.user.name, email: $store.user.email, trained: $store.user.trained }}
+    preload={{ firstname: $store.user.firstname, lastname: $store.user.lastname, email: $store.user.email, trained: $store.user.trained }}
     on:escape={() => { modal = undefined }}>
-    <FieldText path='name' label='Full Name' required={true}/>
+    {#if !$store.user.system}
+      <FieldText path='firstname' label='First Name' required={true}/>
+    {/if}
+    <FieldText path='lastname' label={`${$store.user.system ? 'Name' : 'Last Name'}`} required={true}/>
     <FieldText path='email' label='Email' required={true}/>
     <FieldCheckbox path='trained' label='Trained' defaultValue={false} boxLabel='User has received training'/>
   </FormDialog>

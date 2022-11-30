@@ -1,7 +1,8 @@
 export const GET_GLOBAL_SELF = `
   query getSelf {
     users (filter:{ ids: ["self"], enabled: true }) {
-      name
+      firstname
+      lastname
     }
     access {
       viewAssetManager
@@ -19,7 +20,8 @@ export const GET_GLOBAL_SELF = `
 
 export interface GlobalSelf {
   users: [{
-    name: string
+    firstname: string
+    lastname: string
   }]
   access: {
     viewAssetManager: boolean

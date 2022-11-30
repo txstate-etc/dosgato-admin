@@ -3,7 +3,8 @@ import { accessDetailRules, type AccessDetailPageRule, type AccessDetailSiteRule
 
 const userDetails = `
 id
-name
+firstname
+lastname
 email
 disabled
 trained
@@ -19,11 +20,13 @@ permissions {
 
 const fullUserDetails = `
   id
-  name
+  firstname
+  lastname
   email
   disabled
   disabledAt
   trained
+  system
   lastlogin
   directRoles: roles(direct: true) {
     id
@@ -71,7 +74,8 @@ const fullUserDetails = `
 
 export interface UserListUser {
   id: string
-  name: string
+  firstname: string
+  lastname: string
   email: string
   disabled: boolean
   trained: boolean
@@ -96,11 +100,13 @@ export interface GroupWithParents {
 
 export interface FullUser {
   id: string
-  name: string
+  firstname: string
+  lastname: string
   email: string
   disabled: boolean
   disabledAt?: string
   trained: boolean
+  system: boolean
   lastlogin?: string
   directRoles: {
     id: string
@@ -141,7 +147,8 @@ export interface UserFilter {
 
 export interface CreateUserInput {
   userId: string
-  name: string
+  firstname: string
+  lastname: string
   email: string
   trained: boolean
   system: boolean
@@ -186,8 +193,8 @@ export const ENABLE_USERS = `
 `
 
 export const CREATE_USER = `
-  mutation createUser ($userId: ID!, $name: String!, $email: String!, $trained: Boolean!, $system: Boolean!, $validateOnly: Boolean) {
-    createUser (userId: $userId, name: $name, email: $email, trained: $trained, system: $system, validateOnly: $validateOnly) {
+  mutation createUser ($userId: ID!, $firstname: String, $lastname: String!, $email: String!, $trained: Boolean!, $system: Boolean!, $validateOnly: Boolean) {
+    createUser (userId: $userId, firstname: $firstname, lastname: $lastname, email: $email, trained: $trained, system: $system, validateOnly: $validateOnly) {
       ${mutationResponse}
       user {
         ${userDetails}

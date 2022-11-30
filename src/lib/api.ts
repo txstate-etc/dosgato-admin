@@ -252,7 +252,7 @@ class API {
   }
 
   async createUser (args: CreateUserInput) {
-    const resp = validateRequired<{ user: undefined }>(args, ['userId', 'name', 'email'])
+    const resp = validateRequired<{ user: undefined }>(args, ['userId', 'lastname', 'email'])
     if (resp) return resp
     const { createUser } = await this.query<{ createUser: MutationResponse & { user: UserListUser } }>(CREATE_USER, args)
     return createUser

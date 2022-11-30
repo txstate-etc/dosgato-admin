@@ -31,8 +31,8 @@
   async function searchUsers (search) {
     const query = search.toLowerCase()
     return data.users.filter(u => {
-      return u.name.toLowerCase().includes(query) || u.id.includes(query)
-    }).map(u => ({ label: u.name, value: u.id }))
+      return u.lastname.toLowerCase().includes(query) || u.firstname.toLowerCase().includes(query) || u.id.includes(query)
+    }).map(u => ({ label: `${u.firstname} ${u.lastname}`, value: u.id }))
   }
 
   async function searchPagetrees (term) {
@@ -301,13 +301,13 @@
     <dd>{$store.site.organization?.name ?? ''}</dd>
     <dt>Owner:</dt>
     <dd>
-      {#if $store.site.owner}{$store.site.owner.name} ({$store.site.owner.id}){/if}
+      {#if $store.site.owner}{$store.site.owner.firstname} {$store.site.owner.lastname} ({$store.site.owner.id}){/if}
     </dd>
     <dt>Manager(s):</dt>
     <dd>
       <ul class='manager-list'>
         {#each $store.site.managers as manager (manager.id)}
-        <li>{manager.name} ({manager.id})</li>
+        <li> {manager.firstname} {manager.lastname} ({manager.id})</li>
         {/each}
       </ul>
     </dd>
@@ -406,8 +406,8 @@
       <tbody>
         {#each $store.users as user (user.id)}
           <tr>
-            <td><div class="carded-label">Name:</div><a href={`${base}/auth/users/${user.id}`}>{user.name}</a></td>
-            <td><div class="carded-label">Read-Only:</div><Icon icon={user.readonly ? checkIcon : minusIcon} hiddenLabel={`${user.name} has ${user.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+            <td><div class="carded-label">Name:</div><a href={`${base}/auth/users/${user.id}`}>{user.firstname} {user.lastname}</a></td>
+            <td><div class="carded-label">Read-Only:</div><Icon icon={user.readonly ? checkIcon : minusIcon} hiddenLabel={`${user.firstname} ${user.lastname} has ${user.readonly ? 'read-only' : 'write'} access to this site`}/></td>
             <td><div class="carded-label">Source Role(s):</div>{user.roles}</td>
           </tr>
         {/each}
@@ -574,7 +574,7 @@
     preload={{ organization: $store.site.organization?.id, owner: $store.site.owner?.id, managers: $store.site.managers?.map(m => m.id) }}
     on:escape={() => { modal = undefined }}>
     <FieldSelect path='organization' label='Organization' choices={data.organizations.map(o => ({ label: o.name, value: o.id }))}/>
-    <FieldAutocomplete path='owner' label='Site Owner' placeholder='Please Select' choices={data.users.map(u => ({ label: `${u.name} (${u.id})`, value: u.id }))}/>
+    <FieldAutocomplete path='owner' label='Site Owner' placeholder='Please Select' choices={data.users.map(u => ({ label: `${u.firstname} ${u.lastname} (${u.id})`, value: u.id }))}/>
     <FieldMultiselect path='managers' label='Site Managers' getOptions={searchUsers}/>
   </FormDialog>
 {:else if modal === 'editlaunch'}

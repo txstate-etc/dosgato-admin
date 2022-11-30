@@ -34,7 +34,7 @@
   }
 
   async function searchUsersForMembers (term: string) {
-    return allUsers.filter(u => !u.disabled && (u.name.includes(term) || u.id.includes(term))).map(u => ({ label: `${u.name} (${u.id})`, value: u.id }))
+    return allUsers.filter(u => !u.disabled && (u.firstname.includes(term) || (u.lastname.includes(term)) || u.id.includes(term))).map(u => ({ label: `${u.firstname} ${u.lastname} (${u.id})`, value: u.id }))
   }
 
   async function openAddUsersDialog () {
@@ -134,13 +134,13 @@
     <StyledList>
       {#each $store.group.directMembers as member (member.id)}
         <li class="flex-row">
-          {member.name} ({member.id})
+          {member.firstname} {member.lastname}  ({member.id})
           <button on:click={() => { onClickRemoveGroupMember(member.id) }}><Icon icon={deleteOutline} width="1.5em"/></button>
         </li>
       {/each}
       {#each $store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id)) as member (member.id)}
         <li class="flex-row">
-          {member.name} ({member.id})
+          {member.firstname} {member.lastname} ({member.id})
           <div>{`Via ${getMemberDirectGroup(member.groups)}`}</div>
         </li>
       {/each}

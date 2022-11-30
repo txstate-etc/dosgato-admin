@@ -11,6 +11,6 @@ export const load: Load<{ id: string }> = async ({ params }) => {
     api.getUserList({ enabled: true })
   ])
   const siteOptions = sites.map((s: SiteListSite) => ({ value: s.id, label: s.name }))
-  const userOptions = users.map((u: UserListUser) => ({ value: u.id, label: `${u.name} (${u.id})` }))
+  const userOptions = users.map((u: UserListUser) => ({ value: u.id, label: `${u.firstname} ${u.lastname} (${u.id})` }))
   return { siteOptions, userOptions }
 }

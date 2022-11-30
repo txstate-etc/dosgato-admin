@@ -95,7 +95,8 @@ export const siteDetails = `
   }
   owner {
     id
-    name
+    firstname
+    lastname
   }
   deleted
   permissions {
@@ -142,11 +143,13 @@ export const fullSiteDetails = `
   }
   owner {
     id
-    name
+    firstname
+    lastname
   }
   managers {
     id
-    name
+    firstname
+    lastname
   }
   pagetrees {
     ${sitePagetreeDetails}
@@ -181,7 +184,8 @@ export const fullSiteDetails = `
     }
     users {
       id
-      name
+      firstname
+      lastname
     }
     assetRules {
       site {
@@ -241,11 +245,13 @@ export interface FullSite {
   }
   owner: {
     id: string
-    name: string
+    firstname: string
+    lastname: string
   }
   managers: {
     id: string
-    name: string
+    firstname: string
+    lastname: string
   }[]
   pagetrees: SitePagetree[]
   pageTemplates: {
@@ -271,12 +277,13 @@ export interface FullSite {
     id: string
     name: string
     groups: {
-      id
-      name
+      id: string
+      name: string
     }[]
     users: {
-      id
-      name
+      id: string
+      firstname: string
+      lastname: string
     }[]
     assetRules: {
       site: {

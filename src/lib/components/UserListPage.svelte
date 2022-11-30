@@ -28,6 +28,10 @@
     )
   }
 
+  function renderName (user: TypedUserItem) {
+    return `${user.firstname} ${user.lastname}`
+  }
+
   const store: TreeStore<UserListUser> = new TreeStore(fetchChildren)
 
   function singleactions (user: TypedUserItem) {
@@ -70,7 +74,8 @@
       data: resp.success
         ? {
             userId: resp.user!.id,
-            name: resp.user!.name,
+            firstname: resp.user!.firstname,
+            lastname: resp.user!.lastname,
             email: resp.user!.email,
             trained: resp.user!.trained
           }
@@ -93,7 +98,7 @@
 <ActionPanel {actions} actionsTitle={$store.selected.size ? $store.selectedItems[0].id : 'Users'}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/users/' + detail.id)} headers={[
     { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', fixed: '10em', icon: u => u.disabled ? accountOff : accountIcon },
-    { id: 'fullname', label: 'Full Name', get: 'name', fixed: '17em' },
+    { id: 'fullname', label: 'Full Name', render: renderName, fixed: '17em' },
     { id: 'roles', label: 'Roles', render: renderRoles, grow: 5 }
   ]}/>
 </ActionPanel>
@@ -116,9 +121,12 @@
     Are you sure you want to enable {#if $store.selectedItems.length > 1}{$store.selectedItems.length} users{:else}this user{/if}? They will be able to log in again and will have all the same roles as when they were disabled.
   </Dialog>
 {:else if modal === 'create'}
-  <FormDialog submit={onCreate} validate={onCreateValidate} on:escape={() => { modal = undefined }} on:saved={onCreateComplete}>
+  <FormDialog title="Create User" submit={onCreate} validate={onCreateValidate} on:escape={() => { modal = undefined }} on:saved={onCreateComplete}>
     <FieldText path="userId" label="Login"></FieldText>
-    <FieldText path="name" label="Full Name"></FieldText>
+    {#if !system}
+      <FieldText path="firstname" label="First Name"></FieldText>
+    {/if}
+    <FieldText path="lastname" label="{system ? 'Name' : 'Last Name'}"></FieldText>
     <FieldText path="email" label="E-mail"></FieldText>
     <FieldCheckbox path="trained" label="Training" boxLabel="This user successfully completed editor training." defaultValue={false}></FieldCheckbox>
   </FormDialog>

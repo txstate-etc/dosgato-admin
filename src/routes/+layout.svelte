@@ -14,6 +14,7 @@
   import { base } from '$app/paths'
   import { page } from '$app/stores'
   import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton } from '$lib'
+  import { isNotNull } from 'txstate-utils'
 
   export let data: { errObj: any }
 
@@ -65,7 +66,7 @@
         <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
       </div>
       <button bind:this={profileelement} class="login-status reset">
-        {$globalStore.me.name || 'Unauthorized User'}
+        {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}
         <Icon icon={menuDown} inline />
       </button>
     </div>

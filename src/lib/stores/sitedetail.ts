@@ -36,7 +36,8 @@ interface SiteGroup {
 
 interface SiteUser {
   id: string
-  name: string
+  firstname: string
+  lastname: string
   roles: string
   readonly: boolean
 }
@@ -57,7 +58,7 @@ const initialValue: FullSite = {
   name: '',
   url: { host: '', path: '', prefix: '', enabled: false },
   organization: { name: '', id: '' },
-  owner: { id: '', name: '' },
+  owner: { id: '', firstname: '', lastname: '' },
   managers: [],
   pagetrees: [],
   pageTemplates: [],
@@ -98,7 +99,7 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
         groupRoles[group.id].roles.push(role.name)
       }
       for (const user of role.users) {
-        userRoles[user.id] ||= { name: user.name, roles: [] }
+        userRoles[user.id] ||= { firstname: user.firstname, lastname: user.lastname, roles: [] }
         userRoles[user.id].roles.push(role.name)
       }
     }
@@ -108,7 +109,7 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
     })
     const users = Object.keys(userRoles).map(k => {
       const readonly = userRoles[k].roles.some(r => readOnlyHash[r])
-      return { id: k, name: userRoles[k].name, roles: userRoles[k].roles.join(', '), readonly }
+      return { id: k, firstname: userRoles[k].firstname, lastname: userRoles[k].lastname, roles: userRoles[k].roles.join(', '), readonly }
     })
     const sitePageTemplateKeys = site.pageTemplates.map(t => t.key)
     const pageTemplates: SiteTemplate[] = site.pageTemplates.map(t => ({ ...t, id: t.key, pagetrees: [] }))
