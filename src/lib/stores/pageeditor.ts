@@ -18,6 +18,7 @@ export interface EditorState {
   selectedPath?: string
   selectedLabel?: string
   selectedMaxReached?: boolean
+  state?: any
   cutAllowed?: boolean
   copyAllowed?: boolean
   pasteAllowed?: boolean
@@ -258,6 +259,10 @@ class PageEditorStore extends Store<IPageEditorStore> {
         this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }), true)
       }
     }
+  }
+
+  saveState (state: any) {
+    this.updateEditorState(es => ({ ...es, state }))
   }
 }
 

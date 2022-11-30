@@ -55,7 +55,7 @@
     }
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any }) {
     if (message.action === 'scroll') {
       $editorStore.scrollY = message.scrollTop!
       return
@@ -95,6 +95,8 @@
       goto(base + '/pages/' + message.pageId!)
     } else if (message.action === 'menu') {
       panelelement.querySelector<HTMLElement>('.actions li button')?.focus()
+    } else if (message.action === 'save') {
+      pageEditorStore.saveState(message.state)
     }
   }
 
@@ -181,7 +183,7 @@
   // if user refreshes the iframe manually, it's possible the temporary token will have
   // expired, so we need to watch for refresh errors and load in a new token
   async function iframeload () {
-    iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath: $editorStore.selectedPath }, '*')
+    iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath: $editorStore.selectedPath, state: $editorStore.state }, '*')
     const newtemptoken = await getTempToken($editorStore.page, temptoken)
     if (newtemptoken !== temptoken) temptoken = newtemptoken
   }
