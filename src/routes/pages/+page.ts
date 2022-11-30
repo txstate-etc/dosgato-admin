@@ -19,7 +19,7 @@ async function fetchChildren (item?: TypedPageItem) {
     const rootp = p as RootTreePage
     return {
       ...p,
-      name: p.name + (item || rootp.pagetree.type === 'PRIMARY' ? '' : `-${rootp.pagetree.name} (${rootp.pagetree.type})`),
+      name: item ? p.name : rootp.pagetree.name,
       type: item?.type ?? rootp.pagetree.type,
       children: undefined,
       hasChildren: !!p.children.length,
