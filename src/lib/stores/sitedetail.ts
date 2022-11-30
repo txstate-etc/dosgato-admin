@@ -107,10 +107,10 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
       const readonly = groupRoles[k].roles.some(r => readOnlyHash[r])
       return { id: k, name: groupRoles[k].name, roles: groupRoles[k].roles.join(', '), readonly }
     })
-    const users = Object.keys(userRoles).map(k => {
+    const users = sortby(Object.keys(userRoles).map(k => {
       const readonly = userRoles[k].roles.some(r => readOnlyHash[r])
       return { id: k, firstname: userRoles[k].firstname, lastname: userRoles[k].lastname, roles: userRoles[k].roles.join(', '), readonly }
-    })
+    }), 'lastname', 'firstname')
     const sitePageTemplateKeys = site.pageTemplates.map(t => t.key)
     const pageTemplates: SiteTemplate[] = site.pageTemplates.map(t => ({ ...t, id: t.key, pagetrees: [] }))
     const pagetreePageTemplates: Record<string, SiteTemplate> = {}

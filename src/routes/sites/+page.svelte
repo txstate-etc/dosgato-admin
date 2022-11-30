@@ -47,12 +47,12 @@
   }
 
   async function validateCreateSite (state: CreateWithPageState) {
-    const resp = await api.addSite(state.name, state.templateKey, state.data, true)
+    const resp = await api.addSite(state.name!, state.templateKey, state.data, true)
     return resp.messages.map(m => ({ ...m, path: m.arg }))
   }
 
   async function onCreateSite (state: CreateWithPageState) {
-    const resp = await api.addSite(state.name, state.templateKey, state.data)
+    const resp = await api.addSite(state.name!, state.templateKey, state.data)
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),

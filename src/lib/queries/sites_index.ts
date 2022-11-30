@@ -95,8 +95,7 @@ export const siteDetails = `
   }
   owner {
     id
-    firstname
-    lastname
+    name
   }
   deleted
   permissions {
