@@ -1,5 +1,6 @@
 <script lang="ts">
   import applicationOutline from '@iconify-icons/mdi/application-outline'
+  import copySimpleLight from '@iconify-icons/ph/copy-simple-light'
   import deleteEmpty from '@iconify-icons/mdi/delete-empty'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import archiveLight from '@iconify-icons/ph/archive-light'
@@ -62,7 +63,8 @@
       actions: [
         { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
         { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move, onClick: () => { modal = 'renamepage' } },
-        { label: 'Change Template', icon: layoutLight, disabled: !page.permissions.update, onClick: onClickTemplateChange }
+        { label: 'Change Template', icon: layoutLight, disabled: !page.permissions.update, onClick: onClickTemplateChange },
+        { label: 'Preview in new window', icon: copySimpleLight, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${page.pagetree.id}/latest${page.path}.html`), '_blank') } }
       ]
     }
 
