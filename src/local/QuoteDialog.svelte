@@ -2,17 +2,17 @@
   import { FieldText, Tabs, Tab } from '@dosgato/dialog'
 
   const tabs = [
-    { title: 'General' },
-    { title: 'Other' }
+    { name: 'General' },
+    { name: 'Other' }
   ]
 </script>
 
 <Tabs {tabs}>
-  <Tab title="General">
+  <Tab name="General">
     <FieldText path="author" label="Author" />
     <FieldText path="quote" label="Quote" />
   </Tab>
-  <Tab title="Other">
+  <Tab name="Other">
     Nothing to see here.
   </Tab>
 </Tabs>
