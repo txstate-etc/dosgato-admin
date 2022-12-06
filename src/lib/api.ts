@@ -1,5 +1,5 @@
 import { base } from '$app/paths'
-import type { AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
+import type { AssetFolderLink, AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
 import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
 import { get, isBlank, keyby, omit, pick, set, splice, toArray } from 'txstate-utils'
@@ -10,18 +10,18 @@ import {
   GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY,
   GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST,
   GET_USER_BY_ID, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS,
-  GET_SUBGROUPS, GET_GROUP_BY_ID, GET_ROLE_BY_ID, GET_SITE_LIST, GET_SUBPAGES_BY_PATH,
-  GET_SUBFOLDERS_AND_ASSETS_BY_PATH, GET_PAGE_BY_LINK, GET_AVAILABLE_COMPONENTS, GET_TEMPLATES_BY_TYPE, RENAME_SITE,
+  GET_SUBGROUPS, GET_GROUP_BY_ID, GET_ROLE_BY_ID, GET_SITE_LIST, CHOOSER_SUBPAGES_BY_PATH,
+  CHOOSER_SUBFOLDERS_AND_ASSETS_BY_PATH, CHOOSER_PAGE_BY_LINK, GET_AVAILABLE_COMPONENTS, GET_TEMPLATES_BY_TYPE, RENAME_SITE,
   GET_SITE_BY_ID, GET_ORGANIZATION_LIST, UPDATE_SITE_MANAGEMENT, SET_LAUNCH_URL, ADD_SITE_COMMENT, ADD_PAGETREE,
   type DataFolder, type GlobalSelf, type PageEditorPage, type TemplateListTemplate, type DataItem, type DataRoot,
   type TreePage, type UserListUser, type FullUser, type GroupListGroup, type FullGroup, type RoleListRole,
-  type FullRole, type SiteListSite, type GetAvailableComponents, type GetSubPagesByPath,
-  type GetSubFoldersAndAssetsByPath, type GetPageByLink, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule,
+  type FullRole, type SiteListSite, type GetAvailableComponents, type ChooserSubPagesByPath,
+  type GetSubFoldersAndAssetsByPath, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule,
   type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, CREATE_PAGE, UPDATE_PAGE, type FullSite,
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
   GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
-  type GetAssetByLink, GET_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE,
+  CHOOSER_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE,
   UPDATE_ASSET_RULE, CREATE_USER, type CreateUserInput, ADD_ROLES_TO_USER, REMOVE_ROLE_FROM_USER, type UpdateAssetRuleInput,
   type UpdateDataRuleInput, UPDATE_DATA_RULE, type MessageFromAPI, UPDATE_ROLE, type CreateGlobalRuleInput, type UpdateGlobalRuleInput,
   type GlobalRule, ADD_GLOBAL_RULE, UPDATE_GLOBAL_RULE, type PageRule, type CreatePageRuleInput, type UpdatePageRuleInput,
@@ -30,7 +30,10 @@ import {
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
   GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
   PUBLISH_DELETION, UNDELETE_PAGES, SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES,
-  PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES, type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS
+  PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES,
+  type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS, type ChooserRootPages, CHOOSER_ROOT_PAGES, apiPageToChooserPage,
+  type ChooserPageByLink, type ChooserAssetByLink, CHOOSER_PAGE_BY_PATH, type ChooserPageByPath, CHOOSER_ASSET_BY_ID,
+  type ChooserAssetById, type ChooserAssetFolderByLink, CHOOSER_ASSET_FOLDER_BY_LINK
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -178,24 +181,46 @@ class API {
     return pages
   }
 
-  async getSubPagesByPath (path: string) {
-    const { pages } = await this.query<GetSubPagesByPath>(GET_SUBPAGES_BY_PATH, { path })
-    return pages
+  async chooserSubPagesByPath (path: string) {
+    if (path === '/') return await this.chooserRootPages()
+    const { pages } = await this.query<ChooserSubPagesByPath>(CHOOSER_SUBPAGES_BY_PATH, { path })
+    return pages.map(apiPageToChooserPage)
+  }
+
+  async chooserRootPages () {
+    const { sites } = await this.query<ChooserRootPages>(CHOOSER_ROOT_PAGES)
+    return sites.flatMap(s => s.pagetrees.map(t => ({ ...t.rootPage, name: t.name }))).map(apiPageToChooserPage)
   }
 
   async chooserPageByLink (link: PageLink, pagetreeId?: string) {
-    const { pages } = await this.query<GetPageByLink>(GET_PAGE_BY_LINK, { pageLink: { ...pick(link, 'linkId', 'siteId', 'path'), context: pagetreeId ? { pagetreeId } : undefined } })
-    return pages[0]
+    const { pages } = await this.query<ChooserPageByLink>(CHOOSER_PAGE_BY_LINK, { pageLink: { ...pick(link, 'linkId', 'siteId', 'path'), context: pagetreeId ? { pagetreeId } : undefined } })
+    return apiPageToChooserPage(pages[0])
+  }
+
+  async chooserPageByPath (path: string) {
+    const { pages } = await this.query<ChooserPageByPath>(CHOOSER_PAGE_BY_PATH, { path })
+    return apiPageToChooserPage(pages[0])
   }
 
   async chooserSubFoldersAndAssetsByPath (path: string) {
-    const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(GET_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
+    const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(CHOOSER_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
     return [...assets.map(a => apiAssetToChooserAsset(a)!), ...assetfolders.map(f => apiAssetFolderToChooserFolder(f))]
   }
 
   async chooserAssetByLink (link: AssetLink) {
-    const { assets } = await this.query<GetAssetByLink>(GET_ASSET_BY_LINK, { link: pick(link, 'id', 'siteId', 'path', 'checksum') })
+    const { assets } = await this.query<ChooserAssetByLink>(CHOOSER_ASSET_BY_LINK, { link: pick(link, 'id', 'siteId', 'path', 'checksum') })
     return apiAssetToChooserAsset(assets[0])
+  }
+
+  async chooserAssetByPath (path: string) {
+    const id = path.split('/')[2]
+    const { assets } = await this.query<ChooserAssetById>(CHOOSER_ASSET_BY_ID, { id })
+    return apiAssetToChooserAsset(assets[0])
+  }
+
+  async chooserAssetFolderByLink (link: AssetFolderLink) {
+    const { assetfolders } = await this.query<ChooserAssetFolderByLink>(CHOOSER_ASSET_FOLDER_BY_LINK, { link: pick(link, 'id', 'siteId', 'path') })
+    return apiAssetFolderToChooserFolder(assetfolders[0])
   }
 
   async getSubFoldersAndAssets (folderId: string) {

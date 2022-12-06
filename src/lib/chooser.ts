@@ -1,15 +1,10 @@
-import type { AnyItem, Asset, ChooserType, Client, Folder, Page, Source } from '@dosgato/dialog'
+import type { AnyItem, Asset, ChooserType, Client, Folder, Source } from '@dosgato/dialog'
 import type { LinkDefinition } from '@dosgato/templating'
-import { sortby } from 'txstate-utils'
+import { sortby, stringify } from 'txstate-utils'
 import { api } from './api.js'
-import type { ChooserPageDetails } from './queries/chooser.js'
 
 function parseLink (link: string) {
   return JSON.parse(link) as LinkDefinition
-}
-
-function processPage (p: ChooserPageDetails): Page {
-  return { type: 'page', source: 'pages', id: p.id, url: p.path, path: p.path, title: p.title ?? p.name, name: p.name, hasChildren: p.children.length > 0 }
 }
 
 export class ChooserClient implements Client {
@@ -22,8 +17,7 @@ export class ChooserClient implements Client {
 
   async getChildren (source: string, path: string): Promise<AnyItem[]> {
     if (source === 'pages') {
-      const pages = path === '/' ? await api.getRootPages() : await api.getSubPagesByPath(path)
-      return pages.map(processPage)
+      return await api.chooserSubPagesByPath(path)
     } else {
       const assetsFolders = await api.chooserSubFoldersAndAssetsByPath(path)
       return sortby(assetsFolders.map<Folder | Asset>(a => ({ ...a, url: a.path })), 'name')
@@ -39,10 +33,23 @@ export class ChooserClient implements Client {
     if (link.type === 'asset') {
       return await api.chooserAssetByLink(link)
     } else if (link.type === 'assetfolder') {
-      return {} as any // await api.assetFolderByLink(link)
+      return await api.chooserAssetFolderByLink(link)
     } else if (link.type === 'page') {
-      const page = await api.chooserPageByLink(link, this.pagetreeId)
-      return processPage(page)
+      return await api.chooserPageByLink(link, this.pagetreeId)
+    }
+  }
+
+  urlToValue (url: string) {
+    return stringify({ type: 'url', url })
+  }
+
+  async findByUrl (url: string) {
+    if (url.startsWith('/assets/')) {
+      return await api.chooserAssetByPath(url)
+    } else if (url.startsWith('/')) {
+      const page = await api.chooserPageByPath(url)
+      console.log(page)
+      return page
     }
   }
 
