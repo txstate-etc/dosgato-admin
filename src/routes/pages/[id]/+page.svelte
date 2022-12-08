@@ -83,7 +83,7 @@
     } else if (message.action === 'cancelCopy') {
       pageEditorStore.clearClipboard()
     } else if (message.action === 'create') {
-      pageEditorStore.addComponentShowModal(message.path)
+      pageEditorStore.addComponentShowModal(message.path, refreshIframe)
     } else if (message.action === 'del') {
       pageEditorStore.removeComponentShowModal(message.path)
     } else if (message.action === 'drop') {

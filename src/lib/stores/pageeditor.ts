@@ -116,7 +116,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     })
   }
 
-  async addComponentShowModal (path: string) {
+  async addComponentShowModal (path: string, refreshIframe: () => Promise<void>) {
     const pageId = this.value.active
     if (!pageId) return
     const editorState = this.value.editors[pageId]
@@ -128,6 +128,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const templateKey = parentData.templateKey
     const availableComponents = await api.getAvailableComponents(templateKey, area, pageId)
     this.update(v => set(v, `editors["${pageId}"]`, { ...editorState, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + (String(parentData.areas?.[area]?.length) ?? '0'), data: undefined, availableComponents } }))
+    if (availableComponents.length === 1) await this.addComponentChooseTemplate(availableComponents[0].templateKey, refreshIframe)
   }
 
   async addComponentChooseTemplate (templateKey: string, refreshIframe: () => Promise<void>) {

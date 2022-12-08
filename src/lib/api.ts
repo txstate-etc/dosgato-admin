@@ -380,7 +380,7 @@ class API {
 
   async getAvailableComponents (templateKey: string, area: string, pageId: string) {
     const { templates } = await this.query<GetAvailableComponents>(GET_AVAILABLE_COMPONENTS, { templateKey, pageId })
-    return templates[0]?.areas.find(a => a.name === area)?.availableComponents.filter(ac => ac.permissions.useOnPage).map(ac => ({ name: ac.name, ...templateRegistry.getTemplate(ac.key) })) ?? []
+    return templates[0]?.areas.find(a => a.name === area)?.availableComponents.filter(ac => ac.permissions.useOnPage).map(ac => templateRegistry.getTemplate(ac.key)!) ?? []
   }
 
   async getGlobalDataRootByTemplateKey (key: string) {
