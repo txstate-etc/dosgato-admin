@@ -221,8 +221,8 @@
     {@const template = templateRegistry.getTemplate($editorStore.creating.templateKey)}
     {#if template}
       {#if template.dialog}
-        <FormDialog {chooserClient} icon={template.icon} title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} validate={onAddComponentValidate} on:escape={cancelModal}>
-          <svelte:component this={template.dialog} creating={true} page={$editorStore.page} path={$editorStore.creating.componentEventualPath} templateProperties={pagetemplate.templateProperties} {environmentConfig} />
+        <FormDialog {chooserClient} icon={template.icon} title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} validate={onAddComponentValidate} on:escape={cancelModal} let:data>
+          <svelte:component this={template.dialog} creating={true} page={$editorStore.page} path={$editorStore.creating.componentEventualPath} {data} templateProperties={pagetemplate.templateProperties} {environmentConfig} />
         </FormDialog>
       {/if}
     {:else}
