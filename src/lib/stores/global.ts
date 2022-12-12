@@ -11,18 +11,20 @@ export interface IGlobalStore {
 
 export interface EnvironmentConfig {
   apiBase: string
+  assetLiveBase: string
+  assetRegex: RegExp
   authRedirect: string
   renderBase: string
 }
 
 class GlobalStore extends Store<IGlobalStore> {
   constructor () {
-    super({ access: {}, me: { name: '' }, toasts: [] })
+    super({ access: {}, me: { firstname: '', lastname: '' }, toasts: [] })
   }
 }
 
 export const globalStore = new GlobalStore()
-export const environmentConfig: EnvironmentConfig = { apiBase: '', authRedirect: '', renderBase: '' }
+export const environmentConfig: EnvironmentConfig = { apiBase: '', authRedirect: '', renderBase: '', assetLiveBase: '', assetRegex: /unused/ }
 export const toasts = subStore(globalStore, 'toasts')
 export const toast = (message: string, type: Feedback['type'] = 'error') => {
   globalStore.update(v => ({ ...v, toasts: sortby([...v.toasts.filter(t => t.message !== message), { id: randomid(), type, message, stamp: new Date(), hidden: false }], 'stamp', true) }))

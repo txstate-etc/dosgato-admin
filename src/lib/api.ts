@@ -33,7 +33,7 @@ import {
   PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES,
   type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS, type ChooserRootPages, CHOOSER_ROOT_PAGES, apiPageToChooserPage,
   type ChooserPageByLink, type ChooserAssetByLink, CHOOSER_PAGE_BY_PATH, type ChooserPageByPath, CHOOSER_ASSET_BY_ID,
-  type ChooserAssetById, type ChooserAssetFolderByLink, CHOOSER_ASSET_FOLDER_BY_LINK
+  type ChooserAssetById, type ChooserAssetFolderByLink, CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -125,6 +125,7 @@ class API {
       this.token = sessionStorage.getItem('token') ?? undefined
     }
     Object.assign(environmentConfig, await this.config())
+    environmentConfig.assetRegex = new RegExp('^(?:' + environmentConfig.assetLiveBase + '|/assets)/([^/]+)/')
     this.ready()
   }
 
@@ -202,6 +203,11 @@ class API {
     return apiPageToChooserPage(pages[0])
   }
 
+  async chooserPageByUrl (url: string) {
+    const { pages } = await this.query<ChooserPageByPath>(CHOOSER_PAGE_BY_URL, { url })
+    return apiPageToChooserPage(pages[0])
+  }
+
   async chooserSubFoldersAndAssetsByPath (path: string) {
     const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(CHOOSER_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
     return [...assets.map(a => apiAssetToChooserAsset(a)!), ...assetfolders.map(f => apiAssetFolderToChooserFolder(f))]
@@ -212,8 +218,7 @@ class API {
     return apiAssetToChooserAsset(assets[0])
   }
 
-  async chooserAssetByPath (path: string) {
-    const id = path.split('/')[2]
+  async chooserAssetById (id: string) {
     const { assets } = await this.query<ChooserAssetById>(CHOOSER_ASSET_BY_ID, { id })
     return apiAssetToChooserAsset(assets[0])
   }

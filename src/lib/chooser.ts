@@ -2,6 +2,7 @@ import type { AnyItem, Asset, ChooserType, Client, Folder, Source } from '@dosga
 import type { LinkDefinition } from '@dosgato/templating'
 import { sortby, stringify } from 'txstate-utils'
 import { api } from './api.js'
+import { environmentConfig } from './stores/global.js'
 
 function parseLink (link: string) {
   return JSON.parse(link) as LinkDefinition
@@ -43,14 +44,25 @@ export class ChooserClient implements Client {
     return stringify({ type: 'url', url })
   }
 
+  valueToUrl (value: string) {
+    return JSON.parse(value).url
+  }
+
   async findByUrl (url: string) {
-    if (url.startsWith('/assets/')) {
-      return await api.chooserAssetByPath(url)
-    } else if (url.startsWith('/')) {
-      const page = await api.chooserPageByPath(url)
-      console.log(page)
-      return page
+    let m = url.match(environmentConfig.assetRegex)
+    if (m) {
+      const id = m[1]
+      return await api.chooserAssetById(id)
     }
+    m = url.match(/\/\.(?:edit|preview)\/(?:\w+)\/(?:\w+)\/(\/.*?)(?:\.html)?/)
+    if (m) {
+      const path = m[1]
+      return await api.chooserPageByPath(path)
+    }
+    if (url.startsWith('/')) {
+      return await api.chooserPageByPath(url)
+    }
+    return await api.chooserPageByUrl(url)
   }
 
   async upload (source: string, path: string, files: FileList): Promise<void> {

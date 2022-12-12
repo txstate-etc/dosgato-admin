@@ -153,6 +153,14 @@ export interface ChooserPageByPath {
   pages: ChooserPageDetails[]
 }
 
+export const CHOOSER_PAGE_BY_URL = `
+  query chooserPageByPath ($url: String!) {
+    pages (filter: { launchedUrls: [$url] }) {
+      ${chooserPageDetails}
+    }
+  }
+`
+
 export const CHOOSER_ASSET_BY_LINK = `
   query chooserAssetByLink ($link: AssetLinkInput!) {
     assets (filter: { links: [$link] }) {
