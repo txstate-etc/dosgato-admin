@@ -1,6 +1,6 @@
 import type { ComponentData, PageData, UITemplate } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
-import { get, isBlank, set } from 'txstate-utils'
+import { get, isBlank, randomid, set } from 'txstate-utils'
 import { api, type PageEditorPage, templateRegistry, toast } from '$lib'
 
 export interface IPageEditorStore {
@@ -135,7 +135,8 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const def = templateRegistry.getTemplate(templateKey)
     this.updateEditorState(editorState => ({ ...editorState, creating: { ...editorState.creating!, templateKey, data: undefined } }))
     if (def && def.dialog == null) {
-      const resp = await this.addComponentSubmit({ areas: def.defaultContent })
+      const data = def.randomId ? { [def.randomId]: randomid() } : {}
+      const resp = await this.addComponentSubmit({ ...data, areas: def.defaultContent })
       if (resp?.success) await refreshIframe()
     }
   }
