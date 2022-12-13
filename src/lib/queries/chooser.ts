@@ -154,7 +154,7 @@ export interface ChooserPageByPath {
 }
 
 export const CHOOSER_PAGE_BY_URL = `
-  query chooserPageByPath ($url: String!) {
+  query chooserPageByUrl ($url: String!) {
     pages (filter: { launchedUrls: [$url] }) {
       ${chooserPageDetails}
     }
