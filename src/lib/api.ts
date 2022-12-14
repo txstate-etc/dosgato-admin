@@ -125,7 +125,7 @@ class API {
       this.token = sessionStorage.getItem('token') ?? undefined
     }
     Object.assign(environmentConfig, await this.config())
-    environmentConfig.assetRegex = new RegExp('^(?:' + environmentConfig.assetLiveBase + '|/assets)/([^/]+)/')
+    environmentConfig.assetRegex = new RegExp('^(?:' + environmentConfig.assetLiveBase + ')?(?:/assets|/resize)/([^/]+)/')
     this.ready()
   }
 
