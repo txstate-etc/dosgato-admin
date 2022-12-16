@@ -5,10 +5,11 @@ id
 path
 name
 deleted
+deleteState
 folders {
   id
 }
-assets {
+assets (filter: { deleted: HIDE }) {
   id
 }
 permissions {
@@ -24,6 +25,7 @@ export interface TreeAssetFolder {
   path: string
   name: string
   deleted: boolean
+  deleteState: number
   folders: {
     id: string
   }[]
@@ -45,6 +47,7 @@ path
 name
 filename
 deleted
+deleteState
 modifiedAt
 modifiedBy {
   id
@@ -64,6 +67,7 @@ export interface TreeAsset {
   name: string
   filename: string
   deleted: boolean
+  deleteState: number
   modifiedAt: string
   modifiedBy: {
     id: string
@@ -95,7 +99,7 @@ export const GET_ASSETFOLDER_CHILDREN = `
       folders {
         ${assetFolderDetails}
       }
-      assets {
+      assets (filter: { deleted: HIDE }) {
         ${assetDetails}
       }
     }
@@ -123,6 +127,60 @@ export const CREATE_ASSET_FOLDER = `
 export const RENAME_ASSET_FOLDER = `
   mutation renameAssetFolder ($folderId: ID!, $name: UrlSafeString!, $validateOnly: Boolean) {
     renameAssetFolder (folderId: $folderId, name: $name, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      assetFolder { ${assetFolderDetails} }
+    }
+  }
+`
+
+export const DELETE_ASSET = `
+  mutation deleteAsset ($assetId: ID!) {
+    deleteAsset (assetId: $assetId) {
+      ${mutationResponse}
+      asset { ${assetDetails}}
+    }
+  }
+ `
+
+export const FINALIZE_DELETE_ASSET = `
+  mutation finalizeAssetDeletion ($assetId: ID!) {
+    finalizeAssetDeletion (assetId: $assetId) {
+      ${mutationResponse}
+      asset { ${assetDetails}}
+    }
+  }
+`
+
+export const UNDELETE_ASSET = `
+  mutation undeleteAsset ($assetId: ID!) {
+    undeleteAsset (assetId: $assetId) {
+      ${mutationResponse}
+      asset { ${assetDetails}}
+    }
+  }
+`
+
+export const DELETE_ASSET_FOLDER = `
+  mutation deleteAssetFolder ($folderId: ID!) {
+    deleteAssetFolder (folderId: $folderId) {
+      ${mutationResponse}
+      assetFolder { ${assetFolderDetails} }
+    }
+  }
+`
+
+export const FINALIZE_DELETE_ASSET_FOLDER = `
+  mutation finalizeAssetFolderDeletion ($folderId: ID!) {
+    finalizeAssetFolderDeletion (folderId: $folderId) {
+      ${mutationResponse}
+      assetFolder { ${assetFolderDetails} }
+    }
+  }
+`
+
+export const UNDELETE_ASSET_FOLDER = `
+  mutation undeleteAssetFolder ($folderId: ID!) {
+    undeleteAssetFolder (folderId: $folderId) {
       ${mutationResponse}
       assetFolder { ${assetFolderDetails} }
     }

@@ -33,7 +33,7 @@ import {
   PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES,
   type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS, type ChooserRootPages, CHOOSER_ROOT_PAGES, apiPageToChooserPage,
   type ChooserPageByLink, type ChooserAssetByLink, CHOOSER_PAGE_BY_PATH, type ChooserPageByPath, CHOOSER_ASSET_BY_ID,
-  type ChooserAssetById, type ChooserAssetFolderByLink, CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL
+  type ChooserAssetById, type ChooserAssetFolderByLink, CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL, DELETE_ASSET, FINALIZE_DELETE_ASSET, UNDELETE_ASSET, DELETE_ASSET_FOLDER, FINALIZE_DELETE_ASSET_FOLDER, UNDELETE_ASSET_FOLDER
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -254,6 +254,36 @@ class API {
     if (resp) return resp
     const { renameAssetFolder } = await this.query<{ renameAssetFolder: MutationResponse & { assetFolder: TreeAssetFolder } }>(RENAME_ASSET_FOLDER, { folderId, name, validateOnly })
     return renameAssetFolder
+  }
+
+  async deleteAsset (assetId: string) {
+    const { deleteAsset } = await this.query<{ deleteAsset: MutationResponse & { asset: TreeAsset } }>(DELETE_ASSET, { assetId })
+    return deleteAsset
+  }
+
+  async finalizeDeleteAsset (assetId: string) {
+    const { finalizeAssetDeletion } = await this.query<{ finalizeAssetDeletion: MutationResponse & { asset: TreeAsset } }>(FINALIZE_DELETE_ASSET, { assetId })
+    return finalizeAssetDeletion
+  }
+
+  async undeleteAsset (assetId: string) {
+    const { undeleteAsset } = await this.query<{ undeleteAsset: MutationResponse & { asset: TreeAsset } }>(UNDELETE_ASSET, { assetId })
+    return undeleteAsset
+  }
+
+  async deleteAssetFolder (folderId: string) {
+    const { deleteAssetFolder } = await this.query<{ deleteAssetFolder: MutationResponse & { folder: TreeAssetFolder } }>(DELETE_ASSET_FOLDER, { folderId })
+    return deleteAssetFolder
+  }
+
+  async finalizeDeleteAssetFolder (folderId: string) {
+    const { finalizeAssetFolderDeletion } = await this.query<{ finalizeAssetFolderDeletion: MutationResponse & { folder: TreeAssetFolder } }>(FINALIZE_DELETE_ASSET_FOLDER, { folderId })
+    return finalizeAssetFolderDeletion
+  }
+
+  async undeleteAssetFolder (folderId: string) {
+    const { undeleteAssetFolder } = await this.query<{ undeleteAssetFolder: MutationResponse & { folder: TreeAssetFolder } }>(UNDELETE_ASSET_FOLDER, { folderId })
+    return undeleteAssetFolder
   }
 
   async getEditorPage (pageId: string) {

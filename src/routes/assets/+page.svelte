@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { iconForMime, bytesToHuman, FieldText, FormDialog, Tree } from '@dosgato/dialog'
+  import { iconForMime, bytesToHuman, FieldText, FormDialog, Tree, Dialog } from '@dosgato/dialog'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
@@ -10,14 +10,16 @@
   import folderNotchOpenLight from '@iconify-icons/ph/folder-notch-open-light'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
+  import deleteEmpty from '@iconify-icons/mdi/delete-empty'
+  import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import uploadLight from '@iconify-icons/ph/upload-light'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort } from '$lib'
+  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState } from '$lib'
   import { store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
   import './index.css'
 
-  let modal: 'upload' | 'create' | 'rename' | undefined
+  let modal: 'upload' | 'create' | 'rename' | 'delete' | 'finalizeDelete' | 'restore' | undefined
   let selectedFolder: TypedAssetFolderItem | undefined
 
   function singlepageactions (item: TypedAnyAssetItem) {
@@ -42,9 +44,14 @@
     actions.push(
       { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste() } }
     )
-    actions.push(
-      { label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => {} }
-    )
+    if (item.deleteState === DeleteState.NOTDELETED) {
+      actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => { modal = 'delete' } })
+    } else {
+      actions.push(
+        { label: 'Restore', icon: deleteRestore, disabled: !item.permissions.undelete, onClick: () => { modal = 'restore' } },
+        { label: 'Finalize Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => { modal = 'finalizeDelete' } }
+      )
+    }
     return actions
   }
 
@@ -104,12 +111,51 @@
   function onChoose ({ detail }: CustomEvent<AssetItem | AssetFolderItem>) {
     if (detail.kind === 'asset' && detail.permissions.update) goto(base + '/assets/' + detail.id)
   }
+
+  async function onDelete () {
+    let resp
+    if ($store.selectedItems[0].kind === 'asset') {
+      resp = await api.deleteAsset($store.selectedItems[0].id)
+    } else {
+      resp = await api.deleteAssetFolder($store.selectedItems[0].id)
+    }
+    if (resp.success) {
+      store.refresh()
+    }
+    modal = undefined
+  }
+
+  async function onFinalizeDelete () {
+    let resp
+    if ($store.selectedItems[0].kind === 'asset') {
+      resp = await api.finalizeDeleteAsset($store.selectedItems[0].id)
+    } else {
+      resp = await api.finalizeDeleteAssetFolder($store.selectedItems[0].id)
+    }
+    if (resp.success) {
+      store.refresh()
+    }
+    modal = undefined
+  }
+
+  async function onRestore () {
+    let resp
+    if ($store.selectedItems[0].kind === 'asset') {
+      resp = await api.undeleteAsset($store.selectedItems[0].id)
+    } else {
+      resp = await api.undeleteAssetFolder($store.selectedItems[0].id)
+    }
+    if (resp.success) {
+      store.refresh()
+    }
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Assets'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={onChoose}
     headers={[
-      { label: 'Path', id: 'name', grow: 5, icon: item => item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight), render: itm => 'filename' in itm ? itm.filename : itm.name },
+      { label: 'Path', id: 'name', grow: 5, icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : (item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight)), render: itm => 'filename' in itm ? itm.filename : itm.name },
       { label: 'Size', id: 'size', fixed: '6em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },
       { label: 'Type', id: 'type', fixed: '10em', render: itm => itm.kind === 'asset' ? itm.mime.split(';')[0] : '' },
       { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.kind === 'asset' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
@@ -127,4 +173,28 @@
   <FormDialog title="Rename Folder {selectedFolder.path}" preload={{ name: selectedFolder.name }} on:escape={onModalEscape} submit={onRenameSubmit} validate={onRenameValidate} on:saved={onSelfSaved}>
     <FieldText path="name" label="Name" required />
   </FormDialog>
+{:else if modal === 'delete' }
+  <Dialog title={`Delete ${$store.selectedItems[0].kind === 'asset' ? 'Asset' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onDelete} on:escape={onModalEscape}>
+    {#if $store.selectedItems[0].kind === 'asset'}
+      Delete this asset?
+    {:else}
+      Delete this asset folder? All contents will be marked for deletion.
+    {/if}
+  </Dialog>
+{:else if modal === 'finalizeDelete'}
+  <Dialog title={`Delete ${$store.selectedItems[0].kind === 'asset' ? 'Asset' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onFinalizeDelete} on:escape={onModalEscape}>
+    {#if $store.selectedItems[0].kind === 'asset'}
+      Delete this asset?
+    {:else}
+      Delete this asset folder and its contents?
+    {/if}
+  </Dialog>
+{:else if modal === 'restore'}
+  <Dialog title={`Restore ${$store.selectedItems[0].kind === 'asset' ? 'Asset' : 'Folder'}`} continueText='Restore' cancelText='Cancel' on:continue={onRestore} on:escape={onModalEscape}>
+    {#if $store.selectedItems[0].kind === 'asset'}
+      Restore this asset?
+    {:else}
+      Restore this asset folder?
+    {/if}
+  </Dialog>
 {/if}
