@@ -8,7 +8,7 @@
   import { unique } from 'txstate-utils'
   import { base } from '$app/paths'
   import { api, DetailPanel, StyledList, ResponsiveTable, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog } from '$lib'
-  import { store } from './+page'
+  import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
 
   export let data: { siteOptions: { value: string, label: string }[], userOptions: { value: string, label: string }[] }

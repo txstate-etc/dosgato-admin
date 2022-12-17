@@ -6,7 +6,7 @@
   import { Dialog, FieldText, FieldMultiselect, Icon, FieldSelect, FormDialog } from '@dosgato/dialog'
   import { base } from '$app/paths'
   import { api, DetailPanel, messageForDialog, StyledList, type RoleListRole, type UserListUser } from '$lib'
-  import { store } from './+page'
+  import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   let modal: 'editbasic' | 'addmembers' | 'removegroupmember' | 'addrole' | 'removerole' | undefined
   let allUsers: UserListUser[]

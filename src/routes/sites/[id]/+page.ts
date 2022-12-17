@@ -3,11 +3,11 @@ import { api, siteListStore, SiteDetailStore, subnavStore } from '$lib'
 import globeLight from '@iconify-icons/ph/globe-light'
 import { error, type Load } from '@sveltejs/kit'
 
-export const store = new SiteDetailStore(getSite)
+export const _store = new SiteDetailStore(getSite)
 
 export const load: Load<{ id: string }> = async ({ params }) => {
-  const site = await store.refresh(params.id)
-  if (!store.siteFetched()) throw error(404)
+  const site = await _store.refresh(params.id)
+  if (!_store.siteFetched()) throw error(404)
 
   const [organizations, users, allPageTemplates, allComponentTemplates] = await Promise.all([
     api.getOrganizationList(),

@@ -16,7 +16,7 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState } from '$lib'
-  import { store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
+  import { _store as store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
   import './index.css'
 
   let modal: 'upload' | 'create' | 'rename' | 'delete' | 'finalizeDelete' | 'restore' | undefined

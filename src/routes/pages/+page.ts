@@ -46,8 +46,8 @@ function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, 
   if (!actualTargetParent?.permissions.create) return 'none'
   // if we don't have permission to move one of the selected items then the user needs to request a copy operation
   if (selectedItems.some(p => !p.permissions.move)) return userWantsCopy ? 'copy' : 'none'
-  const dropRoot = store.root(actualTargetParent)
-  const selectedItemsInSameSiteAsTarget = selectedItems.filter(p => store.root(p).id === dropRoot.id)
+  const dropRoot = _store.root(actualTargetParent)
+  const selectedItemsInSameSiteAsTarget = selectedItems.filter(p => _store.root(p).id === dropRoot.id)
   if (selectedItemsInSameSiteAsTarget.length === selectedItems.length) {
     return userWantsCopy ? 'copy' : 'move' // if within the site the user can do whatever they are requesting
   } else if (selectedItemsInSameSiteAsTarget.length) {
@@ -57,4 +57,4 @@ function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, 
   }
 }
 
-export const store: TreeStore<PageItem> = new TreeStore(fetchChildren, { copyHandler, dragEligible, dropEffect, moveHandler })
+export const _store: TreeStore<PageItem> = new TreeStore(fetchChildren, { copyHandler, dragEligible, dropEffect, moveHandler })

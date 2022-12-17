@@ -3,7 +3,7 @@
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import uploadLight from '@iconify-icons/ph/upload-light'
   import { DetailList, DetailPanel, environmentConfig, UploadUI, StyledList, dateStamp } from '$lib'
-  import { getAssetDetail, type AssetDetail } from './+page'
+  import { getAssetDetail, type AssetDetail } from './helpers'
 
   export let data: { asset: AssetDetail }
   $: asset = data.asset

@@ -7,7 +7,7 @@
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
   import { api, DetailPanel, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser } from '$lib'
-  import { store } from './+page'
+  import { _store as store } from './+page'
 
   export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
 

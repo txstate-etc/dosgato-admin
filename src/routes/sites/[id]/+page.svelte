@@ -15,7 +15,7 @@
   import { keyby, titleCase } from 'txstate-utils'
   import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, templateListStore, siteDetails, Accordion } from '$lib'
   import { base } from '$app/paths'
-  import { store } from './+page'
+  import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
 
   export let data: { organizations: Organization[], users: UserListUser[], allPageTemplates: TemplateListTemplate[], allComponentTemplates: TemplateListTemplate[] }

@@ -1,24 +1,11 @@
 import applicationEditOutline from '@iconify-icons/mdi/application-edit-outline'
 import { error, type Load } from '@sveltejs/kit'
 import { base } from '$app/paths'
-import { api, environmentConfig, pageEditorStore, type SubNavLink, subnavStore, templateRegistry, type PageEditorPage } from '$lib'
-
-interface PageSubNavLink extends SubNavLink {
-  pageId: string
-}
+import { api, pageEditorStore, subnavStore, templateRegistry } from '$lib'
+import { getTempToken, type PageSubNavLink } from './helpers'
 
 const toBeFreed = new Set<string>()
 function free (link: PageSubNavLink) { toBeFreed.add(link.pageId) }
-
-export async function getTempToken (page: PageEditorPage, currentToken?: string, skfetch = fetch) {
-  const resp = await skfetch(environmentConfig.renderBase + '/.token' + page.path + (currentToken ? `?currentToken=${currentToken}` : ''), {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${api.token ?? ''}`
-    }
-  })
-  return await resp.text()
-}
 
 export const load: Load<{ id: string }> = async ({ params, fetch }) => {
   await templateRegistry.enhanceInfo()

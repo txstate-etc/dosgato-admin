@@ -27,7 +27,7 @@
   import { base } from '$app/paths'
   import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
-  import { store, type TypedPageItem } from './+page'
+  import { _store as store, type TypedPageItem } from './+page'
   import './index.css'
   import { Dialog, FieldSelect, FieldText, FormDialog, Tree } from '@dosgato/dialog'
 

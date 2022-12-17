@@ -13,7 +13,7 @@
   import trashLight from '@iconify-icons/ph/trash-light'
   import { printIf } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate, ChooserClient } from '$lib'
-  import { getTempToken } from './+page'
+  import { getTempToken } from './helpers'
 
   export let data: { temptoken: string, page: PageEditorPage, pagetemplate: EnhancedUITemplate }
   $: ({ page, temptoken, pagetemplate } = data)
