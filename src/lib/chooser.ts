@@ -21,7 +21,7 @@ export class ChooserClient implements Client {
       return await api.chooserSubPagesByPath(path)
     } else {
       const assetsFolders = await api.chooserSubFoldersAndAssetsByPath(path)
-      return sortby(assetsFolders.map<Folder | Asset>(a => ({ ...a, url: a.path })), 'name')
+      return sortby(assetsFolders, 'name')
     }
   }
 
@@ -49,8 +49,10 @@ export class ChooserClient implements Client {
   }
 
   async findByUrl (url: string) {
+    console.log('findByUrl', url, environmentConfig.assetRegex)
     let m = url.match(environmentConfig.assetRegex)
     if (m) {
+      console.log('looks like an asset')
       const id = m[1]
       return await api.chooserAssetById(id)
     }
