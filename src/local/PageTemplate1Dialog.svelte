@@ -52,7 +52,7 @@
     <div>If someone makes a social post about this page, the below details will be used for the post.</div>
       <FieldText path="socialtitle" label="Title" />
       <FieldChooserLink path="socialimage" label="Image" assets />
-      <FieldText path="socialimagealt" label="Alt. Text" required conditional={isNotBlank(data?.socialimage)}/>
+      <FieldText path="socialimagealt" label="Alt. Text" required conditional={isNotBlank(data.socialimage)}/>
       <FieldText path="socialdescription" label="Description"/>
   </div>
 </div>
