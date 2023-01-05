@@ -2,7 +2,6 @@
   import { ChooserClient, environmentConfig, templateRegistry } from '$lib'
   import { FieldSelect, FieldText, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
-  import { derivedStore } from '@txstate-mws/svelte-store'
   import { type SubmitResponse, type Feedback, FormStore, SubForm } from '@txstate-mws/svelte-forms'
   import type { CreateWithPageState } from './createwithpage'
   import { createEventDispatcher } from 'svelte'
@@ -17,25 +16,28 @@
   export let pagetreeId: string | undefined = undefined
   export let addName: boolean = true
   const chooserClient = new ChooserClient(pagetreeId)
-  const store: FormStore = new FormStore<CreateWithPageState>(submit, validate)
-  const tkey = derivedStore<string>(store, 'data.templateKey')
-  function reactToTemplateKey (..._) {
-    store.update(v => ({ ...v, data: { ...v.data, data: { ...v.data.data, areas: templateRegistry.getTemplate(v.data.templateKey)?.defaultContent } } }))
+  const store = new FormStore<CreateWithPageState>(submitWrapper, validateWrapper)
+  async function submitWrapper (state: CreateWithPageState) {
+    if (!state.templateKey) return await submit(state)
+    return await submit({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey!)?.defaultContent } })
   }
-  $: reactToTemplateKey($tkey)
+  async function validateWrapper (state: CreateWithPageState) {
+    if (!state.templateKey) return await validate?.(state) ?? []
+    return await validate?.({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey)?.defaultContent } }) ?? []
+  }
   function escape () {
     store.reset()
     dispatch('escape')
   }
 </script>
 
-<FormDialog {chooserClient} {title} {submit} {validate} {store} on:escape={escape} on:saved let:data>
+<FormDialog {chooserClient} {title} submit={submitWrapper} validate={validateWrapper} {store} on:escape={escape} on:saved let:data>
   {#if addName}
     <FieldText path='name' label='Name' required/>
   {/if}
   <FieldSelect path='templateKey' label='Root Page Template' placeholder='Select' choices={templateChoices}/>
   <SubForm path='data' conditional={isNotNull($store.data?.templateKey)} let:value>
-    {@const template = templateRegistry.getTemplate($store.data.templateKey)}
+    {@const template = templateRegistry.getTemplate($store.data.templateKey ?? '')}
     {#if template && template.dialog}
       <svelte:component this={template.dialog} creating={true} data={value} templateProperties={template.templateProperties} {environmentConfig} />
     {:else}
