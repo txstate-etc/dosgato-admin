@@ -124,8 +124,15 @@
 
   async function onAddComponentSubmit (data: any) {
     const resp = await pageEditorStore.addComponentSubmit(data)
-    if (resp?.success) await refreshIframe()
-    return resp!
+    if (resp?.success) {
+      await refreshIframe()
+      return resp!
+    } else {
+      return {
+        ...resp,
+        data
+      }
+    }
   }
 
   async function onEditComponentValidate (data: any) {
