@@ -203,8 +203,10 @@
     {/each}
   </div>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
-  to steal credentials from other editors! -->
-  <iframe use:messages sandbox="allow-scripts" src={iframesrc} title="page preview for editing" on:load={iframeload}></iframe>
+  to steal credentials from other editors!
+  UPDATE: I'm  going to go ahead and add allow-same-origin for now and we'll explore putting the render server on
+  a separate subdomain or port to prevent credential exposure. -->
+  <iframe use:messages sandbox="allow-scripts allow-same-origin" src={iframesrc} title="page preview for editing" on:load={iframeload}></iframe>
 </ActionPanel>
 
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
