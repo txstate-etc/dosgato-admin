@@ -17,6 +17,7 @@ module.exports = {
 		'no-use-before-define': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/array-type': 'off',
+		'@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }]
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-unused-vars': 'off', // typescript does this better
 		'@typescript-eslint/prefer-nullish-coalescing': ['error', { ignoreConditionalTests: true }],

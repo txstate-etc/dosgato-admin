@@ -147,7 +147,7 @@ class API {
       })
     })
     if (!response.ok) {
-      if (response.status === 401) return handleUnauthorized(environmentConfig, response) as any
+      if (response.status === 401) handleUnauthorized(environmentConfig, response)
       else throw error(response.status, response.statusText)
     }
     const gqlresponse = await response.json()
@@ -808,7 +808,7 @@ class API {
     return {
       ...updatePage,
       messages: messageForDialog(updatePage.messages, msgPrefix),
-      data: get(updatePage.page.data, path)?.slice(-1)[0]
+      data: validateOnly || !updatePage.success ? data : get(updatePage.page.data, path)?.slice(-1)[0]
     }
   }
 
@@ -819,7 +819,7 @@ class API {
     return {
       ...updatePage,
       messages: messageForDialog(updatePage.messages, msgPrefix),
-      data: get(updatePage.page.data, path)
+      data: validateOnly || !updatePage.success ? data : get(updatePage.page.data, path)
     }
   }
 

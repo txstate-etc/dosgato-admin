@@ -1,7 +1,8 @@
-import type { ComponentData, PageData, UITemplate } from '@dosgato/templating'
+import type { ComponentData, PageData, UITemplate, ValidationFeedback } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
 import { get, isBlank, randomid, set } from 'txstate-utils'
 import { api, type PageEditorPage, templateRegistry, toast } from '$lib'
+import type { Feedback } from '@txstate-mws/svelte-forms'
 
 export interface IPageEditorStore {
   editors: Record<string, EditorState | undefined>
@@ -143,9 +144,9 @@ class PageEditorStore extends Store<IPageEditorStore> {
 
   async addComponentSubmit (data: any, validateOnly?: boolean) {
     const pageId = this.value.active
-    if (!pageId) return
+    if (!pageId) return { success: false, messages: [] as Feedback[], data }
     const editorState = this.value.editors[pageId]
-    if (!editorState?.creating?.templateKey) return
+    if (!editorState?.creating?.templateKey) return { success: false, messages: [] as Feedback[], data }
     const def = templateRegistry.getTemplate(editorState.creating.templateKey)
     const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey, areas: def?.defaultContent }, { validateOnly })
     if (!validateOnly && resp.success) {
@@ -163,9 +164,9 @@ class PageEditorStore extends Store<IPageEditorStore> {
 
   async editComponentSubmit (data: any, validateOnly?: boolean) {
     const pageId = this.value.active
-    if (!pageId) return
+    if (!pageId) return { success: false, messages: [] as Feedback[], data }
     const editorState = this.value.editors[pageId]
-    if (!editorState?.editing) return
+    if (!editorState?.editing) return { success: false, messages: [] as Feedback[], data }
     const resp = await api.editComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.editing.path, data, { validateOnly })
     if (!validateOnly && resp.success) {
       this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
