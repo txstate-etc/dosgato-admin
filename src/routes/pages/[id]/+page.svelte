@@ -196,10 +196,12 @@
 <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath)} on:returnfocus={onReturnFocus}>
   <div class="page-bar"><span>{$editorStore.page.path}</span>
     {#each pagetemplate.pageBarButtons ?? [] as button}
-      <button class="user-button" on:click={onUserButtonClick(button)}>
-        <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
-        {#if !button.hideLabel}{button.label}{/if}
-      </button>
+      {#if button.shouldAppear?.($editorStore.page.data, $editorStore.page.path)}
+        <button class="user-button" on:click={onUserButtonClick(button)}>
+          <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
+          {#if !button.hideLabel}{button.label}{/if}
+        </button>
+      {/if}
     {/each}
   </div>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
