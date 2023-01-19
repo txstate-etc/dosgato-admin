@@ -196,7 +196,7 @@
 <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath)} on:returnfocus={onReturnFocus}>
   <div class="page-bar"><span>{$editorStore.page.path}</span>
     {#each pagetemplate.pageBarButtons ?? [] as button}
-      {#if button.shouldAppear?.($editorStore.page.data, $editorStore.page.path)}
+      {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
         <button class="user-button" on:click={onUserButtonClick(button)}>
           <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
           {#if !button.hideLabel}{button.label}{/if}
