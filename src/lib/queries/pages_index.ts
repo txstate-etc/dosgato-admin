@@ -15,6 +15,7 @@ modifiedBy {
 }
 published
 publishedAt
+hasUnpublishedChanges
 deleteState
 children {
   id
@@ -46,6 +47,7 @@ export interface TreePage {
   }
   published: boolean
   publishedAt: string
+  hasUnpublishedChanges: boolean
   deleteState: number
   children: {
     id: string

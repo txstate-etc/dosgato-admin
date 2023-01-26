@@ -250,7 +250,7 @@
       { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
       { label: 'Status', id: 'status', fixed: '4em', icon: item => item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : trashSimpleFill, class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
       { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
-      { label: 'By', id: 'modifiedBy', fixed: '3em', get: 'modifiedBy.id' }
+      { label: 'By', id: 'modifiedBy', fixed: '4.3em', get: 'modifiedBy.id' }
     ]}
   />
 </ActionPanel>

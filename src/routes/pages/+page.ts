@@ -25,7 +25,7 @@ async function fetchChildren (item?: TypedPageItem) {
       hasChildren: !!p.children.length,
       modifiedAt,
       publishedAt,
-      status: p.published ? (publishedAt >= modifiedAt ? 'published' : 'modified') : 'unpublished'
+      status: p.published ? (p.hasUnpublishedChanges ? 'modified' : 'published') : 'unpublished'
     }
   })
 }

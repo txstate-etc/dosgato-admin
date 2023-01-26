@@ -18,7 +18,7 @@ li .status {
 .status.deleted {
   color: #555;
 }
-li .modified span {
+li .modified span, li .modifiedBy {
   font-size: 0.9em;
 }
 .modified span.short {
