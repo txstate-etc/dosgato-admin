@@ -220,7 +220,13 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
     id: stringify({ id: asset.id, source: 'assets', type: 'asset', checksum: asset.checksum, siteId: asset.site.id, path: asset.path }),
     bytes: asset.size,
     url: `/assets/${asset.id}/${asset.name}.${asset.extension}`,
-    image: asset.box ? { ...asset.box, thumbnailUrl: asset.thumbnail ? `${environmentConfig.apiBase}/resize/${asset.thumbnail.id}/${asset.name}.${asset.thumbnail.extension}` : undefined } : undefined
+    image: asset.box
+      ? {
+          ...asset.box,
+          thumbnailUrl: `${environmentConfig.apiBase}/assets/${asset.id}/w/150/${asset.checksum}/${asset.name}.${asset.extension}?admin=1`,
+          previewUrl: `${environmentConfig.apiBase}/assets/${asset.id}/w/600/${asset.checksum}/${asset.name}.${asset.extension}?admin=1`
+        }
+      : undefined
   }
 }
 
