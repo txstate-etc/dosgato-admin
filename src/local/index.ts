@@ -8,6 +8,7 @@ import { pageTemplate1 } from './pagetemplate1.js'
 import { pageTemplate2 } from './pagetemplate2.js'
 import { richText } from './richtext.js'
 import { HorizontalRule } from './horizontalrule.js'
+import type { SvelteComponent } from 'svelte'
 
 export * from './login.js'
 
@@ -23,3 +24,5 @@ export const templates = [
   pageTemplate2,
   richText
 ]
+
+export const AssetMetaDialog: typeof SvelteComponent | undefined = undefined
