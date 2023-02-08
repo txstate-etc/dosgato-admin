@@ -33,7 +33,7 @@ import {
   PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES,
   type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS, type ChooserRootPages, CHOOSER_ROOT_PAGES, apiPageToChooserPage,
   type ChooserPageByLink, type ChooserAssetByLink, CHOOSER_PAGE_BY_PATH, type ChooserPageByPath, CHOOSER_ASSET_BY_ID,
-  type ChooserAssetById, type ChooserAssetFolderByLink, CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL, DELETE_ASSET, FINALIZE_DELETE_ASSET, UNDELETE_ASSET, DELETE_ASSET_FOLDER, FINALIZE_DELETE_ASSET_FOLDER, UNDELETE_ASSET_FOLDER
+  type ChooserAssetById, type ChooserAssetFolderByLink, CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL, DELETE_ASSET, FINALIZE_DELETE_ASSET, UNDELETE_ASSET, DELETE_ASSET_FOLDER, FINALIZE_DELETE_ASSET_FOLDER, UNDELETE_ASSET_FOLDER, type MoveComponentResponse, MOVE_COMPONENT, type CreateComponentResponse, CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT, type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -802,122 +802,63 @@ class API {
 
   async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validateOnly?: boolean, comment?: string }) {
     const { validateOnly, comment } = opts ?? {}
+    const { createPageComponent } = await this.query<CreateComponentResponse>(CREATE_COMPONENT, { pageId, data, dataVersion, schemaversion: page.savedAtVersion, path, validateOnly, comment })
     const area = get<any[]>(page, path) ?? []
-    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: set(page, path, [...area, data]), dataVersion, validateOnly, comment })
-    const msgPrefix = `data.${path}.${area.length}`
+    const pathIsTargeted = !isNaN(Number(path.split('.').slice(-1)[0]))
+    const finalPath = path + (pathIsTargeted ? '' : `.${area.length}`)
+    const msgPrefix = `data.${finalPath}`
     return {
-      ...updatePage,
-      messages: messageForDialog(updatePage.messages, msgPrefix),
-      data: validateOnly || !updatePage.success ? data : get(updatePage.page.data, path)?.slice(-1)[0]
+      ...createPageComponent,
+      messages: messageForDialog(createPageComponent.messages, msgPrefix),
+      data: validateOnly || !createPageComponent.success ? data : get(createPageComponent.page, msgPrefix)
     }
   }
 
   async editComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validateOnly?: boolean, comment?: string }) {
     const { validateOnly, comment } = opts ?? {}
-    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: set(page, path, data), dataVersion, validateOnly, comment })
+    const { updatePageComponent } = await this.query<EditComponentResponse>(EDIT_COMPONENT, { pageId, data, dataVersion, schemaversion: page.savedAtVersion, path, validateOnly, comment })
     const msgPrefix = `data.${path}`
     return {
-      ...updatePage,
-      messages: messageForDialog(updatePage.messages, msgPrefix),
-      data: validateOnly || !updatePage.success ? data : get(updatePage.page.data, path)
+      ...updatePageComponent,
+      messages: messageForDialog(updatePageComponent.messages, msgPrefix),
+      data: validateOnly || !updatePageComponent.success ? data : get(updatePageComponent.page.data, path)
     }
   }
 
-  async changeTemplate (pageId: string, templateKey: string, validateOnly?: boolean) {
-    const page = await this.getEditorPage(pageId)
-    if (!page) return { success: false, messages: [{ type: 'error', message: 'Page not found.' }] as Feedback[], data: {} }
-    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: { ...page.data, templateKey }, dataVersion: page.version.version, validateOnly })
+  async changeTemplate (pageId: string, templateKey: string, opts?: { validateOnly?: boolean, comment?: string }) {
+    const { validateOnly, comment } = opts ?? {}
+    const { changePageTemplate } = await this.query<ChangeTemplateResponse>(CHANGE_PAGE_TEMPLATE, { pageId, templateKey, comment, validateOnly })
     return {
-      ...omit(updatePage, 'page'),
-      messages: updatePage.messages.map<Feedback>(m => ({ type: m.type, message: m.message })),
-      data: {}
+      ...changePageTemplate,
+      messages: [],
+      data: changePageTemplate.page.data
     }
   }
 
-  async moveComponent (pageId: string, dataVersion: number, page: PageData, from: string, to: string) {
-    const fromObj = get<ComponentData>(page, from)
-    const fromParts = from.split('.')
-    const fromParentParts = fromParts.slice(0, -1)
-    const fromParent = fromParentParts.join('.')
-    const fromIdx = Number(fromParts[fromParts.length - 1])
-
-    const toParts = to.split('.')
-    const toObj = get<ComponentData | ComponentData[]>(page, to)
-    let toParent = to
-    let toIdx: number
-    if (!Array.isArray(toObj)) {
-      toParent = toParts.slice(0, -1).join('.')
-      toIdx = Number(toParts[toParts.length - 1])
-
-      // when they dragged to the item directly below, reorder below that item
-      if (fromParent === toParent && toIdx === fromIdx + 1) toIdx++
-    } else {
-      toIdx = toObj.length
-    }
-    const toParentParts = toParent.split('.')
-
-    let data = page
-    function add () {
-      const toComponents = get<ComponentData[]>(data, toParent)
-      data = set(data, toParent, toIdx === toComponents.length ? [...toComponents, fromObj] : toComponents.flatMap((c, i) => i === toIdx ? [fromObj, c] : c))
-    }
-    function remove () {
-      data = set(data, fromParent, get<ComponentData[]>(data, fromParent).filter((c, i) => i !== fromIdx))
-    }
-    if (fromParentParts.length > toParentParts.length || (fromParentParts.length === toParentParts.length && toIdx < fromIdx)) {
-      // moving from deep to shallow or up in the same list -> delete then add
-      remove()
-      add()
-    } else {
-      // moving from shallow to deep or down in the same list -> add then delete
-      add()
-      remove()
-    }
-
-    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data, dataVersion })
-    return updatePage
+  async moveComponent (pageId: string, dataVersion: number, page: PageData, fromPath: string, toPath: string) {
+    const { movePageComponent } = await this.query<MoveComponentResponse>(MOVE_COMPONENT, { pageId, schemaversion: page.savedAtVersion, dataVersion, fromPath, toPath })
+    return movePageComponent
   }
 
   async insertComponent (pageId: string, dataVersion: number, pageData: PageData, to: string, componentData: ComponentData) {
-    const toParts = to.split('.')
-    const toObj = get<ComponentData | ComponentData[]>(pageData, to)
-    let toParent = to
-    let toIdx: number
-    if (!Array.isArray(toObj)) {
-      toParent = toParts.slice(0, -1).join('.')
-      toIdx = Number(toParts[toParts.length - 1])
-    } else {
-      toIdx = toObj.length
-    }
-
-    const toComponents = get<ComponentData[]>(pageData, toParent)
-    pageData = set(pageData, toParent, toIdx === toComponents.length ? [...toComponents, componentData] : toComponents.flatMap((c, i) => i === toIdx ? [componentData, c] : c))
-
-    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: pageData, dataVersion })
-    return updatePage
+    const ret = await this.createComponent(pageId, dataVersion, pageData, to, componentData)
+    if (!ret.success) toast(ret.messages.find(m => m.type === 'error')!.message)
+    return ret
   }
 
   async removeComponent (pageId: string, dataVersion: number, page: PageData, path: string, opts?: { comment?: string }) {
     const { comment } = opts ?? {}
-    const m = path.match(/^(.*)\.(\d+)$/)
-    if (!m) return { success: false, page: undefined }
-    const [_, areaPath, index] = m
-    const components = get(page, areaPath) ?? []
-    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: set(page, areaPath, splice(components, Number(index), 1)), dataVersion, comment })
-    return {
-      ...updatePage,
-      messages: [],
-      data: get(updatePage.page.data, path)
-    }
+    const { deletePageComponent } = await this.query<RemoveComponentResponse>(REMOVE_COMPONENT, { pageId, path, dataVersion, schemaversion: page.savedAtVersion, comment })
+    return deletePageComponent
   }
 
   async editPageProperties (pageId: string, dataVersion: number, page: PageData, opts?: { validateOnly?: boolean, comment?: string }) {
     const { validateOnly, comment } = opts ?? {}
-    const { updatePage } = await this.query<UpdatePageResponse>(UPDATE_PAGE, { pageId, data: page, dataVersion, validateOnly, comment })
+    const { updatePageProperties } = await this.query<EditPagePropertiesResponse>(EDIT_PAGE_PROPERTIES, { pageId, data: page, dataVersion, schemaversion: page.savedAtVersion, validateOnly, comment })
     return {
-      ...updatePage,
-      messages: updatePage.messages.map(m => ({ type: m.type, message: m.message, path: m.arg })),
-      data: updatePage.page.data
+      ...updatePageProperties,
+      messages: updatePageProperties.messages.map(m => ({ type: m.type, message: m.message, path: m.arg })),
+      data: updatePageProperties.page.data
     }
   }
 }

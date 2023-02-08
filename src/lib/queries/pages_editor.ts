@@ -107,3 +107,117 @@ export const UPDATE_PAGE = `
 export interface UpdatePageResponse {
   updatePage: MutationResponse & { page: PageEditorPage }
 }
+
+export const MOVE_COMPONENT = `
+  mutation movePageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: DateTime!, $fromPath: String!, $toPath: String!, $comment: String) {
+    movePageComponent (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, fromPath: $fromPath, toPath: $toPath, comment: $comment) {
+      success
+      page {
+        ${EDITOR_PAGE_DETAILS}
+      }
+      messages {
+        arg
+        type
+        message
+      }
+    }
+  }
+`
+export interface MoveComponentResponse {
+  movePageComponent: MutationResponse & { page: PageEditorPage }
+}
+
+export const CREATE_COMPONENT = `
+  mutation createPageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: DateTime!, $path: String!, $data: JsonData!, $comment: String, $validateOnly: Boolean) {
+    createPageComponent (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, path: $path, data: $data, comment: $comment, validateOnly: $validateOnly) {
+      success
+      page {
+        ${EDITOR_PAGE_DETAILS}
+      }
+      messages {
+        arg
+        type
+        message
+      }
+    }
+  }
+`
+export interface CreateComponentResponse {
+  createPageComponent: MutationResponse & { page: PageEditorPage }
+}
+
+export const EDIT_COMPONENT = `
+  mutation updatePageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: DateTime!, $path: String!, $data: JsonData!, $comment: String, $validateOnly: Boolean) {
+    updatePageComponent (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, path: $path, data: $data, comment: $comment, validateOnly: $validateOnly) {
+      success
+      page {
+        ${EDITOR_PAGE_DETAILS}
+      }
+      messages {
+        arg
+        type
+        message
+      }
+    }
+  }
+`
+export interface EditComponentResponse {
+  updatePageComponent: MutationResponse & { page: PageEditorPage }
+}
+
+export const EDIT_PAGE_PROPERTIES = `
+  mutation updatePageProperties ($pageId: ID!, $dataVersion: Int!, $schemaversion: DateTime!, $data: JsonData!, $comment: String, $validateOnly: Boolean) {
+    updatePageProperties (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, data: $data, comment: $comment, validateOnly: $validateOnly) {
+      success
+      page {
+        ${EDITOR_PAGE_DETAILS}
+      }
+      messages {
+        arg
+        type
+        message
+      }
+    }
+  }
+`
+export interface EditPagePropertiesResponse {
+  updatePageProperties: MutationResponse & { page: PageEditorPage }
+}
+
+export const REMOVE_COMPONENT = `
+  mutation deletePageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: DateTime!, $path: String!, $comment: String) {
+    deletePageComponent (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, path: $path, comment: $comment) {
+      success
+      page {
+        ${EDITOR_PAGE_DETAILS}
+      }
+      messages {
+        arg
+        type
+        message
+      }
+    }
+  }
+`
+export interface RemoveComponentResponse {
+  deletePageComponent: MutationResponse & { page: PageEditorPage }
+}
+
+export const CHANGE_PAGE_TEMPLATE = `
+  mutation changePageTemplate ($pageId: ID!, $dataVersion: Int, $templateKey: String!, $comment: String, $validateOnly: Boolean) {
+    changePageTemplate (pageId: $pageId, dataVersion: $dataVersion, templateKey: $templateKey, comment: $comment, validateOnly: $validateOnly) {
+      success
+      page {
+        ${EDITOR_PAGE_DETAILS}
+      }
+      messages {
+        arg
+        type
+        message
+      }
+    }
+  }
+`
+export interface ChangeTemplateResponse {
+  changePageTemplate: MutationResponse & { page: PageEditorPage }
+}

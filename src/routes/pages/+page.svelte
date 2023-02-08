@@ -233,7 +233,7 @@
     return await api.changeTemplate($store.selectedItems[0].id, data.templateKey)
   }
   async function validateChangeTemplate (data: { templateKey: string }) {
-    const resp = await api.changeTemplate($store.selectedItems[0].id, data.templateKey, true)
+    const resp = await api.changeTemplate($store.selectedItems[0].id, data.templateKey, { validateOnly: true })
     return resp.messages
   }
   async function onChangeTemplateSaved () {
