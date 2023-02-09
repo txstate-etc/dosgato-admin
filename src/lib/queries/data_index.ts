@@ -233,7 +233,7 @@ export const DELETE_DATA_FOLDERS = `
 `
 
 export const RENAME_DATA_FOLDER = `
-  mutation renameDataFolder ($folderId: ID!, $name: String!) {
+  mutation renameDataFolder ($folderId: ID!, $name: UrlSafeString!) {
     renameDataFolder (folderId: $folderId, name: $name) {
       ${mutationResponse}
       dataFolder {
@@ -282,7 +282,7 @@ export const CREATE_DATA_ITEM = `
 `
 
 export const RENAME_DATA = `
-  mutation renameDataEntry ($dataId: ID!, $name: String!, $validateOnly: Boolean) {
+  mutation renameDataEntry ($dataId: ID!, $name: UrlSafeString!, $validateOnly: Boolean) {
     renameDataEntry (dataId: $dataId, name: $name, validateOnly: $validateOnly) {
       ${mutationResponse}
       data {
