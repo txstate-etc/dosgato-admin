@@ -12,7 +12,7 @@
     "lint": "eslint --ignore-path .gitignore ."
   },
   "dependencies": {
-    "@dosgato/dialog": ">=0.0.39",
+    "@dosgato/dialog": ">=0.0.41",
     "@dosgato/templating":">=0.0.109",
     "@iconify-icons/file-icons": "^1.2.2",
     "@iconify-icons/mdi": "^1.2.8",
