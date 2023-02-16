@@ -35,8 +35,8 @@ services:
       - ../dosgato/src:/usr/app/src
       - ../dosgato/testserver:/usr/app/testserver
       - ../dosgato/bootstrap:/bootstrap
-      - ../dosgato/test/files/blankpdf.pdf:/files/storage/d7/31/d520ca21a90b2ca28b5068cfdd678dbd3ace
-      - ../dosgato/test/files/bobcat.jpg:/files/storage/6c/e1/19a866c6821764edcdd5b30395d0997c8aff
+      - ../dosgato/test/files/blankpdf.pdf:/files/storage/P/K/BUoghpogATqmK14ry1wqKsP-e-S8GVqHKuCxH7k1k
+      - ../dosgato/test/files/bobcat.jpg:/files/storage/Q/7/HN1moFtRWxE_gLyvxM8B2sK5CrjB3482LttjgbWME
     depends_on:
       - mysql
   dosgato-render:
