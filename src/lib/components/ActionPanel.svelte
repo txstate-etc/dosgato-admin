@@ -9,7 +9,6 @@
   import { Store } from '@txstate-mws/svelte-store'
   import { createEventDispatcher, onMount } from 'svelte'
   import { writable } from 'svelte/store'
-  import { randomid } from 'txstate-utils'
   import type { ActionPanelAction, ActionPanelGroup } from './actionpanel'
 
   export let actionsTitle: string|undefined = ''
