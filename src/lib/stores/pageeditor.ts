@@ -1,6 +1,6 @@
-import type { ComponentData, PageData, UITemplate, ValidationFeedback } from '@dosgato/templating'
+import type { ComponentData, PageData, UITemplate } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
-import { get, isBlank, randomid, set } from 'txstate-utils'
+import { get, groupby, isBlank, randomid, set, sortby } from 'txstate-utils'
 import { api, type PageEditorPage, templateRegistry, toast } from '$lib'
 import type { Feedback } from '@txstate-mws/svelte-forms'
 
@@ -33,6 +33,7 @@ export interface EditorState {
     componentEventualPath: string
     data: any
     availableComponents: (UITemplate & { name: string })[]
+    availableComponentsByCategory: { category: string, templates: (UITemplate & { name: string })[] }[]
     templateKey?: string
   }
   scrollY?: number
@@ -128,7 +129,9 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const parentData = isBlank(componentPath) ? editorState.page.data : get<ComponentData>(editorState.page.data, componentPath)
     const templateKey = parentData.templateKey
     const availableComponents = await api.getAvailableComponents(templateKey, area, pageId)
-    this.update(v => set(v, `editors["${pageId}"]`, { ...editorState, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + (String(parentData.areas?.[area]?.length) ?? '0'), data: undefined, availableComponents } }))
+    const availableComponentsByCategory = sortby(Object.entries(groupby(availableComponents, 'displayCategory')).map(([category, templates]) => ({ category, templates })), entry => entry.category !== 'Standard', 'category')
+    for (const entry of availableComponentsByCategory) entry.templates = sortby(entry.templates, 'name')
+    this.update(v => set(v, `editors["${pageId}"]`, { ...editorState, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + (String(parentData.areas?.[area]?.length) ?? '0'), data: undefined, availableComponents, availableComponentsByCategory } }))
     if (availableComponents.length === 1) await this.addComponentChooseTemplate(availableComponents[0].templateKey, refreshIframe)
   }
 
@@ -188,7 +191,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     if (!editorState?.editing) return
     const resp = await api.removeComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.editing.path)
     if (resp.success) {
-      this.updateEditorState(editorState => ({ ...editorState, page: resp.page!, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
+      this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
     } else {
       this.cancelModal()
     }

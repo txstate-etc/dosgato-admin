@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { Dialog, FieldSelect, FormDialog, Icon } from '@dosgato/dialog'
+  import { Dialog, FieldSelect, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
   import type { UITemplate } from '@dosgato/templating'
   import clipboardTextLight from '@iconify-icons/ph/clipboard-text-light'
   import copyLight from '@iconify-icons/ph/copy-light'
@@ -233,14 +233,20 @@
       <Dialog title="Unrecognized Template" on:continue={cancelModal} on:escape={cancelModal}>This content uses an unrecognized template. Please contact support for assistance.</Dialog>
     {/if}
   {:else}
-    <Dialog title="What would you like to add?" cancelText="Cancel" size="large" on:escape={cancelModal}>
-      <div class="component-chooser">
-        {#each $editorStore.creating.availableComponents as availableComponent}
-          <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
-            <Icon icon={availableComponent.preview ?? availableComponent.icon} width="60%" /><br>{availableComponent.name}
-          </button>
+    <Dialog title="What would you like to add?" cancelText="Cancel" continueText="" size="large" on:escape={cancelModal}>
+      <Tabs tabs={$editorStore.creating.availableComponentsByCategory.map(cat => ({ name: cat.category }))}>
+        {#each $editorStore.creating.availableComponentsByCategory as { category, templates } (category)}
+          <Tab name={category}>
+            <div class="component-chooser">
+              {#each templates as availableComponent}
+                <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
+                  <Icon icon={availableComponent.preview ?? availableComponent.icon} width="60%" /><br>{availableComponent.name}
+                </button>
+              {/each}
+            </div>
+          </Tab>
         {/each}
-      </div>
+      </Tabs>
     </Dialog>
   {/if}
 {:else if $editorStore.modal === 'delete' && $editorStore.editing}
