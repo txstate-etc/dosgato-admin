@@ -9,7 +9,7 @@ deleteState
 folders {
   id
 }
-assets (filter: { deleted: HIDE }) {
+assets {
   id
 }
 permissions {
@@ -83,10 +83,12 @@ export interface TreeAsset {
 }
 
 export const GET_ASSET_ROOTS = `
-  query getRootPages {
+  query getRootAssetFolders {
     sites {
-      assetroot {
-        ${assetFolderDetails}
+      pagetrees {
+        rootAssetFolder {
+          ${assetFolderDetails}
+        }
       }
     }
   }
@@ -99,7 +101,7 @@ export const GET_ASSETFOLDER_CHILDREN = `
       folders {
         ${assetFolderDetails}
       }
-      assets (filter: { deleted: HIDE }) {
+      assets {
         ${assetDetails}
       }
     }

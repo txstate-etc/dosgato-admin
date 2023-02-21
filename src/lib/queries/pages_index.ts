@@ -76,14 +76,12 @@ export interface RootTreePage extends TreePage {
 
 export const GET_ROOT_PAGES = `
   query getRootPages {
-    sites {
-      pagetrees {
-        rootPage {
-          ${pageDetails}
-          pagetree {
-            type
-            name
-          }
+    pagetrees {
+      rootPage {
+        ${pageDetails}
+        pagetree {
+          type
+          name
         }
       }
     }

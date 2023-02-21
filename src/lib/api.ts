@@ -1,8 +1,8 @@
 import { base } from '$app/paths'
 import type { AssetFolderLink, AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
-import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
-import { get, isBlank, keyby, omit, pick, set, splice, toArray } from 'txstate-utils'
+import { MessageType } from '@txstate-mws/svelte-forms'
+import { get, isBlank, keyby, pick, toArray } from 'txstate-utils'
 import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
@@ -17,7 +17,7 @@ import {
   type TreePage, type UserListUser, type FullUser, type GroupListGroup, type FullGroup, type RoleListRole,
   type FullRole, type SiteListSite, type GetAvailableComponents, type ChooserSubPagesByPath,
   type GetSubFoldersAndAssetsByPath, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule,
-  type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, type UpdatePageResponse, CREATE_PAGE, UPDATE_PAGE, type FullSite,
+  type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, CREATE_PAGE, type FullSite,
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
   GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
@@ -168,8 +168,8 @@ class API {
   }
 
   async getRootPages () {
-    const { sites } = await this.query<{ sites: { pagetrees: { rootPage: RootTreePage }[] }[] }>(GET_ROOT_PAGES)
-    return sites.flatMap(s => s.pagetrees.map(t => t.rootPage))
+    const { pagetrees } = await this.query<{ pagetrees: { rootPage: RootTreePage }[] }>(GET_ROOT_PAGES)
+    return pagetrees.map(t => t.rootPage)
   }
 
   async getSubPages (pageId: string) {
@@ -238,8 +238,8 @@ class API {
   }
 
   async getRootAssetFolders () {
-    const { sites } = await this.query<{ sites: { assetroot: TreeAssetFolder }[] }>(GET_ASSET_ROOTS)
-    return sites.map(s => s.assetroot)
+    const { sites } = await this.query<{ sites: { pagetrees: { rootAssetFolder: TreeAssetFolder }[] }[] }>(GET_ASSET_ROOTS)
+    return sites.flatMap(s => s.pagetrees.map(pt => pt.rootAssetFolder))
   }
 
   async createAssetFolder (args: CreateAssetFolderInput, validateOnly?: boolean) {
