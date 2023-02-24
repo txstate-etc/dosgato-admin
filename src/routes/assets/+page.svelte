@@ -13,6 +13,7 @@
   import deleteEmpty from '@iconify-icons/mdi/delete-empty'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import uploadLight from '@iconify-icons/ph/upload-light'
+  import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState } from '$lib'
@@ -30,7 +31,7 @@
         ]
       : [
           { label: 'Upload', icon: uploadLight, disabled: !item.permissions.create, onClick: () => { modal = 'upload'; selectedFolder = item as TypedAssetFolderItem } },
-          { label: 'Rename Folder', icon: pencilIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { modal = 'rename'; selectedFolder = item as TypedAssetFolderItem } },
+          { label: 'Rename Folder', icon: renameIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { modal = 'rename'; selectedFolder = item as TypedAssetFolderItem } },
           { label: 'Create Folder', icon: folderPlusLight, disabled: !item.permissions.create, onClick: () => { modal = 'create'; selectedFolder = item as TypedAssetFolderItem } }
         ]
     if ($store.copied.size) {
