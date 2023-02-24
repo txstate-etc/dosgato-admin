@@ -3,7 +3,7 @@
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
-  import downloadLight from '@iconify-icons/ph/download-light'
+  import download from '@iconify-icons/ph/download'
   import fileXLight from '@iconify-icons/ph/file-x-light'
   import folderLight from '@iconify-icons/ph/folder-light'
   import folderPlusLight from '@iconify-icons/ph/folder-plus-light'
@@ -26,7 +26,7 @@
     const actions: ActionPanelAction[] = item.kind === 'asset'
       ? [
           { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: () => goto(base + '/assets/' + item.id) },
-          { label: 'Download', icon: downloadLight, onClick: () => { goto(`${environmentConfig.apiBase}/assets/${item.id}/${item.filename}?admin=1`) } }
+          { label: 'Download', icon: download, onClick: () => { goto(`${environmentConfig.apiBase}/assets/${item.id}/${item.filename}?admin=1`) } }
         ]
       : [
           { label: 'Upload', icon: uploadLight, disabled: !item.permissions.create, onClick: () => { modal = 'upload'; selectedFolder = item as TypedAssetFolderItem } },

@@ -18,6 +18,7 @@
   import squareIcon from '@iconify-icons/mdi/square'
   import trashSimpleFill from '@iconify-icons/ph/trash-simple-fill'
   import triangleIcon from '@iconify-icons/mdi/triangle'
+  import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
@@ -215,7 +216,7 @@
     if (item.type === DataTreeNodeType.DATA) {
       const actions: ActionPanelAction[] = [
         { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { onClickEdit() } },
-        { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamedata' } }
+        { label: 'Rename', icon: renameIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamedata' } }
       ]
       if ($store.copied.size) {
         actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
@@ -235,7 +236,7 @@
       return actions
     } else if (item.type === DataTreeNodeType.FOLDER) {
       return [
-        { label: 'Rename', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamefolder' } },
+        { label: 'Rename', icon: renameIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamefolder' } },
         { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => { modal = 'adddata' } },
         { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => { modal = 'deletefolder' } },
         { label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} },

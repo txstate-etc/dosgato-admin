@@ -1,13 +1,13 @@
 <script lang="ts">
   import applicationOutline from '@iconify-icons/mdi/application-outline'
-  import copySimpleLight from '@iconify-icons/ph/copy-simple-light'
+  import copySimple from '@iconify-icons/ph/copy-simple'
   import deleteEmpty from '@iconify-icons/mdi/delete-empty'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
-  import archiveLight from '@iconify-icons/ph/archive-light'
+  import archive from '@iconify-icons/ph/archive'
   import sandboxIcon from '@iconify-icons/file-icons/sandbox'
   import circleIcon from '@iconify-icons/mdi/circle'
   import fileXLight from '@iconify-icons/ph/file-x-light'
-  import layoutLight from '@iconify-icons/ph/layout-light'
+  import layout from '@iconify-icons/ph/layout'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import publishIcon from '@iconify-icons/mdi/publish'
@@ -22,6 +22,7 @@
   import importIcon from '@iconify-icons/mdi/import'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import trashSimpleFill from '@iconify-icons/ph/trash-simple-fill'
+  import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
@@ -42,7 +43,7 @@
   const siteIcon = {
     PRIMARY: applicationOutline,
     SANDBOX: sandboxIcon,
-    ARCHIVE: archiveLight
+    ARCHIVE: archive
   }
 
   function singlepageactions (page: TypedPageItem, ..._: any) {
@@ -62,9 +63,9 @@
       id: 'simple',
       actions: [
         { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
-        { label: 'Rename', icon: pencilIcon, disabled: !page.permissions.move, onClick: () => { modal = 'renamepage' } },
-        { label: 'Change Template', icon: layoutLight, disabled: !page.permissions.update, onClick: onClickTemplateChange },
-        { label: 'Preview in new window', icon: copySimpleLight, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${page.pagetree.id}/latest${page.path}.html`), '_blank') } }
+        { label: 'Rename', icon: renameIcon, disabled: !page.permissions.move, onClick: () => { modal = 'renamepage' } },
+        { label: 'Change Template', icon: layout, disabled: !page.permissions.update, onClick: onClickTemplateChange },
+        { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${page.pagetree.id}/latest${page.path}.html`), '_blank') } }
       ]
     }
 
