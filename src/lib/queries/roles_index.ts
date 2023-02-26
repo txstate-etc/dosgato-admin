@@ -139,7 +139,7 @@ export const GET_ROLE_BY_ID = `
 `
 
 export const CREATE_ROLE = `
-  mutation createRole ($name: String!, $validateOnly: Boolean) {
+  mutation createRole ($name: UrlSafeString!, $validateOnly: Boolean) {
     createRole (name: $name, validateOnly: $validateOnly) {
       ${mutationResponse}
       role {
@@ -150,7 +150,7 @@ export const CREATE_ROLE = `
 `
 
 export const UPDATE_ROLE = `
-  mutation updateRole ($roleId: ID!, $name: String!, $validateOnly: Boolean) {
+  mutation updateRole ($roleId: ID!, $name: UrlSafeString!, $validateOnly: Boolean) {
     updateRole (roleId: $roleId, name: $name, validateOnly: $validateOnly) {
       ${mutationResponse}
       role {
