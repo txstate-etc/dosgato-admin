@@ -70,7 +70,15 @@ function dropEffect (selectedItems: (TypedAssetFolderItem | TypedAssetItem)[], d
 
   // if we don't have permission to move one of the selected items then the user needs to request a copy operation
   if (selectedItems.some(p => !p.permissions.move)) return userWantsCopy ? 'copy' : 'none'
-  return userWantsCopy ? 'copy' : 'move'
+  const dropRoot = _store.root(dropTarget)
+  const selectedItemsInSameSiteAsTarget = selectedItems.filter(p => _store.root(p).id === dropRoot.id)
+  if (selectedItemsInSameSiteAsTarget.length === selectedItems.length) {
+    return userWantsCopy ? 'copy' : 'move' // if within the site the user can do whatever they are requesting
+  } else if (selectedItemsInSameSiteAsTarget.length) {
+    return 'none' // mixing assets/folders from target site and some other site - weird, how about no
+  } else {
+    return 'copy' // if dragging to another site the operation will be forced into a copy
+  }
 }
 
 export const _store = new TreeStore<AssetItem | AssetFolderItem>(fetchChildren, { copyHandler, moveHandler, dragEligible, dropEffect })
