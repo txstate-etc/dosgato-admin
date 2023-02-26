@@ -12,6 +12,9 @@ const config = {
 			fallback: 'index.html',
 			precompress: true
 		}),
+		output: {
+			preloadStrategy: 'preload-mjs'
+		},
 		prerender: {
 			entries: []
 		},

@@ -73,4 +73,4 @@ function dropEffect (selectedItems: (TypedAssetFolderItem | TypedAssetItem)[], d
   return userWantsCopy ? 'copy' : 'move'
 }
 
-export const _store: TreeStore<AssetItem | AssetFolderItem> = new TreeStore(fetchChildren, { copyHandler, moveHandler, dragEligible, dropEffect })
+export const _store = new TreeStore<AssetItem | AssetFolderItem>(fetchChildren, { copyHandler, moveHandler, dragEligible, dropEffect })

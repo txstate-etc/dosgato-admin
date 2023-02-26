@@ -57,4 +57,4 @@ function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, 
   }
 }
 
-export const _store: TreeStore<PageItem> = new TreeStore(fetchChildren, { copyHandler, dragEligible, dropEffect, moveHandler })
+export const _store = new TreeStore<PageItem>(fetchChildren, { copyHandler, dragEligible, dropEffect, moveHandler })

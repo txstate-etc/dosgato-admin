@@ -92,7 +92,7 @@ export class Loader<T> {
   }
 }
 
-function validateRequired <T = {}> (data: any, requiredFields: string[]) {
+function validateRequired <T = any> (data: any, requiredFields: string[]) {
   const messages: MessageFromAPI[] = []
   for (const field of requiredFields) {
     if (isBlank(data[field])) {
