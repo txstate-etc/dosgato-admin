@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
-  import keyLight from '@iconify-icons/ph/key-light'
+  import keyIcon from '@iconify-icons/ph/key'
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { goto } from '$app/navigation'
@@ -64,7 +64,7 @@
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Roles'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/roles/' + detail.id)} headers={[
-    { id: 'name', label: 'Name', get: 'name', grow: 4, icon: keyLight }
+    { id: 'name', label: 'Name', get: 'name', grow: 4, icon: keyIcon }
   ]}>
   </Tree>
 </ActionPanel>

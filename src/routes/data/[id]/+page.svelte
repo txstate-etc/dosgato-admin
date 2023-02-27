@@ -3,12 +3,12 @@
   import circleIcon from '@iconify-icons/mdi/circle'
   import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
-  import cubeLight from '@iconify-icons/ph/cube-light'
+  import cube from '@iconify-icons/ph/cube'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import deleteEmpty from '@iconify-icons/mdi/delete-empty'
-  import fileXLight from '@iconify-icons/ph/file-x-light'
+  import fileX from '@iconify-icons/ph/file-x'
   import folderOutline from '@iconify-icons/mdi/folder-outline'
   import folderPlusOutline from '@iconify-icons/mdi/folder-plus-outline'
   import pencilIcon from '@iconify-icons/mdi/pencil'
@@ -142,7 +142,7 @@
 
   function getPathIcon (item: AnyDataTreeItem) {
     const type = item.type
-    if (type === DataTreeNodeType.DATA) return item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : cubeLight
+    if (type === DataTreeNodeType.DATA) return item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : cube
     else if (type === DataTreeNodeType.FOLDER) return folderOutline
     else return applicationOutline
   }
@@ -219,7 +219,7 @@
         { label: 'Rename', icon: renameIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamedata' } }
       ]
       if ($store.copied.size) {
-        actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+        actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
       } else {
         actions.push({ label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() })
       }
@@ -275,7 +275,7 @@
         { label: 'Restore Data', icon: deleteRestore, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.undelete), onClick: () => { modal = 'undeletedata' } }
       ]
       if ($store.copied.size) {
-        actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+        actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
       } else {
         actions.push({ label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() })
       }

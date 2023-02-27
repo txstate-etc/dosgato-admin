@@ -1,7 +1,7 @@
 <script lang="ts">
   import { bytesToHuman } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
-  import uploadLight from '@iconify-icons/ph/upload-light'
+  import uploadIcon from '@iconify-icons/ph/upload'
   import { DetailList, DetailPanel, environmentConfig, UploadUI, StyledList, dateStamp } from '$lib'
   import { getAssetDetail, type AssetDetail } from './helpers'
 
@@ -46,7 +46,7 @@
 <div class="container">
   <div class:hasimage={image}>
     <DetailPanel header={asset.filename} button={[
-      { icon: uploadLight, hiddenLabel: 'upload new file for asset', onClick: onUploadClick },
+      { icon: uploadIcon, hiddenLabel: 'upload new file for asset', onClick: onUploadClick },
       { icon: pencilIcon, hiddenLabel: 'edit asset details', onClick: onEditClick }
     ]}>
       <DetailList records={{

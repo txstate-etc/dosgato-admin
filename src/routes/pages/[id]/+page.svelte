@@ -3,14 +3,14 @@
   import { base } from '$app/paths'
   import { Dialog, FieldSelect, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
   import type { UITemplate } from '@dosgato/templating'
-  import clipboardTextLight from '@iconify-icons/ph/clipboard-text-light'
-  import copyLight from '@iconify-icons/ph/copy-light'
-  import copySimpleLight from '@iconify-icons/ph/copy-simple-light'
-  import fileXLight from '@iconify-icons/ph/file-x-light'
+  import clipboardText from '@iconify-icons/ph/clipboard-text'
+  import copyIcon from '@iconify-icons/ph/copy'
+  import copySimple from '@iconify-icons/ph/copy-simple'
+  import fileX from '@iconify-icons/ph/file-x'
   import historyIcon from '@iconify-icons/mdi/history'
   import pencilIcon from '@iconify-icons/mdi/pencil'
-  import scissorsLight from '@iconify-icons/ph/scissors-light'
-  import trashLight from '@iconify-icons/ph/trash-light'
+  import scissors from '@iconify-icons/ph/scissors'
+  import trash from '@iconify-icons/ph/trash'
   import { printIf } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate, ChooserClient } from '$lib'
   import { getTempToken } from './helpers'
@@ -28,29 +28,29 @@
       // nothing selected
       return [
         { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
-        { label: 'Preview in new window', icon: copySimpleLight, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${$editorStore.page.pagetree.id}/latest${$editorStore.page.path}.html`), '_blank') } },
+        { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${$editorStore.page.pagetree.id}/latest${$editorStore.page.path}.html`), '_blank') } },
         { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.versions.length === 0 }
       ]
     } else if (/\.\d+$/.test(selectedPath)) {
       // edit bar selected
       return [
         { label: 'Edit', icon: pencilIcon, onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
-        { label: 'Delete', icon: trashLight, onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) },
+        { label: 'Delete', icon: trash, onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) },
         ...($actionsStore.clipboardActive
           ? [
-              { label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, icon: fileXLight, onClick: () => pageEditorStore.clearClipboard() }
+              { label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, icon: fileX, onClick: () => pageEditorStore.clearClipboard() }
             ]
           : [
-              { label: 'Cut', icon: scissorsLight, onClick: () => pageEditorStore.cutComponent(selectedPath) },
-              { label: 'Copy', icon: copyLight, onClick: () => pageEditorStore.copyComponent(selectedPath) }
+              { label: 'Cut', icon: scissors, onClick: () => pageEditorStore.cutComponent(selectedPath) },
+              { label: 'Copy', icon: copyIcon, onClick: () => pageEditorStore.copyComponent(selectedPath) }
             ]),
-        { label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardTextLight, disabled: !$editorStore.pasteAllowed, onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) }
+        { label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardText, disabled: !$editorStore.pasteAllowed, onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) }
       ]
     } else {
       // new bar selected
       const actions: ActionPanelAction[] = []
       if ($actionsStore.clipboardActive) actions.push({ label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, onClick: () => pageEditorStore.clearClipboard() })
-      actions.push({ label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardTextLight, disabled: !$editorStore.pasteAllowed, onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) })
+      actions.push({ label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardText, disabled: !$editorStore.pasteAllowed, onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) })
       return actions
     }
   }

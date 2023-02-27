@@ -4,15 +4,15 @@
   import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
   import download from '@iconify-icons/ph/download'
-  import fileXLight from '@iconify-icons/ph/file-x-light'
-  import folderLight from '@iconify-icons/ph/folder-light'
-  import folderPlusLight from '@iconify-icons/ph/folder-plus-light'
-  import folderNotchOpenLight from '@iconify-icons/ph/folder-notch-open-light'
+  import fileX from '@iconify-icons/ph/file-x'
+  import folderIcon from '@iconify-icons/ph/folder'
+  import folderPlus from '@iconify-icons/ph/folder-plus'
+  import folderNotchOpen from '@iconify-icons/ph/folder-notch-open'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import deleteEmpty from '@iconify-icons/mdi/delete-empty'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
-  import uploadLight from '@iconify-icons/ph/upload-light'
+  import uploadIcon from '@iconify-icons/ph/upload'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
@@ -30,13 +30,13 @@
           { label: 'Download', icon: download, onClick: () => { goto(`${environmentConfig.apiBase}/assets/${item.id}/${item.filename}?admin=1`) } }
         ]
       : [
-          { label: 'Upload', icon: uploadLight, disabled: !item.permissions.create, onClick: () => { modal = 'upload'; selectedFolder = item as TypedAssetFolderItem } },
+          { label: 'Upload', icon: uploadIcon, disabled: !item.permissions.create, onClick: () => { modal = 'upload'; selectedFolder = item as TypedAssetFolderItem } },
           { label: 'Download', icon: download, onClick: () => goto(`${environmentConfig.apiBase}/assets/zip/${item.id}/${item.name}.zip`) },
           { label: 'Rename Folder', icon: renameIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { modal = 'rename'; selectedFolder = item as TypedAssetFolderItem } },
-          { label: 'Create Folder', icon: folderPlusLight, disabled: !item.permissions.create, onClick: () => { modal = 'create'; selectedFolder = item as TypedAssetFolderItem } }
+          { label: 'Create Folder', icon: folderPlus, disabled: !item.permissions.create, onClick: () => { modal = 'create'; selectedFolder = item as TypedAssetFolderItem } }
         ]
     if ($store.copied.size) {
-      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
     } else {
       actions.push(
         { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
@@ -61,7 +61,7 @@
     if (!pages?.length) return []
     const actions: ActionPanelAction[] = []
     if ($store.copied.size) {
-      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
     } else {
       actions.push(
         { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
@@ -157,7 +157,7 @@
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Assets'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={onChoose}
     headers={[
-      { label: 'Path', id: 'name', grow: 5, icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : (item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpenLight : folderLight)), render: itm => 'filename' in itm ? itm.filename : itm.name },
+      { label: 'Path', id: 'name', grow: 5, icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : (item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpen : folderIcon)), render: itm => 'filename' in itm ? itm.filename : itm.name },
       { label: 'Size', id: 'size', fixed: '6em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },
       { label: 'Type', id: 'type', fixed: '10em', render: itm => itm.kind === 'asset' ? itm.mime.split(';')[0] : '' },
       { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.kind === 'asset' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },

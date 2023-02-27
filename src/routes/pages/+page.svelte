@@ -6,7 +6,7 @@
   import archive from '@iconify-icons/ph/archive'
   import sandboxIcon from '@iconify-icons/file-icons/sandbox'
   import circleIcon from '@iconify-icons/mdi/circle'
-  import fileXLight from '@iconify-icons/ph/file-x-light'
+  import fileX from '@iconify-icons/ph/file-x'
   import layout from '@iconify-icons/ph/layout'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
@@ -79,7 +79,7 @@
     }
 
     if ($store.copied.size) {
-      movement.actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+      movement.actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
     } else {
       movement.actions.push(
         { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
@@ -117,7 +117,7 @@
       { label: 'Unpublish', icon: publishOffIcon, disabled: pages.some(p => !p.permissions.unpublish), onClick: () => { modal = 'unpublishpages' } }
     ]
     if ($store.copied.size) {
-      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileXLight, onClick: () => { store.cancelCopy() } })
+      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
     } else {
       actions.push(
         { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
