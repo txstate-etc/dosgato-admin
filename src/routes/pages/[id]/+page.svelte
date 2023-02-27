@@ -290,7 +290,7 @@
     cursor: pointer;
   }
   .page-bar {
-    background-color: var(--dg-page-bar-bg, #00507A);
+    background-color: var(--dg-page-bar-bg, #501214);
     color: var(--dg-page-bar-text, white);
     padding: 0.2em 0.5em;
     display: flex;

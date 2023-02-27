@@ -111,7 +111,8 @@
     display: inline-block;
     position: relative;
     height: 100%;
-    border: 1px solid #888888;
+    border: 2px solid #888888;
+    border-radius: 4px;
     transition: 0.3s;
   }
   @media (prefers-reduced-motion) {

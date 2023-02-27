@@ -55,12 +55,12 @@
     <div class="topbar">
       <div class="logo"></div>
       <ul class="topnav">
-        {#if $globalStore.access.viewPageManager}<li><LabeledIcon href="{base}/pages" icon={fileCodeLight} label="Pages"/></li>{/if}
-        {#if $globalStore.access.viewAssetManager}<li><LabeledIcon href="{base}/assets" icon={copySimpleLight} label="Assets" /></li>{/if}
-        {#if $globalStore.access.viewDataManager}<li><LabeledIcon href="{base}/data" icon={databaseLight} label="Data" /></li>{/if}
-        {#if $globalStore.access.viewSiteManager}<li class="separator"><LabeledIcon href="{base}/sites" icon={globeLight} label="Sites" /></li>{/if}
-        {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager}><LabeledIcon href="{base}/auth/users" icon={usersLight} label="Access" /></li>{/if}
-        {#if $globalStore.access.manageTemplates}<li><LabeledIcon href="{base}/settings/templates" icon={dotsThree} label="More" /></li>{/if}
+        {#if $globalStore.access.viewPageManager}<li class:selected={$page.url.pathname.startsWith(`${base}/pages`)}><LabeledIcon href="{base}/pages" icon={fileCodeLight} label="Pages"/></li>{/if}
+        {#if $globalStore.access.viewAssetManager}<li class:selected={$page.url.pathname.startsWith(`${base}/assets`)}><LabeledIcon href="{base}/assets" icon={copySimpleLight} label="Assets" /></li>{/if}
+        {#if $globalStore.access.viewDataManager}<li class:selected={$page.url.pathname.startsWith(`${base}/data`)}><LabeledIcon href="{base}/data" icon={databaseLight} label="Data" /></li>{/if}
+        {#if $globalStore.access.viewSiteManager}<li class="separator" class:selected={$page.url.pathname.startsWith(`${base}/sites`)}><LabeledIcon href="{base}/sites" icon={globeLight} label="Sites" /></li>{/if}
+        {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager} class:selected={$page.url.pathname.startsWith(`${base}/auth`)}><LabeledIcon href="{base}/auth/users" icon={usersLight} label="Access" /></li>{/if}
+        {#if $globalStore.access.manageTemplates}<li class:selected={$page.url.pathname.startsWith(`${base}/settings`)}><LabeledIcon href="{base}/settings/templates" icon={dotsThree} label="More" /></li>{/if}
       </ul>
       <div class="profile-compact">
         <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
@@ -112,10 +112,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #444444;
-    background-color: #501214;
+    background-color: #f5f1ee;
     padding: 0.5em;
-    color: white;
+    color: #000;
   }
   nav ul {
     padding: 0;
@@ -128,7 +127,20 @@
   }
   .topnav li {
     margin-left: 0.5em;
+    border-radius: 4px;
   }
+  .topnav li :global(a) {
+    border-radius: 4px;
+    padding: 4px 2px;
+  }
+  .topnav li:hover :global(a) {
+    background-color: #d9d4cf;
+  }
+
+  .topnav li.selected :global(a){
+    background-color: #fcfcfc;
+  }
+
   .topnav li.separator {
     position: relative;
     margin-left: 1em;
@@ -146,15 +158,13 @@
   .subnav {
     width: 100%;
     display: flex;
-    background-color: #f5f1ee;
+    background-color: #ccc;
   }
   .subnav div {
     flex-grow: 1;
-    border-bottom: 1px solid #888888;
   }
   .subnav li {
     position: relative;
-    border-right: 1px solid #888888;
   }
   .subnav li a {
     display: block;
@@ -166,7 +176,7 @@
     padding: 0.35em 1.7em 0.35em 1em;
   }
   .subnav li:not(.selected) {
-    border-bottom: 1px solid #888888;
+    background-color: #ebebeb;
   }
   .subnav li.selected {
     background-color: white;

@@ -1,3 +1,7 @@
+:root {
+  --tree-head-bg: #6c6c6c;
+}
+
 html * {
   box-sizing: border-box;
 }
