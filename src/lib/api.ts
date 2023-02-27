@@ -38,8 +38,8 @@ import {
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
 import { environmentConfig, toast } from './stores'
-import { DateTime } from 'luxon'
 import { messageForDialog } from './helpers'
+import { schemaVersion } from './schemaversion'
 
 export interface MutationResponse {
   success: boolean
@@ -470,8 +470,7 @@ class API {
   async addDataEntry (name: string, data: any, templateKey: string, siteId?: string, folderId?: string, validateOnly?: boolean) {
     const resp = validateRequired<{ data: undefined }>({ name }, ['name'])
     if (resp) return resp
-    // TODO: Get actual schema version
-    const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+    const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
     const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem } }>(CREATE_DATA_ITEM, { args: { name, data: dataToSave, siteId, folderId }, validateOnly })
     return createDataEntry
   }
@@ -489,8 +488,7 @@ class API {
   }
 
   async editDataEntry (dataId: string, data: DataData, templateKey: string, dataVersion: number, validateOnly?: boolean) {
-    // TODO: Get actual schema version
-    const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+    const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
     const { updateDataEntry } = await this.query<{ updateDataEntry: MutationResponse & { data: DataItem } }>(UPDATE_DATA, { dataId, args: { data: dataToSave, dataVersion }, validateOnly })
     return updateDataEntry
   }
@@ -604,8 +602,7 @@ class API {
   async addSite (name: string, templateKey: string, data: any, validateOnly?: boolean) {
     const resp = validateRequired<{ site: undefined }>({ name, templateKey, data }, ['name', 'templateKey'])
     if (resp) return resp
-    // TODO: Get actual schema version
-    const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+    const pageData = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
     const { createSite } = await this.query<{ createSite: MutationResponse & { site: SiteListSite } }>(ADD_SITE, { name, data: pageData, validateOnly })
     return createSite
   }
@@ -638,8 +635,7 @@ class API {
   async addPagetree (siteId: string, templateKey: string, data: any, validateOnly?: boolean) {
     const resp = validateRequired<{ pagetree: undefined }>({ templateKey, data }, ['templateKey'])
     if (resp) return resp
-    // TODO: Get actual schema version
-    const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+    const pageData = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
     const { createPagetree } = await this.query<{ createPagetree: MutationResponse & { pagetree: SitePagetree } }>(ADD_PAGETREE, { siteId, data: pageData, validateOnly })
     return createPagetree
   }
@@ -742,8 +738,7 @@ class API {
   async createPage (name: string, templateKey: string, data: any, targetId: string, above: boolean, validateOnly?: boolean) {
     const resp = validateRequired<{ page: undefined }>({ name, templateKey, data }, ['name', 'templateKey'])
     if (resp) return resp
-    // TODO: Get actual schema version
-    const pageData = Object.assign({}, data, { templateKey, savedAtVersion: DateTime.now().toFormat('yLLddHHmmss') })
+    const pageData = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
     const { createPage } = await this.query<{ createPage: MutationResponse & { page: PageEditorPage } }>(CREATE_PAGE, { name, data: pageData, targetId, validateOnly })
     return createPage
   }
