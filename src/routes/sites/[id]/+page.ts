@@ -1,6 +1,6 @@
 import { base } from '$app/paths'
 import { api, siteListStore, SiteDetailStore, subnavStore } from '$lib'
-import globeLight from '@iconify-icons/ph/globe-light'
+import globe from '@iconify-icons/ph/globe'
 import { error, type Load } from '@sveltejs/kit'
 
 export const _store = new SiteDetailStore(getSite)
@@ -15,7 +15,7 @@ export const load: Load<{ id: string }> = async ({ params }) => {
     api.getTemplatesByType('PAGE'),
     api.getTemplatesByType('COMPONENT')
   ])
-  subnavStore.open('sites', { label: site.name, href: base + '/sites/' + site.id, icon: globeLight })
+  subnavStore.open('sites', { label: site.name, href: base + '/sites/' + site.id, icon: globe })
   siteListStore.open({ id: params.id, name: site.name })
   return { organizations, users, allPageTemplates, allComponentTemplates }
 }
