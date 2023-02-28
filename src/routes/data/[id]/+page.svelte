@@ -22,16 +22,14 @@
   import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
-  import { api, ActionPanel, DataTreeNodeType, messageForDialog, templateStore, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient } from '$lib'
+  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, type TemplateListTemplate, type EnhancedUITemplate } from '$lib'
   import '../index.css'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
 
-  export let data: { mayManageGlobalData: boolean }
+  export let data: { mayManageGlobalData: boolean, template: EnhancedUITemplate }
 
+  $: templateKey = data.template.templateKey
   let modal: 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'renamedata' | 'editdata' | 'publishdata' | 'unpublishdata' | 'deletedata' | 'publishdeletedata' | 'undeletedata' | undefined
-
-  $: templateKey = $templateStore?.id
-  $: if ($templateStore) store.refresh()
 
   const chooserClient = new ChooserClient()
 
@@ -113,7 +111,7 @@
     } else {
       const [globaldataroot, sitedataroots] = await Promise.all([
         api.getGlobalDataRootByTemplateKey(templateKey),
-        api.getSiteDataRootsByTemplateKey(templateKey)
+        data.template?.global ? [] : api.getSiteDataRootsByTemplateKey(templateKey)
       ])
       const ret: AnyDataTreeItem[] = []
       ret.push({
@@ -148,7 +146,6 @@
   }
 
   async function moveHandler (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
-    console.log(dropTarget)
     const ids = selectedItems.map(d => d.id)
     if (selectedItems[0].type === DataTreeNodeType.DATA) {
       let target: MoveDataTarget = {}
@@ -521,10 +518,9 @@
     on:saved={onAddDataComplete}>
     <!-- TODO: Need some description text explaining this field -->
     <FieldText path='name' label='Data Name' required></FieldText>
-    {@const reg = templateRegistry.getTemplate($templateStore.id)}
-    {#if reg?.dialog}
+    {#if data.template.dialog}
       <SubForm path='data'>
-        <svelte:component this={reg.dialog} creating={true} {environmentConfig} />
+        <svelte:component this={data.template.dialog} creating={true} {environmentConfig} />
       </SubForm>
     {/if}
   </FormDialog>
@@ -547,10 +543,9 @@
     on:escape={() => { modal = undefined }}
     on:saved={onSaved}
     preload={{ data: itemEditing ? itemEditing.data : {} }}>
-    {@const reg = templateRegistry.getTemplate($templateStore.id)}
-    {#if reg?.dialog}
+    {#if data.template.dialog}
       <SubForm path='data'>
-        <svelte:component this={reg.dialog} creating={false} {data} {environmentConfig} />
+        <svelte:component this={data.template.dialog} creating={false} {data} {environmentConfig} />
       </SubForm>
     {/if}
   </FormDialog>

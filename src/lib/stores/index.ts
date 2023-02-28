@@ -1,7 +1,6 @@
 export * from './global.js'
 export * from './pageeditor.js'
 export * from './userlist.js'
-export * from './datalists.js'
 export * from './userdetail.js'
 export * from './groupdetail.js'
 export * from './roledetail.js'

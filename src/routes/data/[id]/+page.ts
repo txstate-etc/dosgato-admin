@@ -1,15 +1,15 @@
 import { base } from '$app/paths'
-import { api, dataListStore, subnavStore, templateRegistry } from '$lib'
+import { api, subnavStore, templateRegistry } from '$lib'
 import codeJson from '@iconify-icons/mdi/code-json'
 import { error, type Load } from '@sveltejs/kit'
 
 export const load: Load<{ id: string }> = async ({ params }) => {
-  const template = await api.getTemplateInfo(params.id)
+  await templateRegistry.enhanceInfo()
+  const template = templateRegistry.getTemplate(params.id)
   if (!template) throw error(404)
 
-  subnavStore.open('data', { href: base + '/data/' + template.key, label: template.name, icon: templateRegistry.getTemplate(template.key)?.icon ?? codeJson })
-  dataListStore.open({ id: params.id, name: template.name })
+  subnavStore.open('data', { href: base + '/data/' + template.templateKey, label: template.name, icon: template.icon ?? codeJson })
 
-  const mayManageGlobalData = await api.getGlobalDataAccessByTemplateKey(template.key)
-  return { mayManageGlobalData }
+  const mayManageGlobalData = await api.getGlobalDataAccessByTemplateKey(template.templateKey)
+  return { mayManageGlobalData, template }
 }

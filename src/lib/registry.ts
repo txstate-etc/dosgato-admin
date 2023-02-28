@@ -4,7 +4,7 @@ import { Cache } from 'txstate-utils'
 import { templates } from '../local/index.js'
 
 const templateCache = new Cache(async (_, templateMap: Map<string, EnhancedUITemplate>) => {
-  const { templates } = await api.query<{ templates: { key: string, name: string, templateProperties: any, displayCategory?: string, areas: { name: string, availableComponents: { key: string }[] }[] }[] }>('query enhanceTemplateInfo { templates { key name templateProperties displayCategory areas { name availableComponents { key } } } }')
+  const { templates } = await api.query<{ templates: { key: string, name: string, templateProperties: any, displayCategory?: string, global?: boolean, areas: { name: string, availableComponents: { key: string }[] }[] }[] }>('query enhanceTemplateInfo { templates { key name templateProperties displayCategory global areas { name availableComponents { key } } } }')
   for (const t of templates) {
     const old = templateMap.get(t.key)
     if (old) {
@@ -12,6 +12,7 @@ const templateCache = new Cache(async (_, templateMap: Map<string, EnhancedUITem
       old.templateProperties = t.templateProperties
       old.displayCategory = t.displayCategory ?? 'Standard'
       old.areas = new Map()
+      old.global = t.global
       for (const a of t.areas) old.areas.set(a.name, { name: a.name, availableComponents: new Set(a.availableComponents.map(ac => ac.key)) })
     }
   }
@@ -22,6 +23,7 @@ export interface EnhancedUITemplate extends UITemplate {
   templateProperties: any
   displayCategory?: string
   areas: Map<string, { name: string, availableComponents: Set<string> }>
+  global?: boolean
 }
 
 class TemplateRegistry {

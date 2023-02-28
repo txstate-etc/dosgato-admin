@@ -11,10 +11,10 @@
   <div class="grid-wrapper">
     <div class="template-grid">
       {#each data.templates as template (template.key)}
-        <!-- TODO: What if the API returns the template but it is not in the registry here? -->
-        {#if templateRegistry.getTemplate(template.key)}
+        {@const tmpl = templateRegistry.getTemplate(template.key)}
+        {#if tmpl}
           <a href={`${base}/data/${template.key}`}>
-            <Icon icon={(templateRegistry.getTemplate(template.key))?.icon ?? cubeOutline} width="6em"/>
+            <Icon icon={tmpl.icon ?? cubeOutline} width="6em"/>
             <div class="template-name">{template.name}</div>
           </a>
         {/if}

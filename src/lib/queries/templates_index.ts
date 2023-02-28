@@ -1,19 +1,22 @@
 import { mutationResponse } from './global'
 
 const templateDetails = `
+  type
   name
   key
   universal
+  global
   permissions {
     setUniversal
     assign
   }
 `
 export interface TemplateListTemplate {
-  id: string
+  type: 'page' | 'component' | 'data'
   name: string
   key: string
   universal: boolean
+  global?: boolean
   permissions: {
     setUniversal: boolean
     assign: boolean
