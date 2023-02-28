@@ -32,9 +32,9 @@ export class ChooserClient implements Client {
   async findById (id: string): Promise<AnyItem | undefined> {
     const link = parseLink(id)
     if (link.type === 'asset') {
-      return await api.chooserAssetByLink(link)
+      return await api.chooserAssetByLink(link, this.pagetreeId)
     } else if (link.type === 'assetfolder') {
-      return await api.chooserAssetFolderByLink(link)
+      return await api.chooserAssetFolderByLink(link, this.pagetreeId)
     } else if (link.type === 'page') {
       return await api.chooserPageByLink(link, this.pagetreeId)
     }

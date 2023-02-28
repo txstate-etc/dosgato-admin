@@ -213,8 +213,8 @@ class API {
     return [...assets.map(a => apiAssetToChooserAsset(a)!), ...assetfolders.map(f => apiAssetFolderToChooserFolder(f))]
   }
 
-  async chooserAssetByLink (link: AssetLink) {
-    const { assets } = await this.query<ChooserAssetByLink>(CHOOSER_ASSET_BY_LINK, { link: pick(link, 'id', 'siteId', 'path', 'checksum') })
+  async chooserAssetByLink (link: AssetLink, pagetreeId?: string) {
+    const { assets } = await this.query<ChooserAssetByLink>(CHOOSER_ASSET_BY_LINK, { link: { ...pick(link, 'siteId', 'path', 'checksum'), linkId: link.id, context: pagetreeId ? { pagetreeId } : undefined } })
     return apiAssetToChooserAsset(assets[0])
   }
 
@@ -223,8 +223,8 @@ class API {
     return apiAssetToChooserAsset(assets[0])
   }
 
-  async chooserAssetFolderByLink (link: AssetFolderLink) {
-    const { assetfolders } = await this.query<ChooserAssetFolderByLink>(CHOOSER_ASSET_FOLDER_BY_LINK, { link: pick(link, 'id', 'siteId', 'path') })
+  async chooserAssetFolderByLink (link: AssetFolderLink, pagetreeId?: string) {
+    const { assetfolders } = await this.query<ChooserAssetFolderByLink>(CHOOSER_ASSET_FOLDER_BY_LINK, { link: { ...pick(link, 'siteId', 'path'), linkId: link.id, context: pagetreeId ? { pagetreeId } : undefined } })
     return apiAssetFolderToChooserFolder(assetfolders[0])
   }
 
