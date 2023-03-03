@@ -1,4 +1,4 @@
-import type { AnyItem, Asset, ChooserType, Client, Folder, Source } from '@dosgato/dialog'
+import type { AnyItem, ChooserType, Client, Source } from '@dosgato/dialog'
 import type { LinkDefinition } from '@dosgato/templating'
 import { sortby, stringify } from 'txstate-utils'
 import { api } from './api.js'
@@ -49,10 +49,8 @@ export class ChooserClient implements Client {
   }
 
   async findByUrl (url: string) {
-    console.log('findByUrl', url, environmentConfig.assetRegex)
     let m = url.match(environmentConfig.assetRegex)
     if (m) {
-      console.log('looks like an asset')
       const id = m[1]
       return await api.chooserAssetById(id)
     }
