@@ -7,6 +7,8 @@ path
 name
 data
 title
+published
+hasUnpublishedChanges
 pagetree {
   id
 }
@@ -22,6 +24,7 @@ version {
 versions {
   version
   date
+  tags
   user { id }
 }
 `
@@ -36,6 +39,8 @@ export const GET_EDITOR_PAGE = `
 export interface PageEditorPage extends DialogPageProp {
   name: string
   title?: string
+  published: boolean
+  hasUnpublishedChanges: boolean
   pagetree: {
     id: string
   }
@@ -51,6 +56,7 @@ export interface PageEditorPage extends DialogPageProp {
   versions: {
     version: number
     date: string
+    tags: string[]
     user: {
       id
     }

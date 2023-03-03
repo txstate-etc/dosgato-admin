@@ -6,13 +6,14 @@
   import clipboardText from '@iconify-icons/ph/clipboard-text'
   import copyIcon from '@iconify-icons/ph/copy'
   import copySimple from '@iconify-icons/ph/copy-simple'
+  import eye from '@iconify-icons/ph/eye'
   import fileX from '@iconify-icons/ph/file-x'
   import historyIcon from '@iconify-icons/mdi/history'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import scissors from '@iconify-icons/ph/scissors'
   import trash from '@iconify-icons/ph/trash'
   import { printIf } from 'txstate-utils'
-  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate, ChooserClient } from '$lib'
+  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api } from '$lib'
   import { getTempToken } from './helpers'
 
   export let data: { temptoken: string, page: PageEditorPage, pagetemplate: EnhancedUITemplate }
@@ -23,16 +24,32 @@
   let panelelement: HTMLElement
   $: editable = $editorStore.page.permissions.update
 
-  function getActions (selectedPath?: string): ActionPanelAction[] {
-    if (!selectedPath) {
-      // nothing selected
+  function getActions (selectedPath?: string, ..._:any[]): (ActionPanelAction | ActionPanelGroup)[] {
+    if ($editorStore.previewing) {
+      // preview mode
       return [
-        { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
-        { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${$editorStore.page.pagetree.id}/latest${$editorStore.page.path}.html`), '_blank') } },
-        { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.versions.length === 0 }
+        { label: 'Cancel Preview', icon: pencilIcon, onClick: () => pageEditorStore.cancelPreview() }
       ]
+    } else if (!selectedPath) {
+      // editing mode, nothing selected
+      const editGroup: ActionPanelGroup = {
+        id: 'editinggroup',
+        actions: [
+          { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
+          { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.versions.length === 0 }
+        ]
+      }
+      const previewGroup: ActionPanelGroup = {
+        id: 'previewgroup',
+        actions: [
+          { label: 'Preview', icon: eye, onClick: () => pageEditorStore.previewVersion(page.version.version) },
+          { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${$editorStore.page.pagetree.id}/latest${$editorStore.page.path}.html`), '_blank') } },
+          { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions(page.versions.find(v => v.tags.includes('published'))!.version), disabled: !page.published || !page.hasUnpublishedChanges }
+        ]
+      }
+      return [editGroup, previewGroup]
     } else if (/\.\d+$/.test(selectedPath)) {
-      // edit bar selected
+      // editing mode, edit bar selected
       return [
         { label: 'Edit', icon: pencilIcon, onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
         { label: 'Delete', icon: trash, onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) },
@@ -111,6 +128,7 @@
     } else {
       temptoken = newTempToken // if there's a new token, setting it will alter the iframe src and therefore refresh it
     }
+    page = (await api.getEditorPage(page.id)) ?? page
   }
 
   function onAddComponentChooseTemplate (templateKey: string) {
@@ -188,27 +206,38 @@
     if (newtemptoken !== temptoken) temptoken = newtemptoken
   }
 
-  $: iframesrc = editable
+  $: iframesrc = editable && !$editorStore.previewing
     ? `${environmentConfig.renderBase}/.edit/${$pageStore.pagetree.id}${$pageStore.path}?token=${temptoken}`
-    : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/latest${$pageStore.path}?token=${temptoken}`
+    : (
+        $editorStore.previewing?.fromVersion
+          ? `${environmentConfig.renderBase}/.compare/${$pageStore.pagetree.id}/${$editorStore.previewing.fromVersion}/${$editorStore.previewing.version ?? 'latest'}${$pageStore.path}?token=${temptoken}`
+          : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/${$editorStore.previewing?.version ?? 'latest'}${$pageStore.path}?token=${temptoken}`
+      )
 </script>
 
-<ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath)} on:returnfocus={onReturnFocus}>
+<ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath, $editorStore.previewing, page)} on:returnfocus={onReturnFocus}>
   <div class="page-bar"><span>{$editorStore.page.path}</span>
-    {#each pagetemplate.pageBarButtons ?? [] as button}
-      {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
-        <button class="user-button" on:click={onUserButtonClick(button)}>
-          <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
-          {#if !button.hideLabel}{button.label}{/if}
-        </button>
-      {/if}
-    {/each}
+    {#if $editorStore.previewing}
+      <select value={$editorStore.previewing.mode ?? 'desktop'} on:change={function () { console.log(this.value); pageEditorStore.setPreviewMode(this.value) }}>
+        <option value="desktop">Desktop</option>
+        <option value="mobile">Mobile</option>
+      </select>
+    {:else}
+      {#each pagetemplate.pageBarButtons ?? [] as button}
+        {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
+          <button class="user-button" on:click={onUserButtonClick(button)}>
+            <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
+            {#if !button.hideLabel}{button.label}{/if}
+          </button>
+        {/if}
+      {/each}
+    {/if}
   </div>
   <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
   to steal credentials from other editors!
   UPDATE: I'm  going to go ahead and add allow-same-origin for now and we'll explore putting the render server on
   a separate subdomain or port to prevent credential exposure. -->
-  <iframe use:messages sandbox="allow-scripts allow-same-origin" src={iframesrc} title="page preview for editing" on:load={iframeload}></iframe>
+  <iframe use:messages sandbox="allow-scripts allow-same-origin" src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.previewing?.mode === 'mobile'}></iframe>
 </ActionPanel>
 
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
@@ -276,6 +305,11 @@
     border: 0;
     width: 100%;
     height: calc(100% - 2em);
+  }
+  iframe.mobile {
+    border: 1px solid #555555;
+    width: 400px;
+    margin: 0 auto;
   }
 
   .component-chooser {

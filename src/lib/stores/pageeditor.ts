@@ -23,6 +23,11 @@ export interface EditorState {
   cutAllowed?: boolean
   copyAllowed?: boolean
   pasteAllowed?: boolean
+  previewing?: {
+    mode?: 'desktop' | 'mobile'
+    version?: number
+    fromVersion?: number
+  }
   editing?: {
     path: string
     data: any
@@ -269,6 +274,22 @@ class PageEditorStore extends Store<IPageEditorStore> {
 
   saveState (state: any) {
     this.updateEditorState(es => ({ ...es, state }))
+  }
+
+  compareVersions (from: number, to?: number) {
+    this.updateEditorState(es => ({ ...es, previewing: { version: to, fromVersion: from } }))
+  }
+
+  previewVersion (version: number) {
+    this.updateEditorState(es => ({ ...es, previewing: { version } }))
+  }
+
+  setPreviewMode (mode: 'desktop' | 'mobile') {
+    this.updateEditorState(es => ({ ...es, previewing: { ...es.previewing, mode } }))
+  }
+
+  cancelPreview () {
+    this.updateEditorState(es => ({ ...es, previewing: undefined }))
   }
 }
 
