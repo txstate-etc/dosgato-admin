@@ -7,6 +7,7 @@ path
 name
 data
 title
+fallbackTitle
 published
 hasUnpublishedChanges
 pagetree {
@@ -39,6 +40,7 @@ export const GET_EDITOR_PAGE = `
 export interface PageEditorPage extends DialogPageProp {
   name: string
   title?: string
+  fallbackTitle: string
   published: boolean
   hasUnpublishedChanges: boolean
   pagetree: {
