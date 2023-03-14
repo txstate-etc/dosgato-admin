@@ -93,6 +93,7 @@
     validate={validateCreateSite}
     templateChoices={data.pageTemplateChoices}
     on:saved={onCreateSiteComplete}
+    creatingSite={true}
   />
 {:else if modal === 'deletesite'}
   <Dialog

@@ -15,6 +15,7 @@
   export let templateChoices: PopupMenuItem[]
   export let pagetreeId: string | undefined = undefined
   export let addName: boolean = true
+  export let creatingSite: boolean = false
   const chooserClient = new ChooserClient(pagetreeId)
   const store = new FormStore<CreateWithPageState>(submitWrapper, validateWrapper)
   async function submitWrapper (state: CreateWithPageState) {
@@ -33,9 +34,9 @@
 
 <FormDialog {chooserClient} {title} submit={submitWrapper} validate={validateWrapper} {store} on:escape={escape} on:saved let:data>
   {#if addName}
-    <FieldText path='name' label='Name' required/>
+    <FieldText path='name' label={creatingSite ? 'Name' : 'URL Slug'} required/>
   {/if}
-  <FieldSelect path='templateKey' label='Root Page Template' placeholder='Select' choices={templateChoices}/>
+  <FieldSelect path='templateKey' label={`${creatingSite ? 'Root' : ''} Page Template`} placeholder='Select' choices={templateChoices} required/>
   <SubForm path='data' conditional={isNotNull($store.data?.templateKey)} let:value>
     {@const template = templateRegistry.getTemplate($store.data.templateKey ?? '')}
     {#if template && template.dialog}
