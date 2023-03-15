@@ -263,19 +263,23 @@
     {/if}
   {:else}
     <Dialog title="What would you like to add?" cancelText="Cancel" continueText="" size="large" on:escape={cancelModal}>
-      <Tabs tabs={$editorStore.creating.availableComponentsByCategory.map(cat => ({ name: cat.category }))}>
-        {#each $editorStore.creating.availableComponentsByCategory as { category, templates } (category)}
-          <Tab name={category}>
-            <div class="component-chooser">
-              {#each templates as availableComponent}
-                <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
-                  <Icon icon={availableComponent.preview ?? availableComponent.icon} width="60%" /><br>{availableComponent.name}
-                </button>
-              {/each}
-            </div>
-          </Tab>
-        {/each}
-      </Tabs>
+      {#if $editorStore.creating.availableComponents.length}
+        <Tabs tabs={$editorStore.creating.availableComponentsByCategory.map(cat => ({ name: cat.category }))}>
+          {#each $editorStore.creating.availableComponentsByCategory as { category, templates } (category)}
+            <Tab name={category}>
+              <div class="component-chooser">
+                {#each templates as availableComponent}
+                  <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
+                    <Icon icon={availableComponent.preview ?? availableComponent.icon} width="60%" /><br>{availableComponent.name}
+                  </button>
+                {/each}
+              </div>
+            </Tab>
+          {/each}
+        </Tabs>
+      {:else}
+        No components to add.
+      {/if}
     </Dialog>
   {/if}
 {:else if $editorStore.modal === 'delete' && $editorStore.editing}
