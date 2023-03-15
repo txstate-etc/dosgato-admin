@@ -84,12 +84,8 @@ export interface TreeAsset {
 
 export const GET_ASSET_ROOTS = `
   query getRootAssetFolders {
-    sites {
-      pagetrees {
-        rootAssetFolder {
-          ${assetFolderDetails}
-        }
-      }
+    assetfolders (filter: { root: true }) {
+      ${assetFolderDetails}
     }
   }
 `

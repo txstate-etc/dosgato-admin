@@ -238,8 +238,8 @@ class API {
   }
 
   async getRootAssetFolders () {
-    const { sites } = await this.query<{ sites: { pagetrees: { rootAssetFolder: TreeAssetFolder }[] }[] }>(GET_ASSET_ROOTS)
-    return sites.flatMap(s => s.pagetrees.map(pt => pt.rootAssetFolder))
+    const { assetfolders } = await this.query<{ assetfolders: TreeAssetFolder[] }>(GET_ASSET_ROOTS)
+    return assetfolders
   }
 
   async createAssetFolder (args: CreateAssetFolderInput, validateOnly?: boolean) {
