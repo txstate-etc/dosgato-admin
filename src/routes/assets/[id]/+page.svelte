@@ -75,7 +75,7 @@
   </div>
   {#if image}
     <div class="image">
-      <img src="{environmentConfig.apiBase}/assets/{asset.id}/w/500/{asset.checksum}/{encodeURIComponent(asset.name)}?admin=1" width={image.width} height={image.height} alt="">
+      <img src="{environmentConfig.apiBase}/assets/{asset.id}/w/500/{asset.checksum}/{encodeURIComponent(asset.filename)}?admin=1" width={image.width} height={image.height} alt="">
       <div class="details">
         {image.width}x{image.height}
       </div>
