@@ -156,6 +156,27 @@
   </StyledList>
 </DetailPanel>
 
+<DetailPanel header='Page Rules' button={{ icon: plusIcon, onClick: () => { modal = 'addpagerule' }, hiddenLabel: 'Add Page Rule' }}>
+  {#if $store.role.pageRules.length}
+    <ResponsiveTable items={$store.role.pageRules} headers={[
+      { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
+      { id: 'pagetreetype', label: 'Pagetree Type', render: (item) => { return item.pagetreeType ? item.pagetreeType : 'All types' } },
+      { id: 'path', label: 'Path', get: 'path' },
+      { id: 'mode', label: 'Mode', get: 'mode' },
+      { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create permitted' } : { icon: minusIcon, hiddenLabel: 'Create not permitted' } } },
+      { id: 'update', label: 'Update', icon: (item) => { return item.grants.update ? { icon: checkIcon, hiddenLabel: 'Update permitted' } : { icon: minusIcon, hiddenLabel: 'Update not permitted' } } },
+      { id: 'move', label: 'Move', icon: (item) => { return item.grants.move ? { icon: checkIcon, hiddenLabel: 'Move permitted' } : { icon: minusIcon, hiddenLabel: 'Move not permitted' } } },
+      { id: 'publish', label: 'Publish', icon: (item) => { return item.grants.publish ? { icon: checkIcon, hiddenLabel: 'Publish permitted' } : { icon: minusIcon, hiddenLabel: 'Publish not permitted' } } },
+      { id: 'delete', label: 'Delete', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'Delete permitted' } : { icon: minusIcon, hiddenLabel: 'Delete not permitted' } } }
+    ]} rowActions={[
+      { icon: pencilIcon, hiddenLabel: 'Edit Page Rule', label: 'Edit', onClick: (item) => { onClickEdit(item.id, 'page', item) } },
+      { icon: deleteOutline, hiddenLabel: 'Delete Page Rule', label: 'Delete', onClick: (item) => { onClickDelete(item.id, 'page') } }
+    ]}/>
+  {:else}
+    <div>This role has no page rules</div>
+  {/if}
+</DetailPanel>
+
 <DetailPanel header='Asset Rules' button={{ icon: plusIcon, onClick: () => { modal = 'addassetrule' }, hiddenLabel: 'Add Asset Rule' }}>
   {#if $store.role.assetRules.length}
   <ResponsiveTable items={$store.role.assetRules} headers={[
@@ -213,29 +234,6 @@
     ]}/>
   {:else}
     <div>This role has no global rules.</div>
-  {/if}
-</DetailPanel>
-
-<DetailPanel header='Page Rules' button={{ icon: plusIcon, onClick: () => { modal = 'addpagerule' }, hiddenLabel: 'Add Page Rule' }}>
-  {#if $store.role.pageRules.length}
-    <ResponsiveTable items={$store.role.pageRules} headers={[
-      { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
-      { id: 'pagetreetype', label: 'Pagetree Type', render: (item) => { return item.pagetreeType ? item.pagetreeType : 'All types' } },
-      { id: 'path', label: 'Path', get: 'path' },
-      { id: 'mode', label: 'Mode', get: 'mode' },
-      { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create permitted' } : { icon: minusIcon, hiddenLabel: 'Create not permitted' } } },
-      { id: 'update', label: 'Update', icon: (item) => { return item.grants.update ? { icon: checkIcon, hiddenLabel: 'Update permitted' } : { icon: minusIcon, hiddenLabel: 'Update not permitted' } } },
-      { id: 'move', label: 'Move', icon: (item) => { return item.grants.move ? { icon: checkIcon, hiddenLabel: 'Move permitted' } : { icon: minusIcon, hiddenLabel: 'Move not permitted' } } },
-      { id: 'publish', label: 'Publish', icon: (item) => { return item.grants.publish ? { icon: checkIcon, hiddenLabel: 'Publish permitted' } : { icon: minusIcon, hiddenLabel: 'Publish not permitted' } } },
-      { id: 'unpublish', label: 'Unpublish', icon: (item) => { return item.grants.unpublish ? { icon: checkIcon, hiddenLabel: 'Unpublish permitted' } : { icon: minusIcon, hiddenLabel: 'Unpublish not permitted' } } },
-      { id: 'delete', label: 'Delete', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'Delete permitted' } : { icon: minusIcon, hiddenLabel: 'Delete not permitted' } } },
-      { id: 'undelete', label: 'Undelete', icon: (item) => { return item.grants.undelete ? { icon: checkIcon, hiddenLabel: 'Undelete permitted' } : { icon: minusIcon, hiddenLabel: 'Undelete not permitted' } } }
-    ]} rowActions={[
-      { icon: pencilIcon, hiddenLabel: 'Edit Page Rule', label: 'Edit', onClick: (item) => { onClickEdit(item.id, 'page', item) } },
-      { icon: deleteOutline, hiddenLabel: 'Delete Page Rule', label: 'Delete', onClick: (item) => { onClickDelete(item.id, 'page') } }
-    ]}/>
-  {:else}
-    <div>This role has no page rules</div>
   {/if}
 </DetailPanel>
 
