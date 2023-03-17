@@ -134,8 +134,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const parentData = isBlank(componentPath) ? editorState.page.data : get<ComponentData>(editorState.page.data, componentPath)
     const templateKey = parentData.templateKey
     const availableComponents = await api.getAvailableComponents(templateKey, area, pageId)
-    const availableComponentsByCategory = sortby(Object.entries(groupby(availableComponents, 'displayCategory')).map(([category, templates]) => ({ category, templates })), entry => entry.category !== 'Standard', 'category')
-    for (const entry of availableComponentsByCategory) entry.templates = sortby(entry.templates, 'name')
+    const availableComponentsByCategory = Object.entries(groupby(availableComponents, 'displayCategory')).map(([category, templates]) => ({ category, templates }))
     this.update(v => set(v, `editors["${pageId}"]`, { ...editorState, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + (String(parentData.areas?.[area]?.length) ?? '0'), data: undefined, availableComponents, availableComponentsByCategory } }))
     if (availableComponents.length === 1) await this.addComponentChooseTemplate(availableComponents[0].templateKey, refreshIframe)
   }
