@@ -11,8 +11,8 @@
 
   const modeChoices: PopupMenuItem[] = [
     { value: 'SELF', label: 'This path only' },
-    { value: 'SELFANDSUB', label: 'This path and its subfolders' },
-    { value: 'SUB', label: 'Only subfolders of this path' }
+    { value: 'SELFANDSUB', label: 'This path and its subpages' },
+    { value: 'SUB', label: 'Only subpages of this path' }
   ]
 
   const pageTreeTypes: PopupMenuItem[] = [
@@ -96,7 +96,6 @@
   }
 
   async function validateAdd (state: PageRuleDialogState) {
-    console.log('validateAdd', state, stateToPreload(state))
     const resp = await api.addPageRule({ ...stateToPreload(state), roleId }, true)
     return messageForDialog(resp.messages, '')
   }
@@ -155,8 +154,8 @@
 
 <FormDialog submit={ruleId ? onEditPageRule : onAddPageRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} preload={preloadToState(preload)} on:escape on:saved let:data>
   <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
-  <FieldText path='path' label='Path' conditional={!!data?.siteId} helptext="If the editor should be limited to a sub-section of the site, enter that path here. Otherwise leave blank."/>
-  <FieldSelect path='mode' label='Path Mode' conditional={!!data?.siteId && !!data.path} choices={modeChoices} helptext="If you enter a path, choose whether rule should affect child pages."/>
+  <FieldText path='path' label='Path' conditional={!!data?.siteId} related helptext="If the editor should be limited to a sub-section of the site, enter that path here. Otherwise leave blank."/>
+  <FieldSelect path='mode' label='Path Mode' conditional={!!data?.siteId && !!data.path && data.path?.startsWith('/') && data.path !== '/'} related choices={modeChoices} helptext="If you enter a path, choose whether rule should affect child pages."/>
   <FieldSelect path='pagetreeType' label='Pagetree Type' choices={pageTreeTypes} />
   <FieldChoices path='grants' {choices} leftToRight />
 </FormDialog>

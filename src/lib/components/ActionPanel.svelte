@@ -149,13 +149,13 @@
     width: 100%;
   }
 
-  .action-panel:global([data-eq~="800px"]) .actions header {
+  .action-panel[data-eq~="800px"] .actions header {
     cursor: pointer;
   }
-  .action-panel:global([data-eq~="500px"]):not(.hidden):not(.empty) .actions {
+  .action-panel:not(.empty):global(:not(.hidden)[data-eq~="500px"]) .actions {
     margin-left: -11em;
   }
-  .action-panel:global([data-eq~="500px"]):not(.empty) .work {
+  .action-panel:global(:not(.empty)[data-eq~="500px"]) .work {
     width: calc(100% - 2.7em);
   }
 
