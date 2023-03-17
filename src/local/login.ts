@@ -16,3 +16,9 @@ export function getToken ({ url }: LoadEvent) {
   const { searchParams } = url
   return searchParams.get('unifiedJwt') ?? undefined
 }
+
+export function logout (environmentConfig: any, token: string) {
+  const url = new URL(location.href)
+  url.search = ''
+  location.replace(url)
+}

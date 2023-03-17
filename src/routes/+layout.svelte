@@ -13,8 +13,9 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
-  import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton } from '$lib'
+  import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig } from '$lib'
   import { isNotNull } from 'txstate-utils'
+  import { logout } from '../local'
 
   export let data: { errObj: any }
 
@@ -27,10 +28,11 @@
 
   function onProfileChange (e: any) {
     if (e.detail.value === 'Logout') {
-      sessionStorage.setItem('token', '')
-      const url = new URL(location.href)
-      url.search = ''
-      location.replace(url)
+      const token = sessionStorage.getItem('token')
+      if (token) {
+        sessionStorage.setItem('token', '')
+        logout(environmentConfig, token)
+      }
     }
   }
 
