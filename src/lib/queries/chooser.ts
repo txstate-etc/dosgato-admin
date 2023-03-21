@@ -1,5 +1,6 @@
 import { environmentConfig } from '$lib/stores'
 import type { Asset, Folder, Page } from '@dosgato/dialog'
+import type { AssetFolderLink } from '@dosgato/templating'
 import { omit, pick, stringify } from 'txstate-utils'
 import type { PagetreeTypes } from './pages_index'
 
@@ -231,12 +232,13 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
 }
 
 export function apiAssetFolderToChooserFolder (f: ChooserFolderDetails): Folder {
+  const assetFolderLink: AssetFolderLink = { id: f.id, siteId: f.site.id, path: f.path, source: 'assets', type: 'assetfolder' }
   return {
     type: 'folder' as const,
     source: 'assets',
     ...omit(f, 'permissions', 'id'),
     url: `/assets${f.path}`,
-    id: stringify({ id: f.id, siteId: f.site.id, path: f.path, source: 'assets', type: 'folder' }),
+    id: stringify(assetFolderLink),
     acceptsUpload: f.permissions.create,
     hasChildren: (f.assets.length + f.folders.length) > 0
   }
