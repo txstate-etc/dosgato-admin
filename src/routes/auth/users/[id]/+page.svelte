@@ -6,7 +6,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
-  import { api, DetailPanel, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser } from '$lib'
+  import { api, DetailPanel, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser, BackButton } from '$lib'
   import { _store as store } from './+page'
 
   export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
@@ -103,12 +103,7 @@
 
 </script>
 
-<div class="back-link">
-  <a href={`${base}/auth/users/`}>
-    <Icon icon={arrowLeft}/>
-    Back to User List
-  </a>
-</div>
+<BackButton destination="user list" url={`${base}/auth/users/`}/>
 
 <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? { icon: pencilIcon, onClick: () => { modal = 'editbasic' } } : undefined}>
   <div class="row">
@@ -261,11 +256,6 @@
 {/if}
 
 <style>
-  .back-link {
-    display: flex;
-    justify-content: flex-end;
-    font-size: 1.2em;
-  }
   .row {
     display: flex;
     padding: 0.5rem 0;

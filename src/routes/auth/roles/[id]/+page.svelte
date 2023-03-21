@@ -7,7 +7,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { unique } from 'txstate-utils'
   import { base } from '$app/paths'
-  import { api, DetailPanel, StyledList, ResponsiveTable, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog } from '$lib'
+  import { api, DetailPanel, StyledList, ResponsiveTable, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog, BackButton } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
 
@@ -107,11 +107,7 @@
 
 </script>
 
-<div class="back-link">
-  <a href={`${base}/auth/roles/`}>
-    Back to Role List
-  </a>
-</div>
+<BackButton destination="role list" url={`${base}/auth/roles/`}/>
 
 <DetailPanel header='Basic Information' button={ $store.role.permissions.rename ? { icon: pencilIcon, onClick: () => { modal = 'editbasic' }, hiddenLabel: 'Edit Basic Information' } : undefined }>
   <div class="row">
@@ -358,11 +354,6 @@
   </Dialog>
 {/if}
 <style>
-  .back-link {
-    display: flex;
-    justify-content: flex-end;
-    font-size: 1.2em;
-  }
   .row {
     display: flex;
     padding: 0.5rem 0;

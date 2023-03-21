@@ -5,7 +5,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { Dialog, FieldText, FieldMultiselect, Icon, FieldSelect, FormDialog } from '@dosgato/dialog'
   import { base } from '$app/paths'
-  import { api, DetailPanel, messageForDialog, StyledList, type RoleListRole, type UserListUser } from '$lib'
+  import { api, BackButton, DetailPanel, messageForDialog, StyledList, type RoleListRole, type UserListUser } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   let modal: 'editbasic' | 'addmembers' | 'removegroupmember' | 'addrole' | 'removerole' | undefined
@@ -116,11 +116,7 @@
   }
 </script>
 
-<div class="back-link">
-  <a href={`${base}/auth/groups/`}>
-    Back to Group List
-  </a>
-</div>
+<BackButton destination="group list" url={`${base}/auth/groups/`}/>
 
 <DetailPanel header='Basic Information' button={{ icon: pencilIcon, onClick: () => { modal = 'editbasic' } }}>
   <div class="row">
@@ -269,11 +265,6 @@
   </Dialog>
 {/if}
 <style>
-  .back-link {
-    display: flex;
-    justify-content: flex-end;
-    font-size: 1.2em;
-  }
   .row {
     display: flex;
     padding: 0.5rem 0;
