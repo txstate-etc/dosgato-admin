@@ -14,6 +14,8 @@
   let modal: 'editbasic'|'editgroups'|'editroles'|'removefromgroup'|undefined
   let groupLeaving: GroupWithParents|undefined = undefined
 
+  const panelHeaderColor = '#BCD2CA'
+
   $: allUserGroups = [...$store.user.directGroups, ...$store.user.indirectGroups]
 
 
@@ -108,7 +110,7 @@
   </a>
 </div>
 
-<DetailPanel header='Basic Information' button={$store.user.permissions.update ? { icon: pencilIcon, onClick: () => { modal = 'editbasic' } } : undefined}>
+<DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? { icon: pencilIcon, onClick: () => { modal = 'editbasic' } } : undefined}>
   <div class="row">
     <div class="label">Login:</div>
     <div class="value">{$store.user.id}</div>
@@ -145,7 +147,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Group Memberships' button={{ icon: plusIcon, onClick: () => { modal = 'editgroups' } }}>
+<DetailPanel header='Group Memberships' headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => { modal = 'editgroups' } }}>
   {#if $store.user.directGroups.length || $store.user.indirectGroups.length}
     <StyledList>
       {#each $store.user.directGroups as group (group.id)}
@@ -166,7 +168,7 @@
   {/if}
 </DetailPanel>
 
-<DetailPanel header='Roles' button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modal = 'editroles' } } : undefined}>
+<DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modal = 'editroles' } } : undefined}>
   {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
     <StyledList>
       {#each $store.user.directRoles as role (role.id)}
@@ -188,7 +190,7 @@
 </DetailPanel>
 
 {#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
-  <DetailPanel header='Sites'>
+  <DetailPanel header='Sites' headerColor={panelHeaderColor}>
     <StyledList>
       {#if $store.permittedOnAllSites.length}
         <li class="flex-row">
@@ -206,7 +208,7 @@
   </DetailPanel>
 {/if}
 
-<DetailPanel header='Global Data'></DetailPanel>
+<DetailPanel header='Global Data' headerColor={panelHeaderColor}></DetailPanel>
 
 {#if modal === 'editbasic'}
   <FormDialog
