@@ -22,6 +22,7 @@
 
   let modal: 'upload' | 'create' | 'rename' | 'delete' | 'finalizeDelete' | 'restore' | undefined
   let selectedFolder: TypedAssetFolderItem | undefined
+  $: selectedItem = $store.selected.size === 1 ? $store.selectedItems[0] : undefined
 
   function singlepageactions (item: TypedAnyAssetItem) {
     const actions: ActionPanelAction[] = item.kind === 'asset'
@@ -164,6 +165,11 @@
       { label: 'By', id: 'modifiedBy', fixed: '3em', get: 'modifiedBy.id' }
     ]}
   />
+  <svelte:fragment slot="preview">
+    {#if selectedItem?.kind === 'asset' && selectedItem.box}
+      <img src="{environmentConfig.apiBase}/assets/{selectedItem.id}/w/400/{selectedItem.checksum}/{encodeURIComponent(selectedItem.filename)}?admin=1" width={selectedItem.box.width} height={selectedItem.box.height} alt="">
+    {/if}
+  </svelte:fragment>
 </ActionPanel>
 {#if modal === 'upload' && selectedFolder}
   <UploadUI title="Upload Files to {selectedFolder.path}" uploadPath="{environmentConfig.apiBase}/assets/{selectedFolder.id}" on:escape={onModalEscape} on:saved={onChildSaved} />
@@ -200,3 +206,11 @@
     {/if}
   </Dialog>
 {/if}
+
+<style>
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>

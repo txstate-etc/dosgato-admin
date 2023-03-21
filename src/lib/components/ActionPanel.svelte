@@ -60,31 +60,38 @@
 </script>
 
 <svelte:window bind:scrollY />
-<div bind:this={panelelement} class="action-panel" class:hidden={$hidden} class:empty={actions.length === 0} use:eq={{ store: eqstore }} use:offset={{ store: offsetStore }} style:height>
+<div bind:this={panelelement} class="action-panel" class:hasPreview={$$slots.preview} class:hidden={$hidden} use:eq={{ store: eqstore }} use:offset={{ store: offsetStore }} style:height>
   <section use:eq class="work" on:transitionend={() => elementqueries.refresh()}>
     <slot />
   </section>
-  <section class="actions">
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <header on:click={allowCollapse ? onClick : undefined}>
-      {#if $hidden}<ScreenReaderOnly>{actionsTitle}</ScreenReaderOnly>{:else}{actionsTitle}{/if}
-      {#if allowCollapse}<button class="reset" on:click|stopPropagation={onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
-    </header>
-    <ScreenReaderOnly {arialive}>
-      {#if actions.length}
-        {enabled.length} actions available, {disabledCount} disabled
-      {:else}
-        no actions available
-      {/if}
-    </ScreenReaderOnly>
-    {#each grouped as group (group.id)}
-      <ul>
-        {#each group.actions as action (action.id || action.label)}
-          <li class:enabled={!action.disabled} class={action.class}><button class="reset" disabled={action.disabled} on:click={action.onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={action.icon} />{action.label}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly></button></li>
-        {/each}
-      </ul>
-    {/each}
-  </section>
+  <div class="right-panel">
+    <section class="actions">
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <header on:click={allowCollapse ? onClick : undefined}>
+        {#if $hidden}<ScreenReaderOnly>{actionsTitle}</ScreenReaderOnly>{:else}{actionsTitle}{/if}
+        {#if allowCollapse}<button class="reset" on:click|stopPropagation={onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
+      </header>
+      <ScreenReaderOnly {arialive}>
+        {#if actions.length}
+          {enabled.length} actions available, {disabledCount} disabled
+        {:else}
+          no actions available
+        {/if}
+      </ScreenReaderOnly>
+      {#each grouped as group (group.id)}
+        <ul>
+          {#each group.actions as action (action.id || action.label)}
+            <li class:enabled={!action.disabled} class={action.class}><button class="reset" disabled={action.disabled} on:click={action.onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={action.icon} />{action.label}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly></button></li>
+          {/each}
+        </ul>
+      {/each}
+    </section>
+    {#if $$slots.preview}
+      <section class="action-panel-preview">
+        <slot name="preview" />
+      </section>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -104,8 +111,9 @@
   .action-panel {
     overflow: hidden;
     white-space: nowrap;
+    border-radius: 4px;
   }
-  .work, .actions {
+  .work, .right-panel {
     white-space: normal;
     vertical-align: top;
     display: inline-block;
@@ -113,50 +121,47 @@
     height: 100%;
     border: 2px solid #888888;
     border-radius: 4px;
-    transition: 0.3s;
-  }
-  @media (prefers-reduced-motion) {
-    .work, .actions {
-      transition: 0s;
-    }
   }
   .work {
-    width: calc(100% - min(max(calc(20% - 2em), 14em), 18em) - 1em);
+    width: calc(100% - min(max(calc(20% - 2em), 14em), 18em) - 0.5em - 4px);
     overflow: hidden auto;
   }
-  .actions {
+  .right-panel {
     background-color: var(--action-panel-bg, #555555);
     color: var(--action-panel-text, white);
-    margin-left: 1em;
+    margin-left: 0.5em;
     width: 20%;
     max-width: 18em;
     min-width: 14em;
     z-index: 1;
   }
 
-  .action-panel.hidden .actions {
+  .hasPreview .actions {
+    height: 70%;
+  }
+
+  .action-panel-preview {
+    height: 30%;
+  }
+
+  .action-panel.hidden .right-panel {
     margin-left: 0.5em;
   }
   .action-panel.hidden .work {
-    width: calc(100% - 2.7em);
+    width: calc(100% - 2.8em);
   }
   .action-panel.hidden header button {
     left: 0.4em;
     right: auto;
   }
-
-  .action-panel.empty .work {
-    width: 100%;
-  }
-
   .action-panel[data-eq~="800px"] .actions header {
     cursor: pointer;
   }
-  .action-panel:not(.empty):global(:not(.hidden)[data-eq~="500px"]) .actions {
-    margin-left: -11em;
+  :global(.action-panel[data-eq~="500px"]) .work {
+    width: calc(100% - 2.8em);
   }
-  .action-panel:global(:not(.empty)[data-eq~="500px"]) .work {
-    width: calc(100% - 2.7em);
+  .action-panel:global(:not(.hidden)[data-eq~="500px"]) .right-panel {
+    margin-left: -11em;
   }
 
   .actions ul {

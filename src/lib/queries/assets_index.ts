@@ -45,6 +45,7 @@ const assetDetails = `
 id
 path
 name
+checksum
 filename
 deleted
 deleteState
@@ -54,6 +55,10 @@ modifiedBy {
 }
 mime
 size
+box {
+  width
+  height
+}
 permissions {
   move
   update
@@ -65,6 +70,7 @@ export interface TreeAsset {
   id: string
   path: string
   name: string
+  checksum: string
   filename: string
   deleted: boolean
   deleteState: number
@@ -74,6 +80,10 @@ export interface TreeAsset {
   }
   mime: string
   size: number
+  box?: {
+    width: number
+    height: number
+  }
   permissions: {
     move: boolean
     update: boolean
