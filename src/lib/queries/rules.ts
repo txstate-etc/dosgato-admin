@@ -133,7 +133,6 @@ export const globalRuleDetails = `
     manageGlobalData
     manageAccess
     manageParentRoles
-    viewSiteList
     manageTemplates
   }
 `
@@ -153,7 +152,6 @@ export interface GlobalRule {
     manageGlobalData: boolean
     manageAccess: boolean
     manageParentRoles: boolean
-    viewSiteList: boolean
     manageTemplates: boolean
   }
 }
@@ -421,7 +419,6 @@ export interface CreateGlobalRuleInput {
     manageParentRoles: boolean
     createSites: boolean
     manageGlobalData: boolean
-    viewSiteList: boolean
     manageTemplates: boolean
   }
 }
@@ -433,7 +430,6 @@ export interface UpdateGlobalRuleInput {
     manageParentRoles: boolean
     createSites: boolean
     manageGlobalData: boolean
-    viewSiteList: boolean
     manageTemplates: boolean
   }
 }

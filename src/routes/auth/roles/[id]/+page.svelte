@@ -226,7 +226,6 @@
       { id: 'manageparentroles', label: 'Manage Parent Roles', icon: (item) => { return item.grants.manageParentRoles ? { icon: checkIcon, hiddenLabel: 'May manage parent roles' } : { icon: minusIcon, hiddenLabel: 'May not manage parent roles' } } },
       { id: 'createsites', label: 'Create Sites', icon: (item) => { return item.grants.createSites ? { icon: checkIcon, hiddenLabel: 'May create sites' } : { icon: minusIcon, hiddenLabel: 'May not create sites' } } },
       { id: 'manageglobaldata', label: 'Manage Global Data', icon: (item) => { return item.grants.manageGlobalData ? { icon: checkIcon, hiddenLabel: 'May manage global data' } : { icon: minusIcon, hiddenLabel: 'May not manage global data' } } },
-      { id: 'viewsitelist', label: 'View Site List', icon: (item) => { return item.grants.viewSiteList ? { icon: checkIcon, hiddenLabel: 'May view the site list' } : { icon: minusIcon, hiddenLabel: 'May not view the site list' } } },
       { id: 'managetemplates', label: 'Manage Templates', icon: (item) => { return item.grants.manageTemplates ? { icon: checkIcon, hiddenLabel: 'May manage templates' } : { icon: minusIcon, hiddenLabel: 'May not manage templates' } } }
     ]} rowActions={[
       { icon: pencilIcon, hiddenLabel: 'Edit Global Rule', label: 'Edit', onClick: (item) => { onClickEdit(item.id, 'global', item) } },

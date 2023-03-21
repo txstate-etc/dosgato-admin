@@ -15,7 +15,6 @@
       manageParentRoles: boolean
       createSites: boolean
       manageGlobalData: boolean
-      viewSiteList: boolean
       manageTemplates: boolean
     }
   }
@@ -47,7 +46,6 @@
         manageParentRoles: state.grants.manageParentRoles,
         createSites: state.grants.createSites,
         manageGlobalData: state.grants.manageGlobalData,
-        viewSiteList: state.grants.viewSiteList,
         manageTemplates: state.grants.manageTemplates
       }
     }
@@ -72,7 +70,6 @@
         manageParentRoles: state.grants.manageParentRoles,
         createSites: state.grants.createSites,
         manageGlobalData: state.grants.manageGlobalData,
-        viewSiteList: state.grants.viewSiteList,
         manageTemplates: state.grants.manageTemplates
       }
     }
@@ -87,7 +84,6 @@
     <FieldCheckbox path='manageParentRoles' boxLabel='Manage Parent Roles' defaultValue={false}/>
     <FieldCheckbox path='createSites' boxLabel='Create Sites'  defaultValue={false}/>
     <FieldCheckbox path='manageGlobalData' boxLabel='Manage Global Data'  defaultValue={false}/>
-    <FieldCheckbox path='viewSiteList' boxLabel='View Site List' defaultValue={false}/>
     <FieldCheckbox path='manageTemplates' boxLabel='Mange Templates' defaultValue={false}/>
   </SubForm>
 </FormDialog>
