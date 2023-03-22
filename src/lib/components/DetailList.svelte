@@ -6,9 +6,11 @@
 </script>
 
 <dl>
-  {#each entries as [key, value](key)}
-    <dt>{key}</dt>
-    <dd>{value}</dd>
+  {#each entries as [key, value], index (key)}
+
+    <span class="{(index === entries.length - 1 && entries.length % 2 === 1) ? 'last' : ''}">
+      <dt>{key}:</dt><dd>{value}</dd>
+    </span>
   {/each}
 </dl>
 
@@ -18,23 +20,25 @@
     flex-wrap: wrap;
     margin: 0;
   }
+  dl span {
+    padding: 0.5em 0;
+    border-bottom: 1px dashed #707070;
+    width: 50%;
+  }
+  dl span.last {
+    flex-grow: 1;
+  }
   dt, dd {
-    display: block;
+    display: inline;
   }
   dt {
     font-weight: bold;
-    text-align: right;
-    padding-right: 1em;
-    width: 20%
+    padding-right: 0.5em;
   }
   dd {
     margin: 0;
-    width: 30%
   }
-  :global([data-eq~="500px"]) dt {
-    width: 30%
-  }
-  :global([data-eq~="500px"]) dd {
-    width: 70%
+  :global([data-eq~="500px"]) span {
+    width: 100%
   }
 </style>

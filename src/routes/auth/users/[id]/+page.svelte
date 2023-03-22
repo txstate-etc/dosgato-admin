@@ -2,12 +2,12 @@
   import { Dialog, Icon, FieldText, FieldMultiselect, FieldCheckbox, FormDialog } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
-  import arrowLeft from '@iconify-icons/mdi/arrow-left'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
   import { api, DetailPanel, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser, BackButton } from '$lib'
   import { _store as store } from './+page'
+  import DetailList from '$lib/components/DetailList.svelte'
 
   export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
 
@@ -106,40 +106,15 @@
 <BackButton destination="user list" url={`${base}/auth/users/`}/>
 
 <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? { icon: pencilIcon, onClick: () => { modal = 'editbasic' } } : undefined}>
-  <div class="row">
-    <div class="label">Login:</div>
-    <div class="value">{$store.user.id}</div>
-  </div>
-  {#if !$store.user.system}
-  <div class="row">
-    <div class="label">First Name:</div>
-    <div class="value">{$store.user.firstname}</div>
-  </div>
-  {/if}
-  <div class="row">
-    <div class="label">{#if $store.user.system}Name{:else}Last Name{/if}:</div>
-    <div class="value">{$store.user.lastname}</div>
-  </div>
-  <div class="row">
-    <div class="label">Email:</div>
-    <div class="value">{$store.user.email}</div>
-  </div>
-  <div class="row">
-    <div class="label">Trained:</div>
-    <div class="value">{$store.user.trained ? 'Yes' : 'No'}</div>
-  </div>
-  <div class="row">
-    <div class="label">Last Login:</div>
-    <div class="value">
-      {$store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never'}
-    </div>
-  </div>
-  {#if $store.user.disabledAt}
-    <div class="row">
-      <div class="label">Inactive Since:</div>
-      <div class="value">{DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</div>
-    </div>
-  {/if}
+  <DetailList records={{
+    'First Name': $store.user.system ? ' ' : $store.user.firstname,
+    'Last Name': $store.user.lastname,
+    Login: $store.user.id,
+    Email: $store.user.email,
+    Trained: $store.user.trained ? 'Yes' : 'No',
+    'Last Login': $store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never',
+    'Inactive Since': $store.user.disabledAt ? DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : ''
+  }} />
 </DetailPanel>
 
 <DetailPanel header='Group Memberships' headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => { modal = 'editgroups' } }}>
