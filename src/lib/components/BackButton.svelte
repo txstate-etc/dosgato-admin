@@ -19,6 +19,7 @@
     border-radius: 4px;
     display: inline-flex;
     align-items: center;
+    margin-bottom: 1em;
   }
   span {
     margin-left: 0.5em;

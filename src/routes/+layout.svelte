@@ -9,7 +9,7 @@
   import menuDown from '@iconify-icons/mdi/menu-down'
   import userCircleLight from '@iconify-icons/ph/user-circle-light'
   import usersLight from '@iconify-icons/ph/users-light'
-  import { PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
+  import { eq, PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
@@ -91,7 +91,7 @@
   </nav>
   <PopupMenu {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
   <PopupMenu buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
-  <main>
+  <main use:eq>
     <slot />
   </main>
   {#if $toasts.length > 1}

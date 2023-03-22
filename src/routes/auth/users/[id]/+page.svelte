@@ -1,13 +1,12 @@
 <script lang="ts">
   import { Dialog, Icon, FieldText, FieldMultiselect, FieldCheckbox, FormDialog } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
-  import plusIcon from '@iconify-icons/mdi/plus'
-  import deleteOutline from '@iconify-icons/mdi/delete-outline'
+  import plusIcon from '@iconify-icons/ph/plus'
+  import deleteIcon from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
-  import { api, Accordion, DetailList, DetailPanel, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser, BackButton } from '$lib'
+  import { api, Accordion, DetailList, DetailPanel, DetailPanelSection, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser, BackButton, type DetailPanelButton } from '$lib'
   import { _store as store } from './+page'
-    import DetailPanelSection from '$lib/components/DetailPanelSection.svelte';
 
   export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
 
@@ -100,92 +99,102 @@
     modal = undefined
   }
 
-
 </script>
 
 <BackButton destination="user list" url={`${base}/auth/users/`}/>
 
-<DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? { icon: pencilIcon, onClick: () => { modal = 'editbasic' } } : undefined}>
-  <DetailPanelSection>
-    <DetailList records={{
-      'First Name': $store.user.system ? ' ' : $store.user.firstname,
-      'Last Name': $store.user.lastname,
-      Login: $store.user.id,
-      Email: $store.user.email,
-      Trained: $store.user.trained ? 'Yes' : 'No',
-      'Last Login': $store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never',
-      'Inactive Since': $store.user.disabledAt ? DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : ''
-    }} />
-  </DetailPanelSection>
-  <DetailPanelSection hasBackground addTopBorder>
-    <Accordion title="Group Memberships">
-      list groups here
-    </Accordion>
-  </DetailPanelSection>
-</DetailPanel>
+<div class="panel-grid">
+  <div class="grid-item">
+    <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? [{ icon: pencilIcon, onClick: () => { modal = 'editbasic' } }, { icon: plusIcon, onClick: () => { modal = 'editgroups' } }] : undefined}>
+      <DetailPanelSection>
+        <DetailList records={{
+          'First Name': $store.user.system ? ' ' : $store.user.firstname,
+          'Last Name': $store.user.lastname,
+          Login: $store.user.id,
+          Email: $store.user.email,
+          Trained: $store.user.trained ? 'Yes' : 'No',
+          'Last Login': $store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never',
+          'Inactive Since': $store.user.disabledAt ? DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : ''
+        }} />
+      </DetailPanelSection>
+      <DetailPanelSection hasBackground addTopBorder>
+        <Accordion title="Group Memberships">
+          {#if $store.user.directGroups.length || $store.user.indirectGroups.length}
+            <StyledList>
+              {#each $store.user.directGroups as group (group.id)}
+                <li class="flex-row">
+                  <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
+                  <button class="leave-group" on:click={() => { groupLeaving = group; modal = 'removefromgroup' }}><Icon icon={deleteIcon} width="1.5em"/></button>
+                </li>
+              {/each}
+              {#each $store.user.indirectGroups as group (group.id)}
+                <li class="flex-row">
+                  <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
+                  <div>{`Via ${getGroupParents(group)}`}</div>
+                </li>
+              {/each}
+            </StyledList>
+          {:else}
+            <div>User {$store.user.id} is not a member of any groups.</div>
+          {/if}
+        </Accordion>
+      </DetailPanelSection>
+    </DetailPanel>
+  </div>
 
-<DetailPanel header='Group Memberships' headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => { modal = 'editgroups' } }}>
-  {#if $store.user.directGroups.length || $store.user.indirectGroups.length}
-    <StyledList>
-      {#each $store.user.directGroups as group (group.id)}
-        <li class="flex-row">
-          <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-          <button class="leave-group" on:click={() => { groupLeaving = group; modal = 'removefromgroup' }}><Icon icon={deleteOutline} width="1.5em"/></button>
-        </li>
-      {/each}
-      {#each $store.user.indirectGroups as group (group.id)}
-        <li class="flex-row">
-          <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-          <div>{`Via ${getGroupParents(group)}`}</div>
-        </li>
-      {/each}
-    </StyledList>
-  {:else}
-    <div>User {$store.user.id} is not a member of any groups.</div>
+  {#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
+    <div class="grid-item">
+      <DetailPanel header='Sites' headerColor={panelHeaderColor}>
+        <DetailPanelSection>
+          <StyledList>
+            {#if $store.permittedOnAllSites.length}
+              <li class="flex-row">
+                All Sites
+                <div>{$store.permittedOnAllSites.join(', ')}</div>
+              </li>
+            {/if}
+            {#each Object.keys($store.sites) as site (site)}
+              <li class="flex-row">
+                {site}
+                <div>{$store.sites[site].join(', ')}</div>
+              </li>
+            {/each}
+          </StyledList>
+        </DetailPanelSection>
+      </DetailPanel>
+    </div>
   {/if}
-</DetailPanel>
 
-<DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modal = 'editroles' } } : undefined}>
-  {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
-    <StyledList>
-      {#each $store.user.directRoles as role (role.id)}
-        <li class="flex-row">
-          {role.name}
-          <button class="remove-role" disabled={!role.permissions.assign} on:click={onRemoveRole(role)}><Icon icon={deleteOutline} width="1.5em"/></button>
-        </li>
-      {/each}
-      {#each $store.user.indirectRoles as role (role.id)}
-        <li class="flex-row">
-          {role.name}
-          <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
-        </li>
-      {/each}
-      </StyledList>
-  {:else}
-  <div>User {$store.user.id} has no roles assigned.</div>
-  {/if}
-</DetailPanel>
-
-{#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
-  <DetailPanel header='Sites' headerColor={panelHeaderColor}>
-    <StyledList>
-      {#if $store.permittedOnAllSites.length}
-        <li class="flex-row">
-          All Sites
-          <div>{$store.permittedOnAllSites.join(', ')}</div>
-        </li>
-      {/if}
-      {#each Object.keys($store.sites) as site (site)}
-        <li class="flex-row">
-          {site}
-          <div>{$store.sites[site].join(', ')}</div>
-        </li>
-      {/each}
-    </StyledList>
-  </DetailPanel>
-{/if}
-
-<DetailPanel header='Global Data' headerColor={panelHeaderColor}></DetailPanel>
+  <div class="grid-item">
+    <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modal = 'editroles' } } : undefined}>
+      <DetailPanelSection>
+        {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
+          <StyledList>
+            {#each $store.user.directRoles as role (role.id)}
+              <li class="flex-row">
+                {role.name}
+                <button class="remove-role" disabled={!role.permissions.assign} on:click={onRemoveRole(role)}><Icon icon={deleteIcon} width="1.5em"/></button>
+              </li>
+            {/each}
+            {#each $store.user.indirectRoles as role (role.id)}
+              <li class="flex-row">
+                {role.name}
+                <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
+              </li>
+            {/each}
+            </StyledList>
+        {:else}
+        <div>User {$store.user.id} has no roles assigned.</div>
+        {/if}
+      </DetailPanelSection>
+    </DetailPanel>
+  </div>
+  <div class="grid-item last">
+    <DetailPanel header='Global Data' headerColor={panelHeaderColor}>
+      <DetailPanelSection></DetailPanelSection>
+    </DetailPanel>
+  </div>
+</div>
 
 {#if modal === 'editbasic'}
   <FormDialog
@@ -238,12 +247,20 @@
 {/if}
 
 <style>
-  .row {
-    display: flex;
-    padding: 0.5rem 0;
+  .panel-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-row-gap: 3em;
   }
-  .label {
-    font-weight: bold;
-    width: 25%;
+  .grid-item.last {
+    grid-column-start: 1;
+    grid-column-end: span 3;
+  }
+  :global([data-eq~="800px"]) .panel-grid {
+    grid-template-columns: 1fr;
+  }
+  :global([data-eq~="800px"]) .grid-item.last {
+    grid-column-start: auto;
+    grid-column-end: auto;
   }
 </style>

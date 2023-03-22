@@ -26,8 +26,6 @@
 <style>
   .panel {
     width: calc(100% - 2em);
-    margin: 0 auto 3em auto;
-    max-width: 60em;
     border: 2px solid black;
     border-radius: 4px;
   }
