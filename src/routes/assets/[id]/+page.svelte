@@ -2,7 +2,7 @@
   import { bytesToHuman } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import uploadIcon from '@iconify-icons/ph/upload'
-  import { DetailList, DetailPanel, environmentConfig, UploadUI, StyledList, dateStamp } from '$lib'
+  import { DetailList, DetailPanel, DetailPanelSection, environmentConfig, UploadUI, StyledList, dateStamp } from '$lib'
   import { getAssetDetail, type AssetDetail } from './helpers'
 
   export let data: { asset: AssetDetail }
@@ -49,28 +49,32 @@
       { icon: uploadIcon, hiddenLabel: 'upload new file for asset', onClick: onUploadClick },
       { icon: pencilIcon, hiddenLabel: 'edit asset details', onClick: onEditClick }
     ]}>
-      <DetailList records={{
-        Size: bytesToHuman(asset.size),
-        Type: asset.mime,
-        'Modified By': `${asset.modifiedBy.name} (${asset.modifiedBy.id})`,
-        'Modified At': dateStamp(asset.modifiedAt),
-        'Filename Uploaded': asset.uploadedFilename !== asset.filename ? asset.uploadedFilename : undefined,
-        'Legacy ID': asset.data.legacyId
-      }} />
+      <DetailPanelSection>
+        <DetailList records={{
+          Size: bytesToHuman(asset.size),
+          Type: asset.mime,
+          'Modified By': `${asset.modifiedBy.name} (${asset.modifiedBy.id})`,
+          'Modified At': dateStamp(asset.modifiedAt),
+          'Filename Uploaded': asset.uploadedFilename !== asset.filename ? asset.uploadedFilename : undefined,
+          'Legacy ID': asset.data.legacyId
+        }} />
+      </DetailPanelSection>
     </DetailPanel>
     {#if asset.resizes.length || refreshes}
-      <DetailPanel header="Resizes{refreshes ? ' (loading more...)' : ''}">
-        <StyledList>
-          {#each asset.resizes as resize}
-            <li class="flex-row">
-              <img src="{environmentConfig.apiBase}/resize/{resize.id}/{encodeURIComponent(asset.name)}_{resize.width}.{resize.extension}?admin=1" width={resize.width} height={resize.height} alt="">
-              <span class="mime">{resize.mime}</span>
-              <span class="resolution">{resize.width} x {resize.height}</span>
-              <span class="size">{bytesToHuman(resize.size)}</span>
-            </li>
-          {/each}
-        </StyledList>
-      </DetailPanel>
+        <DetailPanel header="Resizes{refreshes ? ' (loading more...)' : ''}">
+          <DetailPanelSection>
+            <StyledList>
+              {#each asset.resizes as resize}
+                <li class="flex-row">
+                  <img src="{environmentConfig.apiBase}/resize/{resize.id}/{encodeURIComponent(asset.name)}_{resize.width}.{resize.extension}?admin=1" width={resize.width} height={resize.height} alt="">
+                  <span class="mime">{resize.mime}</span>
+                  <span class="resolution">{resize.width} x {resize.height}</span>
+                  <span class="size">{bytesToHuman(resize.size)}</span>
+                </li>
+              {/each}
+            </StyledList>
+          </DetailPanelSection>
+        </DetailPanel>
     {/if}
   </div>
   {#if image}

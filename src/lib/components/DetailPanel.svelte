@@ -35,7 +35,7 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    padding: 0em 1.6em;
+    padding: 0em 1.5em;
   }
   .header h2 {
     font-size: 1.3em;
@@ -53,7 +53,12 @@
     margin-left: auto;
   }
   .body {
-    padding: 0.8em 1.6em;
     background-color: #f4f4f4;
+  }
+  .panel :global(.body > *:not(:last-child)) {
+    margin-bottom: 1em;
+  }
+  .panel :global(.body > *:last-child) {
+    padding-bottom: 1em;
   }
 </style>

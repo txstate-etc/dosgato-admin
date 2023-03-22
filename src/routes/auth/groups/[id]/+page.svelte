@@ -5,7 +5,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { Dialog, FieldText, FieldMultiselect, Icon, FieldSelect, FormDialog } from '@dosgato/dialog'
   import { base } from '$app/paths'
-  import { api, BackButton, DetailPanel, messageForDialog, StyledList, type RoleListRole, type UserListUser } from '$lib'
+  import { api, BackButton, DetailPanel, DetailPanelSection, messageForDialog, StyledList, type RoleListRole, type UserListUser } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   let modal: 'editbasic' | 'addmembers' | 'removegroupmember' | 'addrole' | 'removerole' | undefined
@@ -119,95 +119,107 @@
 <BackButton destination="group list" url={`${base}/auth/groups/`}/>
 
 <DetailPanel header='Basic Information' button={{ icon: pencilIcon, onClick: () => { modal = 'editbasic' } }}>
-  <div class="row">
-    <div class="label">Name:</div>
-    <div class="value">{$store.group.name}</div>
-  </div>
+  <DetailPanelSection>
+    <div class="row">
+      <div class="label">Name:</div>
+      <div class="value">{$store.group.name}</div>
+    </div>
+  </DetailPanelSection>
 </DetailPanel>
 
 <DetailPanel header='Members' button={{ icon: plusIcon, onClick: () => openAddUsersDialog() }} >
-  {#if $store.group.directMembers.length || $store.group.indirectMembers.length}
-    <StyledList>
-      {#each $store.group.directMembers as member (member.id)}
-        <li class="flex-row">
-          {member.firstname} {member.lastname}  ({member.id})
-          <button on:click={() => { onClickRemoveGroupMember(member.id) }}><Icon icon={deleteOutline} width="1.5em"/></button>
-        </li>
-      {/each}
-      {#each $store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id)) as member (member.id)}
-        <li class="flex-row">
-          {member.firstname} {member.lastname} ({member.id})
-          <div>{`Via ${getMemberDirectGroup(member.groups)}`}</div>
-        </li>
-      {/each}
-    </StyledList>
-  {:else}
-    <div>{$store.group.name} has no members.</div>
-  {/if}
+  <DetailPanelSection>
+    {#if $store.group.directMembers.length || $store.group.indirectMembers.length}
+      <StyledList>
+        {#each $store.group.directMembers as member (member.id)}
+          <li class="flex-row">
+            {member.firstname} {member.lastname}  ({member.id})
+            <button on:click={() => { onClickRemoveGroupMember(member.id) }}><Icon icon={deleteOutline} width="1.5em"/></button>
+          </li>
+        {/each}
+        {#each $store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id)) as member (member.id)}
+          <li class="flex-row">
+            {member.firstname} {member.lastname} ({member.id})
+            <div>{`Via ${getMemberDirectGroup(member.groups)}`}</div>
+          </li>
+        {/each}
+      </StyledList>
+    {:else}
+      <div>{$store.group.name} has no members.</div>
+    {/if}
+  </DetailPanelSection>
 </DetailPanel>
 
 {#if $store.group.subgroups.length}
 <DetailPanel header='Subgroups'>
-  <StyledList>
-    {#each $store.group.subgroups as group (group.id)}
-      <li class="flex-row">
-        <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-        {#if (group.parents.map(g => g.id).includes($store.group.id))}
-          <button on:click={() => { }}><Icon icon={linkVariantOffIcon} width="1.5em"/></button>
-        {:else}
-          <div>{`Via ${group.parents.map(g => g.name).join(', ')}`}</div>
-        {/if}
-      </li>
-    {/each}
-  </StyledList>
+  <DetailPanelSection>
+    <StyledList>
+      {#each $store.group.subgroups as group (group.id)}
+        <li class="flex-row">
+          <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
+          {#if (group.parents.map(g => g.id).includes($store.group.id))}
+            <button on:click={() => { }}><Icon icon={linkVariantOffIcon} width="1.5em"/></button>
+          {:else}
+            <div>{`Via ${group.parents.map(g => g.name).join(', ')}`}</div>
+          {/if}
+        </li>
+      {/each}
+    </StyledList>
+  </DetailPanelSection>
 </DetailPanel>
 {/if}
 
 {#if $store.group.supergroups.length}
   <DetailPanel header='Ancestor Groups'>
-    <StyledList>
-      {#each $store.group.supergroups as group (group.id)}
-      <li class="flex-row">
-        <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-      </li>
-      {/each}
-    </StyledList>
+    <DetailPanelSection>
+      <StyledList>
+        {#each $store.group.supergroups as group (group.id)}
+        <li class="flex-row">
+          <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
+        </li>
+        {/each}
+      </StyledList>
+    </DetailPanelSection>
   </DetailPanel>
 {/if}
 
 <DetailPanel header='Roles' button={{ icon: plusIcon, onClick: () => { openAddRoleDialog() } } }>
-  <StyledList>
-    {#each $store.group.directRoles as role (role.id)}
-      <li class="flex-row">
-        {role.name}
-        <button on:click={() => { onClickRemoveRole(role.id) }}><Icon icon={deleteOutline} width="1.5em"/></button>
-      </li>
-    {/each}
-    {#each $store.group.rolesThroughParentGroup as role (role.id)}
-      <li class="flex-row">
-        {role.name}
-        <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
-      </li>
-    {/each}
-  </StyledList>
+  <DetailPanelSection>
+    <StyledList>
+      {#each $store.group.directRoles as role (role.id)}
+        <li class="flex-row">
+          {role.name}
+          <button on:click={() => { onClickRemoveRole(role.id) }}><Icon icon={deleteOutline} width="1.5em"/></button>
+        </li>
+      {/each}
+      {#each $store.group.rolesThroughParentGroup as role (role.id)}
+        <li class="flex-row">
+          {role.name}
+          <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
+        </li>
+      {/each}
+    </StyledList>
+  </DetailPanelSection>
 </DetailPanel>
 
 {#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
   <DetailPanel header='Sites'>
-    <StyledList>
-      {#if $store.permittedOnAllSites.length}
-        <li class="flex-row">
-          All Sites
-          <div>{$store.permittedOnAllSites.join(', ')}</div>
-        </li>
-      {/if}
-      {#each Object.keys($store.sites) as site (site)}
-        <li class="flex-row">
-          {site}
-          <div>{$store.sites[site].join(', ')}</div>
-        </li>
-      {/each}
-    </StyledList>
+    <DetailPanelSection>
+      <StyledList>
+        {#if $store.permittedOnAllSites.length}
+          <li class="flex-row">
+            All Sites
+            <div>{$store.permittedOnAllSites.join(', ')}</div>
+          </li>
+        {/if}
+        {#each Object.keys($store.sites) as site (site)}
+          <li class="flex-row">
+            {site}
+            <div>{$store.sites[site].join(', ')}</div>
+          </li>
+        {/each}
+      </StyledList>
+    </DetailPanelSection>
   </DetailPanel>
 {/if}
 

@@ -5,9 +5,9 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
-  import { api, DetailPanel, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser, BackButton } from '$lib'
+  import { api, Accordion, DetailList, DetailPanel, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser, BackButton } from '$lib'
   import { _store as store } from './+page'
-  import DetailList from '$lib/components/DetailList.svelte'
+    import DetailPanelSection from '$lib/components/DetailPanelSection.svelte';
 
   export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
 
@@ -106,15 +106,22 @@
 <BackButton destination="user list" url={`${base}/auth/users/`}/>
 
 <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? { icon: pencilIcon, onClick: () => { modal = 'editbasic' } } : undefined}>
-  <DetailList records={{
-    'First Name': $store.user.system ? ' ' : $store.user.firstname,
-    'Last Name': $store.user.lastname,
-    Login: $store.user.id,
-    Email: $store.user.email,
-    Trained: $store.user.trained ? 'Yes' : 'No',
-    'Last Login': $store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never',
-    'Inactive Since': $store.user.disabledAt ? DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : ''
-  }} />
+  <DetailPanelSection>
+    <DetailList records={{
+      'First Name': $store.user.system ? ' ' : $store.user.firstname,
+      'Last Name': $store.user.lastname,
+      Login: $store.user.id,
+      Email: $store.user.email,
+      Trained: $store.user.trained ? 'Yes' : 'No',
+      'Last Login': $store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never',
+      'Inactive Since': $store.user.disabledAt ? DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : ''
+    }} />
+  </DetailPanelSection>
+  <DetailPanelSection hasBackground addTopBorder>
+    <Accordion title="Group Memberships">
+      list groups here
+    </Accordion>
+  </DetailPanelSection>
 </DetailPanel>
 
 <DetailPanel header='Group Memberships' headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => { modal = 'editgroups' } }}>
