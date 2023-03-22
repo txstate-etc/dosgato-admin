@@ -311,7 +311,7 @@
     height: calc(100% - 2em);
   }
   iframe.mobile {
-    border: 1px solid #555555;
+    border: 1px solid #757575;
     width: 400px;
     margin: 0 auto;
   }

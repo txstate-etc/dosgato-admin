@@ -119,15 +119,15 @@
     display: inline-block;
     position: relative;
     height: 100%;
-    border: 2px solid #888888;
+    border: 1.5px solid #757575;
     border-radius: 4px;
   }
   .work {
-    width: calc(100% - min(max(calc(20% - 2em), 14em), 18em) - 0.5em - 4px);
+    width: calc(100% - min(max(calc(20% - 2em), 14em), 18em) - 0.5em - 3px);
     overflow: hidden auto;
   }
   .right-panel {
-    background-color: var(--action-panel-bg, #555555);
+    background-color: var(--action-panel-bg, #757575);
     color: var(--action-panel-text, white);
     margin-left: 0.5em;
     width: 20%;
