@@ -1,4 +1,5 @@
 <script lang="ts">
+
   import { Dialog, Icon, FieldText, FieldMultiselect, FieldCheckbox, FormDialog } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/ph/plus'
@@ -7,16 +8,17 @@
   import { base } from '$app/paths'
   import { api, Accordion, DetailList, DetailPanel, DetailPanelSection, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser, BackButton, type DetailPanelButton } from '$lib'
   import { _store as store } from './+page'
+  import SortableTable from '$lib/components/table/SortableTable.svelte'
+  import { unique } from 'txstate-utils'
+
 
   export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
 
-  let modal: 'editbasic'|'editgroups'|'editroles'|'removefromgroup'|undefined
-  let groupLeaving: GroupWithParents|undefined = undefined
+  let modal: 'editbasic' | 'editgroups' | 'editroles' | 'removefromgroup' | 'removerole' | undefined
 
   const panelHeaderColor = '#BCD2CA'
 
   $: allUserGroups = [...$store.user.directGroups, ...$store.user.indirectGroups]
-
 
   function getGroupParents (group) {
     const parents: string[] = []
@@ -26,6 +28,11 @@
       }
     }
     return parents.join(', ')
+  }
+
+  function onSaved () {
+    store.refresh($store.user.id)
+    modal = undefined
   }
 
   function getIndirectRoleGroup (role) {
@@ -82,21 +89,35 @@
     return { ...resp, data: state }
   }
 
-  function onRemoveRole (role: FullUser['directRoles'][number]) {
-    return async () => {
-      const resp = await api.removeRoleFromUser(role.id, $store.user.id)
-      if (resp.success) store.refresh($store.user.id)
+  async function onRemoveRole (state) {
+    if (!$store.roleRemoving) return
+    const resp = await api.removeRoleFromUser($store.roleRemoving.id, $store.user.id)
+    console.log(resp)
+    if (resp.success) {
+      store.resetRoleRemoving()
+      onSaved()
     }
+    return { ...resp, data: state }
   }
 
-  async function onRemoveFromGroup () {
-    if (!groupLeaving) return
-    const resp = await api.removeUserFromGroup($store.user.id, groupLeaving.id)
+  async function onRemoveFromGroup (state) {
+    if (!$store.groupRemoving) return
+    const resp = await api.removeUserFromGroup($store.user.id, $store.groupRemoving.id)
     if (resp.success) {
-      store.refresh($store.user.id)
+      store.resetGroupRemoving()
+      onSaved()
     }
-    groupLeaving = undefined
-    modal = undefined
+    return { ...resp, data: state }
+  }
+
+  function onClickRemoveGroup (groupId, groupName) {
+    store.setGroupRemoving(groupId, groupName)
+    modal = 'removefromgroup'
+  }
+
+  function onClickRemoveRole (roleId, roleName) {
+    store.setRoleRemoving(roleId, roleName)
+    modal = 'removerole'
   }
 
 </script>
@@ -119,21 +140,13 @@
       </DetailPanelSection>
       <DetailPanelSection hasBackground addTopBorder>
         <Accordion title="Group Memberships">
+          <!-- TODO: indirect groups, if displayed, should not have trash cans. What should they look like? -->
           {#if $store.user.directGroups.length || $store.user.indirectGroups.length}
-            <StyledList>
-              {#each $store.user.directGroups as group (group.id)}
-                <li class="flex-row">
-                  <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-                  <button class="leave-group" on:click={() => { groupLeaving = group; modal = 'removefromgroup' }}><Icon icon={deleteIcon} width="1.5em"/></button>
-                </li>
-              {/each}
-              {#each $store.user.indirectGroups as group (group.id)}
-                <li class="flex-row">
-                  <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-                  <div>{`Via ${getGroupParents(group)}`}</div>
-                </li>
-              {/each}
-            </StyledList>
+            <SortableTable items={unique([...$store.user.directGroups, ...$store.user.indirectGroups], 'id')} headers={[
+              { id: 'name', label: 'Group name', sortable: true, render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>` }
+            ]} rowActions={[
+              { icon: deleteIcon, hiddenLabel: 'Remove user from group', label: 'Delete', onClick: (item) => { onClickRemoveGroup(item.id, item.name) } }
+            ]} rowActionHeader="Remove" />
           {:else}
             <div>User {$store.user.id} is not a member of any groups.</div>
           {/if}
@@ -142,47 +155,36 @@
     </DetailPanel>
   </div>
 
-  {#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
-    <div class="grid-item">
-      <DetailPanel header='Sites' headerColor={panelHeaderColor}>
-        <DetailPanelSection>
-          <StyledList>
-            {#if $store.permittedOnAllSites.length}
-              <li class="flex-row">
-                All Sites
-                <div>{$store.permittedOnAllSites.join(', ')}</div>
-              </li>
-            {/if}
-            {#each Object.keys($store.sites) as site (site)}
-              <li class="flex-row">
-                {site}
-                <div>{$store.sites[site].join(', ')}</div>
-              </li>
-            {/each}
-          </StyledList>
-        </DetailPanelSection>
-      </DetailPanel>
-    </div>
-  {/if}
+  <div class="grid-item">
+    <DetailPanel header='Sites' headerColor={panelHeaderColor}>
+      <DetailPanelSection>
+        {#if $store.sites.length}
+          <SortableTable items={$store.sites}
+          headers={[
+            { id: 'name', label: 'Site name', get: 'name' },
+            { id: 'permissions', label: 'Permissions', render: item => `<div>${item.permissions.join(', ')}</div>` }
+          ]}
+            />
+        {:else}
+          <div>User {$store.user.id} has no permissions on sites.</div>
+        {/if}
+      </DetailPanelSection>
+    </DetailPanel>
+  </div>
 
   <div class="grid-item">
     <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modal = 'editroles' } } : undefined}>
       <DetailPanelSection>
         {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
-          <StyledList>
-            {#each $store.user.directRoles as role (role.id)}
-              <li class="flex-row">
-                {role.name}
-                <button class="remove-role" disabled={!role.permissions.assign} on:click={onRemoveRole(role)}><Icon icon={deleteIcon} width="1.5em"/></button>
-              </li>
-            {/each}
-            {#each $store.user.indirectRoles as role (role.id)}
-              <li class="flex-row">
-                {role.name}
-                <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
-              </li>
-            {/each}
-            </StyledList>
+          <SortableTable items = {unique([...$store.user.directRoles, ...$store.user.indirectRoles], 'id')}
+            headers={[
+              { id: 'name', label: 'Role name', render: (item) => `<a href="${base}/auth/roles/${item.id}">${item.name}</a>` }
+            ]}
+            rowActionHeader="Remove"
+            rowActions={[
+              { icon: deleteIcon, hiddenLabel: 'Remove role from user', label: 'Delete', onClick: (item) => { onClickRemoveRole(item.id, item.name) } }
+            ]}
+            />
         {:else}
         <div>User {$store.user.id} has no roles assigned.</div>
         {/if}
@@ -230,8 +232,17 @@
     continueText='Remove'
     cancelText='Cancel'
     on:continue={onRemoveFromGroup}
-    on:escape={() => { modal = undefined; groupLeaving = undefined }}>
-    Remove user {$store.user.id} from group {groupLeaving ? groupLeaving.name : ''}?
+    on:escape={() => { modal = undefined; $store.groupRemoving = undefined }}>
+    Remove user {$store.user.id} from group {$store.groupRemoving?.name ?? ''}?
+  </Dialog>
+{:else if modal === 'removerole'}
+  <Dialog
+    title='Remove Role'
+    continueText='Remove'
+    cancelText='Cancel'
+    on:continue={onRemoveRole}
+    on:escape={() => { modal = undefined; $store.roleRemoving = undefined }}>
+    Remove role {$store.roleRemoving?.name ?? ''} from user {$store.user.id}?
   </Dialog>
 {:else if modal === 'editroles'}
   <FormDialog

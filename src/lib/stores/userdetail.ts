@@ -1,12 +1,19 @@
 import { Store } from '@txstate-mws/svelte-store'
 import type { FullUser, AccessDetailSiteRule, AccessDetailPageRule } from '$lib/queries'
-import { isNull, unique } from 'txstate-utils'
-
+import { isNull, set, sortby, unique } from 'txstate-utils'
 
 interface IUserDetailStore {
   user: FullUser
-  sites: Record<string, string[]>
+  sites: { id: string, name: string, permissions: string[] } [] // Record<string, string[]>
   permittedOnAllSites: string[]
+  groupRemoving?: {
+    id: string
+    name: string
+  }
+  roleRemoving?: {
+    id: string
+    name: string
+  }
 }
 
 interface Role {
@@ -20,20 +27,20 @@ const initialValue: FullUser = { id: '', firstname: '', lastname: '', email: '',
 
 export class UserDetailStore extends Store<IUserDetailStore> {
   constructor (public fetchUser: (id: string) => Promise<FullUser>) {
-    super({ user: initialValue, sites: {}, permittedOnAllSites: [] })
+    super({ user: initialValue, sites: [], permittedOnAllSites: [] })
   }
 
   async refresh (id: string) {
     const user = await this.fetchUser(id)
-    const sites = {}
+    const sites: Record<string, { id: string, permissions: string[] }> = {}
     let globalSiteEditor = false
     let globalPublisher = false
     const permittedOnAllSites: string [] = []
     for (const site of user.sitesOwned) {
-      sites[site.name] = ['owner']
+      sites[site.name] = { id: site.id, permissions: ['owner'] }
     }
     for (const site of user.sitesManaged) {
-      sites[site.name] = sites[site.name] ? [...sites[site.name], 'manager'] : ['manager']
+      sites[site.name] = sites[site.name] ? { ...sites[site.name], permissions: [...sites[site.name].permissions, 'manager'] } : { id: site.id, permissions: ['manager'] }
     }
 
     const userRoles: Role[] = [...user.directRoles, ...user.indirectRoles]
@@ -51,35 +58,61 @@ export class UserDetailStore extends Store<IUserDetailStore> {
     })
     if (globalPublisher) permittedOnAllSites.push('publisher')
     if (!globalSiteEditor || !globalPublisher) {
-      const editSites: string[] = []
-      const publishSites: string[] = []
+      const editSites: { id: string, name: string }[] = []
+      const publishSites: { id: string, name: string }[] = []
       for (const role of userRoles) {
         if (!globalSiteEditor) {
           for (const sr of role.siteRules) {
-            if (sr.site && sr.grants.viewForEdit) editSites.push(sr.site.name)
+            if (sr.site && sr.grants.viewForEdit) editSites.push({ id: sr.site.id, name: sr.site.name })
           }
         }
         for (const pr of role.pageRules) {
           if (!globalSiteEditor) {
-            if (pr.site && pr.grants.viewForEdit) editSites.push(pr.site.name)
+            if (pr.site && pr.grants.viewForEdit) editSites.push({ id: pr.site.id, name: pr.site.name })
           }
           if (!globalPublisher) {
-            if (pr.site && pr.grants.publish) publishSites.push(pr.site.name)
+            if (pr.site && pr.grants.publish) publishSites.push({ id: pr.site.id, name: pr.site.name })
           }
         }
       }
       for (const site of unique(editSites)) {
-        sites[site] = sites[site] ? [...sites[site], 'editor'] : ['editor']
+        sites[site.name] = sites[site.name] ? { ...sites[site.name], permissions: [...sites[site.name].permissions, 'editor'] } : { id: site.id, permissions: ['editor'] }
       }
       for (const site of unique(publishSites)) {
-        sites[site] = sites[site] ? [...sites[site], 'publisher'] : ['publisher']
+        sites[site.name] = sites[site.name] ? { ...sites[site.name], permissions: [...sites[site.name].permissions, 'publisher'] } : { id: site.id, permissions: ['publisher'] }
       }
     }
-    this.set({ user, sites, permittedOnAllSites })
+
+    const sitesArray = sortby(Object.keys(sites).map(key => ({ id: sites[key].id, name: key, permissions: sites[key].permissions })), 'name')
+    if (permittedOnAllSites.length) sitesArray.unshift({ id: 'all', name: 'All Sites', permissions: permittedOnAllSites })
+    this.set({ user, sites: sitesArray, permittedOnAllSites })
   }
 
   userFetched () {
     return this.value.user.id.length > 0
   }
-}
 
+  setGroupRemoving (id: string, name: string) {
+    this.update(v => {
+      return set(v, 'groupRemoving', { id, name })
+    })
+  }
+
+  resetGroupRemoving () {
+    this.update(v => {
+      return set(v, 'groupRemoving', undefined)
+    })
+  }
+
+  setRoleRemoving (id: string, name: string) {
+    this.update(v => {
+      return set(v, 'roleRemoving', { id, name })
+    })
+  }
+
+  resetRoleRemoving () {
+    this.update(v => {
+      return set(v, 'roleRemoving', undefined)
+    })
+  }
+}
