@@ -10,11 +10,11 @@
   import userCircleLight from '@iconify-icons/ph/user-circle-light'
   import usersLight from '@iconify-icons/ph/users-light'
   import { eq, PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
+  import { isNotNull } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
   import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig } from '$lib'
-  import { isNotNull } from 'txstate-utils'
   import { logout } from '../local'
 
   export let data: { errObj: any }
