@@ -240,6 +240,7 @@ export function apiAssetFolderToChooserFolder (f: ChooserFolderDetails): Folder 
     url: `/assets${f.path}`,
     id: stringify(assetFolderLink),
     acceptsUpload: f.permissions.create,
-    hasChildren: (f.assets.length + f.folders.length) > 0
+    hasChildren: (f.assets.length + f.folders.length) > 0,
+    childCount: f.assets.length + f.folders.length
   }
 }
