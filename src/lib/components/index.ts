@@ -1,5 +1,6 @@
 export { default as ActionPanel } from './ActionPanel.svelte'
 export { default as BackButton } from './BackButton.svelte'
+export { default as DetailPageContent } from './DetailPageContent.svelte'
 export { default as DetailList } from './DetailList.svelte'
 export { default as DetailPanel } from './DetailPanel.svelte'
 export { default as DetailPanelSection } from './DetailPanelSection.svelte'

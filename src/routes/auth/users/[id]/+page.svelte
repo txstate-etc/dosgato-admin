@@ -6,7 +6,7 @@
   import deleteIcon from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
-  import { api, Accordion, DetailList, DetailPanel, DetailPanelSection, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser, BackButton, type DetailPanelButton } from '$lib'
+  import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser, BackButton, type DetailPanelButton } from '$lib'
   import { _store as store } from './+page'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
   import { unique } from 'txstate-utils'
@@ -122,81 +122,84 @@
 
 </script>
 
-<BackButton destination="user list" url={`${base}/auth/users/`}/>
+<DetailPageContent>
 
-<div class="panel-grid">
-  <div class="grid-item">
-    <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? [{ icon: pencilIcon, onClick: () => { modal = 'editbasic' } }, { icon: plusIcon, onClick: () => { modal = 'editgroups' } }] : undefined}>
-      <DetailPanelSection>
-        <DetailList records={{
-          'First Name': $store.user.system ? ' ' : $store.user.firstname,
-          'Last Name': $store.user.lastname,
-          Login: $store.user.id,
-          Email: $store.user.email,
-          Trained: $store.user.trained ? 'Yes' : 'No',
-          'Last Login': $store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never',
-          'Inactive Since': $store.user.disabledAt ? DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : ''
-        }} />
-      </DetailPanelSection>
-      <DetailPanelSection hasBackground addTopBorder>
-        <Accordion title="Group Memberships">
-          <!-- TODO: indirect groups, if displayed, should not have trash cans. What should they look like? -->
-          {#if $store.user.directGroups.length || $store.user.indirectGroups.length}
-            <SortableTable items={unique([...$store.user.directGroups, ...$store.user.indirectGroups], 'id')} headers={[
-              { id: 'name', label: 'Group name', sortable: true, render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>` }
-            ]} rowActions={[
-              { icon: deleteIcon, hiddenLabel: 'Remove user from group', label: 'Delete', onClick: (item) => { onClickRemoveGroup(item.id, item.name) } }
-            ]} rowActionHeader="Remove" />
-          {:else}
-            <div>User {$store.user.id} is not a member of any groups.</div>
-          {/if}
-        </Accordion>
-      </DetailPanelSection>
-    </DetailPanel>
-  </div>
+  <BackButton destination="user list" url={`${base}/auth/users/`}/>
 
-  <div class="grid-item">
-    <DetailPanel header='Sites' headerColor={panelHeaderColor}>
-      <DetailPanelSection>
-        {#if $store.sites.length}
-          <SortableTable items={$store.sites}
-          headers={[
-            { id: 'name', label: 'Site name', get: 'name' },
-            { id: 'permissions', label: 'Permissions', render: item => `<div>${item.permissions.join(', ')}</div>` }
-          ]}
-            />
-        {:else}
-          <div>User {$store.user.id} has no permissions on sites.</div>
-        {/if}
-      </DetailPanelSection>
-    </DetailPanel>
-  </div>
+  <div class="panel-grid">
+    <div class="grid-item">
+      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? [{ icon: pencilIcon, onClick: () => { modal = 'editbasic' } }, { icon: plusIcon, onClick: () => { modal = 'editgroups' } }] : undefined}>
+        <DetailPanelSection>
+          <DetailList records={{
+            'First Name': $store.user.system ? ' ' : $store.user.firstname,
+            'Last Name': $store.user.lastname,
+            Login: $store.user.id,
+            Email: $store.user.email,
+            Trained: $store.user.trained ? 'Yes' : 'No',
+            'Last Login': $store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never',
+            'Inactive Since': $store.user.disabledAt ? DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : ''
+          }} />
+        </DetailPanelSection>
+        <DetailPanelSection hasBackground addTopBorder>
+          <Accordion title="Group Memberships">
+            <!-- TODO: indirect groups, if displayed, should not have trash cans. What should they look like? -->
+            {#if $store.user.directGroups.length || $store.user.indirectGroups.length}
+              <SortableTable items={unique([...$store.user.directGroups, ...$store.user.indirectGroups], 'id')} headers={[
+                { id: 'name', label: 'Group name', sortable: true, render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>` }
+              ]} rowActions={[
+                { icon: deleteIcon, hiddenLabel: 'Remove user from group', label: 'Delete', onClick: (item) => { onClickRemoveGroup(item.id, item.name) } }
+              ]} rowActionHeader="Remove" />
+            {:else}
+              <div>User {$store.user.id} is not a member of any groups.</div>
+            {/if}
+          </Accordion>
+        </DetailPanelSection>
+      </DetailPanel>
+    </div>
 
-  <div class="grid-item">
-    <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modal = 'editroles' } } : undefined}>
-      <DetailPanelSection>
-        {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
-          <SortableTable items = {unique([...$store.user.directRoles, ...$store.user.indirectRoles], 'id')}
+    <div class="grid-item">
+      <DetailPanel header='Sites' headerColor={panelHeaderColor}>
+        <DetailPanelSection>
+          {#if $store.sites.length}
+            <SortableTable items={$store.sites}
             headers={[
-              { id: 'name', label: 'Role name', render: (item) => `<a href="${base}/auth/roles/${item.id}">${item.name}</a>` }
+              { id: 'name', label: 'Site name', get: 'name' },
+              { id: 'permissions', label: 'Permissions', render: item => `<div>${item.permissions.join(', ')}</div>` }
             ]}
-            rowActionHeader="Remove"
-            rowActions={[
-              { icon: deleteIcon, hiddenLabel: 'Remove role from user', label: 'Delete', onClick: (item) => { onClickRemoveRole(item.id, item.name) } }
-            ]}
-            />
-        {:else}
-        <div>User {$store.user.id} has no roles assigned.</div>
-        {/if}
-      </DetailPanelSection>
-    </DetailPanel>
+              />
+          {:else}
+            <div>User {$store.user.id} has no permissions on sites.</div>
+          {/if}
+        </DetailPanelSection>
+      </DetailPanel>
+    </div>
+
+    <div class="grid-item">
+      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modal = 'editroles' } } : undefined}>
+        <DetailPanelSection>
+          {#if $store.user.directRoles.length || $store.user.indirectRoles.length}
+            <SortableTable items = {unique([...$store.user.directRoles, ...$store.user.indirectRoles], 'id')}
+              headers={[
+                { id: 'name', label: 'Role name', render: (item) => `<a href="${base}/auth/roles/${item.id}">${item.name}</a>` }
+              ]}
+              rowActionHeader="Remove"
+              rowActions={[
+                { icon: deleteIcon, hiddenLabel: 'Remove role from user', label: 'Delete', onClick: (item) => { onClickRemoveRole(item.id, item.name) } }
+              ]}
+              />
+          {:else}
+          <div>User {$store.user.id} has no roles assigned.</div>
+          {/if}
+        </DetailPanelSection>
+      </DetailPanel>
+    </div>
+    <div class="grid-item last">
+      <DetailPanel header='Global Data' headerColor={panelHeaderColor}>
+        <DetailPanelSection></DetailPanelSection>
+      </DetailPanel>
+    </div>
   </div>
-  <div class="grid-item last">
-    <DetailPanel header='Global Data' headerColor={panelHeaderColor}>
-      <DetailPanelSection></DetailPanelSection>
-    </DetailPanel>
-  </div>
-</div>
+</DetailPageContent>
 
 {#if modal === 'editbasic'}
   <FormDialog
