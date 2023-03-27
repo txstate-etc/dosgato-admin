@@ -8,7 +8,7 @@ import {
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
   CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP, GET_DATA_BY_DATAFOLDER_ID, GET_EDITOR_PAGE,
   GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY,
-  GET_GLOBAL_SELF, GET_ROOT_PAGES, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST,
+  GET_GLOBAL_SELF, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST,
   GET_USER_BY_ID, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS,
   GET_SUBGROUPS, GET_GROUP_BY_ID, GET_ROLE_BY_ID, GET_SITE_LIST, CHOOSER_SUBPAGES_BY_PATH,
   CHOOSER_SUBFOLDERS_AND_ASSETS_BY_PATH, CHOOSER_PAGE_BY_LINK, GET_AVAILABLE_COMPONENTS, GET_TEMPLATES_BY_TYPE, RENAME_SITE,
@@ -19,7 +19,7 @@ import {
   type GetSubFoldersAndAssetsByPath, ADD_ASSET_RULE, ADD_DATA_RULE, REMOVE_RULE, type AssetRule,
   type CreateAssetRuleInput, type CreateDataRuleInput, type DataRule, CREATE_PAGE, type FullSite,
   type Organization, type SiteComment, type SitePagetree, type TreeAssetFolder, type TreeAsset, type UserFilter,
-  GET_ASSETFOLDER_CHILDREN, GET_ASSET_ROOTS, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
+  GET_ASSETFOLDER_CHILDREN, UPDATE_PAGETREE, DELETE_PAGETREE, PROMOTE_PAGETREE, ARCHIVE_PAGETREE,
   AUTHORIZE_TEMPLATE_SITE, AUTHORIZE_TEMPLATE_PAGETREES, GET_ALL_TEMPLATES, SET_TEMPLATE_UNIVERSAL,
   CHOOSER_ASSET_BY_LINK, apiAssetToChooserAsset, apiAssetFolderToChooserFolder, DEAUTHORIZE_TEMPLATE, ADD_SITE,
   UPDATE_ASSET_RULE, CREATE_USER, type CreateUserInput, ADD_ROLES_TO_USER, REMOVE_ROLE_FROM_USER, type UpdateAssetRuleInput,
@@ -31,9 +31,9 @@ import {
   GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
   PUBLISH_DELETION, UNDELETE_PAGES, SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES,
   PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES,
-  type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS, type ChooserRootPages, CHOOSER_ROOT_PAGES, apiPageToChooserPage,
+  type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS, apiPageToChooserPage,
   type ChooserPageByLink, type ChooserAssetByLink, CHOOSER_PAGE_BY_PATH, type ChooserPageByPath, CHOOSER_ASSET_BY_ID,
-  type ChooserAssetById, type ChooserAssetFolderByLink, CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL, DELETE_ASSET, FINALIZE_DELETE_ASSET, UNDELETE_ASSET, DELETE_ASSET_FOLDER, FINALIZE_DELETE_ASSET_FOLDER, UNDELETE_ASSET_FOLDER, type MoveComponentResponse, MOVE_COMPONENT, type CreateComponentResponse, CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT, type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES
+  type ChooserAssetById, type ChooserAssetFolderByLink, CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL, DELETE_ASSET, FINALIZE_DELETE_ASSET, UNDELETE_ASSET, DELETE_ASSET_FOLDER, FINALIZE_DELETE_ASSET_FOLDER, UNDELETE_ASSET_FOLDER, type MoveComponentResponse, MOVE_COMPONENT, type CreateComponentResponse, CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT, type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder
 } from './queries'
 import { handleUnauthorized } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -158,6 +158,21 @@ class API {
     return gqlresponse.data
   }
 
+  async restful <ReturnType = any> (url: string) {
+    await this.readyPromise
+    const resp = await this.fetch(environmentConfig.apiBase + url, {
+      headers: {
+        Authorization: `Bearer ${this.token ?? ''}`,
+        Accept: 'application/json'
+      }
+    })
+    if (!resp.ok) {
+      if (resp.status === 401) handleUnauthorized(environmentConfig, resp)
+      else throw error(resp.status, resp.statusText)
+    }
+    return await resp.json() as ReturnType
+  }
+
   async config () {
     return await (await this.fetch(base + '/config')).json()
   }
@@ -168,8 +183,7 @@ class API {
   }
 
   async getRootPages () {
-    const { pagetrees } = await this.query<{ pagetrees: { rootPage: RootTreePage }[] }>(GET_ROOT_PAGES)
-    return pagetrees.map(t => t.rootPage)
+    return await this.restful<RootTreePage[]>('/pages/list')
   }
 
   async getSubPages (pageId: string) {
@@ -189,8 +203,8 @@ class API {
   }
 
   async chooserRootPages () {
-    const { sites } = await this.query<ChooserRootPages>(CHOOSER_ROOT_PAGES)
-    return sites.flatMap(s => s.pagetrees.map(t => ({ ...t.rootPage, name: t.name }))).map(apiPageToChooserPage)
+    const pages = await this.getRootPages()
+    return pages.map(apiPageToChooserPage)
   }
 
   async chooserPageByLink (link: PageLink, pagetreeId?: string) {
@@ -209,6 +223,7 @@ class API {
   }
 
   async chooserSubFoldersAndAssetsByPath (path: string) {
+    if (path === '/') return (await this.getRootAssetFolders()).map(apiAssetFolderToChooserFolder)
     const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(CHOOSER_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
     return [...assets.map(a => apiAssetToChooserAsset(a)!), ...assetfolders.map(f => apiAssetFolderToChooserFolder(f))]
   }
@@ -238,8 +253,7 @@ class API {
   }
 
   async getRootAssetFolders () {
-    const { assetfolders } = await this.query<{ assetfolders: TreeAssetFolder[] }>(GET_ASSET_ROOTS)
-    return assetfolders
+    return await this.restful<RootAssetFolder[]>('/assetfolders/list')
   }
 
   async createAssetFolder (args: CreateAssetFolderInput, validateOnly?: boolean) {

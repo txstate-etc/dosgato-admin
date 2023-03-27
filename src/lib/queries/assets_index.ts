@@ -41,6 +41,18 @@ export interface TreeAssetFolder {
   }
 }
 
+export interface RootAssetFolder extends TreeAssetFolder {
+  pagetree: {
+    id: string
+    type: 'PRIMARY' | 'SANDBOX' | 'ARCHIVE'
+    name: string
+  }
+  site: {
+    id: string
+    name: string
+  }
+}
+
 const assetDetails = `
 id
 path

@@ -4,7 +4,7 @@ import { api, type RootTreePage, type TreePage } from '$lib'
 
 export interface PageItem extends Omit<Omit<Omit<TreePage, 'modifiedAt'>, 'publishedAt'>, 'children'> {
   modifiedAt: DateTime
-  publishedAt: DateTime
+  publishedAt?: DateTime
   hasChildren: boolean
   status: string
   type: RootTreePage['pagetree']['type']
@@ -15,7 +15,7 @@ async function fetchChildren (item?: TypedPageItem) {
   const children = item ? await api.getSubPages(item.id) : await api.getRootPages()
   return children.map<PageItem>(p => {
     const modifiedAt = DateTime.fromISO(p.modifiedAt)
-    const publishedAt = DateTime.fromISO(p.publishedAt)
+    const publishedAt = p.publishedAt ? DateTime.fromISO(p.publishedAt) : undefined
     const rootp = p as RootTreePage
     return {
       ...p,

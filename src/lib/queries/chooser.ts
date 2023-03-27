@@ -2,7 +2,8 @@ import { environmentConfig } from '$lib/stores'
 import type { Asset, Folder, Page } from '@dosgato/dialog'
 import type { AssetFolderLink } from '@dosgato/templating'
 import { omit, pick, stringify } from 'txstate-utils'
-import type { PagetreeTypes } from './pages_index'
+import type { RootAssetFolder } from './assets_index'
+import type { PagetreeTypes, RootTreePage } from './pages_index'
 
 const chooserPageDetails = `
 id
@@ -199,8 +200,8 @@ export interface ChooserAssetFolderByLink {
 }
 
 export function apiPageToChooserPage (page: undefined): undefined
-export function apiPageToChooserPage (page: ChooserPageDetails): Page
-export function apiPageToChooserPage (page: ChooserPageDetails | undefined): Page | undefined {
+export function apiPageToChooserPage (page: ChooserPageDetails | RootTreePage): Page
+export function apiPageToChooserPage (page: ChooserPageDetails | RootTreePage | undefined): Page | undefined {
   if (!page) return undefined
   return {
     type: 'page',
@@ -231,7 +232,7 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
   }
 }
 
-export function apiAssetFolderToChooserFolder (f: ChooserFolderDetails): Folder {
+export function apiAssetFolderToChooserFolder (f: ChooserFolderDetails | RootAssetFolder): Folder {
   const assetFolderLink: AssetFolderLink = { id: f.id, siteId: f.site.id, path: f.path, source: 'assets', type: 'assetfolder' }
   return {
     type: 'folder' as const,

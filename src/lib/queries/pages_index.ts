@@ -46,7 +46,7 @@ export interface TreePage {
     id: string
   }
   published: boolean
-  publishedAt: string
+  publishedAt?: string
   hasUnpublishedChanges: boolean
   deleteState: number
   children: {
@@ -67,22 +67,25 @@ export interface TreePage {
 export type PagetreeTypes = 'PRIMARY' | 'SANDBOX' | 'ARCHIVE'
 
 export interface RootTreePage extends TreePage {
+  linkId: string
   pagetree: {
     id: string
     type: PagetreeTypes
+    name: string
+  }
+  site: {
+    id: string
     name: string
   }
 }
 
 export const GET_ROOT_PAGES = `
   query getRootPages {
-    pagetrees {
-      rootPage {
-        ${pageDetails}
-        pagetree {
-          type
-          name
-        }
+    pages (filter: { maxDepth: 0, viewForEdit: true }) {
+      ${pageDetails}
+      pagetree {
+        type
+        name
       }
     }
   }
