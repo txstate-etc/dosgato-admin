@@ -31,7 +31,7 @@
   async function searchUsers (search) {
     const query = search.toLowerCase()
     return data.users.filter(u => {
-      return u.lastname.toLowerCase().includes(query) || u.firstname.toLowerCase().includes(query) || u.id.includes(query)
+      return u.name.toLowerCase().includes(query) || u.id.includes(query)
     }).map(u => ({ label: `${u.firstname} ${u.lastname}`, value: u.id }))
   }
 

@@ -5,6 +5,7 @@ const userDetails = `
 id
 firstname
 lastname
+name
 email
 disabled
 trained
@@ -22,6 +23,7 @@ const fullUserDetails = `
   id
   firstname
   lastname
+  name
   email
   disabled
   disabledAt
@@ -74,8 +76,9 @@ const fullUserDetails = `
 
 export interface UserListUser {
   id: string
-  firstname: string
+  firstname?: string
   lastname: string
+  name: string
   email: string
   disabled: boolean
   trained: boolean
@@ -100,8 +103,9 @@ export interface GroupWithParents {
 
 export interface FullUser {
   id: string
-  firstname: string
+  firstname?: string
   lastname: string
+  name: string
   email: string
   disabled: boolean
   disabledAt?: string

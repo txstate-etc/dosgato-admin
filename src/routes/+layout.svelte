@@ -15,7 +15,7 @@
   import { base } from '$app/paths'
   import { page } from '$app/stores'
   import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig } from '$lib'
-  import { logout } from '../local'
+  import { uiConfig } from '../local'
 
   export let data: { errObj: any }
 
@@ -31,7 +31,11 @@
       const token = sessionStorage.getItem('token')
       if (token) {
         sessionStorage.setItem('token', '')
-        logout(environmentConfig, token)
+        if (uiConfig.login.logout) {
+          uiConfig.login.logout(environmentConfig, token)
+        } else {
+          location.reload()
+        }
       }
     }
   }

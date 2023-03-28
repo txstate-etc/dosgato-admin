@@ -13,6 +13,7 @@ const templateDetails = `
 `
 export interface TemplateListTemplate {
   type: 'page' | 'component' | 'data'
+  id: string
   name: string
   key: string
   universal: boolean

@@ -35,7 +35,7 @@ import {
   type ChooserPageByLink, type ChooserAssetByLink, CHOOSER_PAGE_BY_PATH, type ChooserPageByPath, CHOOSER_ASSET_BY_ID,
   type ChooserAssetById, type ChooserAssetFolderByLink, CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL, DELETE_ASSET, FINALIZE_DELETE_ASSET, UNDELETE_ASSET, DELETE_ASSET_FOLDER, FINALIZE_DELETE_ASSET_FOLDER, UNDELETE_ASSET_FOLDER, type MoveComponentResponse, MOVE_COMPONENT, type CreateComponentResponse, CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT, type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder
 } from './queries'
-import { handleUnauthorized } from '../local/index.js'
+import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
 import { environmentConfig, toast } from './stores'
 import { messageForDialog } from './helpers'
@@ -147,8 +147,10 @@ class API {
       })
     })
     if (!response.ok) {
-      if (response.status === 401) handleUnauthorized(environmentConfig, response)
-      else throw error(response.status, response.statusText)
+      if (response.status === 401) {
+        uiConfig.login.handleUnauthorized(environmentConfig)
+        throw error(401, response.statusText)
+      } else throw error(response.status, response.statusText)
     }
     const gqlresponse = await response.json()
     if (gqlresponse.errors?.length) {
@@ -167,8 +169,10 @@ class API {
       }
     })
     if (!resp.ok) {
-      if (resp.status === 401) handleUnauthorized(environmentConfig, resp)
-      else throw error(resp.status, resp.statusText)
+      if (resp.status === 401) {
+        uiConfig.login.handleUnauthorized(environmentConfig)
+        throw error(401, resp.statusText)
+      } else throw error(resp.status, resp.statusText)
     }
     return await resp.json() as ReturnType
   }
@@ -384,12 +388,12 @@ class API {
 
   async getAllTemplates () {
     const { templates } = await this.query<{ templates: TemplateListTemplate[] }>(GET_ALL_TEMPLATES)
-    return templates
+    return templates.map(t => { t.id = t.key; return t })
   }
 
   async getTemplatesByType (type: string, universal?: boolean) {
     const { templates } = await this.query<{ templates: TemplateListTemplate[] }>(GET_TEMPLATES_BY_TYPE, { type, universal })
-    return templates
+    return templates.map(t => { t.id = t.key; return t })
   }
 
   async getTemplatesByPage (pageId: string) {
@@ -399,12 +403,14 @@ class API {
 
   async getTemplateInfo (key: string) {
     const { templates } = await this.query<{ templates: TemplateListTemplate[] }>(GET_TEMPLATE_INFO, { key })
-    return templates[0]
+    const t = templates[0]
+    t.id = t.key
+    return t
   }
 
   async getAvailableTemplateInfo (keys: string[]) {
     const { templates } = await this.query< { templates: TemplateListTemplate[] }>(GET_AVAILABLE_TEMPLATE_INFO, { keys })
-    return templates
+    return templates.map(t => { t.id = t.key; return t })
   }
 
   async authorizeTemplateForSite (templateKey: string, siteId: string) {

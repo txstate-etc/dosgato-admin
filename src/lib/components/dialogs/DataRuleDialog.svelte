@@ -32,7 +32,7 @@
 
   onMount(async () => {
     const templates = await api.getTemplatesByType('DATA')
-    dataTemplateChoices = templates.map(t => ({ label: t.name, value: t.id }))
+    dataTemplateChoices = templates.map(t => ({ label: t.name, value: t.key }))
   })
 
   async function onAddDataRule (state: DataRuleDialogState) {

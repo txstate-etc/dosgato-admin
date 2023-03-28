@@ -1,7 +1,7 @@
 import { api } from '$lib'
 import type { UITemplate } from '@dosgato/templating'
 import { Cache } from 'txstate-utils'
-import { templates } from '../local/index.js'
+import { uiConfig } from '../local/index.js'
 
 const templateCache = new Cache(async (_, templateMap: Map<string, EnhancedUITemplate>) => {
   const { templates } = await api.query<{ templates: { key: string, name: string, templateProperties: any, displayCategory?: string, global?: boolean, areas: { name: string, availableComponents: { key: string }[] }[] }[] }>('query enhanceTemplateInfo { templates { key name templateProperties displayCategory global areas { name availableComponents { key } } } }')
@@ -47,4 +47,4 @@ class TemplateRegistry {
 }
 
 export const templateRegistry = new TemplateRegistry()
-templateRegistry.addTemplates(templates)
+templateRegistry.addTemplates(uiConfig.templates)

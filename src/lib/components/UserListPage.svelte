@@ -28,10 +28,6 @@
     )
   }
 
-  function renderName (user: TypedUserItem) {
-    return `${user.firstname} ${user.lastname}`
-  }
-
   const store: TreeStore<UserListUser> = new TreeStore(fetchChildren)
 
   function singleactions (user: TypedUserItem) {
@@ -98,7 +94,7 @@
 <ActionPanel {actions} actionsTitle={$store.selected.size ? $store.selectedItems[0].id : 'Users'}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/users/' + detail.id)} headers={[
     { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', fixed: '10em', icon: u => u.disabled ? accountOff : accountIcon },
-    { id: 'fullname', label: 'Full Name', render: renderName, fixed: '17em' },
+    { id: 'fullname', label: 'Full Name', get: 'name', fixed: '17em' },
     { id: 'roles', label: 'Roles', render: renderRoles, grow: 5 }
   ]}/>
 </ActionPanel>

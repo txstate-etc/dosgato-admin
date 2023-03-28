@@ -1,7 +1,7 @@
 import { type TypedTreeItem, TreeStore } from '@dosgato/dialog'
 import { DateTime } from 'luxon'
 import { sortby } from 'txstate-utils'
-import { type TreeAsset, type TreeAssetFolder, api, mutationResponse } from '$lib'
+import { type TreeAsset, type TreeAssetFolder, api, mutationResponse, type RootAssetFolder } from '$lib'
 
 export interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
   kind: 'asset'
@@ -17,10 +17,10 @@ export type TypedAssetFolderItem = TypedTreeItem<AssetFolderItem>
 export type TypedAnyAssetItem = TypedTreeItem<AssetItem | AssetFolderItem>
 
 async function fetchChildren (item?: TypedAssetFolderItem) {
-  const { folders, assets } = item ? (await api.getSubFoldersAndAssets(item.id))! : { folders: await api.getRootAssetFolders(), assets: [] }
-  const typedfolders = folders.map<AssetFolderItem>(f => ({
+  const { folders, assets } = item ? (await api.getSubFoldersAndAssets(item.id))! : { folders: await api.getRootAssetFolders(), assets: [] as TreeAsset[] }
+  const typedfolders = folders.map<AssetFolderItem>((f: TreeAssetFolder) => ({
     ...f,
-    kind: 'folder',
+    kind: 'folder' as const,
     hasChildren: !!(f.folders.length + f.assets.length)
   }))
   const typedassets = assets.map<AssetItem>(a => ({
