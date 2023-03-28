@@ -15,6 +15,12 @@
     { value: 'SUB', label: 'Only subfolders of this path' }
   ]
 
+  const pageTreeTypes: PopupMenuItem[] = [
+    { value: 'PRIMARY', label: 'Primary' },
+    { value: 'ARCHIVE', label: 'Archive' },
+    { value: 'SANDBOX', label: 'Sandbox' }
+  ]
+
   const name = ruleId ? 'editassetrule' : 'addassetrule'
   const title = ruleId ? 'Edit Asset Rule' : 'Add Asset Rule'
 
@@ -64,7 +70,7 @@
         update: state.grants.update,
         move: state.grants.move,
         delete: state.grants.delete,
-        undelete: state.grants.undelete
+        undelete: state.grants.delete
       }
     }
     const resp = await api.editAssetRule(args)
@@ -94,7 +100,7 @@
         update: state.grants.update,
         move: state.grants.move,
         delete: state.grants.delete,
-        undelete: state.grants.undelete
+        undelete: state.grants.delete
       }
     }
     const resp = await api.editAssetRule(args, true)
@@ -102,15 +108,15 @@
   }
 
 </script>
-<FormDialog submit={ruleId ? onEditAssetRule : onAddAssetRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:escape on:saved>
+<FormDialog submit={ruleId ? onEditAssetRule : onAddAssetRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:escape on:saved let:data>
   <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
-  <FieldText path='path' label='Path'/>
-  <FieldSelect path='mode' label='Mode' choices={modeChoices}/>
+  <FieldText path='path' label='Path' conditional={!!data?.siteId} related helptext="If the editor should be limited to a sub-section of the site, enter that path here. Otherwise leave blank."/>
+  <FieldSelect path='mode' label='Path Mode' conditional={!!data?.siteId && !!data.path && data.path?.startsWith('/') && data.path !== '/'} related choices={modeChoices} helptext="If you enter a path, choose whether rule should affect child pages."/>
+  <FieldSelect path='pagetreeType' label='Pagetree Type' placeholder='Any pagetree' choices={pageTreeTypes} />
   <SubForm path='grants'>
     <FieldCheckbox path='create' boxLabel='Create' defaultValue={false}/>
     <FieldCheckbox path='update' boxLabel='Update' defaultValue={false}/>
     <FieldCheckbox path='move' boxLabel='Move'  defaultValue={false}/>
     <FieldCheckbox path='delete' boxLabel='Delete'  defaultValue={false}/>
-    <FieldCheckbox path='undelete' boxLabel='Undelete' defaultValue={false}/>
   </SubForm>
 </FormDialog>

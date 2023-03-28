@@ -156,6 +156,6 @@
   <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
   <FieldText path='path' label='Path' conditional={!!data?.siteId} related helptext="If the editor should be limited to a sub-section of the site, enter that path here. Otherwise leave blank."/>
   <FieldSelect path='mode' label='Path Mode' conditional={!!data?.siteId && !!data.path && data.path?.startsWith('/') && data.path !== '/'} related choices={modeChoices} helptext="If you enter a path, choose whether rule should affect child pages."/>
-  <FieldSelect path='pagetreeType' label='Pagetree Type' choices={pageTreeTypes} />
+  <FieldSelect path='pagetreeType' label='Pagetree Type' placeholder='Any Pagetree' choices={pageTreeTypes} />
   <FieldChoices path='grants' {choices} leftToRight />
 </FormDialog>
