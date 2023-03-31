@@ -53,9 +53,6 @@
   .body {
     background-color: #f4f4f4;
   }
-  .panel :global(.body > *:not(:last-child)) {
-    margin-bottom: 1em;
-  }
   .panel :global(.body > *:last-child) {
     padding-bottom: 1em;
   }
