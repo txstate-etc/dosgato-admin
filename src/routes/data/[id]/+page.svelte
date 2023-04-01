@@ -20,11 +20,12 @@
   import triangleIcon from '@iconify-icons/mdi/triangle'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
+  import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
-  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, templateRegistry, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, type TemplateListTemplate, type EnhancedUITemplate } from '$lib'
+  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, type EnhancedUITemplate } from '$lib'
   import '../index.css'
-  import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
+  import { afterNavigate } from '$app/navigation'
 
   export let data: { mayManageGlobalData: boolean, template: EnhancedUITemplate }
 
@@ -450,6 +451,8 @@
     if (resp.success) store.refresh()
     modal = undefined
   }
+
+  afterNavigate(() => store.refresh().catch(console.error))
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Data'} actions={getActions($store.selectedItems)}>

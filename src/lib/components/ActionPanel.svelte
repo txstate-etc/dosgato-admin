@@ -38,7 +38,7 @@
 
   function onKeydown (e: KeyboardEvent) {
     if (modifierKey(e)) return
-    if (e.key === 'm') {
+    if (e.key === 'Escape') {
       e.preventDefault()
       e.stopPropagation()
       dispatch('returnfocus')
