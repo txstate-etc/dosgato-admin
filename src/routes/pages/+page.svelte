@@ -254,7 +254,7 @@
       { label: 'Status', id: 'status', fixed: '4em', icon: item => item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : trashSimpleFill, class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
       { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
       { label: 'By', id: 'modifiedBy', fixed: '4.3em', get: 'modifiedBy.id' }
-    ]}
+    ]} searchable="name"
   />
 </ActionPanel>
 {#if modal === 'addpage'}
