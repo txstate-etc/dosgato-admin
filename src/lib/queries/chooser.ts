@@ -187,6 +187,22 @@ export interface ChooserAssetById {
   assets: [ChooserAssetDetails]
 }
 
+export const CHOOSER_ASSET_BY_PATH = `
+  query chooserAssetByPath ($assetPath: FilenameSafePath!, $folderPath: UrlSafePath!) {
+    assets (filter: { paths: [$assetPath] }) {
+      ${chooserAssetDetails}
+    }
+    assetfolders (filter: { paths: [$folderPath] }) {
+      ${chooserFolderDetails}
+    }
+  }
+`
+
+export interface ChooserAssetByPath {
+  assets: [ChooserAssetDetails]
+  assetfolders: [ChooserFolderDetails]
+}
+
 export const CHOOSER_ASSET_FOLDER_BY_LINK = `
   query chooserAssetByLink ($link: AssetFolderLinkInput!) {
     assetfolders (filter: { links: [$link] }) {
@@ -221,12 +237,12 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
     ...pick(asset, 'name', 'path', 'mime'),
     id: stringify({ id: asset.id, source: 'assets', type: 'asset', checksum: asset.checksum, siteId: asset.site.id, path: asset.path }),
     bytes: asset.size,
-    url: `/assets/${asset.id}/${asset.name}.${asset.extension}`,
+    url: `/.assets${asset.path}`,
     image: asset.box
       ? {
           ...asset.box,
           thumbnailUrl: `${environmentConfig.apiBase}/assets/${asset.id}/w/150/${asset.checksum}/${asset.name}.${asset.extension}?admin=1`,
-          previewUrl: `${environmentConfig.apiBase}/assets/${asset.id}/w/600/${asset.checksum}/${asset.name}.${asset.extension}?admin=1`
+          previewUrl: `${environmentConfig.apiBase}/assets/${asset.id}/w/700/${asset.checksum}/${asset.name}.${asset.extension}?admin=1`
         }
       : undefined
   }
@@ -238,7 +254,7 @@ export function apiAssetFolderToChooserFolder (f: ChooserFolderDetails | RootAss
     type: 'folder' as const,
     source: 'assets',
     ...omit(f, 'permissions', 'id'),
-    url: `/assets${f.path}`,
+    url: `/.assets${f.path}`,
     id: stringify(assetFolderLink),
     acceptsUpload: f.permissions.create,
     hasChildren: (f.assets.length + f.folders.length) > 0,

@@ -1,6 +1,6 @@
 import type { AnyItem, ChooserType, Client, Source } from '@dosgato/dialog'
 import type { LinkDefinition } from '@dosgato/templating'
-import { sortby, stringify } from 'txstate-utils'
+import { isNotBlank, sortby, stringify } from 'txstate-utils'
 import { api } from './api.js'
 import { environmentConfig } from './stores/global.js'
 
@@ -45,11 +45,27 @@ export class ChooserClient implements Client {
   }
 
   valueToUrl (value: string) {
-    return JSON.parse(value).url
+    try {
+      const parsed = JSON.parse(value) as { type: LinkDefinition['type'], url?: string, path?: string }
+      if (isNotBlank(parsed.url)) return parsed.url
+      if (isNotBlank(parsed.path)) {
+        if (parsed.type === 'asset' || parsed.type === 'assetfolder') return `/.assets${parsed.path}`
+        else if (parsed.type === 'data' || parsed.type === 'datafolder') return `/.data${parsed.path}`
+        else return parsed.path
+      }
+      return undefined
+    } catch {
+      return undefined
+    }
   }
 
   async findByUrl (url: string) {
-    let m = url.match(environmentConfig.assetRegex)
+    let m = url.match(/^\/\.assets(.*?)\/?/)
+    if (m) {
+      const path = m[1]
+      return await api.chooserAssetByPath(path)
+    }
+    m = url.match(environmentConfig.assetRegex)
     if (m) {
       const id = m[1]
       return await api.chooserAssetById(id)
