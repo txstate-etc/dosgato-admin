@@ -1,14 +1,14 @@
 <script lang="ts">
   import pencilIcon from '@iconify-icons/mdi/pencil'
-  import plusIcon from '@iconify-icons/mdi/plus'
-  import linkVariantOffIcon from '@iconify-icons/mdi/link-variant-off'
-  import deleteOutline from '@iconify-icons/mdi/delete-outline'
-  import { Dialog, FieldText, FieldMultiselect, Icon, FieldSelect, FormDialog } from '@dosgato/dialog'
+  import plusIcon from '@iconify-icons/ph/plus'
+  import deleteIcon from '@iconify-icons/ph/trash'
+  import { Dialog, FieldText, FieldMultiselect, FieldSelect, FormDialog } from '@dosgato/dialog'
   import { base } from '$app/paths'
-  import { api, BackButton, DetailPanel, DetailPanelSection, messageForDialog, StyledList, type RoleListRole, type UserListUser } from '$lib'
+  import { api, BackButton, DetailList, DetailPanel, DetailPanelSection, messageForDialog, StyledList, type RoleListRole, type UserListUser } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   import DetailPageContent from '$lib/components/DetailPageContent.svelte'
+  import SortableTable from '$lib/components/table/SortableTable.svelte'
   let modal: 'editbasic' | 'addmembers' | 'removegroupmember' | 'addrole' | 'removerole' | undefined
   let allUsers: UserListUser[]
   let allRoles: RoleListRole[]
@@ -76,10 +76,10 @@
     return groups.filter(g => subgroupIds.includes(g.id)).map(g => g.name).join(', ')
   }
 
-  function getIndirectRoleGroup (role) {
+  function renderIndirectRoleGroups (role) {
     // This role is an indirect role. It comes from an ancestor group of the group we are inspecting.
     // Look at the role's direct groups to see which one(s) are in the supergroups list
-    return role.groups.filter(g => supergroupIds.includes(g.id)).map(g => g.name).join(', ')
+    return role.groups.filter(g => supergroupIds.includes(g.id)).map(g => `<a href="${base}/auth/roles/${g.id}">${g.name}</a>`).join(', ')
   }
 
   async function openAddRoleDialog () {
@@ -120,113 +120,89 @@
 </script>
 
 <DetailPageContent>
-
   <BackButton destination="group list" url={`${base}/auth/groups/`}/>
-  <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={{ icon: pencilIcon, onClick: () => { modal = 'editbasic' } }}>
-    <DetailPanelSection>
-      <div class="row">
-        <div class="label">Name:</div>
-        <div class="value">{$store.group.name}</div>
-      </div>
-    </DetailPanelSection>
-  </DetailPanel>
+  <div class="panel-grid">
+    <div class="vertical-group">
+      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={{ icon: pencilIcon, onClick: () => { modal = 'editbasic' } }}>
+        <DetailPanelSection>
+          <DetailList records={{ Name: $store.group.name }}/>
+        </DetailPanelSection>
+        {#if $store.group.subgroups.length}
+          <DetailPanelSection>
+            <SortableTable items={$store.group.subgroups}
+              headers={[
+                { id: 'name', label: 'Subgroup', render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>`, sortable: true },
+                { id: 'parents', label: 'Subgroup parent', render: (item) => item.parents.map(g => g.name).join(', ') }
+              ]}/>
+          </DetailPanelSection>
+        {/if}
+      </DetailPanel>
 
-  {#if $store.group.subgroups.length}
-  <DetailPanel header='Subgroups' headerColor={panelHeaderColor}>
-    <DetailPanelSection>
-      <StyledList>
-        {#each $store.group.subgroups as group (group.id)}
-          <li class="flex-row">
-            <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-            {#if (group.parents.map(g => g.id).includes($store.group.id))}
-              <button on:click={() => { }}><Icon icon={linkVariantOffIcon} width="1.5em"/></button>
-            {:else}
-              <div>{`Via ${group.parents.map(g => g.name).join(', ')}`}</div>
-            {/if}
-          </li>
-        {/each}
-      </StyledList>
-    </DetailPanelSection>
-  </DetailPanel>
-  {/if}
-
-  {#if $store.group.supergroups.length}
-  <DetailPanel header='Ancestor Groups' headerColor={panelHeaderColor}>
-    <DetailPanelSection>
-      <StyledList>
-        {#each $store.group.supergroups as group (group.id)}
-        <li class="flex-row">
-          <a href={`${base}/auth/groups/${group.id}`}>{group.name}</a>
-        </li>
-        {/each}
-      </StyledList>
-    </DetailPanelSection>
-  </DetailPanel>
-  {/if}
-
-  <DetailPanel header='Roles' headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => { openAddRoleDialog() } } }>
-    <DetailPanelSection>
-      <StyledList>
-        {#each $store.group.directRoles as role (role.id)}
-          <li class="flex-row">
-            {role.name}
-            <button on:click={() => { onClickRemoveRole(role.id) }}><Icon icon={deleteOutline} width="1.5em"/></button>
-          </li>
-        {/each}
-        {#each $store.group.rolesThroughParentGroup as role (role.id)}
-          <li class="flex-row">
-            {role.name}
-            <div>{`Via ${getIndirectRoleGroup(role)}`}</div>
-          </li>
-        {/each}
-      </StyledList>
-    </DetailPanelSection>
-  </DetailPanel>
-
-  {#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
-    <DetailPanel header='Sites' headerColor={panelHeaderColor}>
-      <DetailPanelSection>
-        <StyledList>
-          {#if $store.permittedOnAllSites.length}
-            <li class="flex-row">
-              All Sites
-              <div>{$store.permittedOnAllSites.join(', ')}</div>
-            </li>
+      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => { openAddRoleDialog() } } }>
+        <DetailPanelSection>
+          {#if $store.group.directRoles.length}
+            <SortableTable items={$store.group.directRoles}
+              headers={[
+                { id: 'name', label: 'Assigned Role Names', render: (item) => `<a href="${base}/auth/roles/${item.id}">${item.name}</a>`, sortable: true },
+                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickRemoveRole(item.id) }] }
+              ]}/>
+          {:else}
+            <span>This group has no assigned roles.</span>
           {/if}
-          {#each Object.keys($store.sites) as site (site)}
-            <li class="flex-row">
-              {site}
-              <div>{$store.sites[site].join(', ')}</div>
-            </li>
-          {/each}
-        </StyledList>
-      </DetailPanelSection>
-    </DetailPanel>
-  {/if}
+          {#if $store.group.rolesThroughParentGroup.length}
+            <SortableTable items={$store.group.rolesThroughParentGroup}
+              headers={[
+                { id: 'name', label: 'Inherited Role Names', render: (item) => `<a href="${base}/auth/roles/${item.id}">${item.name}</a>`, sortable: true },
+                { id: 'source', label: 'From group', render: (item) => renderIndirectRoleGroups(item) }
+              ]}/>
+          {/if}
+        </DetailPanelSection>
+      </DetailPanel>
 
-
-  <DetailPanel header='Members' headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => openAddUsersDialog() }} >
-    <DetailPanelSection>
-      {#if $store.group.directMembers.length || $store.group.indirectMembers.length}
-        <StyledList>
-          {#each $store.group.directMembers as member (member.id)}
-            <li class="flex-row">
-              {member.firstname} {member.lastname}  ({member.id})
-              <button on:click={() => { onClickRemoveGroupMember(member.id) }}><Icon icon={deleteOutline} width="1.5em"/></button>
-            </li>
-          {/each}
-          {#each $store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id)) as member (member.id)}
-            <li class="flex-row">
-              {member.firstname} {member.lastname} ({member.id})
-              <div>{`Via ${getMemberDirectGroup(member.groups)}`}</div>
-            </li>
-          {/each}
-        </StyledList>
-      {:else}
-        <div>{$store.group.name} has no members.</div>
+      {#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
+        <DetailPanel header='Sites' headerColor={panelHeaderColor}>
+          <DetailPanelSection>
+            <StyledList>
+              {#if $store.permittedOnAllSites.length}
+                <li class="flex-row">
+                  All Sites
+                  <div>{$store.permittedOnAllSites.join(', ')}</div>
+                </li>
+              {/if}
+              {#each Object.keys($store.sites) as site (site)}
+                <li class="flex-row">
+                  {site}
+                  <div>{$store.sites[site].join(', ')}</div>
+                </li>
+              {/each}
+            </StyledList>
+          </DetailPanelSection>
+        </DetailPanel>
       {/if}
-    </DetailPanelSection>
-  </DetailPanel>
+    </div>
+    <div>
+      <DetailPanel header='Members' headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => openAddUsersDialog() }} >
+        <DetailPanelSection>
+          {#if $store.group.directMembers.length}
+            <SortableTable items={$store.group.directMembers}
+              headers={[
+                { id: 'name', label: 'Member names', render: (item) => `${item.firstname} ${item.lastname} (${item.id})`, sortable: true, sortFunction: (item) => item.lastname },
+                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickRemoveGroupMember(item.id) }] }
+              ]}/>
+          {:else}
+            <span>This group has no directly assigned members.</span>
+          {/if}
+          {#if $store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id)).length}
+          <SortableTable items={$store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id))}
+                  headers={[
+                    { id: 'name', label: 'Inherited members', render: (item) => `${item.firstname} ${item.lastname} (${item.id})`, sortable: true, sortFunction: (item) => item.lastname },
+                    { id: 'remove', label: 'From group', render: (item) => getMemberDirectGroup(item.groups) }
+                ]}/>
+          {/if}
+        </DetailPanelSection>
+      </DetailPanel>
+    </div>
+  </div>
 
 </DetailPageContent>
 
@@ -284,12 +260,17 @@
   </Dialog>
 {/if}
 <style>
-  .row {
-    display: flex;
-    padding: 0.5rem 0;
+  .panel-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1em;
   }
-  .label {
-    font-weight: bold;
-    width: 25%;
+  .vertical-group {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1em;
+  }
+  :global([data-eq~="800px"]) .panel-grid {
+    grid-template-columns: 1fr;
   }
 </style>

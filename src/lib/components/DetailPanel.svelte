@@ -25,7 +25,6 @@
 
 <style>
   .panel {
-    width: calc(100% - 2em);
     border: 2px solid black;
     border-radius: 4px;
   }

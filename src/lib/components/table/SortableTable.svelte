@@ -62,6 +62,7 @@
   table {
     width: 100%;
     border-collapse: collapse;
+    margin-bottom: 1em;
   }
   thead {
     border-bottom: 2px solid #A5A5A5;

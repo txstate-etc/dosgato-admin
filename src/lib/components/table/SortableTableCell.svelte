@@ -22,7 +22,7 @@
   {#each header.actions as action (action.label)}
     <button on:click={() => action.onClick(item)}>
       <div class="button-content">
-        <span class="button-icon"><Icon icon={action.icon} hiddenLabel={action.hiddenLabel}/></span>
+        <span class="button-icon"><Icon icon={action.icon} hiddenLabel={action.hiddenLabel} width="1.5em"/></span>
       </div>
     </button>
   {/each}
