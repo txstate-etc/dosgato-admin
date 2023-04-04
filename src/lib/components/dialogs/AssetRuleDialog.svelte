@@ -37,8 +37,21 @@
     }
   }
 
+  function convertState (state: AssetRuleDialogState) {
+    return {
+      ...state,
+      grants: {
+        create: state.grants.create,
+        update: state.grants.update,
+        move: state.grants.move,
+        delete: state.grants.delete,
+        undelete: state.grants.delete
+      }
+    }
+  }
+
   async function onAddAssetRule (state: AssetRuleDialogState) {
-    const resp = await api.addAssetRule({ ...state, roleId })
+    const resp = await api.addAssetRule({ ...convertState(state), roleId })
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
@@ -54,7 +67,7 @@
   }
 
   async function validateAdd (state: AssetRuleDialogState) {
-    const resp = await api.addAssetRule({ ...state, roleId }, true)
+    const resp = await api.addAssetRule({ ...convertState(state), roleId }, true)
     return messageForDialog(resp.messages, '')
   }
 
@@ -62,16 +75,7 @@
     if (!ruleId) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Something went wrong' }], data: state }
     const args = {
       ruleId,
-      siteId: state.siteId,
-      path: state.path,
-      mode: state.mode,
-      grants: {
-        create: state.grants.create,
-        update: state.grants.update,
-        move: state.grants.move,
-        delete: state.grants.delete,
-        undelete: state.grants.delete
-      }
+      ...convertState(state)
     }
     const resp = await api.editAssetRule(args)
     return {
@@ -92,16 +96,7 @@
     if (!ruleId) return [{ type: MessageType.ERROR, message: 'Something went wrong' }]
     const args = {
       ruleId,
-      siteId: state.siteId,
-      path: state.path,
-      mode: state.mode,
-      grants: {
-        create: state.grants.create,
-        update: state.grants.update,
-        move: state.grants.move,
-        delete: state.grants.delete,
-        undelete: state.grants.delete
-      }
+      ...convertState(state)
     }
     const resp = await api.editAssetRule(args, true)
     return messageForDialog(resp.messages, 'args')
