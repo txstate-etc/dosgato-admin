@@ -23,5 +23,4 @@ export interface SortableTableHeader {
   icon?: SortableTableIcon | ((item: any) => SortableTableIcon | undefined)
   render?: (item: any) => string
   actions?: SortableTableRowAction[]
-  noActionText?: string | ((item: any) => string) // Does this make sense? If there are two different kinds of things in a table column, maybe it shouldn't be a table.
 }

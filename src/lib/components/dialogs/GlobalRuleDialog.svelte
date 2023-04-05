@@ -84,6 +84,6 @@
     <FieldCheckbox path='manageParentRoles' boxLabel='Manage Parent Roles' defaultValue={false}/>
     <FieldCheckbox path='createSites' boxLabel='Create Sites'  defaultValue={false}/>
     <FieldCheckbox path='manageGlobalData' boxLabel='Manage Global Data'  defaultValue={false}/>
-    <FieldCheckbox path='manageTemplates' boxLabel='Mange Templates' defaultValue={false}/>
+    <FieldCheckbox path='manageTemplates' boxLabel='Manage Templates' defaultValue={false}/>
   </SubForm>
 </FormDialog>

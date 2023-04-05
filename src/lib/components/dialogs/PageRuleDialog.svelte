@@ -3,6 +3,7 @@
   import { FieldAutocomplete, FieldChoices, FieldSelect, FieldText, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { MessageType } from '@txstate-mws/svelte-forms'
+  import { pick } from 'txstate-utils'
 
   export let roleId: string
   export let siteChoices: PopupMenuItem[]
@@ -64,8 +65,12 @@
   }
 
   function stateToPreload (state: PageRuleDialogState) {
+    const { siteId, pagetreeType, mode, path } = pick(state, 'siteId', 'pagetreeType', 'path', 'mode')
     return {
-      ...state,
+      siteId,
+      pagetreeType,
+      mode,
+      path,
       grants: {
         create: state.grants.includes('create'),
         update: state.grants.includes('update'),
