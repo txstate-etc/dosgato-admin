@@ -59,7 +59,9 @@
 {:else}
   <nav>
     <div class="topbar">
-      <div class="logo"></div>
+      <div class="logo">
+        <Icon icon={uiConfig.logo} width={uiConfig.logo?.width} height={uiConfig.logo?.height}/>
+      </div>
       <ul class="topnav">
         {#if $globalStore.access.viewPageManager}<li class:selected={$page.url.pathname.startsWith(`${base}/pages`)}><LabeledIcon href="{base}/pages" icon={fileCodeLight} label="Pages"/></li>{/if}
         {#if $globalStore.access.viewAssetManager}<li class:selected={$page.url.pathname.startsWith(`${base}/assets`)}><LabeledIcon href="{base}/assets" icon={copySimpleLight} label="Assets" /></li>{/if}
