@@ -461,7 +461,7 @@
     { label: 'Status', id: 'status', fixed: '5em', icon: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? trashSimpleFill : statusIcon[item.status]) : undefined, class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
     { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
     { label: 'By', id: 'modifiedBy', fixed: '3em', get: 'modifiedBy.id' }
-  ]}></Tree>
+  ]} searchable='name' />
 </ActionPanel>
 {#if modal === 'addfolder'}
   <FormDialog

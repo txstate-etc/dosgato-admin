@@ -29,6 +29,7 @@
   }
 
   const store: TreeStore<UserListUser> = new TreeStore(fetchChildren)
+  const { filteredRootItems } = store
 
   function singleactions (user: TypedUserItem) {
     const actions: ActionPanelAction[] = [
@@ -88,15 +89,16 @@
     modal = undefined
     store.refresh()
   }
-
+  let filter
+  $: console.log($filteredRootItems, filter)
   $: actions = $store.selected.size ? ($store.selected.size === 1 ? singleactions($store.selectedItems[0]) : multiactions($store.selectedItems)) : emptyactions
 </script>
-<ActionPanel {actions} actionsTitle={$store.selected.size ? $store.selectedItems[0].id : 'Users'}>
+<ActionPanel {actions} actionsTitle={$store.selected.size ? $store.selectedItems[0].id : 'Users'} filterinput on:filter={e => { filter = e.detail }}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/users/' + detail.id)} headers={[
     { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', fixed: '10em', icon: u => u.disabled ? accountOff : accountIcon },
     { id: 'fullname', label: 'Full Name', get: 'name', fixed: '17em' },
     { id: 'roles', label: 'Roles', render: renderRoles, grow: 5 }
-  ]}/>
+  ]} searchable={['id', 'firstname', 'lastname']} {filter}/>
 </ActionPanel>
 {#if modal === 'disable'}
   <Dialog

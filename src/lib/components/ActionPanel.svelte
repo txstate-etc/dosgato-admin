@@ -14,9 +14,11 @@
   export let actionsTitle: string|undefined = ''
   export let actions: (ActionPanelAction | ActionPanelGroup)[]
   export let panelelement: HTMLElement | undefined = undefined
+  export let filterinput = false
 
   interface $$Events {
     returnfocus: CustomEvent
+    filter: CustomEvent<string>
   }
   const dispatch = createEventDispatcher()
 
@@ -45,6 +47,10 @@
     }
   }
 
+  function onFilterChange (e: (KeyboardEvent | InputEvent) & { currentTarget: HTMLInputElement }) {
+    dispatch('filter', e.currentTarget?.value ?? '')
+  }
+
   function reactToScreenWidth (..._: any) {
     $hidden = $eqstore.width <= 600
   }
@@ -71,6 +77,11 @@
         {#if $hidden}<ScreenReaderOnly>{actionsTitle}</ScreenReaderOnly>{:else}{actionsTitle}{/if}
         {#if allowCollapse}<button class="reset" on:click|stopPropagation={onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
       </header>
+      {#if filterinput}
+        <div class="search-area">
+          <input type="text" placeholder="Search..." on:keyup={onFilterChange} on:change={onFilterChange} />
+        </div>
+      {/if}
       <ScreenReaderOnly {arialive}>
         {#if actions.length}
           {enabled.length} actions available, {disabledCount} disabled
@@ -164,6 +175,14 @@
     margin-left: -11em;
   }
 
+  .search-area {
+    padding: 0.3em;
+    border-bottom: 2px solid var(--action-panel-divider, #999999);
+  }
+  .search-area input {
+    width: 100%;
+    line-height: 1.6;
+  }
   .actions ul {
     overflow-y: auto;
     padding: 0.3em 0;

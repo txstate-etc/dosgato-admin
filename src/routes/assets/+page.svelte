@@ -163,7 +163,7 @@
       { label: 'Type', id: 'type', fixed: '10em', render: itm => itm.kind === 'asset' ? itm.mime.split(';')[0] : '' },
       { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.kind === 'asset' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
       { label: 'By', id: 'modifiedBy', fixed: '3em', get: 'modifiedBy.id' }
-    ]}
+    ]} searchable='name'
   />
   <svelte:fragment slot="preview">
     {#if selectedItem?.kind === 'asset' && selectedItem.box}

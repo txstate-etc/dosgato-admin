@@ -82,7 +82,7 @@
      { id: 'url', label: 'URL', get: 'url.prefix', grow: 10 },
      { id: 'organization', label: 'Organization', get: 'organization.name', grow: 8 },
      { id: 'owner', label: 'Owner', render: renderOwner, grow: 7 }
-  ]}>
+  ]} searchable='name'>
   </Tree>
 </ActionPanel>
 {#if modal === 'addsite'}
