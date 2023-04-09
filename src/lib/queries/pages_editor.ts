@@ -117,7 +117,7 @@ export interface UpdatePageResponse {
 }
 
 export const MOVE_COMPONENT = `
-  mutation movePageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: DateTime!, $fromPath: String!, $toPath: String!, $comment: String) {
+  mutation movePageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: SchemaVersion!, $fromPath: String!, $toPath: String!, $comment: String) {
     movePageComponent (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, fromPath: $fromPath, toPath: $toPath, comment: $comment) {
       success
       page {
@@ -136,7 +136,7 @@ export interface MoveComponentResponse {
 }
 
 export const CREATE_COMPONENT = `
-  mutation createPageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: DateTime!, $path: String!, $data: JsonData!, $comment: String, $validateOnly: Boolean) {
+  mutation createPageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: SchemaVersion!, $path: String!, $data: JsonData!, $comment: String, $validateOnly: Boolean) {
     createPageComponent (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, path: $path, data: $data, comment: $comment, validateOnly: $validateOnly) {
       success
       page {
@@ -155,7 +155,7 @@ export interface CreateComponentResponse {
 }
 
 export const EDIT_COMPONENT = `
-  mutation updatePageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: DateTime!, $path: String!, $data: JsonData!, $comment: String, $validateOnly: Boolean) {
+  mutation updatePageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: SchemaVersion!, $path: String!, $data: JsonData!, $comment: String, $validateOnly: Boolean) {
     updatePageComponent (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, path: $path, data: $data, comment: $comment, validateOnly: $validateOnly) {
       success
       page {
@@ -174,7 +174,7 @@ export interface EditComponentResponse {
 }
 
 export const EDIT_PAGE_PROPERTIES = `
-  mutation updatePageProperties ($pageId: ID!, $dataVersion: Int!, $schemaversion: DateTime!, $data: JsonData!, $comment: String, $validateOnly: Boolean) {
+  mutation updatePageProperties ($pageId: ID!, $dataVersion: Int!, $schemaversion: SchemaVersion!, $data: JsonData!, $comment: String, $validateOnly: Boolean) {
     updatePageProperties (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, data: $data, comment: $comment, validateOnly: $validateOnly) {
       success
       page {
@@ -193,7 +193,7 @@ export interface EditPagePropertiesResponse {
 }
 
 export const REMOVE_COMPONENT = `
-  mutation deletePageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: DateTime!, $path: String!, $comment: String) {
+  mutation deletePageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: SchemaVersion!, $path: String!, $comment: String) {
     deletePageComponent (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, path: $path, comment: $comment) {
       success
       page {

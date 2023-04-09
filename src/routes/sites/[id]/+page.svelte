@@ -543,7 +543,7 @@
   <DetailPanelSection>
     {#if $store.site.comments.length}
       <ul use:eq>
-        {#each $store.site.comments.reverse() as comment (comment.id)}
+        {#each $store.site.comments as comment (comment.id)}
           <li class='comment-card'>
             <span class="comment-text">{comment.comment}</span>
             <div>
