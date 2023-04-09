@@ -90,7 +90,6 @@
     store.refresh()
   }
   let filter
-  $: console.log($filteredRootItems, filter)
   $: actions = $store.selected.size ? ($store.selected.size === 1 ? singleactions($store.selectedItems[0]) : multiactions($store.selectedItems)) : emptyactions
 </script>
 <ActionPanel {actions} actionsTitle={$store.selected.size ? $store.selectedItems[0].id : 'Users'} filterinput on:filter={e => { filter = e.detail }}>
