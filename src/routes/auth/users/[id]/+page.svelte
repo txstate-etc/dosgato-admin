@@ -269,7 +269,7 @@
   .panel-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-row-gap: 3em;
+    gap: 1em;
   }
   .grid-item.last {
     grid-column-start: 1;

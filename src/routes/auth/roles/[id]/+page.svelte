@@ -440,7 +440,7 @@
   .vertical-list {
     display: grid;
     grid-template-columns: 1fr;
-    grid-row-gap: 3em;
+    gap: 1em;
   }
   :global(.mobile-list div.background) {
     margin-left: calc(-1 * var(--tabs-padding-hori, 0.7em));

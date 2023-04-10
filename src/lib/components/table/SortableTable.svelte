@@ -60,7 +60,7 @@
   {/each}
   </tbody>
 </table>
-<div class="mobile-list">
+<div class="mobile-list" class:carded={cardedOnMobile}>
   {#each sortedItems as item, idx (item.id)}
     <div class:background={idx % 2 === 0}>
       <Accordion title={mobileHeader(item)}>
@@ -118,7 +118,7 @@
   .mobile-list {
     display: none;
   }
-  :global([data-eq~="500px"]) .mobile-list {
+  :global([data-eq~="500px"]) .mobile-list.carded {
     display: block;
   }
   .mobile-list div.background {
