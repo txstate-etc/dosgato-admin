@@ -139,8 +139,8 @@
     return resp.messages.map(m => ({ ...m, path: (m.arg === 'name' || m.arg === 'templateKey') ? m.arg : `data.${m.arg}` }))
   }
 
-  async function onAddPage (state) {
-    const resp = await api.createPage(state.name, state.templateKey, state.data, $store.selectedItems[0].id, false)
+  async function onAddPage (state, validateOnly) {
+    const resp = await api.createPage(state.name, state.templateKey, state.data, $store.selectedItems[0].id, false, validateOnly)
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),

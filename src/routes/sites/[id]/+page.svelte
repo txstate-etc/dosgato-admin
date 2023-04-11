@@ -89,8 +89,8 @@
     return resp.messages.map(m => ({ ...m, path: m.arg }))
   }
 
-  async function onAddPagetree (state: CreateWithPageState) {
-    const resp = await api.addPagetree($store.site.id, state.templateKey, state.data)
+  async function onAddPagetree (state: CreateWithPageState, validateOnly) {
+    const resp = await api.addPagetree($store.site.id, state.templateKey, state.data, validateOnly)
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
@@ -603,6 +603,7 @@
     submit={onAddPagetree}
     validate={validateAddPagetree}
     title="Add Pagetree"
+    propertyDialogTitle= 'Root Page Properties'
     addName={false}
     templateChoices={$store.site.pageTemplates.map(t => ({ label: t.name, value: t.key }))}
     on:escape={() => { modal = undefined }}

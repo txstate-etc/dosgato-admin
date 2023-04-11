@@ -51,8 +51,8 @@
     return resp.messages.map(m => ({ ...m, path: m.arg }))
   }
 
-  async function onCreateSite (state: CreateWithPageState) {
-    const resp = await api.addSite(state.name!, state.templateKey, state.data)
+  async function onCreateSite (state: CreateWithPageState, validateOnly) {
+    const resp = await api.addSite(state.name!, state.templateKey, state.data, validateOnly)
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
@@ -88,6 +88,7 @@
 {#if modal === 'addsite'}
   <CreateWithPageDialog
     title='Create Site'
+    propertyDialogTitle= 'Root Page Properties'
     submit={onCreateSite}
     on:escape={() => { modal = undefined }}
     validate={validateCreateSite}
