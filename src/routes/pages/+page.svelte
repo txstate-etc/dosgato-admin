@@ -4,7 +4,7 @@
   import deleteEmpty from '@iconify-icons/mdi/delete-empty'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import archive from '@iconify-icons/ph/archive'
-  import sandboxIcon from '@iconify-icons/file-icons/sandbox'
+  import { sandboxIcon } from './sandboxicon'
   import circleIcon from '@iconify-icons/mdi/circle'
   import fileX from '@iconify-icons/ph/file-x'
   import layout from '@iconify-icons/ph/layout'
