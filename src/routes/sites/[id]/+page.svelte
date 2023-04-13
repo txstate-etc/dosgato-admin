@@ -1,5 +1,5 @@
 <script lang="ts">
-  import pencilIcon from '@iconify-icons/ph/pencil-light'
+  import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/ph/plus-light'
   import deleteOutline from '@iconify-icons/ph/trash-light'
   import archiveOutline from '@iconify-icons/ph/archive-light'
@@ -10,9 +10,8 @@
   import authorizeIcon from '@iconify-icons/ph/plus-circle-light'
   import exportIcon from '@iconify-icons/mdi/export'
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog } from '@dosgato/dialog'
-  import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
+  import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
-  import { DateTime } from 'luxon'
   import { keyby, titleCase } from 'txstate-utils'
   import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, templateListStore, siteDetails, Accordion, DetailPanelSection, DetailPageContent } from '$lib'
   import { base } from '$app/paths'
@@ -278,28 +277,22 @@
         <DetailPanelSection>
           <div class="detail-section">
             <dl>
-              <dt>Name:</dt>
-              <dd>
-                <span>{$store.site.name}</span>
+              <div class="dl-row">
+                <span><dt>Name:</dt><dd>{$store.site.name}</dd></span>
                 {#if $store.site.permissions.rename}
                   <button on:click={() => { modal = 'editbasic' }}>
                     <Icon icon={pencilIcon} hiddenLabel="Edit basic information" width="1.3em" inline/>
                   </button>
                 {/if}
-              </dd>
-              <dt>URL:</dt>
-              <dd>
-                {#if $store.site.url}
-                  {$store.site.url.prefix}
-                {:else}
-                  This site is not launched.
-                {/if}
+              </div>
+              <div class="dl-row">
+                <span><dt>URL:</dt><dd>{$store.site.url ? $store.site.url.prefix : 'This site is not launched.'}</dd></span>
                 {#if $store.site.permissions.launch}
                   <button on:click={() => { modal = 'editlaunch' }}>
                     <Icon icon={pencilIcon} hiddenLabel="Edit URL or launch site" inline width="1.3em"/>
                   </button>
                 {/if}
-              </dd>
+              </div>
             </dl>
           </div>
           <div class="detail-area-head">
@@ -311,20 +304,15 @@
             {/if}
           </div>
           <dl>
-            <dt>Organization:</dt>
-            <dd>{$store.site.organization?.name ?? ''}</dd>
-            <dt>Owner:</dt>
-            <dd>
-              {#if $store.site.owner}{$store.site.owner.firstname} {$store.site.owner.lastname} ({$store.site.owner.id}){/if}
-            </dd>
-            <dt>Manager(s):</dt>
-            <dd>
-              <ul class='manager-list'>
-                {#each $store.site.managers as manager (manager.id)}
-                <li> {manager.firstname} {manager.lastname} ({manager.id})</li>
-                {/each}
-              </ul>
-            </dd>
+            <div class="dl-row">
+              <span><dt>Organization:</dt><dd>{$store.site.organization?.name ?? ''}</dd></span>
+            </div>
+            <div class="dl-row">
+              <span><dt>Owner:</dt><dd>{#if $store.site.owner}{$store.site.owner.firstname} {$store.site.owner.lastname} ({$store.site.owner.id}){/if}</dd></span>
+            </div>
+            <div class="dl-row">
+              <span><dt>Manager(s):</dt><dd>{$store.site.managers.map(m => `${m.firstname} ${m.lastname} (${m.id})`).join(', ')}</dd></span>
+            </div>
           </dl>
         </DetailPanelSection>
       </DetailPanel>
@@ -684,41 +672,45 @@
 {/if}
 <style>
   .detail-section:not(:last-child) {
-    margin-bottom: 4em;
+    margin-bottom: 1em;
   }
   .detail-area-head {
     display: flex;
-    margin-bottom: 1.5em;
+    border-bottom: 1px solid #707070;
+    margin-bottom: 1em;
   }
   h3 {
     margin: 0;
-    font-weight: normal;
-    font-size: 1.3em;
+    font-weight: bold;
+    font-size: 1em;
   }
   dl {
-    display: grid;
-    grid-template-columns: min-content auto;
-    grid-gap: 10px;
-    align-items: baseline;
-    margin-block-start: 0;
+    margin: 0;
   }
-  dl dt {
-    font-weight: bold;
+  dl .dl-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5em 0;
+    border-bottom: 1px dashed #707070;
+  }
+  dl .dl-row span {
+    display: flex;
+    gap: 5px;
+  }
+  dt {
+    font-weight: bold
   }
   dd {
-    display: flex;
-    align-items: center;
+    margin-left: 0;
+  }
+  dd, dt {
+    display: inline;
   }
   button {
     background-color: transparent;
     border: 0px;
     cursor: pointer;
     margin-left: 0.5em;
-  }
-  .manager-list {
-    padding-left: 0;
-    margin: 0;
-    list-style: none;
   }
   ul {
     list-style: none;
