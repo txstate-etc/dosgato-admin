@@ -8,15 +8,19 @@
   import launchIcon from '@iconify-icons/ph/rocket-launch-light'
   import deauthorizeIcon from '@iconify-icons/ph/minus-circle-light'
   import authorizeIcon from '@iconify-icons/ph/plus-circle-light'
+  import exportIcon from '@iconify-icons/mdi/export'
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog } from '@dosgato/dialog'
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { keyby, titleCase } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, templateListStore, siteDetails, Accordion, DetailPanelSection } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, templateListStore, siteDetails, Accordion, DetailPanelSection, DetailPageContent } from '$lib'
   import { base } from '$app/paths'
   import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
+  import AuditPanel from './AuditPanel.svelte'
+
+  const panelHeaderColor = '#D1C7B7'
 
   export let data: { organizations: Organization[], users: UserListUser[], allPageTemplates: TemplateListTemplate[], allComponentTemplates: TemplateListTemplate[] }
   let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'| 'authorizetemplate' |
@@ -261,303 +265,301 @@
   }
 </script>
 
-<DetailPanel header="Site Information">
-  <DetailPanelSection>
-    <div class="detail-section">
-      <dl>
-        <dt>Name:</dt>
-        <dd>
-          <span>{$store.site.name}</span>
-          {#if $store.site.permissions.rename}
-            <button on:click={() => { modal = 'editbasic' }}>
-              <Icon icon={pencilIcon} hiddenLabel="Edit basic information" width="1.3em" inline/>
-            </button>
-          {/if}
-        </dd>
-        <dt>URL:</dt>
-        <dd>
-          {#if $store.site.url}
-            {$store.site.url.prefix}
-          {:else}
-            This site is not launched.
-          {/if}
-          {#if $store.site.permissions.launch}
-            <button on:click={() => { modal = 'editlaunch' }}>
-              <Icon icon={pencilIcon} hiddenLabel="Edit URL or launch site" inline width="1.3em"/>
-            </button>
-          {/if}
-        </dd>
-      </dl>
-    </div>
-    <div class="detail-area-head">
-      <h3>Site Management</h3>
-      {#if $store.site.permissions.manageGovernance}
-        <button on:click={() => { modal = 'editsitemanagement' }}>
-          <Icon icon={pencilIcon} hiddenLabel="Edit site management" inline width="1.3em"/>
-        </button>
-      {/if}
-    </div>
-    <dl>
-      <dt>Organization:</dt>
-      <dd>{$store.site.organization?.name ?? ''}</dd>
-      <dt>Owner:</dt>
-      <dd>
-        {#if $store.site.owner}{$store.site.owner.firstname} {$store.site.owner.lastname} ({$store.site.owner.id}){/if}
-      </dd>
-      <dt>Manager(s):</dt>
-      <dd>
-        <ul class='manager-list'>
-          {#each $store.site.managers as manager (manager.id)}
-          <li> {manager.firstname} {manager.lastname} ({manager.id})</li>
-          {/each}
-        </ul>
-      </dd>
-    </dl>
-  </DetailPanelSection>
-</DetailPanel>
-
-<DetailPanel header='Site Stages' button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => { modal = 'addpagetree' } } : undefined}>
-   <DetailPanelSection>
-    <table>
-      <tr class='headers'>
-        <th>Name</th>
-        <th>Stage</th>
-        <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
-      </tr>
-      {#each $store.site.pagetrees as pagetree (pagetree.id)}
-        <tr>
-          <td>{pagetree.name}</td>
-          <td>{titleCase(pagetree.type)}</td>
-          <td class="pagetree-buttons">
-            {#if pagetree.type === 'SANDBOX' && pagetree.permissions.promote}
-              <button title="Promote to Primary" on:click={() => { onClickPromotePagetree(pagetree.id, pagetree.name) }}><Icon icon={launchIcon} width="1.3em"/><ScreenReaderOnly>promote page tree</ScreenReaderOnly></button>
-            {/if}
-            {#if pagetree.type === 'SANDBOX' && pagetree.permissions.archive}
-              <button title="Archive" on:click={() => { onClickArchivePagetree(pagetree.id, pagetree.name) }}><Icon icon={archiveOutline} width="1.3em"/><ScreenReaderOnly>archive page tree</ScreenReaderOnly></button>
-            {/if}
-            {#if pagetree.type !== 'PRIMARY' && pagetree.permissions.delete}
-              <button title="Delete" on:click={() => { onClickDeletePagetree(pagetree.id, pagetree.name) }}><Icon icon={deleteOutline} width="1.3em"/><ScreenReaderOnly>delete page tree</ScreenReaderOnly></button>
-            {/if}
-          </td>
-        </tr>
-      {/each}
-    </table>
-  </DetailPanelSection>
-</DetailPanel>
-
-<DetailPanel header="User Access">
-  <DetailPanelSection>
-    <div class="detail-section">
-      <table class="access">
-        <caption><h3>Roles</h3></caption>
-        <thead>
-          <tr>
-            <th>Role</th>
-            <th class="read-only">Read-Only</th>
-            <th class="universal">Universal</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each $store.siteRoles as role (role.id)}
-            <tr>
-              <td><div class="carded-label">Role:</div><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
-              <td><div class="carded-label">Read-Only:</div><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-              <td class="col3"><div class="carded-label">Universal:</div><Icon icon={minusIcon} hiddenLabel={`${role.name} is a site-specific role`}/></td>
-            </tr>
-          {/each}
-          {#each $store.globalRoles as role (role.id)}
-            <tr>
-              <td><div class="carded-label">Role:</div><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
-              <td><div class="carded-label">Read-Only:</div><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-              <td class="col3"><div class="carded-label">Universal:</div><Icon icon={checkIcon} hiddenLabel={`${role.name} applies to all sites`}/></td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
-    {#if $store.groups.length}
-    <div class="detail-section">
-      <table class="access">
-        <caption><h3>Groups</h3></caption>
-        <thead>
-          <tr>
-            <th>Group</th>
-            <th class="read-only">Read-Only</th>
-            <th class="source-roles">Source Role(s)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each $store.groups as group (group.id)}
-            <tr>
-              <td><div class="carded-label">Group:</div><a href={`${base}/auth/groups/${group.id}`}>{group.name}</a></td>
-              <td><div class="carded-label">Read-Only:</div><Icon icon={group.readonly ? checkIcon : minusIcon} hiddenLabel={`${group.name} has ${group.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-              <td><div class="carded-label">Source Role(s):</div>{group.roles}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
-    {/if}
-    <div class="detail-section">
-      <table class="access">
-        <caption><h3>Users</h3></caption>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th class="read-only">Read-Only</th>
-            <th class="source-roles">Source Role(s)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each $store.users as user (user.id)}
-            <tr>
-              <td><div class="carded-label">Name:</div><a href={`${base}/auth/users/${user.id}`}>{user.firstname} {user.lastname}</a></td>
-              <td><div class="carded-label">Read-Only:</div><Icon icon={user.readonly ? checkIcon : minusIcon} hiddenLabel={`${user.firstname} ${user.lastname} has ${user.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-              <td><div class="carded-label">Source Role(s):</div>{user.roles}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
-  </DetailPanelSection>
-</DetailPanel>
-
-<DetailPanel header="Authorized Templates">
-  <DetailPanelSection>
-    <div class="template-section">
-      <div class="detail-area-head">
-        <h3>Page Templates</h3>
-      </div>
-      {#if $store.pageTemplates.length}
-        <table class="authorized-templates">
-          <tr>
-            <th>Template Name</th>
-            <th>Authorized Pagetree(s)</th>
-            <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
-          </tr>
-          {#each $store.pageTemplates as template (template.key)}
-            <tr>
-              <td>{template.name}</td>
-              <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
-              <td>
-                {#if template.permissions.assign}
-                  <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-                  <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deauthorizeIcon} width="1.5em"/></button>
-                {/if}
-              </td>
-            </tr>
-          {/each}
-        </table>
-      {/if}
-      <div class="template-accordion-wrapper">
-        <Accordion title="Universal Page Templates">
-          <div class="wrapper">
-            <ul class="universal-templates" style={`grid-template-rows: repeat(${Math.ceil(universalPageTemplates.length / 2)}, 1fr)`}>
-              {#each universalPageTemplates as template, index}
-                <li class={hasBackground(universalPageTemplates.length, index) ? 'bg' : ''}>
-                  {template.name}
-                </li>
-              {/each}
-            </ul>
-          </div>
-        </Accordion>
-      </div>
-      <div class="template-accordion-wrapper">
-        <Accordion title="Non-authorized Page Templates">
-          <ul class="forbidden-templates">
-            {#each data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key)) as template}
-              <li>
-                {template.name}
-                {#if template.permissions.assign}
-                  <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={authorizeIcon} width="1.5em"/>
-                    <ScreenReaderOnly>{`deauthorize ${template.name}`}</ScreenReaderOnly>
+<DetailPageContent>
+  <div class="button-container">
+    <button>
+      <Icon icon={exportIcon} />
+      Download CSV
+    </button>
+  </div>
+  <div class="panel-grid">
+    <div class="vertical-group">
+      <DetailPanel header="Site Information" headerColor={panelHeaderColor}>
+        <DetailPanelSection>
+          <div class="detail-section">
+            <dl>
+              <dt>Name:</dt>
+              <dd>
+                <span>{$store.site.name}</span>
+                {#if $store.site.permissions.rename}
+                  <button on:click={() => { modal = 'editbasic' }}>
+                    <Icon icon={pencilIcon} hiddenLabel="Edit basic information" width="1.3em" inline/>
                   </button>
                 {/if}
-              </li>
-            {/each}
-          </ul>
-        </Accordion>
-      </div>
-    </div>
-    <div class="template-section">
-      <div class="detail-area-head">
-        <h3>Component Templates</h3>
-      </div>
-      {#if $store.componentTemplates.length}
-        <table class="authorized-templates">
-          <tr>
-            <th>Template Name</th>
-            <th>Authorized Pagetree(s)</th>
-            <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
-          </tr>
-          {#each $store.componentTemplates as template (template.key)}
-            <tr>
-              <td>{template.name}</td>
-              <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
-              <td>
-                {#if template.universal}
-                  <div>Universal</div>
+              </dd>
+              <dt>URL:</dt>
+              <dd>
+                {#if $store.site.url}
+                  {$store.site.url.prefix}
                 {:else}
-                  <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-                  <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deauthorizeIcon} width="1.5em"/></button>
+                  This site is not launched.
                 {/if}
-              </td>
-            </tr>
-          {/each}
-        </table>
-      {/if}
-      <div class="template-accordion-wrapper">
-        <Accordion title="Universal Components">
-          <div class="wrapper">
-            <ul class="universal-templates" style={`grid-template-rows: repeat(${Math.ceil(universalComponentTemplates.length / 2)}, 1fr)`}>
-              {#each universalComponentTemplates as template, index}
-                <li class={hasBackground(universalComponentTemplates.length, index) ? 'bg' : ''}>
-                  {template.name}
-                </li>
-              {/each}
-            </ul>
-          </div>
-        </Accordion>
-      </div>
-      <div class="template-accordion-wrapper">
-        <Accordion title="Non-authorized Components">
-          <ul class="forbidden-templates">
-            {#each data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key)) as template}
-            <li>
-              {template.name}
-              {#if template.permissions.assign}
-                  <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={authorizeIcon} width="1.5em"/>
-                    <ScreenReaderOnly>{`deauthorize ${template.name}`}</ScreenReaderOnly>
+                {#if $store.site.permissions.launch}
+                  <button on:click={() => { modal = 'editlaunch' }}>
+                    <Icon icon={pencilIcon} hiddenLabel="Edit URL or launch site" inline width="1.3em"/>
                   </button>
-              {/if}
-            </li>
+                {/if}
+              </dd>
+            </dl>
+          </div>
+          <div class="detail-area-head">
+            <h3>Site Management</h3>
+            {#if $store.site.permissions.manageGovernance}
+              <button on:click={() => { modal = 'editsitemanagement' }}>
+                <Icon icon={pencilIcon} hiddenLabel="Edit site management" inline width="1.3em"/>
+              </button>
+            {/if}
+          </div>
+          <dl>
+            <dt>Organization:</dt>
+            <dd>{$store.site.organization?.name ?? ''}</dd>
+            <dt>Owner:</dt>
+            <dd>
+              {#if $store.site.owner}{$store.site.owner.firstname} {$store.site.owner.lastname} ({$store.site.owner.id}){/if}
+            </dd>
+            <dt>Manager(s):</dt>
+            <dd>
+              <ul class='manager-list'>
+                {#each $store.site.managers as manager (manager.id)}
+                <li> {manager.firstname} {manager.lastname} ({manager.id})</li>
+                {/each}
+              </ul>
+            </dd>
+          </dl>
+        </DetailPanelSection>
+      </DetailPanel>
+      <DetailPanel header='Site Stages' headerColor={panelHeaderColor} button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => { modal = 'addpagetree' } } : undefined}>
+        <DetailPanelSection>
+          <table>
+            <tr class='headers'>
+              <th>Name</th>
+              <th>Stage</th>
+              <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
+            </tr>
+            {#each $store.site.pagetrees as pagetree (pagetree.id)}
+              <tr>
+                <td>{pagetree.name}</td>
+                <td>{titleCase(pagetree.type)}</td>
+                <td class="pagetree-buttons">
+                  {#if pagetree.type === 'SANDBOX' && pagetree.permissions.promote}
+                    <button title="Promote to Primary" on:click={() => { onClickPromotePagetree(pagetree.id, pagetree.name) }}><Icon icon={launchIcon} width="1.3em"/><ScreenReaderOnly>promote page tree</ScreenReaderOnly></button>
+                  {/if}
+                  {#if pagetree.type === 'SANDBOX' && pagetree.permissions.archive}
+                    <button title="Archive" on:click={() => { onClickArchivePagetree(pagetree.id, pagetree.name) }}><Icon icon={archiveOutline} width="1.3em"/><ScreenReaderOnly>archive page tree</ScreenReaderOnly></button>
+                  {/if}
+                  {#if pagetree.type !== 'PRIMARY' && pagetree.permissions.delete}
+                    <button title="Delete" on:click={() => { onClickDeletePagetree(pagetree.id, pagetree.name) }}><Icon icon={deleteOutline} width="1.3em"/><ScreenReaderOnly>delete page tree</ScreenReaderOnly></button>
+                  {/if}
+                </td>
+              </tr>
             {/each}
-          </ul>
-        </Accordion>
+          </table>
+        </DetailPanelSection>
+      </DetailPanel>
+      <div class="audit-panel">
+        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} on:addauditcomment={() => { modal = 'addcomment' } }/>
       </div>
     </div>
-  </DetailPanelSection>
-</DetailPanel>
-
-<DetailPanel header="Audit" button={{ icon: plusIcon, hiddenLabel: 'add comment', onClick: () => { modal = 'addcomment' } }}>
-  <DetailPanelSection>
-    {#if $store.site.comments.length}
-      <ul use:eq>
-        {#each $store.site.comments as comment (comment.id)}
-          <li class='comment-card'>
-            <span class="comment-text">{comment.comment}</span>
-            <div>
-              <span class="comment-date">{DateTime.fromISO(comment.createdAt).toFormat('LLL d, yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>
-              <span class="comment-creator">{comment.createdBy.id}</span>
+    <div class="vertical-group">
+      <DetailPanel header="User Access" headerColor={panelHeaderColor}>
+        <DetailPanelSection>
+          <div class="detail-section">
+            <table class="access">
+              <caption><h3>Roles</h3></caption>
+              <thead>
+                <tr>
+                  <th>Role</th>
+                  <th class="read-only">Read-Only</th>
+                  <th class="universal">Universal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each $store.siteRoles as role (role.id)}
+                  <tr>
+                    <td><div class="carded-label">Role:</div><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
+                    <td><div class="carded-label">Read-Only:</div><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+                    <td class="col3"><div class="carded-label">Universal:</div><Icon icon={minusIcon} hiddenLabel={`${role.name} is a site-specific role`}/></td>
+                  </tr>
+                {/each}
+                {#each $store.globalRoles as role (role.id)}
+                  <tr>
+                    <td><div class="carded-label">Role:</div><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
+                    <td><div class="carded-label">Read-Only:</div><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+                    <td class="col3"><div class="carded-label">Universal:</div><Icon icon={checkIcon} hiddenLabel={`${role.name} applies to all sites`}/></td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+          {#if $store.groups.length}
+          <div class="detail-section">
+            <table class="access">
+              <caption><h3>Groups</h3></caption>
+              <thead>
+                <tr>
+                  <th>Group</th>
+                  <th class="read-only">Read-Only</th>
+                  <th class="source-roles">Source Role(s)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each $store.groups as group (group.id)}
+                  <tr>
+                    <td><div class="carded-label">Group:</div><a href={`${base}/auth/groups/${group.id}`}>{group.name}</a></td>
+                    <td><div class="carded-label">Read-Only:</div><Icon icon={group.readonly ? checkIcon : minusIcon} hiddenLabel={`${group.name} has ${group.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+                    <td><div class="carded-label">Source Role(s):</div>{group.roles}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+          {/if}
+          <div class="detail-section">
+            <table class="access">
+              <caption><h3>Users</h3></caption>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th class="read-only">Read-Only</th>
+                  <th class="source-roles">Source Role(s)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each $store.users as user (user.id)}
+                  <tr>
+                    <td><div class="carded-label">Name:</div><a href={`${base}/auth/users/${user.id}`}>{user.firstname} {user.lastname}</a></td>
+                    <td><div class="carded-label">Read-Only:</div><Icon icon={user.readonly ? checkIcon : minusIcon} hiddenLabel={`${user.firstname} ${user.lastname} has ${user.readonly ? 'read-only' : 'write'} access to this site`}/></td>
+                    <td><div class="carded-label">Source Role(s):</div>{user.roles}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        </DetailPanelSection>
+      </DetailPanel>
+      <DetailPanel header="Authorized Templates" headerColor={panelHeaderColor}>
+        <DetailPanelSection>
+          <div class="template-section">
+            <div class="detail-area-head">
+              <h3>Page Templates</h3>
             </div>
-          </li>
-        {/each}
-      </ul>
-    {:else}
-      No comments found.
-    {/if}
-  </DetailPanelSection>
-</DetailPanel>
+            {#if $store.pageTemplates.length}
+              <table class="authorized-templates">
+                <tr>
+                  <th>Template Name</th>
+                  <th>Authorized Pagetree(s)</th>
+                  <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
+                </tr>
+                {#each $store.pageTemplates as template (template.key)}
+                  <tr>
+                    <td>{template.name}</td>
+                    <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
+                    <td>
+                      {#if template.permissions.assign}
+                        <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
+                        <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deauthorizeIcon} width="1.5em"/></button>
+                      {/if}
+                    </td>
+                  </tr>
+                {/each}
+              </table>
+            {/if}
+            <div class="template-accordion-wrapper">
+              <Accordion title="Universal Page Templates">
+                <div class="wrapper">
+                  <ul class="universal-templates" style={`grid-template-rows: repeat(${Math.ceil(universalPageTemplates.length / 2)}, 1fr)`}>
+                    {#each universalPageTemplates as template, index}
+                      <li class={hasBackground(universalPageTemplates.length, index) ? 'bg' : ''}>
+                        {template.name}
+                      </li>
+                    {/each}
+                  </ul>
+                </div>
+              </Accordion>
+            </div>
+            <div class="template-accordion-wrapper">
+              <Accordion title="Non-authorized Page Templates">
+                <ul class="forbidden-templates">
+                  {#each data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key)) as template}
+                    <li>
+                      {template.name}
+                      {#if template.permissions.assign}
+                        <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={authorizeIcon} width="1.5em"/>
+                          <ScreenReaderOnly>{`deauthorize ${template.name}`}</ScreenReaderOnly>
+                        </button>
+                      {/if}
+                    </li>
+                  {/each}
+                </ul>
+              </Accordion>
+            </div>
+          </div>
+          <div class="template-section">
+            <div class="detail-area-head">
+              <h3>Component Templates</h3>
+            </div>
+            {#if $store.componentTemplates.length}
+              <table class="authorized-templates">
+                <tr>
+                  <th>Template Name</th>
+                  <th>Authorized Pagetree(s)</th>
+                  <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
+                </tr>
+                {#each $store.componentTemplates as template (template.key)}
+                  <tr>
+                    <td>{template.name}</td>
+                    <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
+                    <td>
+                      {#if template.universal}
+                        <div>Universal</div>
+                      {:else}
+                        <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
+                        <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deauthorizeIcon} width="1.5em"/></button>
+                      {/if}
+                    </td>
+                  </tr>
+                {/each}
+              </table>
+            {/if}
+            <div class="template-accordion-wrapper">
+              <Accordion title="Universal Components">
+                <div class="wrapper">
+                  <ul class="universal-templates" style={`grid-template-rows: repeat(${Math.ceil(universalComponentTemplates.length / 2)}, 1fr)`}>
+                    {#each universalComponentTemplates as template, index}
+                      <li class={hasBackground(universalComponentTemplates.length, index) ? 'bg' : ''}>
+                        {template.name}
+                      </li>
+                    {/each}
+                  </ul>
+                </div>
+              </Accordion>
+            </div>
+            <div class="template-accordion-wrapper">
+              <Accordion title="Non-authorized Components">
+                <ul class="forbidden-templates">
+                  {#each data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key)) as template}
+                  <li>
+                    {template.name}
+                    {#if template.permissions.assign}
+                        <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={authorizeIcon} width="1.5em"/>
+                          <ScreenReaderOnly>{`deauthorize ${template.name}`}</ScreenReaderOnly>
+                        </button>
+                    {/if}
+                  </li>
+                  {/each}
+                </ul>
+              </Accordion>
+            </div>
+          </div>
+        </DetailPanelSection>
+      </DetailPanel>
+      <div class="audit-panel mobile">
+        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} on:addauditcomment={() => { modal = 'addcomment' } }/>
+      </div>
+    </div>
+  </div>
+</DetailPageContent>
+
 {#if modal === 'addcomment'}
   <FormDialog
     submit={addComment}
@@ -853,33 +855,40 @@
   td button:not(:last-child) {
     margin-right: 0.5em;
   }
-  /* Audit */
-  li.comment-card {
+  .button-container {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .button-container button {
+    background-color: #501214;
+    color: #ffffff;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 1em;
+  }
+  .panel-grid {
+    display: grid;
+    gap: 1em;
+    grid-template-columns: 1fr 2fr;
+  }
+  .vertical-group {
     display: flex;
     flex-direction: column;
-    padding: 0.5em;
+    gap: 1em;
   }
-  li.comment-card:nth-child(even) {
-    background-color: #f6f7f9;
+  :global([data-eq~="800px"]) .panel-grid {
+    grid-template-columns: 1fr;
   }
-  li.comment-card .comment-text {
-    margin-bottom: 0.5em;
+  .audit-panel.mobile {
+    display: none;
   }
-  li.comment-card div {
-    display: flex;
-    justify-content: space-between;
+  :global([data-eq~="800px"]) .audit-panel {
+    display: none;
   }
-  li.comment-card div span {
-    width: 50%;
-  }
-  li.comment-card .comment-creator {
-    text-align: right;
-  }
-  [data-eq~="400px"] li.comment-card div {
-    flex-direction: column;
-    align-items: flex-end;
-  }
-  [data-eq~="400px"] li.comment-card div span {
-    width: auto;
+  :global([data-eq~="800px"]) .audit-panel.mobile {
+    display: block;
   }
 </style>
