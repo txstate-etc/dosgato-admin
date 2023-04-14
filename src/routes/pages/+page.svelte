@@ -1,10 +1,10 @@
 <script lang="ts">
+  import { Dialog, FieldSelect, FieldText, FormDialog, Tree } from '@dosgato/dialog'
   import applicationOutline from '@iconify-icons/mdi/application-outline'
   import copySimple from '@iconify-icons/ph/copy-simple'
   import deleteEmpty from '@iconify-icons/mdi/delete-empty'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import archive from '@iconify-icons/ph/archive'
-  import { sandboxIcon } from './sandboxicon'
   import circleIcon from '@iconify-icons/mdi/circle'
   import fileX from '@iconify-icons/ph/file-x'
   import layout from '@iconify-icons/ph/layout'
@@ -24,13 +24,14 @@
   import trashSimpleFill from '@iconify-icons/ph/trash-simple-fill'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
+  import type { SubmitResponse } from '@txstate-mws/svelte-forms'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup } from '$lib'
+  import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { _store as store, type TypedPageItem } from './+page'
+  import { sandboxIcon } from './sandboxicon'
   import './index.css'
-  import { Dialog, FieldSelect, FieldText, FormDialog, Tree } from '@dosgato/dialog'
 
   let modal: 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | undefined = undefined
 
@@ -139,13 +140,13 @@
     return resp.messages.map(m => ({ ...m, path: (m.arg === 'name' || m.arg === 'templateKey') ? m.arg : `data.${m.arg}` }))
   }
 
-  async function onAddPage (state, validateOnly) {
-    const resp = await api.createPage(state.name, state.templateKey, state.data, $store.selectedItems[0].id, false, validateOnly)
+  async function onAddPage (state) {
+    const resp = await api.createPage(state.name, state.templateKey, state.data, $store.selectedItems[0].id, false, false)
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
       data: state
-    }
+    } as SubmitResponse<CreateWithPageState>
   }
 
   async function onAddPageComplete () {

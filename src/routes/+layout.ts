@@ -4,9 +4,9 @@ import { uiConfig } from '../local'
 
 export const load: Load = async (input) => {
   api.fetch = input.fetch
-  await api.init(uiConfig.login.getToken?.(input))
   let errObj
   try {
+    await api.init(uiConfig.login.getToken?.(input))
     const { me, access } = await api.getSelf()
     if (!me) throw error(403, 'You are not authorized to use this system.')
     globalStore.update(v => ({ ...v, me, access }))

@@ -77,7 +77,6 @@
       $editorStore.scrollY = message.scrollTop!
       return
     }
-    console.log('received message', message)
     if (message.action === 'drag') {
       const validdrops = new Set<string>()
       for (const p of message.allpaths ?? []) {
@@ -237,7 +236,7 @@
   to steal credentials from other editors!
   UPDATE: I'm  going to go ahead and add allow-same-origin for now and we'll explore putting the render server on
   a separate subdomain or port to prevent credential exposure. -->
-  <iframe use:messages sandbox="allow-scripts allow-same-origin" src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.previewing?.mode === 'mobile'}></iframe>
+  <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.previewing?.mode === 'mobile'}></iframe>
 </ActionPanel>
 
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
