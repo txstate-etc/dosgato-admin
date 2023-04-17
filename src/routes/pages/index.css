@@ -6,6 +6,10 @@
 li .status {
   text-align: center;
 }
+.status .icon svg {
+  width: 1.2em;
+  height: 1.2em;
+}
 .status.published {
   color: var(--dosgato-green, #689600);
 }
