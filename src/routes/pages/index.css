@@ -6,7 +6,7 @@
 li .status {
   text-align: center;
 }
-.status .icon svg {
+.status:not(.deleted) .icon svg {
   width: 1.2em;
   height: 1.2em;
 }

@@ -21,7 +21,6 @@
   import exportIcon from '@iconify-icons/mdi/export'
   import importIcon from '@iconify-icons/mdi/import'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
-  import trashSimpleFill from '@iconify-icons/ph/trash-simple-fill'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
@@ -252,7 +251,7 @@
       { label: 'Path', id: 'name', grow: 4, icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : item.parent ? browserIcon : siteIcon[item.type], get: 'name' },
       { label: 'Title', id: 'title', grow: 3, get: 'title' },
       { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
-      { label: 'Status', id: 'status', fixed: '4em', icon: item => item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : trashSimpleFill, class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
+      { label: 'Status', id: 'status', fixed: '4em', icon: item => item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
       { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
       { label: 'By', id: 'modifiedBy', fixed: '4.3em', get: 'modifiedBy.id' }
     ]} searchable={['name', 'title']}

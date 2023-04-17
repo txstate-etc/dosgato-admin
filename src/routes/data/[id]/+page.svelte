@@ -16,7 +16,6 @@
   import publishOffIcon from '@iconify-icons/mdi/publish-off'
   import plusIcon from '@iconify-icons/mdi/plus'
   import squareIcon from '@iconify-icons/mdi/square'
-  import trashSimpleFill from '@iconify-icons/ph/trash-simple-fill'
   import triangleIcon from '@iconify-icons/mdi/triangle'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
@@ -458,7 +457,7 @@
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Data'} actions={getActions($store.selectedItems)}>
   <Tree {store} headers={[
     { label: 'Path', id: 'name', grow: 1, icon: item => getPathIcon(item), get: 'name' },
-    { label: 'Status', id: 'status', fixed: '5em', icon: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? trashSimpleFill : statusIcon[item.status]) : undefined, class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
+    { label: 'Status', id: 'status', fixed: '5em', icon: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? deleteOutline : statusIcon[item.status]) : undefined, class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
     { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
     { label: 'By', id: 'modifiedBy', fixed: '3em', get: 'modifiedBy.id' }
   ]} searchable='name' />
