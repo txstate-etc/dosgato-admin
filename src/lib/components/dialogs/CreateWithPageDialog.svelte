@@ -21,7 +21,7 @@ This component is also used when creating a site or pagetree, both of which requ
   /** The submit function needs the extra validateOnly parameter because we need to call the submit function in
   both dialogs, but only want to save the data after the second dialog. */
   export let submit: (state: CreateWithPageState, validateOnly: boolean) => Promise<SubmitResponse<CreateWithPageState>>
-  export let validate: undefined|((state: CreateWithPageState) => Promise<Feedback[]>) = undefined
+  export let validate: ((state: CreateWithPageState) => Promise<Feedback[]>)
   export let templateChoices: PopupMenuItem[]
   export let pagetreeId: string | undefined = undefined
   /** whether or not to add a name field to the first dialog. true when adding sites and pages, false when adding pagetrees because their root page name defaults to the site name */
@@ -49,14 +49,15 @@ This component is also used when creating a site or pagetree, both of which requ
   }
 
   async function onSaveNameAndTemplate (state: CreateWithPageState) {
-    const resp = await submit(state, true)
-    const messages = resp.messages.filter(m => m.path === 'name' || m.path === 'templateKey')
+    const resp = await validate(state)
+    const messages = resp.filter(m => m.path === 'name' || m.path === 'templateKey')
+    const ret: SubmitResponse<CreateWithPageState> = { success: true, data: state, messages }
     if (messages.some(m => m.type === MessageType.ERROR)) {
-      return { ...resp, messages, data: state }
+      ret.success = false
     } else {
       nameDialogData = state
-      return { success: true, messages: resp.messages.filter(m => m.type === MessageType.SUCCESS), data: state }
     }
+    return ret
   }
 
   function onNameAndTemplateComplete () {
@@ -64,7 +65,6 @@ This component is also used when creating a site or pagetree, both of which requ
   }
 
   async function validateNameAndTemplate (state: CreateWithPageState) {
-    if (!validate) return []
     const messages = await validate(state)
     return messages.filter(m => m.path === 'name' || m.path === 'templateKey') ?? []
   }
