@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { SortableTableHeader } from './sortabletable'
   import SortableTableCell from './SortableTableCell.svelte'
-  import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
+  import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import sortAscendingIcon from '@iconify-icons/ph/sort-ascending'
   import sortDescendingIcon from '@iconify-icons/ph/sort-descending'
   import { isNotNull, sortby } from 'txstate-utils'
@@ -31,9 +31,9 @@
   <thead>
     {#each headers as header (header.id) }
       {#if header.hideHeader}
-        <th><ScreenReaderOnly>{header.label}</ScreenReaderOnly></th>
+        <th style="{header.widthPercent ? `width: ${header.widthPercent}px` : ''}"><ScreenReaderOnly>{header.label}</ScreenReaderOnly></th>
       {:else}
-        <th class:sortable={header.sortable}>
+        <th class:sortable={header.sortable} style="{header.widthPercent ? `width: ${header.widthPercent}%` : ''}">
           <span>{header.label}</span>
           {#if header.sortable}
             <button class="sort-button" type="button" on:click={() => sortItems(header)}>
@@ -52,9 +52,15 @@
     {#each sortedItems as item (item.id)}
     <tr>
       {#each headers as header (header.id)}
-        <td>
-          <SortableTableCell {item} {header}/>
-        </td>
+        {#if header.actions?.length}
+          <td use:eq>
+            <SortableTableCell {item} {header}/>
+          </td>
+        {:else}
+          <td>
+            <SortableTableCell {item} {header}/>
+          </td>
+        {/if}
       {/each}
     </tr>
   {/each}
@@ -73,7 +79,7 @@
             {/if}
           {/each}
         </dl>
-        {@const actions = headers.filter(h => h.actions?.length).map(h => h.actions).filter(isNotNull).flat() }
+        {@const actions = headers.filter(h => h.actions?.length).map(h => h.actions).filter(isNotNull).flat().map(a => (typeof a === 'function') ? a(item) : a).flat() }
         {#if actions.length}
           <div class="actions">
             {#each actions as action}

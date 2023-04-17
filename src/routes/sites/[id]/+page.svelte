@@ -1,11 +1,11 @@
 <script lang="ts">
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/ph/plus-light'
-  import deleteOutline from '@iconify-icons/ph/trash-light'
-  import archiveOutline from '@iconify-icons/ph/archive-light'
+  import deleteOutline from '@iconify-icons/ph/trash'
+  import archiveOutline from '@iconify-icons/ph/archive'
   import checkIcon from '@iconify-icons/ph/check-light'
   import minusIcon from '@iconify-icons/ph/minus-light'
-  import launchIcon from '@iconify-icons/ph/rocket-launch-light'
+  import launchIcon from '@iconify-icons/ph/rocket-launch'
   import deauthorizeIcon from '@iconify-icons/ph/minus-circle-light'
   import authorizeIcon from '@iconify-icons/ph/plus-circle-light'
   import exportIcon from '@iconify-icons/mdi/export'
@@ -18,6 +18,8 @@
   import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import AuditPanel from './AuditPanel.svelte'
+  import SortableTable from '$lib/components/table/SortableTable.svelte'
+  import type { SortableTableRowAction } from '$lib/components/table/sortabletable'
 
   const panelHeaderColor = '#D1C7B7'
 
@@ -92,8 +94,8 @@
     return resp.messages.map(m => ({ ...m, path: m.arg }))
   }
 
-  async function onAddPagetree (state: CreateWithPageState, validateOnly) {
-    const resp = await api.addPagetree($store.site.id, state.templateKey, state.data, validateOnly)
+  async function onAddPagetree (state: CreateWithPageState) {
+    const resp = await api.addPagetree($store.site.id, state.templateKey, state.data)
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
@@ -262,6 +264,20 @@
       return (index - secondColStartIndex) % 2 === 0
     }
   }
+
+  function getPagetreeActions (pagetree) {
+    const actions: SortableTableRowAction[] = []
+    if (pagetree.type === 'SANDBOX' && pagetree.permissions.promote) {
+      actions.push({ icon: launchIcon, label: 'Promote to Primary', onClick: (tree) => onClickPromotePagetree(tree.id, tree.name)})
+    }
+    if (pagetree.type === 'SANDBOX' && pagetree.permissions.archive) {
+      actions.push({ icon: archiveOutline, label: 'Archive', onClick: (tree) => onClickArchivePagetree(tree.id, tree.name)})
+    }
+    if (pagetree.type !== 'PRIMARY' && pagetree.permissions.delete) {
+      actions.push({ icon: deleteOutline, label: 'Delete', onClick: (tree) => onClickDeletePagetree(tree.id, tree.name)})
+    }
+    return actions
+  }
 </script>
 
 <DetailPageContent>
@@ -318,30 +334,11 @@
       </DetailPanel>
       <DetailPanel header='Site Stages' headerColor={panelHeaderColor} button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => { modal = 'addpagetree' } } : undefined}>
         <DetailPanelSection>
-          <table>
-            <tr class='headers'>
-              <th>Name</th>
-              <th>Stage</th>
-              <td><ScreenReaderOnly>No data</ScreenReaderOnly></td>
-            </tr>
-            {#each $store.site.pagetrees as pagetree (pagetree.id)}
-              <tr>
-                <td>{pagetree.name}</td>
-                <td>{titleCase(pagetree.type)}</td>
-                <td class="pagetree-buttons">
-                  {#if pagetree.type === 'SANDBOX' && pagetree.permissions.promote}
-                    <button title="Promote to Primary" on:click={() => { onClickPromotePagetree(pagetree.id, pagetree.name) }}><Icon icon={launchIcon} width="1.3em"/><ScreenReaderOnly>promote page tree</ScreenReaderOnly></button>
-                  {/if}
-                  {#if pagetree.type === 'SANDBOX' && pagetree.permissions.archive}
-                    <button title="Archive" on:click={() => { onClickArchivePagetree(pagetree.id, pagetree.name) }}><Icon icon={archiveOutline} width="1.3em"/><ScreenReaderOnly>archive page tree</ScreenReaderOnly></button>
-                  {/if}
-                  {#if pagetree.type !== 'PRIMARY' && pagetree.permissions.delete}
-                    <button title="Delete" on:click={() => { onClickDeletePagetree(pagetree.id, pagetree.name) }}><Icon icon={deleteOutline} width="1.3em"/><ScreenReaderOnly>delete page tree</ScreenReaderOnly></button>
-                  {/if}
-                </td>
-              </tr>
-            {/each}
-          </table>
+          <SortableTable  items={$store.site.pagetrees} headers={[
+            { id: 'name', label: 'Name', get: 'name', widthPercent: 65 },
+            { id: 'stage', label: 'Stage', render: (tree) => titleCase(tree.type), widthPercent: 15 },
+            { id: 'actions', label: 'pagetree actions', hideHeader: true, actions: (tree) => getPagetreeActions(tree), combinedActionsLabel: 'Manage', widthPercent: 20 }
+          ]}/>
         </DetailPanelSection>
       </DetailPanel>
       <div class="audit-panel">
@@ -730,15 +727,9 @@
     text-align: left;
     padding: 0.2em 0;
   }
-  table tr.headers {
-    border-bottom: 1px solid #ebebeb;
-  }
+
   table tr { border-bottom: 1px dashed #ebebeb }
   table tr:nth-child(even) { background-color: #f6f7f9 }
-
-  .pagetree-buttons {
-    text-align: right;
-  }
 
   /* User Access */
   table.access caption {
@@ -864,7 +855,7 @@
   .panel-grid {
     display: grid;
     gap: 1em;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 50% 50%;
   }
   .vertical-group {
     display: flex;
