@@ -1,8 +1,7 @@
-import type { AnyItem, ChooserType, Client, Source } from '@dosgato/dialog'
-import type { LinkDefinition } from '@dosgato/templating'
+import type { AnyItem, ChooserType, Client, Folder, Source } from '@dosgato/dialog'
+import type { AssetFolderLink, LinkDefinition } from '@dosgato/templating'
 import { isNotBlank, sortby, stringify } from 'txstate-utils'
-import { api } from './api.js'
-import { environmentConfig } from './stores/global.js'
+import { api, environmentConfig, uploadWithProgress } from '$lib'
 
 function parseLink (link: string) {
   return JSON.parse(link) as LinkDefinition
@@ -81,7 +80,20 @@ export class ChooserClient implements Client {
     return await api.chooserPageByUrl(url)
   }
 
-  async upload (source: string, path: string, files: FileList): Promise<void> {
-    throw new Error('Function not implemented.')
+  async upload (folder: Folder, files: File[], progress: (ratio: number) => void) {
+    const folderLink = JSON.parse(folder.id) as AssetFolderLink
+
+    const data = new FormData()
+    for (let i = 0; i < files.length; i++) {
+      data.append('file' + String(i), files[i])
+    }
+
+    await uploadWithProgress(
+      `${environmentConfig.apiBase}/assets/${folderLink.id}`,
+      { Authorization: `Bearer ${api.token!}` },
+      data,
+      progress
+    )
+    return undefined
   }
 }
