@@ -26,9 +26,10 @@
   import '../index.css'
   import { afterNavigate } from '$app/navigation'
 
-  export let data: { mayManageGlobalData: boolean, template: EnhancedUITemplate }
+  let loadedData: { mayManageGlobalData: boolean, template: EnhancedUITemplate }
+  export { loadedData as data }
 
-  $: templateKey = data.template.templateKey
+  $: templateKey = loadedData.template.templateKey
   let modal: 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'renamedata' | 'editdata' | 'publishdata' | 'unpublishdata' | 'deletedata' | 'publishdeletedata' | 'undeletedata' | undefined
 
   const chooserClient = new ChooserClient()
@@ -111,7 +112,7 @@
     } else {
       const [globaldataroot, sitedataroots] = await Promise.all([
         api.getGlobalDataRootByTemplateKey(templateKey),
-        data.template?.global ? [] : api.getSiteDataRootsByTemplateKey(templateKey)
+        loadedData.template?.global ? [] : api.getSiteDataRootsByTemplateKey(templateKey)
       ])
       const ret: AnyDataTreeItem[] = []
       ret.push({
@@ -120,7 +121,7 @@
         hasChildren: !!globaldataroot.datafolders.length || !!globaldataroot.data.length,
         name: 'Global Data',
         permissions: {
-          create: data.mayManageGlobalData
+          create: loadedData.mayManageGlobalData
         }
       })
       for (const dr of sitedataroots) {
@@ -517,12 +518,12 @@
     validate={validateAddData}
     title='Add Data'
     on:escape={() => { modal = undefined }}
-    on:saved={onAddDataComplete}>
+    on:saved={onAddDataComplete} let:data>
     <!-- TODO: Need some description text explaining this field -->
     <FieldText path='name' label='Data Name' required></FieldText>
-    {#if data.template.dialog}
-      <SubForm path='data'>
-        <svelte:component this={data.template.dialog} creating={true} {environmentConfig} />
+    {#if loadedData.template.dialog}
+      <SubForm path='data' let:value>
+        <svelte:component this={loadedData.template.dialog} creating={true} {environmentConfig} data={value ?? {}} />
       </SubForm>
     {/if}
   </FormDialog>
@@ -544,10 +545,10 @@
     title='Edit Data'
     on:escape={() => { modal = undefined }}
     on:saved={onSaved}
-    preload={{ data: itemEditing ? itemEditing.data : {} }}>
-    {#if data.template.dialog}
-      <SubForm path='data'>
-        <svelte:component this={data.template.dialog} creating={false} {data} {environmentConfig} />
+    preload={{ data: itemEditing ? itemEditing.data : {} }} let:data>
+    {#if loadedData.template.dialog}
+      <SubForm path='data' let:value>
+        <svelte:component this={loadedData.template.dialog} creating={false} data={value} {environmentConfig} />
       </SubForm>
     {/if}
   </FormDialog>
