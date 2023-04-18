@@ -855,7 +855,7 @@
   .panel-grid {
     display: grid;
     gap: 1em;
-    grid-template-columns: 50% 50%;
+    grid-template-columns: 1fr 1fr;
   }
   .vertical-group {
     display: flex;
