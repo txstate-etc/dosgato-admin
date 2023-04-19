@@ -418,7 +418,7 @@
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, 'args'),
-      data: resp.success ? resp.data.data : state
+      data: resp.success ? resp.data : state
     }
   }
 
@@ -545,7 +545,7 @@
     title='Edit Data'
     on:escape={() => { modal = undefined }}
     on:saved={onSaved}
-    preload={{ data: itemEditing ? itemEditing.data : {} }} let:data>
+    preload={{ data: itemEditing ? itemEditing.data : {} }}>
     {#if loadedData.template.dialog}
       <SubForm path='data' let:value>
         <svelte:component this={loadedData.template.dialog} creating={false} data={value} {environmentConfig} />
