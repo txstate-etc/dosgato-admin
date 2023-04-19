@@ -248,10 +248,10 @@
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) goto(base + '/pages/' + detail.id) }}
     headers={[
-      { label: 'Path', id: 'name', grow: 4, icon: item => item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : item.parent ? browserIcon : siteIcon[item.type], get: 'name' },
+      { label: 'Path', id: 'name', grow: 4, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : item.parent ? browserIcon : siteIcon[item.type] }), get: 'name' },
       { label: 'Title', id: 'title', grow: 3, get: 'title' },
       { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
-      { label: 'Status', id: 'status', fixed: '4em', icon: item => item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
+      { label: 'Status', id: 'status', fixed: '4em', icon: item => ({ icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline }), class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
       { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
       { label: 'By', id: 'modifiedBy', fixed: '4.3em', get: 'modifiedBy.id' }
     ]} searchable={['name', 'title']}

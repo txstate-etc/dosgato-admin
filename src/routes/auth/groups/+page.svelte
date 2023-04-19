@@ -66,7 +66,7 @@
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Groups'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/groups/' + detail.id)} headers ={[
-    { id: 'name', label: 'Name', get: 'name', fixed: '19em', icon: usersThree },
+    { id: 'name', label: 'Name', get: 'name', fixed: '19em', icon: { icon: usersThree } },
     { id: 'members', label: 'Members', render: item => String(item.users.length), fixed: '7em' },
     { id: 'roles', label: 'Roles', render: item => (item.roles.map(r => r.name)).join(', '), grow: 5 }
   ]} searchable='name'/>

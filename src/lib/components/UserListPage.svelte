@@ -94,7 +94,7 @@
 </script>
 <ActionPanel {actions} actionsTitle={$store.selected.size ? $store.selectedItems[0].id : 'Users'} filterinput on:filter={e => { filter = e.detail }}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/users/' + detail.id)} headers={[
-    { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', fixed: '10em', icon: u => u.disabled ? accountOff : accountIcon },
+    { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', fixed: '10em', icon: u => ({ icon: u.disabled ? accountOff : accountIcon }) },
     { id: 'fullname', label: 'Full Name', get: 'name', fixed: '17em' },
     { id: 'roles', label: 'Roles', render: renderRoles, grow: 5 }
   ]} searchable={['id', 'firstname', 'lastname']} {filter}/>
