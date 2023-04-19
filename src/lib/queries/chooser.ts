@@ -26,6 +26,7 @@ export interface ChooserPageDetails {
 
 const chooserAssetDetails = `
 id
+linkId
 name
 extension
 path
@@ -38,6 +39,7 @@ thumbnail { id extension }
 `
 export interface ChooserAssetDetails {
   id: string
+  linkId: string
   name: string
   extension: string
   path: string
@@ -235,7 +237,7 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
     type: 'asset',
     source: 'assets',
     ...pick(asset, 'name', 'path', 'mime'),
-    id: stringify({ id: asset.id, source: 'assets', type: 'asset', checksum: asset.checksum, siteId: asset.site.id, path: asset.path }),
+    id: stringify({ linkId: asset.linkId, source: 'assets', type: 'asset', checksum: asset.checksum, siteId: asset.site.id, path: asset.path }),
     bytes: asset.size,
     url: `/.assets${asset.path}`,
     image: asset.box
