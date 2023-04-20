@@ -9,7 +9,7 @@
   import deauthorizeIcon from '@iconify-icons/ph/minus-circle-light'
   import authorizeIcon from '@iconify-icons/ph/plus-circle-light'
   import exportIcon from '@iconify-icons/mdi/export'
-  import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog } from '@dosgato/dialog'
+  import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
   import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { keyby, titleCase } from 'txstate-utils'
@@ -20,6 +20,7 @@
   import AuditPanel from './AuditPanel.svelte'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
   import type { SortableTableRowAction } from '$lib/components/table/sortabletable'
+  import TemplateAvailability from './TemplateAvailability.svelte'
 
   const panelHeaderColor = '#D1C7B7'
 
@@ -27,7 +28,6 @@
   let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'| 'authorizetemplate' |
     'promotepagetree'|'archivepagetree'|'edittemplates'|'addpagetemplates'|'addcomponenttemplates'|'deletetemplateauth'|undefined = undefined
 
-  const pagetreesByName = keyby($store.site.pagetrees, 'name')
   $: authorizedPageTemplateKeys = new Set($store.pageTemplates.map(t => t.key))
   $: authorizedComponentTemplateKeys = new Set($store.componentTemplates.map(t => t.key))
   $: universalComponentTemplates = data.allComponentTemplates.filter(t => t.universal && !authorizedComponentTemplateKeys.has(t.key))
@@ -42,6 +42,11 @@
 
   async function searchPagetrees (term) {
     return $store.site.pagetrees.filter(p => p.name.includes(term)).map(p => ({ label: p.name, value: p.id }))
+  }
+
+  async function lookupPagetreeByValue (val: string) {
+    const pagetree = $store.site.pagetrees.find(p => p.id === val)
+    if (pagetree) return { label: pagetree.name, value: pagetree.id }
   }
 
   async function addComment (state) {
@@ -184,8 +189,9 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
-  function onClickAuthorizeTemplate (key: string, name: string, pagetrees: string[]) {
-    store.setTemplateAuthEditing(key, name, pagetrees)
+  function onClickAuthorizeTemplate (e) {
+    const { key, name } = e.detail.template
+    store.setTemplateAuthEditing(key, name, [])
     modal = 'authorizetemplate'
   }
 
@@ -213,7 +219,9 @@
     }
   }
 
-  async function onClickEditTemplateAuth (key: string, name: string, pagetrees: string[]) {
+  async function onClickEditTemplateAuth (e) {
+    const { key, name, pagetrees } = e.detail.template
+    const pagetreesByName = keyby($store.site.pagetrees, 'name')
     store.setTemplateAuthEditing(key, name, pagetrees.map((p: string) => pagetreesByName[p].id))
     modal = 'edittemplates'
   }
@@ -237,7 +245,9 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
-  async function onClickDeleteTemplateAuth (key: string, name: string, pagetrees: string[]) {
+  async function onClickDeleteTemplateAuth (e) {
+    const { key, name, pagetrees } = e.detail.template
+    const pagetreesByName = keyby($store.site.pagetrees, 'name')
     store.setTemplateAuthEditing(key, name, pagetrees.map((p: string) => pagetreesByName[p].id))
     modal = 'deletetemplateauth'
   }
@@ -268,13 +278,13 @@
   function getPagetreeActions (pagetree) {
     const actions: SortableTableRowAction[] = []
     if (pagetree.type === 'SANDBOX' && pagetree.permissions.promote) {
-      actions.push({ icon: launchIcon, label: 'Promote to Primary', onClick: (tree) => onClickPromotePagetree(tree.id, tree.name)})
+      actions.push({ icon: launchIcon, label: 'Promote to Primary', hiddenLabel: (tree) => `Promote pagetree ${tree.name} to primary`, onClick: (tree) => onClickPromotePagetree(tree.id, tree.name) })
     }
     if (pagetree.type === 'SANDBOX' && pagetree.permissions.archive) {
-      actions.push({ icon: archiveOutline, label: 'Archive', onClick: (tree) => onClickArchivePagetree(tree.id, tree.name)})
+      actions.push({ icon: archiveOutline, label: 'Archive', hiddenLabel: (tree) => `Archive pagetree ${tree.name}`, onClick: (tree) => onClickArchivePagetree(tree.id, tree.name)})
     }
     if (pagetree.type !== 'PRIMARY' && pagetree.permissions.delete) {
-      actions.push({ icon: deleteOutline, label: 'Delete', onClick: (tree) => onClickDeletePagetree(tree.id, tree.name)})
+      actions.push({ icon: deleteOutline, label: 'Delete', hiddenLabel: (tree) => `Delete pagetree ${tree.name}`, onClick: (tree) => onClickDeletePagetree(tree.id, tree.name)})
     }
     return actions
   }
@@ -424,117 +434,21 @@
       </DetailPanel>
       <DetailPanel header="Authorized Templates" headerColor={panelHeaderColor}>
         <DetailPanelSection>
-          <div class="template-section">
-            <div class="detail-area-head">
-              <h3>Page Templates</h3>
-            </div>
-            {#if $store.pageTemplates.length}
-              <table class="authorized-templates">
-                <tr>
-                  <th>Template Name</th>
-                  <th>Authorized Pagetree(s)</th>
-                  <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
-                </tr>
-                {#each $store.pageTemplates as template (template.key)}
-                  <tr>
-                    <td>{template.name}</td>
-                    <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
-                    <td>
-                      {#if template.permissions.assign}
-                        <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-                        <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deauthorizeIcon} width="1.5em"/></button>
-                      {/if}
-                    </td>
-                  </tr>
-                {/each}
-              </table>
-            {/if}
-            <div class="template-accordion-wrapper">
-              <Accordion title="Universal Page Templates">
-                <div class="wrapper">
-                  <ul class="universal-templates" style={`grid-template-rows: repeat(${Math.ceil(universalPageTemplates.length / 2)}, 1fr)`}>
-                    {#each universalPageTemplates as template, index}
-                      <li class={hasBackground(universalPageTemplates.length, index) ? 'bg' : ''}>
-                        {template.name}
-                      </li>
-                    {/each}
-                  </ul>
-                </div>
-              </Accordion>
-            </div>
-            <div class="template-accordion-wrapper">
-              <Accordion title="Non-authorized Page Templates">
-                <ul class="forbidden-templates">
-                  {#each data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key)) as template}
-                    <li>
-                      {template.name}
-                      {#if template.permissions.assign}
-                        <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={authorizeIcon} width="1.5em"/>
-                          <ScreenReaderOnly>{`deauthorize ${template.name}`}</ScreenReaderOnly>
-                        </button>
-                      {/if}
-                    </li>
-                  {/each}
-                </ul>
-              </Accordion>
-            </div>
+          <div class="templates-mobile">
+            <Tabs tabs={[{ name: 'Page templates' }, { name: 'Component templates' }]} accordionOnMobile={false}>
+              <Tab name="Page templates">
+                <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={(e) => onClickEditTemplateAuth(e)} on:removeauth={(e) => onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+              </Tab>
+              <Tab name="Component templates">
+                <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={(e) => onClickEditTemplateAuth(e)} on:removeauth={(e) => onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+              </Tab>
+            </Tabs>
           </div>
-          <div class="template-section">
-            <div class="detail-area-head">
-              <h3>Component Templates</h3>
-            </div>
-            {#if $store.componentTemplates.length}
-              <table class="authorized-templates">
-                <tr>
-                  <th>Template Name</th>
-                  <th>Authorized Pagetree(s)</th>
-                  <td><ScreenReaderOnly>No Data</ScreenReaderOnly></td>
-                </tr>
-                {#each $store.componentTemplates as template (template.key)}
-                  <tr>
-                    <td>{template.name}</td>
-                    <td>{template.pagetrees.length ? template.pagetrees.join(', ') : 'All Pagetrees'}</td>
-                    <td>
-                      {#if template.universal}
-                        <div>Universal</div>
-                      {:else}
-                        <button on:click={() => { onClickEditTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={pencilIcon} width="1.5em"/></button>
-                        <button on:click={() => { onClickDeleteTemplateAuth(template.key, template.name, template.pagetrees) }}><Icon icon={deauthorizeIcon} width="1.5em"/></button>
-                      {/if}
-                    </td>
-                  </tr>
-                {/each}
-              </table>
-            {/if}
-            <div class="template-accordion-wrapper">
-              <Accordion title="Universal Components">
-                <div class="wrapper">
-                  <ul class="universal-templates" style={`grid-template-rows: repeat(${Math.ceil(universalComponentTemplates.length / 2)}, 1fr)`}>
-                    {#each universalComponentTemplates as template, index}
-                      <li class={hasBackground(universalComponentTemplates.length, index) ? 'bg' : ''}>
-                        {template.name}
-                      </li>
-                    {/each}
-                  </ul>
-                </div>
-              </Accordion>
-            </div>
-            <div class="template-accordion-wrapper">
-              <Accordion title="Non-authorized Components">
-                <ul class="forbidden-templates">
-                  {#each data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key)) as template}
-                  <li>
-                    {template.name}
-                    {#if template.permissions.assign}
-                        <button on:click={() => { onClickAuthorizeTemplate(template.key, template.name, []) }}><Icon icon={authorizeIcon} width="1.5em"/>
-                          <ScreenReaderOnly>{`deauthorize ${template.name}`}</ScreenReaderOnly>
-                        </button>
-                    {/if}
-                  </li>
-                  {/each}
-                </ul>
-              </Accordion>
-            </div>
+          <div class="templates-desktop">
+            <h3 class="template-header">Page templates</h3>
+            <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={(e) => onClickEditTemplateAuth(e)} on:removeauth={(e) => onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+            <h3 class="template-header">Specially authorized component templates</h3>
+            <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={(e) => onClickEditTemplateAuth(e)} on:removeauth={(e) => onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
           </div>
         </DetailPanelSection>
       </DetailPanel>
@@ -544,7 +458,7 @@
     </div>
   </div>
 </DetailPageContent>
-
+{JSON.stringify($store.templateAuthEditing)}
 {#if modal === 'addcomment'}
   <FormDialog
     submit={addComment}
@@ -654,7 +568,7 @@
     validate={async () => { return [] }}
     preload={{ pagetrees: $store.templateAuthEditing?.pagetrees ?? [] }}
     submit={editTemplateAuthorizations}>
-    <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
+    <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees} lookupByValue={lookupPagetreeByValue}/>
   </FormDialog>
 {:else if modal === 'deletetemplateauth'}
   <Dialog
@@ -709,15 +623,6 @@
     cursor: pointer;
     margin-left: 0.5em;
   }
-  ul {
-    list-style: none;
-    padding-left: 0;
-  }
-  li {
-    border-bottom: 1px dashed #aaa;
-    padding: 0.6em 0em;
-  }
-
   table {
     width: 100%;
     border-collapse: collapse;
@@ -784,60 +689,20 @@
     display: block;
   }
 
-  .template-section:not(:last-child) {
-    margin-bottom: 4em;
+  .templates-mobile { display: none; }
+  :global([data-eq~="450px"]) .templates-mobile {
+    display: block
   }
 
-  table.authorized-templates, .template-accordion-wrapper {
-    margin-bottom: 1em;
+  :global([data-eq~="450px"]) .templates-desktop {
+    display: none;
   }
 
-  .universal-templates {
-    display: grid;
-    grid-auto-flow: column;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 20%;
+  h3.template-header {
+    font-size: 1.2em;
+    margin: 1.2em 0;
   }
 
-  .universal-templates li.bg {
-    background-color: #f6f7f9;
-  }
-
-
-  [data-eq~="600px"] .wrapper .universal-templates {
-    display: flex;
-    flex-direction: column;
-  }
-  [data-eq~="600px"] .universal-templates li.bg {
-    background-color: unset;
-  }
-  [data-eq~="600px"] .universal-templates li:nth-child(odd) {
-    background-color: #f6f7f9;
-  }
-
-
-  .forbidden-templates {
-    width: 50%;
-  }
-
-  .forbidden-templates li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .forbidden-templates li:nth-child(odd) {
-    background-color: #f6f7f9;
-  }
-
-  td button {
-    border: 0;
-    padding: 0;
-    background-color: transparent;
-  }
-  td button:not(:last-child) {
-    margin-right: 0.5em;
-  }
   .button-container {
     display: flex;
     justify-content: flex-end;

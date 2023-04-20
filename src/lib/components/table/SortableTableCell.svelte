@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { get } from 'txstate-utils'
+  import { get, isNotNull } from 'txstate-utils'
   import type { SortableTableHeader } from './sortabletable'
   import { Dialog, Icon } from '@dosgato/dialog'
 
@@ -7,7 +7,8 @@
   export let item: any
   let showModal: boolean = false
   $: icon = typeof header.icon === 'function' ? header.icon(item) : header.icon
-  $: actions = typeof header.actions === 'function' ? header.actions(item) : header.actions
+  $: actions = (typeof header.actions === 'function' ? header.actions(item) : header.actions)?.filter(a => { return a.allowed ? a.allowed(item) : true })
+  const combineActions: boolean = isNotNull(header.combinedActionsLabel)
 </script>
 
 {#if header.render}
@@ -23,16 +24,19 @@
 {:else if actions?.length}
   <div class="actions-container">
     {#each actions as action (action.label)}
-      <button on:click={() => action.onClick(item)} class="icon-button">
+      {@const hiddenLabel = action.hiddenLabel ? (typeof action.hiddenLabel === 'function' ? action.hiddenLabel(item) : action.hiddenLabel) : action.label}
+      <button on:click={() => action.onClick(item)} class="icon-button" class:combine={combineActions}>
         <div class="button-content">
-          <span class="button-icon"><Icon icon={action.icon} hiddenLabel={action.hiddenLabel ?? action.label} width="1.5em"/></span>
+          <span class="button-icon"><Icon icon={action.icon} {hiddenLabel} width="1.5em"/></span>
         </div>
       </button>
     {/each}
-    <button class="collapse-button" on:click={() => { showModal = true }}>{header.combinedActionsLabel ?? 'Manage'}</button>
+    {#if combineActions}
+      <button class="collapse-button" on:click={() => { showModal = true }}>{header.combinedActionsLabel}</button>
+    {/if}
   </div>
-  {#if showModal}
-    <Dialog continueText='Cancel' on:continue={() => { showModal = false }}>
+  {#if combineActions && showModal}
+    <Dialog continueText='Cancel' on:continue={() => { showModal = false }} title={header.combinedActionsLabel}>
       <div class="consolidated-actions">
         {#each actions as action (action.label)}
           <button class='consolidated-action' on:click={() => { showModal = false; action.onClick(item) }}>
@@ -48,6 +52,9 @@
     border: 0;
     background-color: transparent;
   }
+  .actions-container {
+    display: flex;
+  }
   .consolidated-actions {
     display: flex;
     justify-content: space-between;
@@ -59,7 +66,7 @@
     padding: 0.2em 0.5em;
     border-radius: 2px;
   }
-  :global([data-eq~="100px"]) button.icon-button {
+  :global([data-eq~="100px"]) button.icon-button.combine {
     display: none;
   }
   :global([data-eq~="100px"]) button.collapse-button {

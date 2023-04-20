@@ -9,7 +9,8 @@ export interface SortableTableRowAction {
   icon: IconifyIcon
   label: string
   onClick: (params: any) => void | Promise<void>
-  hiddenLabel?: string
+  hiddenLabel?: string | ((item: any) => string)
+  allowed?: (item: any) => boolean
 }
 
 export interface SortableTableHeader {

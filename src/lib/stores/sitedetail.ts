@@ -42,7 +42,7 @@ interface SiteUser {
   readonly: boolean
 }
 
-interface SiteTemplate {
+export interface SiteTemplate {
   id: string
   key: string
   name: string
