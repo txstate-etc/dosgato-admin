@@ -16,6 +16,7 @@
   import { page } from '$app/stores'
   import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig } from '$lib'
   import { uiConfig } from '../local'
+  import '../local/tracking.js'
 
   export let data: { errObj: any }
 
