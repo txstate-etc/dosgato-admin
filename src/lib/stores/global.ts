@@ -15,6 +15,7 @@ export interface EnvironmentConfig {
   assetRegex: RegExp
   authRedirect: string
   renderBase: string
+  tracingServer: string
 }
 
 class GlobalStore extends Store<IGlobalStore> {
@@ -24,7 +25,7 @@ class GlobalStore extends Store<IGlobalStore> {
 }
 
 export const globalStore = new GlobalStore()
-export const environmentConfig: EnvironmentConfig = { apiBase: '', authRedirect: '', renderBase: '', assetLiveBase: '', assetRegex: /unused/ }
+export const environmentConfig: EnvironmentConfig = { apiBase: '', authRedirect: '', renderBase: '', assetLiveBase: '', assetRegex: /unused/, tracingServer: '' }
 export const toasts = subStore(globalStore, 'toasts')
 export const toast = (message: string, type: Feedback['type'] = 'error') => {
   globalStore.update(v => ({ ...v, toasts: sortby([...v.toasts.filter(t => t.message !== message), { id: randomid(), type, message, stamp: new Date(), hidden: false }], 'stamp', true) }))
