@@ -18,6 +18,8 @@
   import { uiConfig } from '../local'
   import '../local/tracking.js'
 
+  uiConfig.tracing?.init?.()
+
   export let data: { errObj: any }
 
   let buttonelement: HTMLButtonElement
