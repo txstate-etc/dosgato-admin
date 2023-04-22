@@ -39,7 +39,7 @@
   <Tree singleSelect {store} headers={[
     { id: 'name', label: 'Name', get: 'name', grow: 5, icon: itm => ({ icon: templateRegistry.getTemplate(itm.key)?.icon ?? boundingBoxLight }) },
     { id: 'key', label: 'Key', get: 'key', grow: 4 },
-    { id: 'universal', label: 'Universal', icon: item => ({ icon: item.universal ? checkIcon : undefined }), fixed: '6em' }
+    { id: 'universal', label: 'Universal', icon: item => item.universal ? { icon: checkIcon, label: 'Universal' } : undefined, fixed: '6em' }
   ]}/>
 </ActionPanel>
 {#if modal === 'setuniversal'}

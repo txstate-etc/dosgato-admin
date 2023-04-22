@@ -1,7 +1,7 @@
 import { error, type Load } from '@sveltejs/kit'
 import { base } from '$app/paths'
 import { api, pageEditorStore, subnavStore, templateRegistry } from '$lib'
-import { getTempToken, type PageSubNavLink } from './helpers'
+import type { PageSubNavLink } from './helpers'
 import { editPageIcon } from './editpageicon'
 
 const toBeFreed = new Set<string>()
@@ -13,12 +13,11 @@ export const load: Load<{ id: string }> = async ({ params, fetch }) => {
   if (!page) throw error(404)
   const pagetemplate = templateRegistry.getTemplate(page.data.templateKey)
   if (!pagetemplate) throw error(500, 'Unrecognized Page Template')
-  const temptoken = await getTempToken(page, undefined, fetch)
   subnavStore.open('pages', { href: `${base}/pages/${page.id}`, label: page.name, icon: editPageIcon, pageId: page.id, onClose: free })
   toBeFreed.delete(page.id)
   setTimeout(() => {
     for (const pageId of toBeFreed.values()) pageEditorStore.free(pageId)
     toBeFreed.clear()
   }, 500)
-  return { temptoken, page, pagetemplate }
+  return { page, pagetemplate }
 }

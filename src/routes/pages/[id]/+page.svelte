@@ -14,10 +14,9 @@
   import trash from '@iconify-icons/ph/trash'
   import { printIf } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api } from '$lib'
-  import { getTempToken } from './helpers'
 
-  export let data: { temptoken: string, page: PageEditorPage, pagetemplate: EnhancedUITemplate }
-  $: ({ page, temptoken, pagetemplate } = data)
+  export let data: { page: PageEditorPage, pagetemplate: EnhancedUITemplate }
+  $: ({ page, pagetemplate } = data)
   $: pageEditorStore.open(page)
   $: chooserClient = new ChooserClient(page.pagetree.id)
   let iframe: HTMLIFrameElement
@@ -43,7 +42,7 @@
         id: 'previewgroup',
         actions: [
           { label: 'Preview', icon: eye, onClick: () => pageEditorStore.previewVersion(page.version.version) },
-          { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${$editorStore.page.pagetree.id}/latest${$editorStore.page.path}.html`), '_blank') } },
+          { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${$editorStore.page.path}.html`), '_blank') } },
           { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions(page.versions.find(v => v.tags.includes('published'))!.version), disabled: !page.published || !page.hasUnpublishedChanges }
         ]
       }
@@ -121,12 +120,7 @@
   }
 
   async function refreshIframe () {
-    const newTempToken = await getTempToken($editorStore!.page)
-    if (newTempToken === temptoken) {
-      iframe.src = iframe.src // force refresh the iframe
-    } else {
-      temptoken = newTempToken // if there's a new token, setting it will alter the iframe src and therefore refresh it
-    }
+    iframe.src = iframe.src // force refresh the iframe
     page = (await api.getEditorPage(page.id)) ?? page
   }
 
@@ -197,20 +191,17 @@
     iframe.contentWindow?.postMessage({ focus: $editorStore.selectedPath }, '*')
   }
 
-  // if user refreshes the iframe manually, it's possible the temporary token will have
-  // expired, so we need to watch for refresh errors and load in a new token
   async function iframeload () {
+    // notify the page about the last known scroll and bar selection state so it can load it up nicely
     iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath: $editorStore.selectedPath, state: $editorStore.state }, '*')
-    const newtemptoken = await getTempToken($editorStore.page, temptoken)
-    if (newtemptoken !== temptoken) temptoken = newtemptoken
   }
 
   $: iframesrc = editable && !$editorStore.previewing
-    ? `${environmentConfig.renderBase}/.edit/${$pageStore.pagetree.id}${$pageStore.path}?token=${temptoken}`
+    ? `${environmentConfig.renderBase}/.edit${$pageStore.path}?token=${api.token}`
     : (
         $editorStore.previewing?.fromVersion
-          ? `${environmentConfig.renderBase}/.compare/${$pageStore.pagetree.id}/${$editorStore.previewing.fromVersion}/${$editorStore.previewing.version ?? 'latest'}${$pageStore.path}?token=${temptoken}`
-          : `${environmentConfig.renderBase}/.preview/${$pageStore.pagetree.id}/${$editorStore.previewing?.version ?? 'latest'}${$pageStore.path}?token=${temptoken}`
+          ? `${environmentConfig.renderBase}/.compare/${$editorStore.previewing.fromVersion}/${$editorStore.previewing.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
+          : `${environmentConfig.renderBase}/.preview/${$editorStore.previewing?.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
       )
 </script>
 

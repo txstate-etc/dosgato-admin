@@ -67,7 +67,7 @@
         { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
         { label: 'Rename', icon: renameIcon, disabled: !page.permissions.move, onClick: () => { modal = 'renamepage' } },
         { label: 'Change Template', icon: layout, disabled: !page.permissions.update, onClick: onClickTemplateChange },
-        { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${page.pagetree.id}/latest${page.path}.html`), '_blank') } }
+        { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${page.path}.html`), '_blank') } }
       ]
     }
 
