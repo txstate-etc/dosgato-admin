@@ -3,17 +3,14 @@
   import plusIcon from '@iconify-icons/ph/plus-light'
   import deleteOutline from '@iconify-icons/ph/trash'
   import archiveOutline from '@iconify-icons/ph/archive'
-  import checkIcon from '@iconify-icons/ph/check-light'
-  import minusIcon from '@iconify-icons/ph/minus-light'
+  import checkIcon from '@iconify-icons/ph/check-bold'
+  import minusIcon from '@iconify-icons/ph/minus-bold'
   import launchIcon from '@iconify-icons/ph/rocket-launch'
-  import deauthorizeIcon from '@iconify-icons/ph/minus-circle-light'
-  import authorizeIcon from '@iconify-icons/ph/plus-circle-light'
   import exportIcon from '@iconify-icons/mdi/export'
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
-  import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { keyby, titleCase } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, templateListStore, siteDetails, Accordion, DetailPanelSection, DetailPageContent } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent } from '$lib'
   import { base } from '$app/paths'
   import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
@@ -21,6 +18,7 @@
   import SortableTable from '$lib/components/table/SortableTable.svelte'
   import type { SortableTableRowAction } from '$lib/components/table/sortabletable'
   import TemplateAvailability from './TemplateAvailability.svelte'
+  import UserAccessPanel from './UserAccessPanel.svelte'
 
   const panelHeaderColor = '#D1C7B7'
 
@@ -356,82 +354,26 @@
       </div>
     </div>
     <div class="vertical-group">
-      <DetailPanel header="User Access" headerColor={panelHeaderColor}>
-        <DetailPanelSection>
-          <div class="detail-section">
-            <table class="access">
-              <caption><h3>Roles</h3></caption>
-              <thead>
-                <tr>
-                  <th>Role</th>
-                  <th class="read-only">Read-Only</th>
-                  <th class="universal">Universal</th>
-                </tr>
-              </thead>
-              <tbody>
-                {#each $store.siteRoles as role (role.id)}
-                  <tr>
-                    <td><div class="carded-label">Role:</div><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
-                    <td><div class="carded-label">Read-Only:</div><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-                    <td class="col3"><div class="carded-label">Universal:</div><Icon icon={minusIcon} hiddenLabel={`${role.name} is a site-specific role`}/></td>
-                  </tr>
-                {/each}
-                {#each $store.globalRoles as role (role.id)}
-                  <tr>
-                    <td><div class="carded-label">Role:</div><a href={`${base}/auth/roles/${role.id}`}>{role.name}</a></td>
-                    <td><div class="carded-label">Read-Only:</div><Icon icon={role.readonly ? checkIcon : minusIcon} hiddenLabel={`${role.name} role has ${role.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-                    <td class="col3"><div class="carded-label">Universal:</div><Icon icon={checkIcon} hiddenLabel={`${role.name} applies to all sites`}/></td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-          {#if $store.groups.length}
-          <div class="detail-section">
-            <table class="access">
-              <caption><h3>Groups</h3></caption>
-              <thead>
-                <tr>
-                  <th>Group</th>
-                  <th class="read-only">Read-Only</th>
-                  <th class="source-roles">Source Role(s)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {#each $store.groups as group (group.id)}
-                  <tr>
-                    <td><div class="carded-label">Group:</div><a href={`${base}/auth/groups/${group.id}`}>{group.name}</a></td>
-                    <td><div class="carded-label">Read-Only:</div><Icon icon={group.readonly ? checkIcon : minusIcon} hiddenLabel={`${group.name} has ${group.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-                    <td><div class="carded-label">Source Role(s):</div>{group.roles}</td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-          {/if}
-          <div class="detail-section">
-            <table class="access">
-              <caption><h3>Users</h3></caption>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th class="read-only">Read-Only</th>
-                  <th class="source-roles">Source Role(s)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {#each $store.users as user (user.id)}
-                  <tr>
-                    <td><div class="carded-label">Name:</div><a href={`${base}/auth/users/${user.id}`}>{user.firstname} {user.lastname}</a></td>
-                    <td><div class="carded-label">Read-Only:</div><Icon icon={user.readonly ? checkIcon : minusIcon} hiddenLabel={`${user.firstname} ${user.lastname} has ${user.readonly ? 'read-only' : 'write'} access to this site`}/></td>
-                    <td><div class="carded-label">Source Role(s):</div>{user.roles}</td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-        </DetailPanelSection>
-      </DetailPanel>
+      <UserAccessPanel {panelHeaderColor} hasGroups={!!$store.groups.length}>
+        <SortableTable slot="roles" items={[...$store.siteRoles, ...$store.globalRoles]} headers={[
+          { id: 'name', label: 'Role', render: (role) => `<a href="${base}/auth/roles/${role.id}">${role.name}</a>` },
+          { id: 'summary', label: 'Role Summary', get: 'access' },
+          { id: 'readonly', label: 'Read-only', icon: (role) => { return role.readonly ? { icon: checkIcon, hiddenLabel: `${role.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${role.name} can edit this site` } } },
+          { id: 'universal', label: 'Universal', icon: (role) => { return role.universal ? { icon: checkIcon, hiddenLabel: `${role.name} has access to all sites` } : { icon: minusIcon, hiddenLabel: `${role.name} has specific access to this site` } } }
+        ]}/>
+        <SortableTable slot="groups" items={$store.groups} headers={[
+          { id: 'name', label: 'Group', render: (group) => `<a href="${base}/auth/groups/${group.id}">${group.name}</a>` },
+          { id: 'summary', label: 'Role Summary', get: 'access' },
+          { id: 'readonly', label: 'Read-only', icon: (group) => { return group.readonly ? { icon: checkIcon, hiddenLabel: `${group.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${group.name} can edit this site` } } },
+          { id: 'source', label: 'Source Role(s)', get: 'roles' }
+        ]}/>
+        <SortableTable slot="users" items={$store.users} headers={[
+          { id: 'name', label: 'Name', render: (user) => `<a href="${base}/auth/users/${user.id}">${user.firstname} ${user.lastname}</a>` },
+          { id: 'summary', label: 'Role Summary', get: 'access' },
+          { id: 'readonly', label: 'Read-only', icon: (user) => { return user.readonly ? { icon: checkIcon, hiddenLabel: `${user.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${user.name} can edit this site` } } },
+          { id: 'source', label: 'Source Role(s)', get: 'roles' }
+        ]} />
+      </UserAccessPanel>
       <DetailPanel header="Authorized Templates" headerColor={panelHeaderColor}>
         <DetailPanelSection>
           <div class="templates-mobile">
@@ -458,7 +400,6 @@
     </div>
   </div>
 </DetailPageContent>
-{JSON.stringify($store.templateAuthEditing)}
 {#if modal === 'addcomment'}
   <FormDialog
     submit={addComment}
@@ -623,72 +564,6 @@
     cursor: pointer;
     margin-left: 0.5em;
   }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1em;
-  }
-  table tr td, table tr th {
-    text-align: left;
-    padding: 0.2em 0;
-  }
-
-  table tr { border-bottom: 1px dashed #ebebeb }
-  table tr:nth-child(even) { background-color: #f6f7f9 }
-
-  /* User Access */
-  table.access caption {
-    display: none;
-  }
-
-  table.access th {
-    width: calc(100%/3);
-  }
-
-  table.access th.read-only{
-    text-align: center;
-  }
-
-  table.access td .carded-label {
-    display: none;
-    font-weight: bold;
-  }
-
-  table.access td:nth-child(2) {
-    text-align: center;
-  }
-
-  table.access td.col3 {
-    padding-left: 1.5em;
-  }
-
-  [data-eq~="600px"] table.access caption {
-    display: table-caption;
-    text-align: left;
-  }
-
-  [data-eq~="600px"] .detail-section table.access {
-    border-collapse: separate;
-    border-spacing: 0 1em;
-  }
-  [data-eq~="600px"] table.access tr {
-    background-color: #f6f7f9;
-  }
-  [data-eq~="600px"] table.access thead {
-    display: none;
-  }
-  [data-eq~="600px"] table.access tr td {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5em;
-  }
-  [data-eq~="600px"] table.access tr td:not(:last-child) {
-    border-bottom: 1px dashed #ebebeb;
-  }
-  [data-eq~="600px"] table.access td .carded-label {
-    display: block;
-  }
-
   .templates-mobile { display: none; }
   :global([data-eq~="450px"]) .templates-mobile {
     display: block

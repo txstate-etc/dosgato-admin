@@ -1,6 +1,7 @@
+/* eslint-disable no-trailing-spaces */
 import { Store } from '@txstate-mws/svelte-store'
 import type { FullSite, SitePagetree } from '$lib/queries'
-import { isNull, sortby, set } from 'txstate-utils'
+import { isNull, sortby, set, keyby } from 'txstate-utils'
 
 interface ISiteDetailStore {
   site: FullSite
@@ -24,7 +25,9 @@ interface ISiteDetailStore {
 interface SiteRole {
   id: string
   name: string
+  access: 'Editor' | 'Limited' | 'Other'
   readonly: boolean
+  universal: boolean
 }
 
 interface SiteGroup {
@@ -79,37 +82,110 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
     const siteRoles: SiteRole[] = []
     const groupRoles = {}
     const userRoles = {}
+    // This keeps track of which roles do not allow editing
     const readOnlyHash: Record<string, boolean> = {}
+    // loop through the roles that have any permission on this site. Don't need the data rules.
     for (const role of site.roles) {
+      let access: 'Editor' | 'Limited' | 'Other' = 'Limited'
+      if (role.assetRules.length === 0 && role.pageRules.length === 0) {
+        access = 'Other'
+      } else {
+        // To be editor, the role needs to have rules that give them everything but undelete on
+        // pages and assets (but having undelete is ok) with no path specified, for primary and sandbox pagetrees
+        const primaryPageGrants = { create: false, delete: false, move: false, publish: false, unpublish: false, update: false }
+        const sandboxPageGrants = { ...primaryPageGrants }
+        for (const pageRule of role.pageRules) {
+          if (pageRule.path !== '/') continue
+          if (isNull(pageRule.pagetreeType) || pageRule.pagetreeType === 'PRIMARY') {
+            primaryPageGrants.create ||= pageRule.grants.create
+            primaryPageGrants.delete ||= pageRule.grants.delete
+            primaryPageGrants.move ||= pageRule.grants.move
+            primaryPageGrants.publish ||= pageRule.grants.publish
+            primaryPageGrants.unpublish ||= pageRule.grants.unpublish
+            primaryPageGrants.update ||= pageRule.grants.update
+          }
+          if (isNull(pageRule.pagetreeType) || pageRule.pagetreeType === 'SANDBOX') {
+            sandboxPageGrants.create ||= pageRule.grants.create
+            sandboxPageGrants.delete ||= pageRule.grants.delete
+            sandboxPageGrants.move ||= pageRule.grants.move
+            sandboxPageGrants.publish ||= pageRule.grants.publish
+            sandboxPageGrants.unpublish ||= pageRule.grants.unpublish
+            sandboxPageGrants.update ||= pageRule.grants.update
+          }
+        }
+        const primaryPageEditor = primaryPageGrants.create && primaryPageGrants.delete && primaryPageGrants.move && primaryPageGrants.publish && primaryPageGrants.unpublish && primaryPageGrants.update
+        const sandboxPageEditor = sandboxPageGrants.create && sandboxPageGrants.delete && sandboxPageGrants.move && sandboxPageGrants.publish && sandboxPageGrants.unpublish && sandboxPageGrants.update
+        if (primaryPageEditor && sandboxPageEditor) {
+          const primaryAssetGrants = { create: false, delete: false, move: false, update: false }
+          const sandboxAssetGrants = { ...primaryAssetGrants }
+          for (const assetRule of role.assetRules) {
+            if (assetRule.path !== '/') continue
+            if (isNull(assetRule.pagetreeType) || assetRule.pagetreeType === 'PRIMARY') {
+              primaryAssetGrants.create ||= assetRule.grants.create
+              primaryAssetGrants.delete ||= assetRule.grants.delete
+              primaryAssetGrants.move ||= assetRule.grants.move
+              primaryAssetGrants.update ||= assetRule.grants.update
+            }
+            if (isNull(assetRule.pagetreeType) || assetRule.pagetreeType === 'SANDBOX') {
+              sandboxAssetGrants.create ||= assetRule.grants.create
+              sandboxAssetGrants.delete ||= assetRule.grants.delete
+              sandboxAssetGrants.move ||= assetRule.grants.move
+              sandboxAssetGrants.update ||= assetRule.grants.update
+            }
+          }
+          const primaryAssetEditor = primaryAssetGrants.create && primaryAssetGrants.delete && primaryAssetGrants.move && primaryAssetGrants.update
+          const sandboxAssetEditor = sandboxAssetGrants.create && sandboxAssetGrants.delete && sandboxAssetGrants.move && sandboxAssetGrants.update
+          if (primaryAssetEditor && sandboxAssetEditor) access = 'Editor'
+        }
+      }
+
+      // has some rule that does not specify a particular site
       const hasGlobalRule =
         role.assetRules.some(r => isNull(r.site)) ||
         role.dataRules.some(r => isNull(r.site)) ||
         role.pageRules.some(r => isNull(r.site)) ||
         role.siteRules.some(r => isNull(r.site))
-      const canWrite =
-        role.assetRules.some(r => r.grants.viewForEdit) ||
-        role.dataRules.some(r => r.grants.viewForEdit) ||
-        role.pageRules.some(r => r.grants.viewForEdit) ||
-        role.siteRules.some(r => r.grants.viewForEdit)
+      // has some rule that allows them to edit the site
+      const canWrite = role.assetRules.some(r => r.grants.viewForEdit) || role.pageRules.some(r => r.grants.viewForEdit)
       readOnlyHash[role.name] = !canWrite
-      if (hasGlobalRule) globalRoles.push({ id: role.id, name: role.name, readonly: !canWrite })
-      else siteRoles.push({ id: role.id, name: role.name, readonly: !canWrite })
+      // global roles have a checkmark in the universal column, site roles do not
+      if (hasGlobalRule) globalRoles.push({ id: role.id, name: role.name, access, readonly: !canWrite, universal: true })
+      else siteRoles.push({ id: role.id, name: role.name, access, readonly: !canWrite, universal: false })
+      // groups might have roles that give them access to this site. keep track of which roles relevant groups have
       for (const group of role.groups) {
         groupRoles[group.id] ||= { name: group.name, roles: [] }
         groupRoles[group.id].roles.push(role.name)
       }
+      // users might have multiple roles that give them access to this site
       for (const user of role.users) {
         userRoles[user.id] ||= { firstname: user.firstname, lastname: user.lastname, roles: [] }
         userRoles[user.id].roles.push(role.name)
       }
     }
+    const roleByName = keyby([...globalRoles, ...siteRoles], 'name')
     const groups = Object.keys(groupRoles).map(k => {
-      const readonly = groupRoles[k].roles.some(r => readOnlyHash[r])
-      return { id: k, name: groupRoles[k].name, roles: groupRoles[k].roles.join(', '), readonly }
+      const readonly = groupRoles[k].roles.every(r => readOnlyHash[r])
+      let access = 'Limited'
+      for (const role of groupRoles[k].roles) {
+        if (roleByName[role].access === 'Other') access = 'Other'
+        if (roleByName[role].access === 'Editor') {
+          access = 'Editor'
+          break
+        }
+      }
+      return { id: k, name: groupRoles[k].name, roles: groupRoles[k].roles.join(', '), readonly, access }
     })
     const users = sortby(Object.keys(userRoles).map(k => {
-      const readonly = userRoles[k].roles.some(r => readOnlyHash[r])
-      return { id: k, firstname: userRoles[k].firstname, lastname: userRoles[k].lastname, roles: userRoles[k].roles.join(', '), readonly }
+      const readonly = userRoles[k].roles.every(r => readOnlyHash[r])
+      let access = 'Limited'
+      for (const role of userRoles[k].roles) {
+        if (roleByName[role].access === 'Other') access = 'Other'
+        if (roleByName[role].access === 'Editor') {
+          access = 'Editor'
+          break
+        }
+      }
+      return { id: k, firstname: userRoles[k].firstname, lastname: userRoles[k].lastname, roles: userRoles[k].roles.join(', '), readonly, access }
     }), 'lastname', 'firstname')
     const sitePageTemplateKeys = site.pageTemplates.map(t => t.key)
     const pageTemplates: SiteTemplate[] = site.pageTemplates.map(t => ({ ...t, id: t.key, pagetrees: [] }))

@@ -66,35 +66,37 @@
   {/each}
   </tbody>
 </table>
-<div class="mobile-list" class:carded={cardedOnMobile}>
-  {#each sortedItems as item, idx (item.id)}
-    <div class:background={idx % 2 === 0}>
-      <Accordion title={mobileHeader(item)}>
-        <dl>
-          {#each headers as header (header.id)}
-            {#if !header.actions}
-              <span>
-                <dt>{header.label}:</dt><dd><SortableTableCell {item} {header}/></dd>
-              </span>
-            {/if}
-          {/each}
-        </dl>
-        {@const actions = headers.filter(h => h.actions?.length).map(h => h.actions).filter(isNotNull).flat().map(a => (typeof a === 'function') ? a(item) : a).flat() }
-        {#if actions.length}
-          <div class="actions">
-            {#each actions as action}
-              <button on:click={() => action.onClick(item)}>
-                <div class="button-content">
-                  <span class="button-label">{action.label}</span>
-                </div>
-              </button>
+{#if cardedOnMobile}
+  <div class="mobile-list" class:carded={cardedOnMobile}>
+    {#each sortedItems as item, idx (item.id)}
+      <div class:background={idx % 2 === 0}>
+        <Accordion title={mobileHeader(item)}>
+          <dl>
+            {#each headers as header (header.id)}
+              {#if !header.actions}
+                <span>
+                  <dt>{header.label}:</dt><dd><SortableTableCell {item} {header}/></dd>
+                </span>
+              {/if}
             {/each}
-          </div>
-        {/if}
-      </Accordion>
-    </div>
-  {/each}
-</div>
+          </dl>
+          {@const actions = headers.filter(h => h.actions?.length).map(h => h.actions).filter(isNotNull).flat().map(a => (typeof a === 'function') ? a(item) : a).flat() }
+          {#if actions.length}
+            <div class="actions">
+              {#each actions as action}
+                <button on:click={() => action.onClick(item)}>
+                  <div class="button-content">
+                    <span class="button-label">{action.label}</span>
+                  </div>
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </Accordion>
+      </div>
+    {/each}
+  </div>
+{/if}
 
 <style>
   table {

@@ -190,7 +190,13 @@ export const fullSiteDetails = `
       site {
         id
       }
+      path
+      pagetreeType
       grants{
+        create
+        delete
+        move
+        update
         viewForEdit
       }
     }
@@ -206,7 +212,15 @@ export const fullSiteDetails = `
       site {
         id
       }
+      path
+      pagetreeType
       grants{
+        create
+        delete
+        move
+        publish
+        unpublish
+        update
         viewForEdit
       }
     }
@@ -288,7 +302,13 @@ export interface FullSite {
       site: {
         id: string
       }
+      path: string
+      pagetreeType: string
       grants: {
+        create: boolean
+        delete: boolean
+        move: boolean
+        update: boolean
         viewForEdit: boolean
       }
     }[]
@@ -304,7 +324,15 @@ export interface FullSite {
       site: {
         id: string
       }
+      path: string
+      pagetreeType: string
       grants: {
+        create: boolean
+        delete: boolean
+        move: boolean
+        publish: boolean
+        unpublish: boolean
+        update: boolean
         viewForEdit: boolean
       }
     }[]
