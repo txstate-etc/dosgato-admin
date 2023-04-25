@@ -9,7 +9,7 @@
   import exportIcon from '@iconify-icons/mdi/export'
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
-  import { keyby, titleCase } from 'txstate-utils'
+  import { csv, keyby, titleCase } from 'txstate-utils'
   import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent } from '$lib'
   import { base } from '$app/paths'
   import { _store as store } from './+page'
@@ -264,15 +264,6 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
-  function hasBackground (total, index) {
-    const inFirstColumn = index < total / 2
-    if (inFirstColumn) return index % 2 === 0
-    else {
-      const secondColStartIndex = Math.ceil(total / 2)
-      return (index - secondColStartIndex) % 2 === 0
-    }
-  }
-
   function getPagetreeActions (pagetree) {
     const actions: SortableTableRowAction[] = []
     if (pagetree.type === 'SANDBOX' && pagetree.permissions.promote) {
@@ -285,6 +276,18 @@
       actions.push({ icon: deleteOutline, label: 'Delete', hiddenLabel: (tree) => `Delete pagetree ${tree.name}`, onClick: (tree) => onClickDeletePagetree(tree.id, tree.name)})
     }
     return actions
+  }
+
+  async function downloadComments () {
+    const rows: string[][] = [['Comment', 'Creator', 'Timestamp']]
+    for (const comment of $store.site.comments) {
+      rows.push([comment.comment, comment.createdBy.id, comment.createdAt])
+    }
+    const csvString = csv(rows)
+    const j = document.createElement('a')
+    j.download = 'siteaudit_' + Date.now() + '.csv'
+    j.href = URL.createObjectURL(new Blob([csvString]))
+    j.click()
   }
 </script>
 
@@ -350,7 +353,7 @@
         </DetailPanelSection>
       </DetailPanel>
       <div class="audit-panel">
-        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} on:addauditcomment={() => { modal = 'addcomment' } }/>
+        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} on:addauditcomment={() => { modal = 'addcomment' } } on:downloadaudit={() => downloadComments() }/>
       </div>
     </div>
     <div class="vertical-group">
@@ -368,7 +371,7 @@
           { id: 'source', label: 'Source Role(s)', get: 'roles' }
         ]}/>
         <SortableTable slot="users" items={$store.users} headers={[
-          { id: 'name', label: 'Name', render: (user) => `<a href="${base}/auth/users/${user.id}">${user.firstname} ${user.lastname}</a>` },
+          { id: 'name', label: 'Name', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.firstname} ${user.lastname}</a>` },
           { id: 'summary', label: 'Role Summary', get: 'access' },
           { id: 'readonly', label: 'Read-only', icon: (user) => { return user.readonly ? { icon: checkIcon, hiddenLabel: `${user.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${user.name} can edit this site` } } },
           { id: 'source', label: 'Source Role(s)', get: 'roles' }
