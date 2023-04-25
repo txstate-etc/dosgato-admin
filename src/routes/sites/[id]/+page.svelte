@@ -359,22 +359,22 @@
     <div class="vertical-group">
       <UserAccessPanel {panelHeaderColor} hasGroups={!!$store.groups.length}>
         <SortableTable slot="roles" items={[...$store.siteRoles, ...$store.globalRoles]} headers={[
-          { id: 'name', label: 'Role', render: (role) => `<a href="${base}/auth/roles/${role.id}">${role.name}</a>` },
-          { id: 'summary', label: 'Role Summary', get: 'access' },
-          { id: 'readonly', label: 'Read-only', icon: (role) => { return role.readonly ? { icon: checkIcon, hiddenLabel: `${role.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${role.name} can edit this site` } } },
-          { id: 'universal', label: 'Universal', icon: (role) => { return role.universal ? { icon: checkIcon, hiddenLabel: `${role.name} has access to all sites` } : { icon: minusIcon, hiddenLabel: `${role.name} has specific access to this site` } } }
+          { id: 'name', label: 'Role', render: (role) => `<a href="${base}/auth/roles/${role.id}">${role.name}</a>`, widthPercent: 40 },
+          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 20 },
+          { id: 'readonly', label: 'Read-only', icon: (role) => { return role.readonly ? { icon: checkIcon, hiddenLabel: `${role.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${role.name} can edit this site` } }, widthPercent: 20 },
+          { id: 'universal', label: 'Universal', icon: (role) => { return role.universal ? { icon: checkIcon, hiddenLabel: `${role.name} has access to all sites` } : { icon: minusIcon, hiddenLabel: `${role.name} has specific access to this site` } }, widthPercent: 20 }
         ]}/>
         <SortableTable slot="groups" items={$store.groups} headers={[
-          { id: 'name', label: 'Group', render: (group) => `<a href="${base}/auth/groups/${group.id}">${group.name}</a>` },
-          { id: 'summary', label: 'Role Summary', get: 'access' },
-          { id: 'readonly', label: 'Read-only', icon: (group) => { return group.readonly ? { icon: checkIcon, hiddenLabel: `${group.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${group.name} can edit this site` } } },
-          { id: 'source', label: 'Source Role(s)', get: 'roles' }
+          { id: 'name', label: 'Group', render: (group) => `<a href="${base}/auth/groups/${group.id}">${group.name}</a>`, widthPercent: 40 },
+          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 20 },
+          { id: 'readonly', label: 'Read-only', icon: (group) => { return group.readonly ? { icon: checkIcon, hiddenLabel: `${group.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${group.name} can edit this site` } }, widthPercent: 20 },
+          { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 20 }
         ]}/>
         <SortableTable slot="users" items={$store.users} headers={[
-          { id: 'name', label: 'Name', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.firstname} ${user.lastname}</a>` },
-          { id: 'summary', label: 'Role Summary', get: 'access' },
-          { id: 'readonly', label: 'Read-only', icon: (user) => { return user.readonly ? { icon: checkIcon, hiddenLabel: `${user.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${user.name} can edit this site` } } },
-          { id: 'source', label: 'Source Role(s)', get: 'roles' }
+          { id: 'name', label: 'Name', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.firstname} ${user.lastname}</a>`, widthPercent: 40 },
+          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 20 },
+          { id: 'readonly', label: 'Read-only', icon: (user) => { return user.readonly ? { icon: checkIcon, hiddenLabel: `${user.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${user.name} can edit this site` } }, widthPercent: 20 },
+          { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 20 }
         ]} />
       </UserAccessPanel>
       <DetailPanel header="Authorized Templates" headerColor={panelHeaderColor}>
@@ -598,7 +598,7 @@
   .panel-grid {
     display: grid;
     gap: 1em;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1.5fr 2fr;
   }
   .vertical-group {
     display: flex;
