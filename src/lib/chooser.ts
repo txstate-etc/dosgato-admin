@@ -3,10 +3,6 @@ import type { AssetFolderLink, LinkDefinition } from '@dosgato/templating'
 import { isNotBlank, sortby, stringify } from 'txstate-utils'
 import { api, environmentConfig, uploadWithProgress } from '$lib'
 
-function parseLink (link: string) {
-  return JSON.parse(link) as LinkDefinition
-}
-
 export class ChooserClient implements Client {
   constructor (public pagetreeId?: string) {}
 
@@ -29,13 +25,17 @@ export class ChooserClient implements Client {
   }
 
   async findById (id: string): Promise<AnyItem | undefined> {
-    const link = parseLink(id)
-    if (link.type === 'asset') {
-      return await api.chooserAssetByLink(link, this.pagetreeId)
-    } else if (link.type === 'assetfolder') {
-      return await api.chooserAssetFolderByLink(link, this.pagetreeId)
-    } else if (link.type === 'page') {
-      return await api.chooserPageByLink(link, this.pagetreeId)
+    try {
+      const link = JSON.parse(id) as LinkDefinition
+      if (link.type === 'asset') {
+        return await api.chooserAssetByLink(link, this.pagetreeId)
+      } else if (link.type === 'assetfolder') {
+        return await api.chooserAssetFolderByLink(link, this.pagetreeId)
+      } else if (link.type === 'page') {
+        return await api.chooserPageByLink(link, this.pagetreeId)
+      }
+    } catch {
+      return undefined
     }
   }
 
@@ -54,7 +54,7 @@ export class ChooserClient implements Client {
       }
       return undefined
     } catch {
-      return undefined
+      return value
     }
   }
 
