@@ -131,50 +131,100 @@ class API {
 
   async query <ReturnType = any> (query: string, variables?: any, querySignature?: string): Promise<ReturnType> {
     await this.readyPromise
-    const response = await this.fetch(environmentConfig.apiBase + '/graphql', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.token ?? ''}`,
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        query,
-        variables,
-        extensions: {
-          querySignature
-        }
+    try {
+      const response = await this.fetch(environmentConfig.apiBase + '/graphql', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token ?? ''}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query,
+          variables,
+          extensions: {
+            querySignature
+          }
+        })
       })
-    })
-    if (!response.ok) {
-      if (response.status === 401) {
-        uiConfig.login.handleUnauthorized(environmentConfig)
-        throw error(401, response.statusText)
-      } else throw error(response.status, response.statusText)
+      if (!response.ok) {
+        if (response.status === 401) {
+          uiConfig.login.handleUnauthorized(environmentConfig)
+          throw error(401, response.statusText)
+        } else throw error(response.status, response.statusText)
+      }
+      const gqlresponse = await response.json()
+      if (gqlresponse.errors?.length) {
+        toast(gqlresponse.errors[0].message)
+        throw new Error(JSON.stringify(gqlresponse.errors))
+      }
+      return gqlresponse.data
+    } catch (e: any) {
+      toast(e.message)
+      throw e
     }
-    const gqlresponse = await response.json()
-    if (gqlresponse.errors?.length) {
-      toast(gqlresponse.errors[0].message)
-      throw new Error(JSON.stringify(gqlresponse.errors))
-    }
-    return gqlresponse.data
   }
 
   async restful <ReturnType = any> (url: string) {
     await this.readyPromise
-    const resp = await this.fetch(environmentConfig.apiBase + url, {
-      headers: {
-        Authorization: `Bearer ${this.token ?? ''}`,
-        Accept: 'application/json'
+    try {
+      const resp = await this.fetch(environmentConfig.apiBase + url, {
+        headers: {
+          Authorization: `Bearer ${this.token ?? ''}`,
+          Accept: 'application/json'
+        }
+      })
+      if (!resp.ok) {
+        if (resp.status === 401) {
+          uiConfig.login.handleUnauthorized(environmentConfig)
+          throw error(401, resp.statusText)
+        } else {
+          toast(resp.statusText)
+          throw error(resp.status, resp.statusText)
+        }
       }
-    })
-    if (!resp.ok) {
-      if (resp.status === 401) {
-        uiConfig.login.handleUnauthorized(environmentConfig)
-        throw error(401, resp.statusText)
-      } else throw error(resp.status, resp.statusText)
+      return await resp.json() as ReturnType
+    } catch (e: any) {
+      toast(e.message)
+      throw e
     }
-    return await resp.json() as ReturnType
+  }
+
+  async download (url: string) {
+    await this.readyPromise
+    const streamSaver = await import('streamsaver')
+    try {
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${this.token ?? ''}`
+        }
+      })
+      if (res.status !== 200) throw new Error(res.statusText)
+
+      const header = res.headers.get('Content-Disposition')
+      const parts = header!.split(';')
+      const filename = parts[1].split('=')[1]
+
+      const fileStream = streamSaver.createWriteStream(filename)
+      const writer = fileStream.getWriter()
+
+      const reader = res.body!.getReader()
+
+      const pump = async () => await reader.read()
+        .then(({ value, done }) => {
+          if (done) writer.close()
+          else {
+            writer.write(value)
+            return writer.ready.then(pump)
+          }
+        })
+
+      await pump()
+    } catch (e: any) {
+      toast(`Download failed. ${e.message as string}`)
+      throw e
+    }
   }
 
   async config () {
