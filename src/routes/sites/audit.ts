@@ -1,4 +1,4 @@
-import { csv, isNotNull } from 'txstate-utils'
+import { csv, isNotNull, isNull } from 'txstate-utils'
 import { api } from '$lib'
 
 export async function buildAuditCSV () {
@@ -25,10 +25,10 @@ export async function buildAuditCSV () {
       else row.push('')
       if (isNotNull(site.organization) && pagetree.type === 'PRIMARY') row.push(site.organization.name)
       else row.push('')
-      if (isNotNull(site.owner) && pagetree.type === 'PRIMARY') row.push(`${site.owner.firstname} ${site.owner.lastname}`, site.owner.email)
+      if (isNotNull(site.owner) && pagetree.type === 'PRIMARY') row.push(site.owner.name, site.owner.email)
       else row.push('', '')
       for (let i = 0; i < maxManagers; i++) {
-        if (site.managers[i]) row.push(`${site.managers[i].firstname} ${site.managers[i].lastname}`, site.managers[i].email)
+        if (site.managers[i]) row.push(site.managers[i].name, site.managers[i].email)
         else row.push('', '')
       }
       row.push(pagetree.rootPage.template?.name ?? '')
@@ -40,11 +40,11 @@ export async function buildAuditCSV () {
       }
       // listing users with write access, looking at page rules and asset rules
       const usersWithAccess: string[] = []
-      for (const role of pagetree.roles) {
-        const siteRules = role.siteRules.filter(r => r.site?.id === site.id && r.grants?.viewForEdit)
-        const assetRules = role.assetRules.filter(r => r.site?.id === site.id && r.grants?.viewForEdit)
-        if (siteRules.length && assetRules.length) {
-          usersWithAccess.push(...role.users.map(u => `${u.firstname ?? ''} ${u.lastname} (${u.id})`))
+      for (const role of site.roles) {
+        const pageRules = role.pageRules.filter(r => r.site?.id === site.id && (isNull(r.pagetreeType) || r.pagetreeType === pagetree.type) && r.grants?.viewForEdit)
+        const assetRules = role.assetRules.filter(r => r.site?.id === site.id && (isNull(r.pagetreeType) || r.pagetreeType === pagetree.type) && r.grants?.viewForEdit)
+        if (pageRules.length && assetRules.length) {
+          usersWithAccess.push(...role.users.map(u => `${u.name} (${u.id})`))
         }
       }
       row.push(usersWithAccess.join(', '))

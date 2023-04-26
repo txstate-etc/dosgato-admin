@@ -506,6 +506,34 @@ export const ARCHIVE_PAGETREE = `
 export interface SiteAuditSite {
   id: string
   name: string
+  roles: {
+    id: string
+    name: string
+    users: {
+      id: string
+      name: string
+    }[]
+    pageRules: {
+      site?: {
+        id: string
+        name: string
+      }
+      pagetreeType: string
+      grants?: {
+        viewForEdit: boolean
+      }
+    }[]
+    assetRules: {
+      site?: {
+        id: string
+        name: string
+      }
+      pagetreeType: string
+      grants?: {
+        viewForEdit: boolean
+      }
+    }[]
+  }[]
   pagetrees: {
     id: string
     name: string
@@ -516,32 +544,6 @@ export interface SiteAuditSite {
         name: string
       }
     }
-    roles: {
-      name: string
-      users: {
-        id: string
-        firstname?: string
-        lastname: string
-      }[]
-      siteRules: {
-        site?: {
-          id: string
-          name: string
-        }
-        grants?: {
-          viewForEdit: boolean
-        }
-      }[]
-      assetRules: {
-        site?: {
-          id: string
-          name: string
-        }
-        grants?: {
-          viewForEdit: boolean
-        }
-      }[]
-    }[]
   }[]
   launched: boolean
   url?: {
@@ -552,14 +554,12 @@ export interface SiteAuditSite {
   }
   owner?: {
     id: string
-    firstname: string
-    lastname: string
+    name: string
     email: string
   }
   managers: {
     id: string
-    firstname: string
-    lastname: string
+    name: string
     email: string
   }[]
 }
@@ -569,6 +569,34 @@ export const GET_SITE_AUDIT = `
     sites {
       id
       name
+      roles {
+        id
+        name
+        users {
+          id
+          name
+        }
+        pageRules {
+          site {
+            id
+            name
+          }
+          pagetreeType
+          grants {
+            viewForEdit
+          }
+        }
+        assetRules {
+          site {
+            id
+            name
+          }
+          pagetreeType
+          grants {
+            viewForEdit
+          }
+        }
+      }
       pagetrees {
         id
         name
@@ -577,32 +605,6 @@ export const GET_SITE_AUDIT = `
           title
           template {
             name
-          }
-        }
-        roles {
-          name
-          users {
-            id
-            firstname
-            lastname
-          }
-          siteRules {
-            site {
-              id
-              name
-            }
-            grants {
-              viewForEdit
-            }
-          }
-          assetRules {
-            site {
-              id
-              name
-            }
-            grants {
-              viewForEdit
-            }
           }
         }
       }
@@ -615,14 +617,12 @@ export const GET_SITE_AUDIT = `
       }
       owner {
         id
-        firstname
-        lastname
+        name
         email
       }
       managers {
         id
-        firstname
-        lastname
+        name
         email
       }
     }
