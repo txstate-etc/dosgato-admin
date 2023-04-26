@@ -511,8 +511,8 @@ export interface SiteAuditSite {
     name: string
     type: string
     rootPage: {
-      title: string
-      template: {
+      title?: string
+      template?: {
         name: string
       }
     }
@@ -520,37 +520,37 @@ export interface SiteAuditSite {
       name: string
       users: {
         id: string
-        firstname: string
+        firstname?: string
         lastname: string
       }[]
       siteRules: {
-        site: {
+        site?: {
           id: string
           name: string
         }
-        grants: {
+        grants?: {
           viewForEdit: boolean
         }
       }[]
       assetRules: {
-        site: {
+        site?: {
           id: string
           name: string
         }
-        grants: {
+        grants?: {
           viewForEdit: boolean
         }
       }[]
     }[]
   }[]
   launched: boolean
-  url: {
+  url?: {
     prefix: string
   }
-  organization: {
+  organization?: {
     name: string
   }
-  owner: {
+  owner?: {
     id: string
     firstname: string
     lastname: string
@@ -624,6 +624,38 @@ export const GET_SITE_AUDIT = `
         firstname
         lastname
         email
+      }
+    }
+  }
+`
+
+export interface PageAuditPage {
+  id: string
+  path: string
+  template?: {
+    name: string
+  }
+  title?: string
+  published: boolean
+  modifiedAt: string
+  modifiedBy: {
+    id: string
+  }
+}
+
+export const GET_PAGETREE_PAGES_FOR_AUDIT = `
+  query getPagetreePagesForAudit ($pagetreeId: ID!) {
+    pages (filter:{ pagetreeIds: [$pagetreeId] }) {
+      id
+      path
+      template {
+        name
+      }
+      title
+      published
+      modifiedAt
+      modifiedBy {
+        id
       }
     }
   }

@@ -23,8 +23,8 @@
   const panelHeaderColor = '#D1C7B7'
 
   export let data: { organizations: Organization[], users: UserListUser[], allPageTemplates: TemplateListTemplate[], allComponentTemplates: TemplateListTemplate[] }
-  let modal: 'editbasic'|'editsitemanagement'|'editlaunch'|'addcomment'|'addpagetree'|'editpagetree'|'deletepagetree'| 'authorizetemplate' |
-    'promotepagetree'|'archivepagetree'|'edittemplates'|'addpagetemplates'|'addcomponenttemplates'|'deletetemplateauth'|undefined = undefined
+  let modal: 'editbasic' | 'editsitemanagement' | 'editlaunch' | 'addcomment' | 'addpagetree' | 'editpagetree' | 'deletepagetree' | 'authorizetemplate' |
+    'promotepagetree' | 'archivepagetree' | 'edittemplates' | 'addpagetemplates' | 'addcomponenttemplates' | 'deletetemplateauth' | 'downloadcsv' | undefined = undefined
 
   $: authorizedPageTemplateKeys = new Set($store.pageTemplates.map(t => t.key))
   $: authorizedComponentTemplateKeys = new Set($store.componentTemplates.map(t => t.key))
@@ -289,11 +289,30 @@
     j.href = URL.createObjectURL(new Blob([csvString]))
     j.click()
   }
+
+  async function downloadPageList (state) {
+    if (!state.pagetree) {
+      return { success: false, data: {}, messages: [] }
+    }
+    modal = undefined
+    const pagetree = $store.site.pagetrees.find(p => p.id === state.pagetree)
+    const pages = await api.getPagetreePages(state.pagetree)
+    const rows: string[][] = [['Path', 'Title', 'Template', 'Status', 'Last Modified', 'Modified By']]
+    for (const page of pages) {
+      rows.push([page.path, page.title ?? '', page.template?.name ?? '', (page.published ? 'Published' : 'Not Published'), page.modifiedAt, page.modifiedBy.id])
+    }
+    const csvString = csv(rows)
+    const j = document.createElement('a')
+    j.download = `${$store.site.name}_${pagetree!.name}_pages_` + Date.now() + '.csv'
+    j.href = URL.createObjectURL(new Blob([csvString]))
+    j.click()
+    return { success: true, data: {}, messages: [] }
+  }
 </script>
 
 <DetailPageContent>
   <div class="button-container">
-    <button>
+    <button on:click={() => { modal = 'downloadcsv' }}>
       <Icon icon={exportIcon} />
       Download CSV
     </button>
@@ -524,6 +543,14 @@
     Are you sure you want to remove this template from the authorized templates? Existing content will remain
     but editors will no longer be able to use this template on this site or any pagetrees in this site.
   </Dialog>
+{:else if modal === 'downloadcsv'}
+  <FormDialog
+    name='downloadcsv'
+    title='Download Page List'
+    on:escape={() => { modal = undefined }}
+    submit={downloadPageList}>
+    <FieldSelect path='pagetree' label='Pagetree' choices={$store.site.pagetrees.map(p => ({ label: p.name, value: p.id }))} required/>
+  </FormDialog>
 {/if}
 <style>
   .detail-section:not(:last-child) {
