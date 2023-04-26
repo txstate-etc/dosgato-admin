@@ -20,7 +20,7 @@ export async function buildAuditCSV () {
     for (const pagetree of site.pagetrees) {
       const row: string[] = []
       row.push(pagetree.name)
-      row.push(pagetree.rootPage.title)
+      row.push(pagetree.rootPage.title ?? '')
       if (isNotNull(site.url) && pagetree.type === 'PRIMARY') row.push(site.url.prefix)
       else row.push('')
       if (isNotNull(site.organization) && pagetree.type === 'PRIMARY') row.push(site.organization.name)
@@ -31,7 +31,7 @@ export async function buildAuditCSV () {
         if (site.managers[i]) row.push(`${site.managers[i].firstname} ${site.managers[i].lastname}`, site.managers[i].email)
         else row.push('', '')
       }
-      row.push(pagetree.rootPage.template.name)
+      row.push(pagetree.rootPage.template?.name ?? '')
       if (pagetree.type === 'SANDBOX') row.push('Sandbox')
       else if (pagetree.type === 'ARCHIVE') row.push('Archive')
       else {
@@ -41,10 +41,10 @@ export async function buildAuditCSV () {
       // listing users with write access, looking at page rules and asset rules
       const usersWithAccess: string[] = []
       for (const role of pagetree.roles) {
-        const siteRules = role.siteRules.filter(r => r.site?.id === site.id && r.grants.viewForEdit)
-        const assetRules = role.assetRules.filter(r => r.site?.id === site.id && r.grants.viewForEdit)
+        const siteRules = role.siteRules.filter(r => r.site?.id === site.id && r.grants?.viewForEdit)
+        const assetRules = role.assetRules.filter(r => r.site?.id === site.id && r.grants?.viewForEdit)
         if (siteRules.length && assetRules.length) {
-          usersWithAccess.push(...role.users.map(u => `${u.firstname} ${u.lastname} (${u.id})`))
+          usersWithAccess.push(...role.users.map(u => `${u.firstname ?? ''} ${u.lastname} (${u.id})`))
         }
       }
       row.push(usersWithAccess.join(', '))
