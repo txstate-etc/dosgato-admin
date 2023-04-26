@@ -4,10 +4,12 @@
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
+  import downloadIcon from '@iconify-icons/ph/download-simple'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog } from '$lib'
+  import { buildAuditCSV } from './audit'
 
   type TypedSiteItem = TypedTreeItem<SiteListSite>
 
@@ -26,8 +28,12 @@
   const store: TreeStore<SiteListSite> = new TreeStore(fetchChildren)
 
   function noneSelectedActions () {
+    // TODO: Do we need another permission for being able to download the audit CSV? I set it to the createSites permission right now
+    // because very few people will be able to do that. We don't want everyone who can see a subset of the site list to be able to
+    // see all sites information.
     return [
-      { label: 'Add Site', icon: plusIcon, disabled: !$globalStore.access.createSites, onClick: () => { modal = 'addsite' } }
+      { label: 'Add Site', icon: plusIcon, disabled: !$globalStore.access.createSites, onClick: () => { modal = 'addsite' } },
+      { label: 'Download CSV', icon: downloadIcon, disabled: !$globalStore.access.createSites, onClick: () => downloadSitesAudit() }
     ]
   }
   function singleActions (item: TypedSiteItem) {
@@ -73,6 +79,14 @@
 
   async function onRestoreSite () {
     // TODO
+  }
+
+  async function downloadSitesAudit () {
+    const sitesCSV = await buildAuditCSV()
+    const j = document.createElement('a')
+    j.download = 'siteaudit_' + Date.now() + '.csv'
+    j.href = URL.createObjectURL(new Blob([sitesCSV]))
+    j.click()
   }
 </script>
 

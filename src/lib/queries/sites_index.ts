@@ -502,3 +502,129 @@ export const ARCHIVE_PAGETREE = `
     }
   }
 `
+
+export interface SiteAuditSite {
+  id: string
+  name: string
+  pagetrees: {
+    id: string
+    name: string
+    type: string
+    rootPage: {
+      title: string
+      template: {
+        name: string
+      }
+    }
+    roles: {
+      name: string
+      users: {
+        id: string
+        firstname: string
+        lastname: string
+      }[]
+      siteRules: {
+        site: {
+          id: string
+          name: string
+        }
+        grants: {
+          viewForEdit: boolean
+        }
+      }[]
+      assetRules: {
+        site: {
+          id: string
+          name: string
+        }
+        grants: {
+          viewForEdit: boolean
+        }
+      }[]
+    }[]
+  }[]
+  launched: boolean
+  url: {
+    prefix: string
+  }
+  organization: {
+    name: string
+  }
+  owner: {
+    id: string
+    firstname: string
+    lastname: string
+    email: string
+  }
+  managers: {
+    id: string
+    firstname: string
+    lastname: string
+    email: string
+  }[]
+}
+
+export const GET_SITE_AUDIT = `
+  query getSiteListForAudit {
+    sites {
+      id
+      name
+      pagetrees {
+        id
+        name
+        type
+        rootPage {
+          title
+          template {
+            name
+          }
+        }
+        roles {
+          name
+          users {
+            id
+            firstname
+            lastname
+          }
+          siteRules {
+            site {
+              id
+              name
+            }
+            grants {
+              viewForEdit
+            }
+          }
+          assetRules {
+            site {
+              id
+              name
+            }
+            grants {
+              viewForEdit
+            }
+          }
+        }
+      }
+      launched
+      url {
+        prefix
+      }
+      organization {
+        name
+      }
+      owner {
+        id
+        firstname
+        lastname
+        email
+      }
+      managers {
+        id
+        firstname
+        lastname
+        email
+      }
+    }
+  }
+`
