@@ -370,7 +370,7 @@
   <UploadUI
     title="Import page into {$store.selectedItems[0].path}"
     uploadPath="{environmentConfig.apiBase}/pages/{$store.selectedItems[0].id}"
-    mimeWhitelist={['application/json']}
+    mimeWhitelist={['application/json', 'application/x-gzip']}
     maxFiles={1}
     on:escape={() => { modal = undefined }}
     on:saved={onImportSaved} />
