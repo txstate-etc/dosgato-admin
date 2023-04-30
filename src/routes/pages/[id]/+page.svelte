@@ -12,8 +12,9 @@
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import scissors from '@iconify-icons/ph/scissors'
   import trash from '@iconify-icons/ph/trash'
-  import { printIf } from 'txstate-utils'
+  import { printIf, titleCase } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api } from '$lib'
+  import { statusIcon } from './helpers'
 
   export let data: { page: PageEditorPage, pagetemplate: EnhancedUITemplate }
   $: ({ page, pagetemplate } = data)
@@ -195,7 +196,7 @@
     // notify the page about the last known scroll and bar selection state so it can load it up nicely
     iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath: $editorStore.selectedPath, state: $editorStore.state }, '*')
   }
-
+  $: status = $editorStore.page.published ? ($editorStore.page.hasUnpublishedChanges ? 'modified' as const : 'published' as const) : 'unpublished' as const
   $: iframesrc = editable && !$editorStore.previewing
     ? `${environmentConfig.renderBase}/.edit${$pageStore.path}?token=${api.token}`
     : (
@@ -228,6 +229,7 @@
   UPDATE: I'm  going to go ahead and add allow-same-origin for now and we'll explore putting the render server on
   a separate subdomain or port to prevent credential exposure. -->
   <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.previewing?.mode === 'mobile'}></iframe>
+  <div slot="bottom" class="status {status}"><Icon width="1.1em" inline icon={statusIcon[status]}/><span>{titleCase(status)}</span></div>
 </ActionPanel>
 
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
@@ -326,5 +328,20 @@
   }
   .page-bar span {
     margin-right: auto;
+  }
+  .status {
+    font-size: 0.9em;
+  }
+  .status span {
+    color: var(--action-panel-text, white);
+  }
+  .status.published {
+  color: var(--dosgato-green, #689600);
+  }
+  .status.modified {
+    color: var(--dosgato-yellow, #ffbf28);
+  }
+  .status.unpublished {
+    color: var(--dosgato-red, #9a3332);
   }
 </style>

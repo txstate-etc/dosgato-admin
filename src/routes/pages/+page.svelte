@@ -5,15 +5,12 @@
   import deleteEmpty from '@iconify-icons/mdi/delete-empty'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import archive from '@iconify-icons/ph/archive'
-  import circleIcon from '@iconify-icons/mdi/circle'
   import fileX from '@iconify-icons/ph/file-x'
   import layout from '@iconify-icons/ph/layout'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import publishIcon from '@iconify-icons/mdi/publish'
   import publishOffIcon from '@iconify-icons/mdi/publish-off'
-  import squareIcon from '@iconify-icons/mdi/square'
-  import triangleIcon from '@iconify-icons/mdi/triangle'
   import duplicateIcon from '@iconify-icons/mdi/content-duplicate'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import contentCopy from '@iconify-icons/mdi/content-copy'
@@ -30,15 +27,10 @@
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { _store as store, type TypedPageItem } from './+page'
   import { sandboxIcon } from './sandboxicon'
+  import { statusIcon } from './[id]/helpers'
   import './index.css'
 
   let modal: 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | undefined = undefined
-
-  const statusIcon = {
-    published: triangleIcon,
-    modified: circleIcon,
-    unpublished: squareIcon
-  }
 
   const siteIcon = {
     PRIMARY: browserIcon,

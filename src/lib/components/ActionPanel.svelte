@@ -67,7 +67,7 @@
 
 <svelte:window bind:scrollY />
 <div bind:this={panelelement} class="action-panel" class:hasPreview={$$slots.preview} class:hidden={$hidden} use:eq={{ store: eqstore }} use:offset={{ store: offsetStore }} style:height>
-  <section use:eq class="work" on:transitionend={() => elementqueries.refresh()}>
+  <section use:eq class="work">
     <slot />
   </section>
   <div class="right-panel">
@@ -100,6 +100,11 @@
     {#if $$slots.preview}
       <section class="action-panel-preview">
         <slot name="preview" />
+      </section>
+    {/if}
+    {#if $$slots.bottom}
+      <section class="action-panel-bottom">
+        <slot name="bottom" />
       </section>
     {/if}
   </div>
@@ -153,6 +158,16 @@
 
   .action-panel-preview {
     height: 30%;
+  }
+
+  .action-panel-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 0.5em 0;
+    text-align: center;
+    border-top: 2px solid var(--action-panel-divider, #999999)
   }
 
   .action-panel.hidden .right-panel {
