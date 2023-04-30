@@ -58,15 +58,17 @@
 
   let scrollY
   const offsetStore = new OffsetStore()
-  $: height = `calc(100vh - ${Math.max(0, $offsetStore.bottom ?? 0)}px - ${Math.max(0, ($offsetStore.top ?? 0))}px)`
+  $: height = `calc(${supportsDVH ? '100dvh' : '100vh'} - ${Math.max(0, $offsetStore.bottom ?? 0)}px - ${Math.max(0, ($offsetStore.top ?? 0))}px)`
   let arialive
+  let supportsDVH = false
   onMount(() => {
     arialive = 'polite'
+    supportsDVH = CSS.supports('height: 100dvh')
   })
 </script>
 
 <svelte:window bind:scrollY />
-<div bind:this={panelelement} class="action-panel" class:hasPreview={$$slots.preview} class:hidden={$hidden} use:eq={{ store: eqstore }} use:offset={{ store: offsetStore }} style:height>
+<div bind:this={panelelement} class="action-panel" class:hidden={$hidden} use:eq={{ store: eqstore }} use:offset={{ store: offsetStore }} style:height>
   <section use:eq class="work">
     <slot />
   </section>
@@ -139,7 +141,7 @@
     border-radius: 4px;
   }
   .work {
-    width: calc(100% - min(max(calc(20% - 2em), 14em), 18em) - 0.5em - 3px);
+    width: calc(100% - min(max(20%, 14em), 18em) - 0.5em - 3px);
     overflow: hidden auto;
   }
   .right-panel {
@@ -150,21 +152,16 @@
     max-width: 18em;
     min-width: 14em;
     z-index: 1;
-  }
-
-  .hasPreview .actions {
-    height: 70%;
+    display: inline-flex;
+    flex-direction: column;
   }
 
   .action-panel-preview {
-    height: 30%;
+    margin-top: auto;
+    max-height: 30%;
   }
-
   .action-panel-bottom {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
+    margin-top: auto;
     padding: 0.5em 0;
     text-align: center;
     border-top: 2px solid var(--action-panel-divider, #999999)
