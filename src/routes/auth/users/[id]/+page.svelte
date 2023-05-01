@@ -1,14 +1,13 @@
 <script lang="ts">
 
-  import { Dialog, Icon, FieldText, FieldMultiselect, FieldCheckbox, FormDialog } from '@dosgato/dialog'
+  import { Dialog, FieldText, FieldMultiselect, FieldCheckbox, FormDialog } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/ph/plus'
   import deleteIcon from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
-  import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, StyledList, messageForDialog, ensureRequiredNotNull, type GroupWithParents, type GroupListGroup, type RoleListRole, type FullUser, BackButton, type DetailPanelButton } from '$lib'
+  import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type GroupListGroup, type RoleListRole, BackButton } from '$lib'
   import { _store as store } from './+page'
-  import { unique } from 'txstate-utils'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
 
 
@@ -64,6 +63,11 @@
     }).map(g => ({ label: g.name, value: g.id }))
   }
 
+  async function lookupGroupByValue (val: string) {
+    const group = data.allGroups.find(g => g.id === val)
+    if (group) return { label: group.name, value: group.id }
+  }
+
   async function onAddGroups (state) {
     const resp = await api.setUserGroups($store.user.id, state.groups)
     if (resp.success) {
@@ -82,6 +86,11 @@
     return filtered.map(role => ({ label: role.name, value: role.id }))
   }
 
+  async function lookupRoleByValue (val: string) {
+    const role = data.allRoles.find(r => r.id === val)
+    if (role) return { label: role.name, value: role.id }
+  }
+
   async function onAddRoles (state: { roleIds: string[] }) {
     const resp = await api.addRolesToUser(state.roleIds, $store.user.id)
     if (resp.success) {
@@ -94,7 +103,6 @@
   async function onRemoveRole (state) {
     if (!$store.roleRemoving) return
     const resp = await api.removeRoleFromUser($store.roleRemoving.id, $store.user.id)
-    console.log(resp)
     if (resp.success) {
       store.resetRoleRemoving()
       onSaved()
@@ -232,6 +240,7 @@
       path='groups'
       label='Add Groups'
       getOptions={searchGroups}
+      lookupByValue={lookupGroupByValue}
     />
   </FormDialog>
 {:else if modal === 'removefromgroup'}
@@ -257,11 +266,13 @@
     submit={onAddRoles}
     name='editroles'
     title={`Edit roles for ${$store.user.id}`}
+    preload={{ roleIds: $store.user.directRoles.map(r => r.id) }}
     on:escape={() => { modal = undefined }}>
     <FieldMultiselect
       path='roleIds'
       label='Add Roles'
-      getOptions={searchRoles}/>
+      getOptions={searchRoles}
+      lookupByValue={lookupRoleByValue}/>
   </FormDialog>
 {/if}
 

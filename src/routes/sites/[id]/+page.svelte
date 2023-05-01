@@ -35,7 +35,7 @@
     const query = search.toLowerCase()
     return data.users.filter(u => {
       return u.name.toLowerCase().includes(query) || u.id.includes(query)
-    }).map(u => ({ label: `${u.firstname} ${u.lastname}`, value: u.id }))
+    }).map(u => ({ label: `${u.name}`, value: u.id }))
   }
 
   async function searchPagetrees (term) {
@@ -270,10 +270,10 @@
       actions.push({ icon: launchIcon, label: 'Promote to Primary', hiddenLabel: (tree) => `Promote pagetree ${tree.name} to primary`, onClick: (tree) => onClickPromotePagetree(tree.id, tree.name) })
     }
     if (pagetree.type === 'SANDBOX' && pagetree.permissions.archive) {
-      actions.push({ icon: archiveOutline, label: 'Archive', hiddenLabel: (tree) => `Archive pagetree ${tree.name}`, onClick: (tree) => onClickArchivePagetree(tree.id, tree.name)})
+      actions.push({ icon: archiveOutline, label: 'Archive', hiddenLabel: (tree) => `Archive pagetree ${tree.name}`, onClick: (tree) => onClickArchivePagetree(tree.id, tree.name) })
     }
     if (pagetree.type !== 'PRIMARY' && pagetree.permissions.delete) {
-      actions.push({ icon: deleteOutline, label: 'Delete', hiddenLabel: (tree) => `Delete pagetree ${tree.name}`, onClick: (tree) => onClickDeletePagetree(tree.id, tree.name)})
+      actions.push({ icon: deleteOutline, label: 'Delete', hiddenLabel: (tree) => `Delete pagetree ${tree.name}`, onClick: (tree) => onClickDeletePagetree(tree.id, tree.name) })
     }
     return actions
   }
@@ -354,10 +354,10 @@
               <span><dt>Organization:</dt><dd>{$store.site.organization?.name ?? ''}</dd></span>
             </div>
             <div class="dl-row">
-              <span><dt>Owner:</dt><dd>{#if $store.site.owner}{$store.site.owner.firstname} {$store.site.owner.lastname} ({$store.site.owner.id}){/if}</dd></span>
+              <span><dt>Owner:</dt><dd>{#if $store.site.owner}{$store.site.owner.name} ({$store.site.owner.id}){/if}</dd></span>
             </div>
             <div class="dl-row">
-              <span><dt>Manager(s):</dt><dd>{$store.site.managers.map(m => `${m.firstname} ${m.lastname} (${m.id})`).join(', ')}</dd></span>
+              <span><dt>Manager(s):</dt><dd>{$store.site.managers.map(m => `${m.name} (${m.id})`).join(', ')}</dd></span>
             </div>
           </dl>
         </DetailPanelSection>
@@ -377,23 +377,20 @@
     </div>
     <div class="vertical-group">
       <UserAccessPanel {panelHeaderColor} hasGroups={!!$store.groups.length}>
-        <SortableTable slot="roles" items={[...$store.siteRoles, ...$store.globalRoles]} headers={[
-          { id: 'name', label: 'Role', render: (role) => `<a href="${base}/auth/roles/${role.id}">${role.name}</a>`, widthPercent: 40 },
-          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 20 },
-          { id: 'readonly', label: 'Read-only', icon: (role) => { return role.readonly ? { icon: checkIcon, hiddenLabel: `${role.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${role.name} can edit this site` } }, widthPercent: 20 },
-          { id: 'universal', label: 'Universal', icon: (role) => { return role.universal ? { icon: checkIcon, hiddenLabel: `${role.name} has access to all sites` } : { icon: minusIcon, hiddenLabel: `${role.name} has specific access to this site` } }, widthPercent: 20 }
+        <SortableTable slot="roles" items={$store.siteRoles} headers={[
+          { id: 'name', label: 'Role', render: (role) => `<a href="${base}/auth/roles/${role.id}">${role.name}</a>`, widthPercent: 50 },
+          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
+          { id: 'universal', label: 'Universal', icon: (role) => { return role.universal ? { icon: checkIcon, hiddenLabel: `${role.name} has access to all sites` } : { icon: minusIcon, hiddenLabel: `${role.name} has specific access to this site` } }, widthPercent: 25 }
         ]}/>
         <SortableTable slot="groups" items={$store.groups} headers={[
-          { id: 'name', label: 'Group', render: (group) => `<a href="${base}/auth/groups/${group.id}">${group.name}</a>`, widthPercent: 40 },
-          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 20 },
-          { id: 'readonly', label: 'Read-only', icon: (group) => { return group.readonly ? { icon: checkIcon, hiddenLabel: `${group.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${group.name} can edit this site` } }, widthPercent: 20 },
-          { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 20 }
+          { id: 'name', label: 'Group', render: (group) => `<a href="${base}/auth/groups/${group.id}">${group.name}</a>`, widthPercent: 50 },
+          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
+          { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
         ]}/>
         <SortableTable slot="users" items={$store.users} headers={[
-          { id: 'name', label: 'Name', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.firstname} ${user.lastname}</a>`, widthPercent: 40 },
-          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 20 },
-          { id: 'readonly', label: 'Read-only', icon: (user) => { return user.readonly ? { icon: checkIcon, hiddenLabel: `${user.name} has read-only access to this site` } : { icon: minusIcon, hiddenLabel: `${user.name} can edit this site` } }, widthPercent: 20 },
-          { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 20 }
+          { id: 'name', label: 'Name', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.firstname} ${user.lastname}</a>`, widthPercent: 50 },
+          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
+          { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
         ]} />
       </UserAccessPanel>
       <DetailPanel header="Authorized Templates" headerColor={panelHeaderColor}>
@@ -448,7 +445,7 @@
     preload={{ organization: $store.site.organization?.id, owner: $store.site.owner?.id, managers: $store.site.managers?.map(m => m.id) }}
     on:escape={() => { modal = undefined }}>
     <FieldSelect path='organization' label='Organization' choices={data.organizations.map(o => ({ label: o.name, value: o.id }))}/>
-    <FieldAutocomplete path='owner' label='Site Owner' placeholder='Please Select' choices={data.users.map(u => ({ label: `${u.firstname} ${u.lastname} (${u.id})`, value: u.id }))}/>
+    <FieldAutocomplete path='owner' label='Site Owner' placeholder='Please Select' choices={data.users.map(u => ({ label: `${u.name} (${u.id})`, value: u.id }))}/>
     <FieldMultiselect path='managers' label='Site Managers' getOptions={searchUsers}/>
   </FormDialog>
 {:else if modal === 'editlaunch'}

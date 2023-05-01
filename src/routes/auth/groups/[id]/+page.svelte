@@ -79,7 +79,7 @@
   function renderIndirectRoleGroups (role) {
     // This role is an indirect role. It comes from an ancestor group of the group we are inspecting.
     // Look at the role's direct groups to see which one(s) are in the supergroups list
-    return role.groups.filter(g => supergroupIds.includes(g.id)).map(g => `<a href="${base}/auth/roles/${g.id}">${g.name}</a>`).join(', ')
+    return role.groups.filter(g => supergroupIds.includes(g.id)).map(g => `<a href="${base}/auth/groups/${g.id}">${g.name}</a>`).join(', ')
   }
 
   async function openAddRoleDialog () {
@@ -159,23 +159,19 @@
         </DetailPanelSection>
       </DetailPanel>
 
-      {#if Object.keys($store.sites).length || $store.permittedOnAllSites.length}
+      {#if Object.keys($store.sites).length}
         <DetailPanel header='Sites' headerColor={panelHeaderColor}>
           <DetailPanelSection>
-            <StyledList>
-              {#if $store.permittedOnAllSites.length}
-                <li class="flex-row">
-                  All Sites
-                  <div>{$store.permittedOnAllSites.join(', ')}</div>
-                </li>
-              {/if}
-              {#each Object.keys($store.sites) as site (site)}
-                <li class="flex-row">
-                  {site}
-                  <div>{$store.sites[site].join(', ')}</div>
-                </li>
-              {/each}
-            </StyledList>
+            {#if $store.sites.length}
+              <SortableTable items={$store.sites}
+              headers={[
+                { id: 'name', label: 'Site name', get: 'name' },
+                { id: 'permissions', label: 'Permissions', render: item => `<div>${item.permissions.join(', ')}</div>` }
+              ]}
+                />
+            {:else}
+              <div>Group {$store.group.name} has no permissions on sites.</div>
+            {/if}
           </DetailPanelSection>
         </DetailPanel>
       {/if}

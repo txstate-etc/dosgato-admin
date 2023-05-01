@@ -1,5 +1,5 @@
 import { mutationResponse } from './global'
-import { accessDetailRules, type AccessDetailPageRule, type AccessDetailSiteRule } from './rules'
+import { accessDetailRules, type AccessDetailPageRule, type AccessDetailSiteRule, type AccessDetailDataRule, type AccessDetailAssetRule } from './rules'
 
 const groupDetails = `
   id
@@ -116,12 +116,16 @@ export interface FullGroup {
     name: string
     siteRules: AccessDetailSiteRule[]
     pageRules: AccessDetailPageRule[]
+    dataRules: AccessDetailDataRule[]
+    assetRules: AccessDetailAssetRule[]
   }[]
   rolesThroughParentGroup: {
     id: string
     name: string
     siteRules: AccessDetailSiteRule[]
     pageRules: AccessDetailPageRule[]
+    dataRules: AccessDetailDataRule[]
+    assetRules: AccessDetailAssetRule[]
     groups: {
       id: string
       name: string

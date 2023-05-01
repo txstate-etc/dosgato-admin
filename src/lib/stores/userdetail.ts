@@ -1,11 +1,11 @@
 import { Store } from '@txstate-mws/svelte-store'
-import type { FullUser, AccessDetailSiteRule, AccessDetailPageRule } from '$lib/queries'
-import { isNull, set, sortby, unique } from 'txstate-utils'
+import type { FullUser, AccessDetailSiteRule, AccessDetailPageRule, AccessDetailAssetRule } from '$lib/queries'
+import { isNotNull, set, sortby } from 'txstate-utils'
+import { getSiteAccess, type SiteAccessRole } from '$lib'
 
 interface IUserDetailStore {
   user: FullUser
-  sites: { id: string, name: string, permissions: string[] } [] // Record<string, string[]>
-  permittedOnAllSites: string[]
+  sites: { id: string, name: string, permissions: string[] } []
   groupRemoving?: {
     id: string
     name: string
@@ -16,76 +16,58 @@ interface IUserDetailStore {
   }
 }
 
-interface Role {
-  id: string
-  name: string
-  siteRules: AccessDetailSiteRule[]
-  pageRules: AccessDetailPageRule[]
-}
+
 
 const initialValue: FullUser = { id: '', firstname: '', lastname: '', name: '', email: '', disabled: false, trained: false, directGroups: [], indirectGroups: [], directRoles: [], indirectRoles: [], sitesOwned: [], sitesManaged: [], permissions: { update: false }, system: false }
 
 export class UserDetailStore extends Store<IUserDetailStore> {
   constructor (public fetchUser: (id: string) => Promise<FullUser>) {
-    super({ user: initialValue, sites: [], permittedOnAllSites: [] })
+    super({ user: initialValue, sites: [] })
   }
 
   async refresh (id: string) {
     const user = await this.fetchUser(id)
-    const sites: Record<string, { id: string, permissions: string[] }> = {}
-    let globalSiteEditor = false
-    let globalPublisher = false
-    const permittedOnAllSites: string [] = []
+    const userAccessBySite: Record<string, string[]> = {}
+    const siteNameById: Record<string, string> = { }
     for (const site of user.sitesOwned) {
-      sites[site.name] = { id: site.id, permissions: ['owner'] }
+      userAccessBySite[site.id] = ['Owner']
+      siteNameById[site.id] = site.name
     }
     for (const site of user.sitesManaged) {
-      sites[site.name] = sites[site.name] ? { ...sites[site.name], permissions: [...sites[site.name].permissions, 'manager'] } : { id: site.id, permissions: ['manager'] }
+      userAccessBySite[site.id] ??= []
+      userAccessBySite[site.id].push('Manager')
+      siteNameById[site.id] = site.name
     }
 
-    const userRoles: Role[] = [...user.directRoles, ...user.indirectRoles]
-    // If they have some site rule with a null site with a viewForEdit grant, they can edit all sites
-    // If they have some page rule with a null site and pagetree with a viewForEdit grant, they can edit all sites?
-    globalSiteEditor = userRoles.some(role => {
-      if (role.siteRules.some(sr => isNull(sr.site) && sr.grants.viewForEdit)) return true
-      if (role.pageRules.some(pr => isNull(pr.site) && pr.grants.viewForEdit)) return true
-      return false
-    })
-    if (globalSiteEditor) permittedOnAllSites.push('editor')
-    globalPublisher = userRoles.some(role => {
-      if (role.pageRules.some(pr => isNull(pr.site) && pr.grants.publish)) return true
-      return false
-    })
-    if (globalPublisher) permittedOnAllSites.push('publisher')
-    if (!globalSiteEditor || !globalPublisher) {
-      const editSites: { id: string, name: string }[] = []
-      const publishSites: { id: string, name: string }[] = []
-      for (const role of userRoles) {
-        if (!globalSiteEditor) {
-          for (const sr of role.siteRules) {
-            if (sr.site && sr.grants.viewForEdit) editSites.push({ id: sr.site.id, name: sr.site.name })
-          }
-        }
-        for (const pr of role.pageRules) {
-          if (!globalSiteEditor) {
-            if (pr.site && pr.grants.viewForEdit) editSites.push({ id: pr.site.id, name: pr.site.name })
-          }
-          if (!globalPublisher) {
-            if (pr.site && pr.grants.publish) publishSites.push({ id: pr.site.id, name: pr.site.name })
-          }
-        }
-      }
-      for (const site of unique(editSites)) {
-        sites[site.name] = sites[site.name] ? { ...sites[site.name], permissions: [...sites[site.name].permissions, 'editor'] } : { id: site.id, permissions: ['editor'] }
-      }
-      for (const site of unique(publishSites)) {
-        sites[site.name] = sites[site.name] ? { ...sites[site.name], permissions: [...sites[site.name].permissions, 'publisher'] } : { id: site.id, permissions: ['publisher'] }
+    const userRoles: SiteAccessRole[] = [...user.directRoles, ...user.indirectRoles]
+    const userRules = userRoles.map(role => [...role.siteRules, ...role.assetRules, ...role.pageRules]).flat()
+    const rulesBySite: Record<string, (AccessDetailAssetRule | AccessDetailPageRule | AccessDetailSiteRule)[]> = {}
+    for (const rule of userRules) {
+      if (isNotNull(rule.site)) {
+        rulesBySite[rule.site.id] ??= []
+        rulesBySite[rule.site.id].push(rule)
+        siteNameById[rule.site.id] = rule.site.name
+      } else {
+        rulesBySite.all ??= []
+        rulesBySite.all.push(rule)
+        siteNameById.all = 'All Sites'
       }
     }
+    // rulesBySite looks like { siteId1: [rules about site1], all: [rules with no site specified], anothersiteId: [more rules]}
 
-    const sitesArray = sortby(Object.keys(sites).map(key => ({ id: sites[key].id, name: key, permissions: sites[key].permissions })), 'name')
-    if (permittedOnAllSites.length) sitesArray.unshift({ id: 'all', name: 'All Sites', permissions: permittedOnAllSites })
-    this.set({ user, sites: sitesArray, permittedOnAllSites })
+    for (const site in rulesBySite) {
+      const permissionsForThisSite = getSiteAccess(rulesBySite[site])
+      userAccessBySite[site] ??= []
+      userAccessBySite[site].push(...permissionsForThisSite)
+    }
+    // The UI is expecting an array like [{ site ID, site name, permissions: [] }]
+    let sitesArray: { id: string, name: string, permissions: string[] }[] = []
+    for (const id in siteNameById) {
+      if (id !== 'all') sitesArray.push({ id, name: siteNameById[id], permissions: userAccessBySite[id] })
+    }
+    sitesArray = sortby(sitesArray, 'name')
+    if (siteNameById.all) sitesArray.unshift({ id: 'all', name: 'All Sites', permissions: userAccessBySite.all })
+    this.set({ user, sites: sitesArray })
   }
 
   userFetched () {

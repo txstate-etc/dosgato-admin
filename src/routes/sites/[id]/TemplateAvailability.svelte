@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Accordion, type SiteTemplate } from '$lib'
+  import { Accordion, type SiteTemplate, type TemplateListTemplate } from '$lib'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import deleteIcon from '@iconify-icons/mdi/trash-can-outline'
@@ -7,7 +7,7 @@
   export let type: string
   export let authorizedTemplates: SiteTemplate[]
   export let universalTemplates: string[]
-  export let unAuthorizedTemplates: SiteTemplate[]
+  export let unAuthorizedTemplates: TemplateListTemplate[]
 
   const dispatch = createEventDispatcher()
 

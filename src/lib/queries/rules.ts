@@ -305,6 +305,15 @@ export interface TemplateRule {
 }
 
 export const accessDetailRules = `
+  dataRules {
+    site {
+      id
+      name
+    }
+    grants {
+      viewForEdit
+    }
+  }
   siteRules {
     site {
       id
@@ -320,35 +329,99 @@ export const accessDetailRules = `
       id
       name
     }
+    path
     pagetreeType
+    type
     grants {
       viewlatest
       viewForEdit
+      create
+      update
+      move
       publish
+      unpublish
+      delete
+      view
+      undelete
+    }
+  }
+  assetRules {
+    site {
+      id
+      name
+    }
+    path
+    pagetreeType
+    type
+    grants {
+      create
+      update
+      move
+      delete
+      view
+      undelete
     }
   }
 `
 
 export interface AccessDetailSiteRule {
-  site: {
+  site?: {
     id: string
     name: string
   }
-  grants: {
+  type: string
+  grants?: {
+    viewForEdit: boolean
+  }
+}
+
+export interface AccessDetailDataRule {
+  site?: {
+    id: string
+    name: string
+  }
+  grants?: {
     viewForEdit: boolean
   }
 }
 
 export interface AccessDetailPageRule {
-  site: {
+  site?: {
     id: string
     name: string
   }
-  pagetreeType: boolean
-  grants: {
+  path?: string
+  pagetreeType?: string
+  type: string
+  grants?: {
     viewlatest: boolean
     viewForEdit: boolean
+    view: boolean
+    create: boolean
+    update: boolean
+    move: boolean
     publish: boolean
+    unpublish: boolean
+    delete: boolean
+    undelete: boolean
+  }
+}
+
+export interface AccessDetailAssetRule {
+  site?: {
+    id: string
+    name: string
+  }
+  path?: string
+  pagetreeType?: string
+  type: string
+  grants?: {
+    create: boolean
+    update: boolean
+    move: boolean
+    delete: boolean
+    view: boolean
+    undelete: boolean
   }
 }
 

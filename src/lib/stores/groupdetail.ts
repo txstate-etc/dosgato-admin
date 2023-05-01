@@ -1,73 +1,51 @@
 import { Store } from '@txstate-mws/svelte-store'
-import type { FullGroup, AccessDetailSiteRule, AccessDetailPageRule } from '$lib/queries'
-import { isNull, unique } from 'txstate-utils'
+import type { FullGroup, AccessDetailSiteRule, AccessDetailPageRule, AccessDetailAssetRule } from '$lib/queries'
+import { isNotNull, isNull, sortby, unique } from 'txstate-utils'
+import { getSiteAccess, type SiteAccessRole } from '$lib'
 
 interface IGroupDetailStore {
   group: FullGroup
-  sites: Record<string, string[]>
-  permittedOnAllSites: string[]
-}
-interface Role {
-  id: string
-  name: string
-  siteRules: AccessDetailSiteRule[]
-  pageRules: AccessDetailPageRule[]
+  // sites: Record<string, string[]>
+  sites: { id: string, name: string, permissions: string[] } []
 }
 
 const initialValue: FullGroup = { id: '', name: '', directMembers: [], indirectMembers: [], subgroups: [], supergroups: [], directRoles: [], rolesThroughParentGroup: [] }
 
 export class GroupDetailStore extends Store<IGroupDetailStore> {
   constructor (public fetchGroup: (id: string) => Promise<FullGroup>) {
-    super({ group: initialValue, sites: {}, permittedOnAllSites: [] })
+    super({ group: initialValue, sites: [] })
   }
 
   async refresh (id: string) {
     const group = await this.fetchGroup(id)
-    const sites = {}
-    let globalSiteEditor = false
-    let globalPublisher = false
-    const permittedOnAllSites: string [] = []
+    const groupAccessBySite: Record<string, string[]> = {}
+    const siteNameById: Record<string, string> = {}
 
-    const groupRoles: Role[] = [...group.directRoles, ...group.rolesThroughParentGroup]
-    // If this group has some site rule with a null site with a viewForEdit grant, the members can edit all sites
-    // If this group has some page rule with a null site and null pagetree with a viewForEdit grant, the members can edit all sites
-    globalSiteEditor = groupRoles.some(role => {
-      if (role.siteRules.some(sr => isNull(sr.site) && sr.grants.viewForEdit)) return true
-      if (role.pageRules.some(pr => isNull(pr.site) && pr.grants.viewForEdit)) return true
-      return false
-    })
-    if (globalSiteEditor) permittedOnAllSites.push('editor')
-    globalPublisher = groupRoles.some(role => {
-      if (role.pageRules.some(pr => isNull(pr.site) && pr.grants.publish)) return true
-      return false
-    })
-    if (globalPublisher) permittedOnAllSites.push('publisher')
-    if (!globalSiteEditor || !globalPublisher) {
-      const editSites: string[] = []
-      const publishSites: string[] = []
-      for (const role of groupRoles) {
-        if (!globalSiteEditor) {
-          for (const sr of role.siteRules) {
-            if (sr.site && sr.grants.viewForEdit) editSites.push(sr.site.name)
-          }
-        }
-        for (const pr of role.pageRules) {
-          if (!globalSiteEditor) {
-            if (pr.site && pr.grants.viewForEdit) editSites.push(pr.site.name)
-          }
-          if (!globalPublisher) {
-            if (pr.site && pr.grants.publish) publishSites.push(pr.site.name)
-          }
-        }
-      }
-      for (const site of unique(editSites)) {
-        sites[site] = ['editor']
-      }
-      for (const site of unique(publishSites)) {
-        sites[site] = sites[site] ? [...sites[site], 'publisher'] : ['publisher']
+    const groupRoles: SiteAccessRole[] = [...group.directRoles, ...group.rolesThroughParentGroup]
+    const groupRules = groupRoles.map(role => [...role.siteRules, ...role.assetRules, ...role.pageRules]).flat()
+    const rulesBySite: Record<string, (AccessDetailAssetRule | AccessDetailPageRule | AccessDetailSiteRule)[]> = {}
+    for (const rule of groupRules) {
+      if (isNotNull(rule.site)) {
+        rulesBySite[rule.site.id] ??= []
+        rulesBySite[rule.site.id].push(rule)
+        siteNameById[rule.site.id] = rule.site.name
+      } else {
+        rulesBySite.all ??= []
+        rulesBySite.all.push(rule)
+        siteNameById.all = 'All Sites'
       }
     }
-    this.set({ group, sites, permittedOnAllSites })
+
+    for (const site in rulesBySite) {
+      groupAccessBySite[site] = getSiteAccess(rulesBySite[site])
+    }
+    let sitesArray: { id: string, name: string, permissions: string[] }[] = []
+    for (const id in siteNameById) {
+      if (id !== 'all') sitesArray.push({ id, name: siteNameById[id], permissions: groupAccessBySite[id] })
+    }
+    sitesArray = sortby(sitesArray, 'name')
+    if (siteNameById.all) sitesArray.unshift({ id: 'all', name: 'All Sites', permissions: groupAccessBySite.all })
+    this.set({ group, sites: sitesArray })
   }
 
   groupFetched () {

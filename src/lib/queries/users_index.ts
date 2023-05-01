@@ -1,5 +1,5 @@
 import { mutationResponse } from './global'
-import { accessDetailRules, type AccessDetailPageRule, type AccessDetailSiteRule } from './rules'
+import { accessDetailRules, type AccessDetailPageRule, type AccessDetailSiteRule, type AccessDetailAssetRule, type AccessDetailDataRule } from './rules'
 
 const userDetails = `
 id
@@ -118,6 +118,8 @@ export interface FullUser {
     permissions: { assign: boolean }
     siteRules: AccessDetailSiteRule[]
     pageRules: AccessDetailPageRule[]
+    dataRules: AccessDetailDataRule[]
+    assetRules: AccessDetailAssetRule[]
   }[]
   indirectRoles: {
     id: string
@@ -128,6 +130,8 @@ export interface FullUser {
     }[]
     siteRules: AccessDetailSiteRule[]
     pageRules: AccessDetailPageRule[]
+    dataRules: AccessDetailDataRule[]
+    assetRules: AccessDetailAssetRule[]
   }[]
   directGroups: GroupWithParents[]
   indirectGroups: GroupWithParents[]

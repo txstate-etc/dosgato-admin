@@ -1,3 +1,4 @@
+import { accessDetailRules, type AccessDetailAssetRule, type AccessDetailDataRule, type AccessDetailPageRule, type AccessDetailSiteRule } from '$lib'
 import { mutationResponse } from './global'
 
 export const commentDetails = `
@@ -142,13 +143,11 @@ export const fullSiteDetails = `
   }
   owner {
     id
-    firstname
-    lastname
+    name
   }
   managers {
     id
-    firstname
-    lastname
+    name
   }
   pagetrees {
     ${sitePagetreeDetails}
@@ -183,55 +182,11 @@ export const fullSiteDetails = `
     }
     users {
       id
+      name
       firstname
       lastname
     }
-    assetRules {
-      site {
-        id
-      }
-      path
-      pagetreeType
-      grants{
-        create
-        delete
-        move
-        update
-        viewForEdit
-      }
-    }
-    dataRules {
-      site {
-        id
-      }
-      grants{
-        viewForEdit
-      }
-    }
-    pageRules {
-      site {
-        id
-      }
-      path
-      pagetreeType
-      grants{
-        create
-        delete
-        move
-        publish
-        unpublish
-        update
-        viewForEdit
-      }
-    }
-    siteRules {
-      site {
-        id
-      }
-      grants{
-        viewForEdit
-      }
-    }
+    ${accessDetailRules}
   }
   permissions {
     rename
@@ -258,13 +213,11 @@ export interface FullSite {
   }
   owner: {
     id: string
-    firstname: string
-    lastname: string
+    name: string
   }
   managers: {
     id: string
-    firstname: string
-    lastname: string
+    name: string
   }[]
   pagetrees: SitePagetree[]
   pageTemplates: {
@@ -295,55 +248,14 @@ export interface FullSite {
     }[]
     users: {
       id: string
+      name: string
       firstname: string
       lastname: string
     }[]
-    assetRules: {
-      site: {
-        id: string
-      }
-      path: string
-      pagetreeType: string
-      grants: {
-        create: boolean
-        delete: boolean
-        move: boolean
-        update: boolean
-        viewForEdit: boolean
-      }
-    }[]
-    dataRules: {
-      site: {
-        id: string
-      }
-      grants: {
-        viewForEdit: boolean
-      }
-    }[]
-    pageRules: {
-      site: {
-        id: string
-      }
-      path: string
-      pagetreeType: string
-      grants: {
-        create: boolean
-        delete: boolean
-        move: boolean
-        publish: boolean
-        unpublish: boolean
-        update: boolean
-        viewForEdit: boolean
-      }
-    }[]
-    siteRules: {
-      site: {
-        id: string
-      }
-      grants: {
-        viewForEdit: boolean
-      }
-    }[]
+    siteRules: AccessDetailSiteRule[]
+    pageRules: AccessDetailPageRule[]
+    dataRules: AccessDetailDataRule[]
+    assetRules: AccessDetailAssetRule[]
   }[]
   permissions: {
     rename: boolean
