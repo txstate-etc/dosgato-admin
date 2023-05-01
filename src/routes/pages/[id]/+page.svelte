@@ -292,7 +292,7 @@
   </FormDialog>
 {:else if $editorStore.modal === 'versions'}
   {@const page = $editorStore.page}
-  <VersionHistory history={api.getPageVersions(page.id)} latest={{ ...page.version, date: DateTime.fromISO(page.version.date), markedAt: page.version.markedAt ? DateTime.fromISO(page.version.markedAt) : undefined }} on:escape={cancelModal} />
+  <VersionHistory dataId={page.id} previewUrl={() => ''} compareUrl={() => ''} history={api.getPageVersions(page.id)} on:escape={cancelModal} />
 {/if}
 
 

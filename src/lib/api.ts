@@ -38,7 +38,7 @@ import {
   CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
-  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT
+  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -952,6 +952,13 @@ class API {
   async getPageVersions (pageId: string): Promise<HistoryVersion[]> {
     const { pages } = await this.query<{ pages: [{ versions: VersionDetails[] }] }>(GET_PAGE_VERSIONS, { pageId })
     return pages[0]?.versions.map(v => ({ ...v, date: DateTime.fromISO(v.date), markedAt: v.markedAt ? DateTime.fromISO(v.markedAt) : undefined })) ?? []
+  }
+
+  async markVersion (dataId: string, version: number) {
+    const { versionToggleMarked: { version: v } } = await this.query<{ versionToggleMarked: { version: VersionDetails } }>(`
+      mutation versionToggleMarked ($dataId: ID!, $version: Int!) { versionToggleMarked (dataId: $dataId, version: $version) { version { ${VERSION_DETAILS} } } }
+    `, { dataId, version })
+    return { ...v, date: DateTime.fromISO(v.date), markedAt: v.markedAt ? DateTime.fromISO(v.markedAt) : undefined }
   }
 }
 
