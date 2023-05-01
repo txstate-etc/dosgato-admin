@@ -31,15 +31,22 @@ import {
   GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
   PUBLISH_DELETION, UNDELETE_PAGES, SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES,
   PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES,
-  type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS, apiPageToChooserPage,
-  type ChooserPageByLink, type ChooserAssetByLink, CHOOSER_PAGE_BY_PATH, type ChooserPageByPath, CHOOSER_ASSET_BY_ID,
-  type ChooserAssetById, type ChooserAssetFolderByLink, CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL, DELETE_ASSET, FINALIZE_DELETE_ASSET, UNDELETE_ASSET, DELETE_ASSET_FOLDER, FINALIZE_DELETE_ASSET_FOLDER, UNDELETE_ASSET_FOLDER, type MoveComponentResponse, MOVE_COMPONENT, type CreateComponentResponse, CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT, type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder, type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT
+  type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS, apiPageToChooserPage, type ChooserPageByLink, type ChooserAssetByLink,
+  CHOOSER_PAGE_BY_PATH, type ChooserPageByPath, CHOOSER_ASSET_BY_ID, type ChooserAssetById, type ChooserAssetFolderByLink,
+  CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL, DELETE_ASSET, FINALIZE_DELETE_ASSET, UNDELETE_ASSET, DELETE_ASSET_FOLDER,
+  FINALIZE_DELETE_ASSET_FOLDER, UNDELETE_ASSET_FOLDER, type MoveComponentResponse, MOVE_COMPONENT, type CreateComponentResponse,
+  CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
+  type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
+  type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
+  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
 import { environmentConfig, toast } from './stores'
 import { messageForDialog } from './helpers'
 import { schemaVersion } from './schemaversion'
+import { DateTime } from 'luxon'
+import type { HistoryVersion } from './components/VersionHistory.svelte'
 
 export interface MutationResponse {
   success: boolean
@@ -940,6 +947,11 @@ class API {
   async getPagetreePages (pagetreeId: string) {
     const { pages } = await this.query<{ pages: PageAuditPage[] }>(GET_PAGETREE_PAGES_FOR_AUDIT, { pagetreeId })
     return pages
+  }
+
+  async getPageVersions (pageId: string): Promise<HistoryVersion[]> {
+    const { pages } = await this.query<{ pages: [{ versions: VersionDetails[] }] }>(GET_PAGE_VERSIONS, { pageId })
+    return pages[0]?.versions.map(v => ({ ...v, date: DateTime.fromISO(v.date), markedAt: v.markedAt ? DateTime.fromISO(v.markedAt) : undefined })) ?? []
   }
 }
 

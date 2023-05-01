@@ -1,6 +1,32 @@
 import type { MutationResponse } from '$lib/api'
 import type { DialogPageProp } from '@dosgato/templating'
 
+export const VERSION_DETAILS = `
+version
+date
+tags
+marked
+markedAt
+comment
+user {
+  id
+  name
+}
+`
+
+export interface VersionDetails {
+  version: number
+  date: string
+  tags: string[]
+  marked: boolean
+  markedAt?: string
+  comment: string
+  user: {
+    id: string
+    name: string
+  }
+}
+
 export const EDITOR_PAGE_DETAILS = `
 id
 path
@@ -20,13 +46,10 @@ permissions {
   update
 }
 version {
-  version
+  ${VERSION_DETAILS}
 }
-versions {
+versions (filter: {tags:["published"]}) {
   version
-  date
-  tags
-  user { id }
 }
 `
 
@@ -52,18 +75,19 @@ export interface PageEditorPage extends DialogPageProp {
   permissions: {
     update: boolean
   }
-  version: {
-    version: number
-  }
-  versions: {
-    version: number
-    date: string
-    tags: string[]
-    user: {
-      id
-    }
-  }[]
+  version: VersionDetails
+  versions: { version: number }[]
 }
+
+export const GET_PAGE_VERSIONS = `
+  query getPageVersions ($pageId: ID!) {
+    pages (filter: { ids: [$pageId] }) {
+      versions {
+        ${VERSION_DETAILS}
+      }
+    }
+  }
+`
 
 export const GET_AVAILABLE_COMPONENTS = `
   query getAvailableComponents ($templateKey: ID!, $pageId: ID!) {

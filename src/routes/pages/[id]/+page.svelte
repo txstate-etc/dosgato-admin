@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { Dialog, FieldSelect, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
+  import { Dialog, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
   import type { UITemplate } from '@dosgato/templating'
   import clipboardText from '@iconify-icons/ph/clipboard-text'
   import copyIcon from '@iconify-icons/ph/copy'
@@ -15,6 +15,8 @@
   import { printIf, titleCase } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api } from '$lib'
   import { statusIcon } from './helpers'
+  import VersionHistory from '$lib/components/VersionHistory.svelte'
+  import { DateTime } from 'luxon'
 
   export let data: { page: PageEditorPage, pagetemplate: EnhancedUITemplate }
   $: ({ page, pagetemplate } = data)
@@ -36,7 +38,7 @@
         id: 'editinggroup',
         actions: [
           { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
-          { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.versions.length === 0 }
+          { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.version.version === 0 }
         ]
       }
       const previewGroup: ActionPanelGroup = {
@@ -44,7 +46,7 @@
         actions: [
           { label: 'Preview', icon: eye, onClick: () => pageEditorStore.previewVersion(page.version.version) },
           { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${$editorStore.page.path}.html`), '_blank') } },
-          { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions(page.versions.find(v => v.tags.includes('published'))!.version), disabled: !page.published || !page.hasUnpublishedChanges }
+          { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions(page.versions[0]!.version), disabled: !page.published || !page.hasUnpublishedChanges }
         ]
       }
       return [editGroup, previewGroup]
@@ -289,9 +291,8 @@
     {/if}
   </FormDialog>
 {:else if $editorStore.modal === 'versions'}
-  <FormDialog title="Page Versions" submit={onSelectVersionSubmit} on:escape={cancelModal}>
-    <FieldSelect path="version" label="Version" choices={page.versions.map(v => ({ value: String(v.version), label: `${v.version}: ${dateStamp(v.date)} (${v.user.id})` }))}/>
-  </FormDialog>
+  {@const page = $editorStore.page}
+  <VersionHistory history={api.getPageVersions(page.id)} latest={{ ...page.version, date: DateTime.fromISO(page.version.date), markedAt: page.version.markedAt ? DateTime.fromISO(page.version.markedAt) : undefined }} on:escape={cancelModal} />
 {/if}
 
 
