@@ -19,6 +19,12 @@
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
+  import PageRuleTable from './PageRuleTable.svelte'
+  import AssetRuleTable from './AssetRuleTable.svelte'
+  import DataRuleTable from './DataRuleTable.svelte'
+  import GlobalRuleTable from './GlobalRuleTable.svelte'
+  import TemplateRuleTable from './TemplateRuleTable.svelte'
+  import SiteRuleTable from './SiteRuleTable.svelte'
 
   export let data: { siteOptions: { value: string, label: string }[], userOptions: { value: string, label: string }[] }
   $: ({ siteOptions, userOptions } = data)
@@ -184,118 +190,80 @@
     </DetailPanel>
 
     <DetailPanel header="Editor Permissions" headerColor={panelHeaderColor} button={{ hiddenLabel: 'Add Editor Permissions', icon: plusIcon, onClick: () => { modal = 'addeditorrule' } }}>
-      <DetailPanelSection>
-        <Tabs tabs={editorTabs} accordionOnMobile={false}>
-          <Tab name="Page Rules">
-            {#if $store.role.pageRules.length}
-              <SortableTable cardedOnMobile mobileHeader={(item) => item.site?.name ?? 'All Sites'} items={$store.role.pageRules}
-                headers={[
-                  { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
-                  { id: 'pagetreetype', label: 'Pagetree Type', render: (item) => { return item.pagetreeType ? item.pagetreeType : 'All types' } },
-                  { id: 'path', label: 'Path', get: 'path' },
-                  { id: 'mode', label: 'Mode', get: 'mode' },
-                  { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create Permitted' } : { icon: minusIcon, hiddenLable: 'Create not permitted' } } },
-                  { id: 'update', label: 'Update', icon: (item) => { return item.grants.update ? { icon: checkIcon, hiddenLabel: 'Update Permitted' } : { icon: minusIcon, hiddenLable: 'Update not permitted' } } },
-                  { id: 'move', label: 'Move', icon: (item) => { return item.grants.move ? { icon: checkIcon, hiddenLabel: 'Move Permitted' } : { icon: minusIcon, hiddenLable: 'Move not permitted' } } },
-                  { id: 'publish', label: 'Publish & Unpublish', icon: (item) => { return item.grants.publish ? { icon: checkIcon, hiddenLabel: 'Publish Permitted' } : { icon: minusIcon, hiddenLable: 'Publish not permitted' } } },
-                  { id: 'delete', label: 'Delete & Restore', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'Delete Permitted' } : { icon: minusIcon, hiddenLable: 'Delete not permitted' } } },
-                  { id: 'editaction', label: 'Edit', actions: [{ icon: pencilIcon, label: 'Edit', onClick: (item) => onClickEdit(item.id, 'page', item) }] },
-                  { id: 'deleteaction', label: 'Delete', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickDelete(item.id, 'page') }] }
-                ]} />
-            {:else}
-              <span>This role has no page rules.</span>
-            {/if}
-          </Tab>
-          <Tab name="Asset Rules">
-            {#if $store.role.assetRules.length}
-              <SortableTable cardedOnMobile mobileHeader={(item) => { return item.site ? item.site.name : 'All Sites' }} items={$store.role.assetRules}
-                headers={[
-                  { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
-                  { id: 'path', label: 'Path', get: 'path' },
-                  { id: 'mode', label: 'Mode', get: 'mode' },
-                  { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create Permitted' } : { icon: minusIcon, hiddenLable: 'Create not permitted' } } },
-                  { id: 'update', label: 'Update', icon: (item) => { return item.grants.update ? { icon: checkIcon, hiddenLabel: 'Update Permitted' } : { icon: minusIcon, hiddenLable: 'Update not permitted' } } },
-                  { id: 'move', label: 'Move', icon: (item) => { return item.grants.move ? { icon: checkIcon, hiddenLabel: 'Move Permitted' } : { icon: minusIcon, hiddenLable: 'Move not permitted' } } },
-                  { id: 'delete', label: 'Delete & Restore', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'Delete Permitted' } : { icon: minusIcon, hiddenLable: 'Delete not permitted' } } },
-                  { id: 'editaction', label: 'Edit', actions: [{ icon: pencilIcon, label: 'Edit', onClick: (item) => onClickEdit(item.id, 'asset', item) }] },
-                  { id: 'deleteaction', label: 'Delete', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickDelete(item.id, 'asset') }] }
-                ]} />
-            {:else}
-              <span>This role has no asset rules.</span>
-            {/if}
-          </Tab>
-          <Tab name="Data Rules">
-            {#if $store.role.dataRules.length}
-              <SortableTable cardedOnMobile mobileHeader={(item) => { return item.site ? item.site.name : 'All Sites' }} items={$store.role.dataRules}
-                headers={[
-                  { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
-                  { id: 'path', label: 'Path', get: 'path' },
-                  { id: 'template', label: 'Template', render: (item) => { return item.template ? item.template.name : 'All Templates' } },
-                  { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create Permitted' } : { icon: minusIcon, hiddenLable: 'Create not permitted' } } },
-                  { id: 'update', label: 'Update', icon: (item) => { return item.grants.update ? { icon: checkIcon, hiddenLabel: 'Update Permitted' } : { icon: minusIcon, hiddenLable: 'Update not permitted' } } },
-                  { id: 'move', label: 'Move', icon: (item) => { return item.grants.move ? { icon: checkIcon, hiddenLabel: 'Move Permitted' } : { icon: minusIcon, hiddenLable: 'Move not permitted' } } },
-                  { id: 'publish', label: 'Publish & Unpublish', icon: (item) => { return item.grants.publish ? { icon: checkIcon, hiddenLabel: 'Publish Permitted' } : { icon: minusIcon, hiddenLable: 'Publish not permitted' } } },
-                  { id: 'delete', label: 'Delete & Restore', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'Delete Permitted' } : { icon: minusIcon, hiddenLable: 'Delete not permitted' } } },
-                  { id: 'editaction', label: 'Edit', actions: [{ icon: pencilIcon, label: 'Edit', onClick: (item) => onClickEdit(item.id, 'data', item) }] },
-                  { id: 'deleteaction', label: 'Delete', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickDelete(item.id, 'data') }] }
-                ]} />
-            {:else}
-              <span>This role has no data rules.</span>
-            {/if}
-          </Tab>
-        </Tabs>
-      </DetailPanelSection>
+      <div class="desktop-layout">
+        <DetailPanelSection>
+          <h3>Page Rules</h3>
+          <PageRuleTable rules={$store.role.pageRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+        </DetailPanelSection>
+        <DetailPanelSection>
+          <h3>Asset Rules</h3>
+          <AssetRuleTable rules={$store.role.assetRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+        </DetailPanelSection>
+        <DetailPanelSection>
+          <h3>Data Rules</h3>
+          <DataRuleTable rules={$store.role.dataRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+        </DetailPanelSection>
+      </div>
+      <div class="mobile-layout">
+        <DetailPanelSection>
+          <Tabs tabs={editorTabs} accordionOnMobile={false}>
+            <Tab name="Page Rules">
+              {#if $store.role.pageRules.length}
+                <PageRuleTable rules={$store.role.pageRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+              {:else}
+                <span>This role has no page rules.</span>
+              {/if}
+            </Tab>
+            <Tab name="Asset Rules">
+              {#if $store.role.assetRules.length}
+                <AssetRuleTable rules={$store.role.assetRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+              {:else}
+                <span>This role has no asset rules.</span>
+              {/if}
+            </Tab>
+            <Tab name="Data Rules">
+              {#if $store.role.dataRules.length}
+                <DataRuleTable rules={$store.role.dataRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+              {:else}
+                <span>This role has no data rules.</span>
+              {/if}
+            </Tab>
+          </Tabs>
+        </DetailPanelSection>
+      </div>
     </DetailPanel>
 
     <DetailPanel header="Administrator Permissions" headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => { modal = 'addadminrule' }, hiddenLabel: 'Add Administrator Permissions' }}>
-      <Tabs tabs={adminTabs} accordionOnMobile={false}>
-        <Tab name="Global Rules">
-          {#if $store.role.globalRules.length}
-            <SortableTable cardedOnMobile mobileHeader={(item) => 'Global Rule'} items={$store.role.globalRules}
-              headers={[
-                { id: 'manageaccess', label: 'Manage Access', icon: (item) => { return item.grants.manageAccess ? { icon: checkIcon, hiddenLabel: 'May manage access' } : { icon: minusIcon, hiddenLable: 'May not manage access' } } },
-                { id: 'manageparentroles', label: 'Manage Parent Roles', icon: (item) => { return item.grants.manageParentRoles ? { icon: checkIcon, hiddenLabel: 'May manage parent roles' } : { icon: minusIcon, hiddenLable: 'May not manage parent roles' } } },
-                { id: 'createsites', label: 'Create Sites', icon: (item) => { return item.grants.createSites ? { icon: checkIcon, hiddenLabel: 'May create sites' } : { icon: minusIcon, hiddenLable: 'May not create sites' } } },
-                { id: 'manageglobaldata', label: 'Manage Global Data', icon: (item) => { return item.grants.manageGlobalData ? { icon: checkIcon, hiddenLabel: 'May manage global data' } : { icon: minusIcon, hiddenLable: 'May not manage global data' } } },
-                { id: 'managetemplates', label: 'Manage Templates', icon: (item) => { return item.grants.manageTemplates ? { icon: checkIcon, hiddenLabel: 'May manage templates' } : { icon: minusIcon, hiddenLable: 'May not manage templates' } } },
-                { id: 'editaction', label: 'Edit', actions: [{ icon: pencilIcon, label: 'Edit', onClick: (item) => onClickEdit(item.id, 'global', item) }] },
-                { id: 'deleteaction', label: 'Delete', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickDelete(item.id, 'global') }] }
-              ]} />
-          {:else}
-            <span>This role has no global rules.</span>
-          {/if}
-        </Tab>
-        <Tab name="Template Rules">
-          {#if $store.role.templateRules.length}
-            <SortableTable cardedOnMobile mobileHeader={(item) => item.template ? item.template.name : 'All Templates'} items={$store.role.templateRules}
-              headers={[
-                { id: 'template', label: 'Template', render: (item) => { return item.template ? item.template.name : 'All Templates' } },
-                { id: 'use', label: 'Use', icon: (item) => { return item.grants.use ? { icon: checkIcon, hiddenLabel: 'May use template' } : { icon: minusIcon, hiddenLabel: 'May not use template' } } },
-                { id: 'editaction', label: 'Edit', actions: [{ icon: pencilIcon, label: 'Edit', onClick: (item) => onClickEdit(item.id, 'template', item) }] },
-                { id: 'deleteaction', label: 'Delete', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickDelete(item.id, 'template') }] }
-              ]} />
-          {:else}
-            <div>This role has no template rules.</div>
-          {/if}
-        </Tab>
-        <Tab name="Site Rules">
-          {#if $store.role.siteRules.length}
-            <SortableTable cardedOnMobile mobileHeader={(item) => { return item.site ? item.site.name : 'All Sites' }} items={$store.role.siteRules}
-              headers={[
-                { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
-                { id: 'launch', label: 'Launch', icon: (item) => { return item.grants.launch ? { icon: checkIcon, hiddenLabel: 'May launch site' } : { icon: minusIcon, hiddenLable: 'May not launch site' } } },
-                { id: 'rename', label: 'Rename', icon: (item) => { return item.grants.rename ? { icon: checkIcon, hiddenLabel: 'May rename site' } : { icon: minusIcon, hiddenLable: 'May not rename site' } } },
-                { id: 'governance', label: 'Governance', icon: (item) => { return item.grants.governance ? { icon: checkIcon, hiddenLabel: 'May update site management' } : { icon: minusIcon, hiddenLable: 'May not update site management' } } },
-                { id: 'managestate', label: 'Manage State', icon: (item) => { return item.grants.manageState ? { icon: checkIcon, hiddenLabel: 'May manage pagetree state' } : { icon: minusIcon, hiddenLable: 'May not manage pagetree state' } } },
-                { id: 'delete', label: 'Delete & Restore', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'May delete or restore site' } : { icon: minusIcon, hiddenLable: 'May not delete or restore site' } } },
-                { id: 'editaction', label: 'Edit', actions: [{ icon: pencilIcon, label: 'Edit', onClick: (item) => onClickEdit(item.id, 'site', item) }] },
-                { id: 'deleteaction', label: 'Delete', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickDelete(item.id, 'site') }] }
-              ]} />
-          {:else}
-            <div>This role has no site rules.</div>
-          {/if}
-        </Tab>
-      </Tabs>
+      <div class="desktop-layout">
+        <DetailPanelSection>
+          <h3>Site Rules</h3>
+          <SiteRuleTable rules={$store.role.siteRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+        </DetailPanelSection>
+        <DetailPanelSection>
+          <h3>Global Rules</h3>
+          <GlobalRuleTable rules={$store.role.globalRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+        </DetailPanelSection>
+        <DetailPanelSection>
+          <h3>Template Rules</h3>
+          <TemplateRuleTable rules={$store.role.templateRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+        </DetailPanelSection>
+      </div>
+      <div class="mobile-layout">
+        <DetailPanelSection>
+          <Tabs tabs={adminTabs} accordionOnMobile={false}>
+            <Tab name="Global Rules">
+              <GlobalRuleTable rules={$store.role.globalRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+            </Tab>
+            <Tab name="Template Rules">
+              <TemplateRuleTable rules={$store.role.templateRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+            </Tab>
+            <Tab name="Site Rules">
+              <SiteRuleTable rules={$store.role.siteRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+            </Tab>
+          </Tabs>
+        </DetailPanelSection>
+      </div>
+
     </DetailPanel>
   </div>
 </DetailPageContent>
@@ -452,5 +420,14 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 1em;
+  }
+  .mobile-layout {
+    display: none;
+  }
+  :global([data-eq~="800px"]) .desktop-layout {
+    display: none;
+  }
+  :global([data-eq~="800px"]) .mobile-layout {
+    display: block;
   }
 </style>
