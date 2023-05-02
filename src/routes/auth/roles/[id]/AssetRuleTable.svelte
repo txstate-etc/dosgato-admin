@@ -19,11 +19,11 @@
       { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
       { id: 'path', label: 'Path', get: 'path' },
       { id: 'mode', label: 'Mode', get: 'mode' },
-      { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create Permitted' } : { icon: minusIcon, hiddenLable: 'Create not permitted' } } },
-      { id: 'update', label: 'Update', icon: (item) => { return item.grants.update ? { icon: checkIcon, hiddenLabel: 'Update Permitted' } : { icon: minusIcon, hiddenLable: 'Update not permitted' } } },
-      { id: 'move', label: 'Move', icon: (item) => { return item.grants.move ? { icon: checkIcon, hiddenLabel: 'Move Permitted' } : { icon: minusIcon, hiddenLable: 'Move not permitted' } } },
-      { id: 'delete', label: 'Delete', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'Delete Permitted' } : { icon: minusIcon, hiddenLable: 'Delete not permitted' } } },
-      { id: 'undelete', label: 'Restore', icon: (item) => { return item.grants.undelete ? { icon: checkIcon, hiddenLabel: 'Restore Permitted' } : { icon: minusIcon, hiddenLable: 'Restore not permitted' } } },
+      { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create Permitted' } : { icon: minusIcon, hiddenLabel: 'Create not permitted' } } },
+      { id: 'update', label: 'Update', icon: (item) => { return item.grants.update ? { icon: checkIcon, hiddenLabel: 'Update Permitted' } : { icon: minusIcon, hiddenLabel: 'Update not permitted' } } },
+      { id: 'move', label: 'Move', icon: (item) => { return item.grants.move ? { icon: checkIcon, hiddenLabel: 'Move Permitted' } : { icon: minusIcon, hiddenLabel: 'Move not permitted' } } },
+      { id: 'delete', label: 'Delete', icon: (item) => { return item.grants.delete ? { icon: checkIcon, hiddenLabel: 'Delete Permitted' } : { icon: minusIcon, hiddenLabel: 'Delete not permitted' } } },
+      { id: 'undelete', label: 'Restore', icon: (item) => { return item.grants.undelete ? { icon: checkIcon, hiddenLabel: 'Restore Permitted' } : { icon: minusIcon, hiddenLabel: 'Restore not permitted' } } },
       { id: 'editaction', label: 'Edit', actions: [{ icon: pencilIcon, label: 'Edit', onClick: (item) => { dispatch('editrule', { id: item.id, type: 'asset', rule: item }) } }] },
       { id: 'deleteaction', label: 'Delete', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => { dispatch('deleterule', { id: item.id, type: 'asset' }) } }] }
     ]} />

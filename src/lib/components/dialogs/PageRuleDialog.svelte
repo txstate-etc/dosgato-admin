@@ -56,7 +56,8 @@
     if (preload.grants.update) grants.push('update')
     if (preload.grants.move) grants.push('move')
     if (preload.grants.publish || preload.grants.unpublish) grants.push('publish')
-    if (preload.grants.delete || preload.grants.undelete) grants.push('delete')
+    if (preload.grants.delete) grants.push('delete')
+    if (preload.grants.undelete) grants.push('undelete')
     return {
       ...preload,
       path: preload.path === '/' ? undefined : preload.path,
@@ -78,7 +79,7 @@
         publish: state.grants.includes('publish'),
         unpublish: state.grants.includes('publish'),
         delete: state.grants.includes('delete'),
-        undelete: state.grants.includes('delete')
+        undelete: state.grants.includes('undelete')
       }
     } as PageRulePreload
   }
@@ -153,7 +154,8 @@
     { value: 'update' },
     { value: 'move' },
     { value: 'publish' },
-    { value: 'delete' }
+    { value: 'delete' },
+    { value: 'undelete' }
   ]
 </script>
 
