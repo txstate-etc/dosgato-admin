@@ -88,7 +88,7 @@
   }
 
   async function onAddRole (state) {
-    const resp = await api.addRoleToGroup(state.role, $store.group.id)
+    const resp = await api.addRoleToGroups(state.role, [$store.group.id])
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),

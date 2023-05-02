@@ -1,9 +1,7 @@
 <script lang="ts">
-  import { Dialog, FieldAutocomplete, FieldText, FormDialog, Icon, Tabs, Tab, FieldSelect } from '@dosgato/dialog'
+  import { Dialog, FieldText, FormDialog, Icon, Tabs, Tab, FieldMultiselect } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/ph/plus'
-  import checkIcon from '@iconify-icons/ph/check-bold'
-  import minusIcon from '@iconify-icons/ph/minus-bold'
   import deleteIcon from '@iconify-icons/ph/trash'
   import fileCodeLight from '@iconify-icons/ph/file-code-light'
   import copySimpleLight from '@iconify-icons/ph/copy-simple-light'
@@ -15,7 +13,7 @@
   import accountGroup from '@iconify-icons/ph/users-three-light'
   import { unique } from 'txstate-utils'
   import { base } from '$app/paths'
-  import { api, DetailPanel, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog, BackButton, DetailPanelSection, Accordion, DetailPageContent, DetailList, type DetailPanelButton } from '$lib'
+  import { api, DetailPanel, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog, BackButton, DetailPanelSection, Accordion, DetailPageContent, DetailList, type DetailPanelButton, type UserListUser, type GroupListGroup } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
@@ -26,8 +24,8 @@
   import TemplateRuleTable from './TemplateRuleTable.svelte'
   import SiteRuleTable from './SiteRuleTable.svelte'
 
-  export let data: { siteOptions: { value: string, label: string }[], userOptions: { value: string, label: string }[] }
-  $: ({ siteOptions, userOptions } = data)
+  export let data: { siteOptions: { value: string, label: string }[], users: UserListUser[], groups: GroupListGroup[] }
+  $: ({ siteOptions, users, groups } = data)
 
   let modal: 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' | 'assignrole' |
     'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | 'assigntogroup' |
@@ -54,6 +52,28 @@
     return relevantGroups.map(g => g.name).join(', ')
   }
 
+  async function searchUsers (term: string) {
+    return users.filter(u => {
+      return u.name.includes(term) || u.id.includes(term)
+    }).map(u => ({ label: u.name, value: u.id }))
+  }
+
+  async function lookupUserByValue (val: string) {
+    const user = users.find(u => u.id === val)
+    if (user) return { label: `${user.name} (${user.id})`, value: user.id }
+  }
+
+  async function searchGroups (term: string) {
+    return groups.filter(g => {
+      return g.name.includes(term)
+    }).map(g => ({ label: g.name, value: g.id }))
+  }
+
+  async function lookupGroupByValue (val: string) {
+    const group = groups.find(g => g.id === val)
+    if (group) return { label: group.name, value: group.id }
+  }
+
   async function validateBasic (state) {
     const resp = await api.editRole($store.role.id, state.name, true)
     return resp.messages.map(m => ({ ...m, path: m.arg }))
@@ -72,15 +92,13 @@
     }
   }
 
-  function filterUsers () {
-    const alreadyAssigned = $store.role.directUsers.map(u => u.id)
-    return userOptions.filter(u => {
-      return !alreadyAssigned.includes(u.value)
-    })
+  async function onAssignRoleToUser (state) {
+    const resp = await api.assignRoleToUsers($store.role.id, state.userId)
+    return { ...resp, data: state }
   }
 
-  async function onAssignRole (state) {
-    const resp = await api.addRolesToUser([$store.role.id], state.userId)
+  async function onAssignRoleToGroup (state) {
+    const resp = await api.addRoleToGroups($store.role.id, state.groupId)
     return { ...resp, data: state }
   }
 
@@ -291,21 +309,23 @@
   </Dialog>
 {:else if modal === 'assigntouser'}
   <FormDialog
-    submit={onAssignRole}
+    submit={onAssignRoleToUser}
     name='assigntouser'
-    title='Assign Role to User'
+    title='Assign Role to Users'
     on:escape={() => { modal = undefined }}
-    on:saved={onSaved}>
-    <FieldAutocomplete path='userId' label='User' choices={filterUsers()}/>
+    on:saved={onSaved}
+    preload={{ userId: $store.role.directUsers.map(u => u.id) }}>
+    <FieldMultiselect path="userId" label=Users getOptions={searchUsers} lookupByValue={lookupUserByValue}/>
   </FormDialog>
 {:else if modal === 'assigntogroup'}
-  <!-- <FormDialog
+  <FormDialog
     title="Assign Role to Group"
     on:escape={() => { modal = undefined }}
     on:saved={onSaved}
-    submit={onAssignRoleToGroup}>
-    <FieldAutocomplete path='groupId' label='Group' choices={filterUsers()}/>
-  </FormDialog> -->
+    submit={onAssignRoleToGroup}
+    preload={{ groupId: $store.role.directGroups.map(g => g.id) }}>
+    <FieldMultiselect path='groupId' label='Groups' getOptions={searchGroups} lookupByValue={lookupGroupByValue}/>
+  </FormDialog>
 {:else if modal === 'unassignfromuser'}
   <Dialog
   title={'Remove Role from User'}
@@ -352,7 +372,7 @@
     siteChoices={siteOptions}
     on:saved={onSaved}
     on:escape={() => { modal = undefined }}
-    preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id } : {} }/>
+    preload={$store.editing ? { ...$store.editing.data } : {} }/>
 {:else if modal === 'adddatarule'}
   <DataRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'editdatarule'}

@@ -168,6 +168,14 @@ export const DELETE_ROLE = `
   }
 `
 
+export const ASSIGN_ROLE_TO_USERS = `
+  mutation assignRoleToUsers ($roleId: ID!, $userIds: [ID!]!) {
+    assignRoleToUsers (roleId: $roleId, userIds: $userIds) {
+      ${mutationResponse}
+    }
+  }
+`
+
 export const ADD_ASSET_RULE = `
   mutation createAssetRule ($args: CreateAssetRuleInput!, $validateOnly: Boolean) {
     createAssetRule (args: $args, validateOnly: $validateOnly) {

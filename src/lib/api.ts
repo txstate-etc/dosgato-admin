@@ -28,7 +28,7 @@ import {
   ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
   GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
-  GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUP, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
+  GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUPS, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
   PUBLISH_DELETION, UNDELETE_PAGES, SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES,
   PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES,
   type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS, apiPageToChooserPage, type ChooserPageByLink, type ChooserAssetByLink,
@@ -38,7 +38,7 @@ import {
   CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
-  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS
+  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -413,6 +413,11 @@ class API {
     return removeRoleFromUser
   }
 
+  async assignRoleToUsers (roleId: string, userIds: string[]) {
+    const { assignRoleToUsers } = await this.query<{ assignRoleToUsers: MutationResponse }>(ASSIGN_ROLE_TO_USERS, { roleId, userIds })
+    return assignRoleToUsers
+  }
+
   async addUserToGroups (userId: string, groupIds: string[]) {
     const { addUserToGroups } = await this.query<{ addUserToGroups: MutationResponse }>(ADD_USER_TO_GROUPS, { groupIds, userId })
     return addUserToGroups
@@ -433,9 +438,9 @@ class API {
     return removeUserFromGroups
   }
 
-  async addRoleToGroup (roleId: string, groupId: string) {
-    const { addRoleToGroup } = await this.query<{ addRoleToGroup: MutationResponse }>(ADD_ROLE_TO_GROUP, { roleId, groupId })
-    return addRoleToGroup
+  async addRoleToGroups (roleId: string, groupIds: string[]) {
+    const { addRoleToGroups } = await this.query<{ addRoleToGroups: MutationResponse }>(ADD_ROLE_TO_GROUPS, { roleId, groupIds })
+    return addRoleToGroups
   }
 
   async removeRoleFromGroup (roleId: string, groupId: string) {

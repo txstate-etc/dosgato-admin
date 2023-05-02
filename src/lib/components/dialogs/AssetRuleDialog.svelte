@@ -1,12 +1,13 @@
 <script lang="ts">
-  import { FieldSelect, FieldText, FieldAutocomplete, FieldCheckbox, FormDialog } from '@dosgato/dialog'
+  import { FieldSelect, FieldText, FieldAutocomplete, FieldCheckbox, FormDialog, FieldChoices } from '@dosgato/dialog'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { api } from '$lib'
   import { messageForDialog } from '$lib/helpers'
+  import { pick } from 'txstate-utils'
   export let roleId: string
   export let siteChoices: PopupMenuItem[]
-  export let preload: AssetRuleDialogState|undefined = undefined
+  export let preload: AssetRulePreload|undefined = undefined
   export let ruleId: string|undefined = undefined
 
   const modeChoices: PopupMenuItem[] = [
@@ -27,6 +28,15 @@
   interface AssetRuleDialogState {
     siteId?: string
     path?: string
+    pagetreeType?: string
+    mode?: string
+    grants: string[]
+  }
+
+  interface AssetRulePreload {
+    siteId?: string
+    pagetreeType?: string
+    path?: string
     mode?: string
     grants : {
       create: boolean
@@ -38,16 +48,35 @@
   }
 
   function convertState (state: AssetRuleDialogState) {
+    const { siteId, pagetreeType, mode, path } = pick(state, 'siteId', 'pagetreeType', 'path', 'mode')
     return {
-      ...state,
+      siteId,
+      pagetreeType,
+      mode,
+      path,
       grants: {
-        create: state.grants.create,
-        update: state.grants.update,
-        move: state.grants.move,
-        delete: state.grants.delete,
-        undelete: state.grants.delete
+        create: state.grants.includes('create'),
+        update: state.grants.includes('update'),
+        move: state.grants.includes('move'),
+        delete: state.grants.includes('delete'),
+        undelete: state.grants.includes('undelete')
       }
-    }
+    } as AssetRulePreload
+  }
+
+  function convertPreload (preload: AssetRulePreload | undefined) {
+    if (!preload) return { grants: [] }
+    const grants: string[] = []
+    if (preload.grants.create) grants.push('create')
+    if (preload.grants.update) grants.push('update')
+    if (preload.grants.move) grants.push('move')
+    if (preload.grants.delete) grants.push('delete')
+    if (preload.grants.undelete) grants.push('undelete')
+    return {
+      ...preload,
+      path: preload.path === '/' ? undefined : preload.path,
+      grants
+    } as AssetRuleDialogState
   }
 
   async function onAddAssetRule (state: AssetRuleDialogState) {
@@ -56,12 +85,13 @@
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
       data: resp.success
-        ? {
-            siteId: resp.assetRule.site?.id,
-            path: resp.assetRule.path,
-            mode: resp.assetRule.mode,
-            grants: resp.assetRule.grants
-          }
+        ? convertPreload({
+          siteId: resp.assetRule.site?.id,
+          pagetreeType: resp.assetRule.pagetreeType,
+          path: resp.assetRule.path,
+          mode: resp.assetRule.mode,
+          grants: resp.assetRule.grants
+        })
         : state
     }
   }
@@ -82,12 +112,13 @@
       success: resp.success,
       messages: messageForDialog(resp.messages, 'args'),
       data: resp.success
-        ? {
-            siteId: resp.assetRule.site?.id,
-            path: resp.assetRule.path,
-            mode: resp.assetRule.mode,
-            grants: resp.assetRule.grants
-          }
+        ? convertPreload({
+          siteId: resp.assetRule.site?.id,
+          pagetreeType: resp.assetRule.pagetreeType,
+          path: resp.assetRule.path,
+          mode: resp.assetRule.mode,
+          grants: resp.assetRule.grants
+        })
         : undefined
     }
   }
@@ -102,16 +133,18 @@
     return messageForDialog(resp.messages, 'args')
   }
 
+const choices = [
+    { value: 'create' },
+    { value: 'update' },
+    { value: 'move' },
+    { value: 'delete' },
+    { value: 'undelete' }
+  ]
 </script>
-<FormDialog submit={ruleId ? onEditAssetRule : onAddAssetRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:escape on:saved let:data>
+<FormDialog submit={ruleId ? onEditAssetRule : onAddAssetRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} preload={convertPreload(preload)} on:escape on:saved let:data>
   <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
   <FieldText path='path' label='Path' conditional={!!data?.siteId} related helptext="If the editor should be limited to a sub-section of the site, enter that path here. Otherwise leave blank."/>
   <FieldSelect path='mode' label='Path Mode' conditional={!!data?.siteId && !!data.path && data.path?.startsWith('/') && data.path !== '/'} related choices={modeChoices} helptext="If you enter a path, choose whether rule should affect child pages."/>
   <FieldSelect path='pagetreeType' label='Pagetree Type' placeholder='Any pagetree' choices={pageTreeTypes} />
-  <SubForm path='grants'>
-    <FieldCheckbox path='create' boxLabel='Create' defaultValue={false}/>
-    <FieldCheckbox path='update' boxLabel='Update' defaultValue={false}/>
-    <FieldCheckbox path='move' boxLabel='Move'  defaultValue={false}/>
-    <FieldCheckbox path='delete' boxLabel='Delete'  defaultValue={false}/>
-  </SubForm>
+  <FieldChoices path='grants' {choices} leftToRight />
 </FormDialog>

@@ -14,6 +14,7 @@ export const assetRuleDetails = `
     name
   }
   type
+  pagetreeType
   grants {
     create
     delete
@@ -40,6 +41,7 @@ export interface AssetRule {
     id: string
     name: string
   }
+  pagetreeType: string
   type: string // TODO: use enum here?
   grants: {
     create: boolean

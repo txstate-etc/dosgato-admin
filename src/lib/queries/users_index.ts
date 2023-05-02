@@ -278,9 +278,9 @@ export const REMOVE_ROLE_FROM_USER = `
   }
 `
 
-export const ADD_ROLE_TO_GROUP = `
-  mutation addRoleToGroup ($roleId: ID!, $groupId: ID!) {
-    addRoleToGroup (roleId: $roleId, groupId: $groupId) {
+export const ADD_ROLE_TO_GROUPS = `
+  mutation addRoleToGroups ($roleId: ID!, $groupIds: [ID!]!) {
+    addRoleToGroups (roleId: $roleId, groupIds: $groupIds) {
       ${mutationResponse}
     }
   }

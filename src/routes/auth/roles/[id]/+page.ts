@@ -1,16 +1,16 @@
 import { error, type Load } from '@sveltejs/kit'
-import { api, RoleDetailStore, type SiteListSite, type UserListUser } from '$lib'
+import { api, RoleDetailStore, type SiteListSite } from '$lib'
 
 export const _store = new RoleDetailStore(api.getRoleById.bind(api))
 
 export const load: Load<{ id: string }> = async ({ params }) => {
   await _store.refresh(params.id)
   if (!_store.roleFetched()) throw error(404)
-  const [sites, users] = await Promise.all([
+  const [sites, users, groups] = await Promise.all([
     api.getSiteList(),
-    api.getUserList({ enabled: true })
+    api.getUserList({ enabled: true }),
+    api.getAllGroups()
   ])
   const siteOptions = sites.map((s: SiteListSite) => ({ value: s.id, label: s.name }))
-  const userOptions = users.map((u: UserListUser) => ({ value: u.id, label: `${u.firstname} ${u.lastname} (${u.id})` }))
-  return { siteOptions, userOptions }
+  return { siteOptions, users, groups }
 }
