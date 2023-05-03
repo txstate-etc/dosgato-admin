@@ -138,6 +138,7 @@ class API {
 
   async query <ReturnType = any> (query: string, variables?: any, querySignature?: string): Promise<ReturnType> {
     await this.readyPromise
+    let toasted = false
     try {
       const response = await this.fetch(environmentConfig.apiBase + '/graphql', {
         method: 'POST',
@@ -961,8 +962,14 @@ class API {
   }
 
   async getPageVersions (pageId: string): Promise<HistoryVersion[]> {
-    const { pages } = await this.query<{ pages: [{ versions: VersionDetails[] }] }>(GET_PAGE_VERSIONS, { pageId })
-    return pages[0]?.versions.map(v => ({ ...v, date: DateTime.fromISO(v.date), markedAt: v.markedAt ? DateTime.fromISO(v.markedAt) : undefined })) ?? []
+    const { pages } = await this.query<{ pages: [{ version: VersionDetails, versions: VersionDetails[] }] }>(GET_PAGE_VERSIONS, { pageId })
+    const page = pages[0]
+    if (!page) return []
+    return [page.version, ...page.versions].map(v => ({ ...v, date: DateTime.fromISO(v.date), markedAt: v.markedAt ? DateTime.fromISO(v.markedAt) : undefined }))
+  }
+
+  async restorePageVersion (pageId: string, version: number) {
+    // TODO: unimplemented
   }
 
   async markVersion (dataId: string, version: number) {

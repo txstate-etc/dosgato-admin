@@ -3,6 +3,7 @@ import { derivedStore, Store } from '@txstate-mws/svelte-store'
 import { get, groupby, isBlank, randomid, set, sortby } from 'txstate-utils'
 import { api, type PageEditorPage, templateRegistry, toast } from '$lib'
 import type { Feedback } from '@txstate-mws/svelte-forms'
+import type { DateTime } from 'luxon'
 
 export interface IPageEditorStore {
   editors: Record<string, EditorState | undefined>
@@ -11,6 +12,12 @@ export interface IPageEditorStore {
   clipboardPath?: string
   clipboardData?: ComponentData
   clipboardLabel?: string
+}
+
+export interface PageEditorVersionPreview {
+  version: number
+  date: DateTime
+  modifiedBy: string
 }
 
 export interface EditorState {
@@ -25,8 +32,8 @@ export interface EditorState {
   pasteAllowed?: boolean
   previewing?: {
     mode?: 'desktop' | 'mobile'
-    version?: number
-    fromVersion?: number
+    version: PageEditorVersionPreview
+    fromVersion?: PageEditorVersionPreview
   }
   editing?: {
     path: string
@@ -275,16 +282,22 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.updateEditorState(es => ({ ...es, state }))
   }
 
-  compareVersions (from: number, to?: number) {
+  compareVersions (from: PageEditorVersionPreview, to: PageEditorVersionPreview) {
     this.updateEditorState(es => ({ ...es, previewing: { version: to, fromVersion: from } }))
   }
 
-  previewVersion (version: number) {
+  previewVersion (version: PageEditorVersionPreview) {
     this.updateEditorState(es => ({ ...es, previewing: { version } }))
   }
 
   setPreviewMode (mode: 'desktop' | 'mobile') {
-    this.updateEditorState(es => ({ ...es, previewing: { ...es.previewing, mode } }))
+    this.updateEditorState(es => ({ ...es, previewing: es.previewing ? { ...es.previewing, mode } : undefined }))
+  }
+
+  async restoreVersion (version: number) {
+    const editorState = this.value.editors[this.value.active!]
+    if (!editorState?.page) return
+    await api.restorePageVersion(editorState.page.id, version)
   }
 
   cancelPreview () {

@@ -50,6 +50,10 @@ version {
 }
 versions (filter: {tags:["published"]}) {
   version
+  date
+  user {
+    name
+  }
 }
 `
 
@@ -76,12 +80,15 @@ export interface PageEditorPage extends DialogPageProp {
     update: boolean
   }
   version: VersionDetails
-  versions: { version: number }[]
+  versions: { version: number, date: string, user: { name: string } }[]
 }
 
 export const GET_PAGE_VERSIONS = `
   query getPageVersions ($pageId: ID!) {
     pages (filter: { ids: [$pageId] }) {
+      version {
+        ${VERSION_DETAILS}
+      }
       versions {
         ${VERSION_DETAILS}
       }

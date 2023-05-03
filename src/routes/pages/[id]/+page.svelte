@@ -1,7 +1,12 @@
+<script lang="ts" context="module">
+  function formatDateTime (dt: DateTime) {
+    return dt.toLocaleString(DateTime.DATETIME_SHORT)
+  }
+</script>
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { Dialog, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
+  import { Button, Dialog, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
   import type { UITemplate } from '@dosgato/templating'
   import clipboardText from '@iconify-icons/ph/clipboard-text'
   import copyIcon from '@iconify-icons/ph/copy'
@@ -12,11 +17,11 @@
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import scissors from '@iconify-icons/ph/scissors'
   import trash from '@iconify-icons/ph/trash'
-  import { printIf, titleCase } from 'txstate-utils'
-  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, dateStamp, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api } from '$lib'
-  import { statusIcon } from './helpers'
-  import VersionHistory from '$lib/components/VersionHistory.svelte'
+  import { OffsetStore, ResizeStore, offset, resize } from '@txstate-mws/svelte-components'
   import { DateTime } from 'luxon'
+  import { printIf, titleCase } from 'txstate-utils'
+  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api, VersionHistory } from '$lib'
+  import { statusIcon } from './helpers'
 
   export let data: { page: PageEditorPage, pagetemplate: EnhancedUITemplate }
   $: ({ page, pagetemplate } = data)
@@ -44,9 +49,9 @@
       const previewGroup: ActionPanelGroup = {
         id: 'previewgroup',
         actions: [
-          { label: 'Preview', icon: eye, onClick: () => pageEditorStore.previewVersion(page.version.version) },
+          { label: 'Preview', icon: eye, onClick: () => pageEditorStore.previewVersion({ version: page.version.version, date: DateTime.fromISO(page.version.date), modifiedBy: page.version.user.name }) },
           { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${$editorStore.page.path}.html`), '_blank') } },
-          { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions(page.versions[0]!.version), disabled: !page.published || !page.hasUnpublishedChanges }
+          { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions({ version: page.versions[0]!.version, date: DateTime.fromISO(page.versions[0]!.date), modifiedBy: page.versions[0]!.user.name }, { version: page.version.version, date: DateTime.fromISO(page.version.date), modifiedBy: page.version.user.name }), disabled: !page.published || !page.hasUnpublishedChanges }
         ]
       }
       return [editGroup, previewGroup]
@@ -169,12 +174,6 @@
     return resp!
   }
 
-  async function onSelectVersionSubmit (data: any) {
-    // TODO: it needs to open the selected version of the page.
-    // The user should then have the option to restore that version
-    return { success: true, messages: [], data }
-  }
-
   function onUserButtonClick (button: NonNullable<UITemplate['pageBarButtons']>[0]) {
     return () => {
       iframe.contentWindow?.postMessage({ action: 'pagebar', label: button.label }, '*')
@@ -202,37 +201,60 @@
   $: iframesrc = editable && !$editorStore.previewing
     ? `${environmentConfig.renderBase}/.edit${$pageStore.path}?token=${api.token}`
     : (
-        $editorStore.previewing?.fromVersion
+        $editorStore.previewing?.fromVersion?.version
           ? `${environmentConfig.renderBase}/.compare/${$editorStore.previewing.fromVersion}/${$editorStore.previewing.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
           : `${environmentConfig.renderBase}/.preview/${$editorStore.previewing?.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
       )
+  let previewDesc = ''
+  $: {
+    previewDesc = $editorStore.previewing?.version.version
+      ? $editorStore.previewing?.version.version === $editorStore.page.version.version
+        ? 'Latest'
+        : $editorStore.previewing?.version.version === $editorStore.page.versions[0]?.version
+          ? 'Published'
+          : formatDateTime($editorStore.previewing?.version.date)
+      : ''
+  }
+  const offsetStore = new OffsetStore()
+  const footerSize = new ResizeStore()
+  const headerSize = new ResizeStore()
 </script>
 
-<ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath, $editorStore.previewing, page)} on:returnfocus={onReturnFocus}>
-  <div class="page-bar"><span>{$editorStore.page.path}</span>
-    {#if $editorStore.previewing}
-      <select value={$editorStore.previewing.mode ?? 'desktop'} on:change={function () { console.log(this.value); pageEditorStore.setPreviewMode(this.value) }}>
-        <option value="desktop">Desktop</option>
-        <option value="mobile">Mobile</option>
-      </select>
-    {:else}
-      {#each pagetemplate.pageBarButtons ?? [] as button}
-        {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
-          <button class="user-button" on:click={onUserButtonClick(button)}>
-            <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
-            {#if !button.hideLabel}{button.label}{/if}
-          </button>
-        {/if}
-      {/each}
-    {/if}
-  </div>
-  <!-- this iframe should NEVER get allow-same-origin in its sandbox, it would give editors the ability
-  to steal credentials from other editors!
-  UPDATE: I'm  going to go ahead and add allow-same-origin for now and we'll explore putting the render server on
-  a separate subdomain or port to prevent credential exposure. -->
-  <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.previewing?.mode === 'mobile'}></iframe>
-  <div slot="bottom" class="status {status}"><Icon width="1.1em" inline icon={statusIcon[status]}/><span>{titleCase(status)}</span></div>
-</ActionPanel>
+{#if previewDesc && previewDesc !== 'Latest'}
+  <section class="preview" use:offset={{ store: offsetStore }}>
+    <header use:resize={{ store: headerSize }}>
+      <div>Version: {previewDesc}</div>
+      <div>Modified By: {$editorStore.previewing?.version.modifiedBy}</div>
+    </header>
+    <iframe style:height="calc(100dvh - {$offsetStore.top}px - {$footerSize.clientHeight}px - {$headerSize.clientHeight}px - 2em)" src={iframesrc} title="page preview for restoring"></iframe>
+    <footer use:resize={{ store: footerSize }}>
+      <Button type="button" cancel on:click={() => { pageEditorStore.cancelPreview() }}>Cancel</Button>
+      <Button type="button" on:click={() => { pageEditorStore.cancelPreview() }}>Restore this version</Button>
+    </footer>
+  </section>
+{:else}
+  <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath, $editorStore.previewing, page)} on:returnfocus={onReturnFocus}>
+    <div class="page-bar"><span>{$editorStore.page.path}</span>
+      {#if $editorStore.previewing}
+        <select value={$editorStore.previewing.mode ?? 'desktop'} on:change={function () { pageEditorStore.setPreviewMode(this.value) }}>
+          <option value="desktop">Desktop</option>
+          <option value="mobile">Mobile</option>
+        </select>
+      {:else}
+        {#each pagetemplate.pageBarButtons ?? [] as button}
+          {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
+            <button class="user-button" on:click={onUserButtonClick(button)}>
+              <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
+              {#if !button.hideLabel}{button.label}{/if}
+            </button>
+          {/if}
+        {/each}
+      {/if}
+    </div>
+    <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.previewing?.mode === 'mobile'}></iframe>
+    <div slot="bottom" class="status {status}"><Icon width="1.1em" inline icon={statusIcon[status]}/><span>{titleCase(status)}</span></div>
+  </ActionPanel>
+{/if}
 
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
@@ -292,7 +314,7 @@
   </FormDialog>
 {:else if $editorStore.modal === 'versions'}
   {@const page = $editorStore.page}
-  <VersionHistory dataId={page.id} previewUrl={() => ''} compareUrl={() => ''} history={api.getPageVersions(page.id)} on:escape={cancelModal} />
+  <VersionHistory dataId={page.id} preview={v => pageEditorStore.previewVersion(v)} compare={(v1, v2) => pageEditorStore.compareVersions(v1, v2)} history={api.getPageVersions(page.id)} on:escape={cancelModal} />
 {/if}
 
 
@@ -327,8 +349,12 @@
     display: flex;
     align-items: center;
   }
-  .page-bar span {
+  .page-bar > span {
     margin-right: auto;
+  }
+  .page-bar-version {
+    font-size: 0.9em;
+    margin-left: 0.5em;
   }
   .status {
     font-size: 0.9em;
@@ -344,5 +370,27 @@
   }
   .status.unpublished {
     color: var(--dosgato-red, #9a3332);
+  }
+
+  .preview {
+    width: 100%;
+    max-width: 80em;
+    margin: 0 auto;
+  }
+  .preview header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1em;
+    padding: 1em;
+  }
+  .preview iframe {
+    border: 1px solid #666666;
+  }
+  .preview footer {
+    display: flex;
+    justify-content: center;
+  }
+  .preview footer :global(button) {
+    margin: 2em;
   }
 </style>

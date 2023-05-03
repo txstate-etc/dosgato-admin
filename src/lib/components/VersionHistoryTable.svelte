@@ -17,7 +17,7 @@
   import bookmarkSimple from '@iconify-icons/ph/bookmark-simple'
   import bookmarkSimpleFill from '@iconify-icons/ph/bookmark-simple-fill'
   import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
-  import { randomid, titleCase } from 'txstate-utils'
+  import { isNotBlank, randomid, titleCase } from 'txstate-utils'
   import type { HistoryVersion } from './VersionHistory.svelte'
   import { api } from '$lib/api'
   import { createEventDispatcher } from 'svelte'
@@ -25,14 +25,28 @@
   const dispatch = createEventDispatcher()
 
   export let dataId: string
+  export let maxVersion: number
   export let title: string
   export let versions: HistoryVersion[]
   export let selected: Set<number>
 
   function onSelect (version: number) {
     return (e: CustomEvent) => {
-      if ((e.currentTarget as HTMLInputElement).checked) selected.add(version)
-      else selected.delete(version)
+      if ((e.currentTarget as HTMLInputElement).checked) {
+        if (selected.size === 2) {
+          const maxSelected = Math.max(...selected)
+          if (version > maxSelected) selected.delete(maxSelected)
+          else {
+            const minSelected = Math.min(...selected)
+            if (version < minSelected) selected.delete(minSelected)
+            else {
+              if (Math.abs(minSelected - version) > Math.abs(maxSelected - version)) selected.delete(maxSelected)
+              else selected.delete(minSelected)
+            }
+          }
+        }
+        selected.add(version)
+      } else selected.delete(version)
       selected = selected
     }
   }
@@ -60,11 +74,12 @@
       <th class="mark">Mark</th>
     </tr>
     {#each versions as version (version.version)}
+    {@const restored = /restored/i.test(version.comment)}
     <tr>
       <td class="checkbox"><Checkbox name="version-compare-{version.version}" value={selected.has(version.version)} onChange={onSelect(version.version)} id={checkboxid} /><label for={checkboxid}><ScreenReaderOnly>Select for Preview/Compare</ScreenReaderOnly></label></td>
       <td class="date">{formatDate(version.date)}</td>
       <td class="time">{formatTime(version.date)}</td>
-      <td class="tags">{['Latest', ...version.tags.map(titleCase)].join(', ')}</td>
+      <td class="tags">{[version.version === maxVersion ? 'Latest' : undefined, ...version.tags.map(titleCase), restored ? 'Restored' : undefined].filter(isNotBlank).join(', ')}</td>
       <td class="modified">{version.user.name}</td>
       <td class="mark">
         <button type="button" class="reset" on:click={onMark(version.version)}>
