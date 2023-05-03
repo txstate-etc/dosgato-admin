@@ -163,11 +163,12 @@ class API {
       const gqlresponse = await response.json()
       if (gqlresponse.errors?.length) {
         toast(gqlresponse.errors[0].message)
+        toasted = true
         throw new Error(JSON.stringify(gqlresponse.errors))
       }
       return gqlresponse.data
     } catch (e: any) {
-      toast(e.message)
+      if (!toasted) toast(e.message)
       throw e
     }
   }
