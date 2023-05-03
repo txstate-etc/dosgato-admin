@@ -150,12 +150,12 @@
   }
 
   const choices = [
-    { value: 'create' },
-    { value: 'update' },
-    { value: 'move' },
-    { value: 'publish' },
-    { value: 'delete' },
-    { value: 'undelete' }
+    { value: 'create', label: 'Create' },
+    { value: 'update', label: 'Update' },
+    { value: 'move', label: 'Move' },
+    { value: 'publish', label: 'Publish/Unpublish' },
+    { value: 'delete', label: 'Delete' },
+    { value: 'undelete', label: 'Restore' }
   ]
 </script>
 

@@ -1,19 +1,18 @@
 <script lang='ts'>
   import { api, messageForDialog } from '$lib'
-  import { FieldAutocomplete, FieldCheckbox, FormDialog } from '@dosgato/dialog'
+  import { FieldAutocomplete, FieldChoices, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
-  import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
-  import { isNull } from 'txstate-utils'
+  import { MessageType } from '@txstate-mws/svelte-forms'
 
   export let roleId: string
   export let siteChoices: PopupMenuItem[]
-  export let preload: SiteRuleDialogState|undefined = undefined
+  export let preload: SiteRulePreload | undefined = undefined
   export let ruleId: string|undefined = undefined
 
   const name = ruleId ? 'editsiterule' : 'addsiterule'
   const title = ruleId ? 'Edit Site Rule' : 'Add Site Rule'
 
-  interface SiteRuleDialogState {
+  interface SiteRulePreload {
     siteId?: string
     grants : {
       launch: boolean
@@ -24,47 +23,73 @@
     }
   }
 
+  interface SiteRuleDialogState {
+    siteId?: string
+    grants: string[]
+  }
+
+  function preloadToState (preload: SiteRulePreload | undefined) {
+    if (!preload) return { grants: [] }
+    const grants: string[] = []
+    if (preload.grants.launch) grants.push('launch')
+    if (preload.grants.rename) grants.push('rename')
+    if (preload.grants.governance) grants.push('governance')
+    if (preload.grants.manageState) grants.push('manageState')
+    if (preload.grants.delete) grants.push('delete')
+    return {
+      ...preload,
+      grants
+    } as SiteRuleDialogState
+  }
+
+  function stateToPreload (state: SiteRuleDialogState) {
+    const siteId = state.siteId
+    return {
+      siteId,
+      grants: {
+        launch: state.grants.includes('launch'),
+        rename: state.grants.includes('rename'),
+        governance: state.grants.includes('governance'),
+        manageState: state.grants.includes('manageState'),
+        delete: state.grants.includes('delete')
+      }
+    } as SiteRulePreload
+  }
+
   async function onAddSiteRule (state: SiteRuleDialogState) {
-    const resp = await api.addSiteRule({ ...state, roleId })
+    const resp = await api.addSiteRule({ ...stateToPreload(state), roleId })
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
       data: resp.success
-        ? {
-            siteId: resp.siteRule.site?.id,
-            grants: resp.siteRule.grants
-          }
+        ? preloadToState({
+          siteId: resp.siteRule.site?.id,
+          grants: resp.siteRule.grants
+        })
         : state
     }
   }
 
   async function validateAdd (state: SiteRuleDialogState) {
-    const resp = await api.addSiteRule({ ...state, roleId }, true)
+    const resp = await api.addSiteRule({ ...stateToPreload(state), roleId }, true)
     return messageForDialog(resp.messages, '')
   }
 
   async function onEditSiteRule (state: SiteRuleDialogState) {
     if (!ruleId) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Something went wrong' }], data: state }
     const args = {
-      ruleId,
-      siteId: state.siteId,
-      grants: {
-        launch: state.grants.launch,
-        rename: state.grants.rename,
-        governance: state.grants.governance,
-        manageState: state.grants.manageState,
-        delete: state.grants.delete
-      }
+      ...stateToPreload(state),
+      ruleId
     }
     const resp = await api.editSiteRule(args)
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, 'args'),
       data: resp.success
-        ? {
-            siteId: resp.siteRule.site?.id,
-            grants: resp.siteRule.grants
-          }
+        ? preloadToState({
+          siteId: resp.siteRule.site?.id,
+          grants: resp.siteRule.grants
+        })
         : undefined
     }
   }
@@ -72,27 +97,23 @@
   async function validateEdit (state: SiteRuleDialogState) {
     if (!ruleId) return [{ type: MessageType.ERROR, message: 'Something went wrong' }]
     const args = {
-      ruleId,
-      grants: {
-        launch: state.grants.launch,
-        rename: state.grants.rename,
-        governance: state.grants.governance,
-        manageState: state.grants.manageState,
-        delete: state.grants.delete
-      }
+      ...stateToPreload(state),
+      ruleId
     }
     const resp = await api.editSiteRule(args, true)
     return messageForDialog(resp.messages, 'args')
   }
+
+  const choices = [
+    { value: 'launch', label: 'Launch' },
+    { value: 'rename', label: 'Rename' },
+    { value: 'governance', label: 'Governance' },
+    { value: 'manageState', label: 'Manage State' },
+    { value: 'delete', label: 'Delete' }
+  ]
 </script>
 
-<FormDialog submit={ruleId ? onEditSiteRule : onAddSiteRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} {preload} on:escape on:saved>
+<FormDialog submit={ruleId ? onEditSiteRule : onAddSiteRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} preload={preloadToState(preload)} on:escape on:saved>
   <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
-  <SubForm path='grants'>
-    <FieldCheckbox path='launch' boxLabel='Launch' defaultValue={false}/>
-    <FieldCheckbox path='rename' boxLabel='Rename' defaultValue={false}/>
-    <FieldCheckbox path='governance' boxLabel='Governance' defaultValue={false}/>
-    <FieldCheckbox path='manageState' boxLabel='Manage State' defaultValue={false}/>
-    <FieldCheckbox path='delete' boxLabel='Delete' defaultValue={false}/>
-  </SubForm>
+  <FieldChoices path='grants' {choices} leftToRight />
 </FormDialog>
