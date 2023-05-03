@@ -31,7 +31,7 @@
     'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | 'assigntogroup' |
     'addsiterule' | 'editsiterule' | 'addtemplaterule' | 'assigntouser' | 'unassignfromuser' | 'addeditorrule' | 'addadminrule' | undefined
 
-  const panelHeaderColor = '#F5917F'
+  const panelHeaderColor = '#C2BCD2'
 
   const editorTabs = [
     { name: 'Page Rules' },
