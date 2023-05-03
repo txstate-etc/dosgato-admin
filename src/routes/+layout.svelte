@@ -18,7 +18,7 @@
   import { uiConfig } from '../local'
   import '../local/tracking.js'
 
-  uiConfig.tracing?.init?.()
+  uiConfig.tracing?.init?.(environmentConfig)
 
   export let data: { errObj: any }
 
