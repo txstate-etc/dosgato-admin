@@ -202,8 +202,8 @@
     ? `${environmentConfig.renderBase}/.edit${$pageStore.path}?token=${api.token}`
     : (
         $editorStore.previewing?.fromVersion?.version
-          ? `${environmentConfig.renderBase}/.compare/${$editorStore.previewing.fromVersion}/${$editorStore.previewing.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
-          : `${environmentConfig.renderBase}/.preview/${$editorStore.previewing?.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
+          ? `${environmentConfig.renderBase}/.compare/${$editorStore.previewing.fromVersion.version}/${$editorStore.previewing.version.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
+          : `${environmentConfig.renderBase}/.preview/${$editorStore.previewing?.version.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
       )
   let previewDesc = ''
   $: {
