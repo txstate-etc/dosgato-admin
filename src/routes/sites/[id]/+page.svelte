@@ -10,7 +10,7 @@
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { csv, keyby, titleCase } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning } from '$lib'
   import { base } from '$app/paths'
   import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
@@ -497,9 +497,8 @@
     <div>Promote this pagetree to primary? The current primary pagetree will be archived.</div>
     {#if !$store.site.url?.enabled}
       <br/>
-      <div>This site is not currently launched. You can promote this page tree, but the site will not
-        be launched until it has a URL and is set to be live.
-      </div>
+      <DialogWarning text="This site is not currently launched. You can promote this page tree, but the site will not
+      be launched until it has a URL and is set to be live." />
     {/if}
   </Dialog>
 {:else if modal === 'archivepagetree'}
