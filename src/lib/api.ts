@@ -38,7 +38,7 @@ import {
   CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
-  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS
+  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGE_AND_DESCENDANTS
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -870,6 +870,11 @@ class API {
   async unpublishPages (pageIds: string[]) {
     const { unpublishPages } = await this.query<{ unpublishPages: MutationResponse }>(UNPUBLISH_PAGES, { pageIds })
     return unpublishPages
+  }
+
+  async getDeletePageCount (pageId: string) {
+    const { pages } = await this.query<{ pages: PageWithDescendants[] }>(GET_PAGE_AND_DESCENDANTS, { pageId })
+    return pages[0]
   }
 
   async deletePages (pageIds: string[]) {

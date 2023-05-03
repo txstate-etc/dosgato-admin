@@ -23,7 +23,7 @@
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState } from '$lib'
+  import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { _store as store, type TypedPageItem } from './+page'
   import { sandboxIcon } from './sandboxicon'
@@ -44,7 +44,7 @@
       actions: []
     }
     createDestroy.actions.push({ label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: onClickAddPage })
-    if (page.deleteState === DeleteState.NOTDELETED) createDestroy.actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'deletepage' } })
+    if (page.deleteState === DeleteState.NOTDELETED) createDestroy.actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { onClickDelete() } })
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) {
       createDestroy.actions.push(
         { label: 'Restore Page', icon: deleteRestore, disabled: !page.permissions.undelete, onClick: () => { modal = 'undeletepage' } },
@@ -192,9 +192,19 @@
     if (resp.success) await store.refresh()
   }
 
+  let pagesToDeleteCount: number | undefined = undefined
+  async function onClickDelete () {
+    // get the number of pages to be deleted
+    const page = await api.getDeletePageCount($store.selectedItems[0].id)
+    console.log(page)
+    pagesToDeleteCount = 1 + page.children.length
+    modal = 'deletepage'
+  }
+
   async function onDeletePage () {
     const resp = await api.deletePages([$store.selectedItems[0].id])
     modal = undefined
+    pagesToDeleteCount = undefined
     if (resp.success) await store.refresh()
   }
 
@@ -329,7 +339,7 @@
     cancelText='Cancel'
     on:continue={onDeletePage}
     on:escape={() => { modal = undefined }}>
-    Delete this page and all its subpages? Deleted pages will no longer be visible on your live site.
+    <DialogWarning text={`You are about to delete ${pagesToDeleteCount} pages. Deleted pages will no longer be visible on your live site.`}/>
   </Dialog>
 {:else if modal === 'publishdelete'}
   <Dialog

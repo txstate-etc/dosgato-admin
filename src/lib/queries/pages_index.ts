@@ -214,3 +214,20 @@ export const GET_TEMPLATES_BY_PAGE = `
     }
   }
 `
+export interface PageWithDescendants {
+  id: string
+  children: {
+    id: string
+  }[]
+}
+
+export const GET_PAGE_AND_DESCENDANTS = `
+  query getPageAndDescendants ($pageId: ID!) {
+    pages (filter: { ids: [$pageId]}) {
+      id
+      children (recursive: true) {
+        id
+      }
+    }
+  }
+`
