@@ -38,7 +38,7 @@ import {
   CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
-  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGE_AND_DESCENDANTS
+  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGE_AND_DESCENDANTS, EDITOR_PAGE_DETAILS
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -968,8 +968,11 @@ class API {
     return [page.version, ...page.versions].map(v => ({ ...v, date: DateTime.fromISO(v.date), markedAt: v.markedAt ? DateTime.fromISO(v.markedAt) : undefined }))
   }
 
-  async restorePageVersion (pageId: string, version: number) {
-    // TODO: unimplemented
+  async restorePage (pageId: string, version: number, validateOnly?: boolean) {
+    const { restorePage } = await this.query<{ restorePage: MutationResponse & { page: PageEditorPage } }>(`
+      mutation restorePage ($pageId: ID!, $version: Int!, $validateOnly: Boolean) { restorePage (pageId: $pageId, restoreVersion: $version, validateOnly: $validateOnly) { success messages { type message arg } page { ${EDITOR_PAGE_DETAILS} } } }
+    `, { pageId, version, validateOnly })
+    return restorePage
   }
 
   async markVersion (dataId: string, version: number) {

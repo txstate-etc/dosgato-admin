@@ -294,10 +294,15 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.updateEditorState(es => ({ ...es, previewing: es.previewing ? { ...es.previewing, mode } : undefined }))
   }
 
-  async restoreVersion (version: number) {
+  async restoreVersion () {
     const editorState = this.value.editors[this.value.active!]
     if (!editorState?.page) return
-    await api.restorePageVersion(editorState.page.id, version)
+    const version = editorState.previewing?.version.version
+    if (version == null) return
+    const resp = await api.restorePage(editorState.page.id, version)
+    if (resp.success) {
+      this.updateEditorState(es => ({ ...es, page: resp.page, previewing: undefined }))
+    }
   }
 
   cancelPreview () {

@@ -7,7 +7,7 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { Button, Dialog, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
-  import type { UITemplate } from '@dosgato/templating'
+  import type { UITemplate, ValidationFeedback } from '@dosgato/templating'
   import clipboardText from '@iconify-icons/ph/clipboard-text'
   import copyIcon from '@iconify-icons/ph/copy'
   import copySimple from '@iconify-icons/ph/copy-simple'
@@ -218,6 +218,18 @@
   const offsetStore = new OffsetStore()
   const footerSize = new ResizeStore()
   const headerSize = new ResizeStore()
+  let restoreFeedback: ValidationFeedback[] = []
+  let lastValidatedRestoreVersion: number | undefined
+  async function reactToPreviewing (..._: any[]) {
+    const saveVersion = $editorStore.previewing?.version.version
+    if (saveVersion == null || lastValidatedRestoreVersion === saveVersion) return
+    const response = await api.restorePage($editorStore.page.id, saveVersion, true)
+    if ($editorStore.previewing?.version.version === saveVersion) {
+      restoreFeedback = response.messages
+      lastValidatedRestoreVersion = saveVersion
+    }
+  }
+  $: reactToPreviewing($editorStore.previewing?.version.version)
 </script>
 
 {#if previewDesc && previewDesc !== 'Latest'}
@@ -228,8 +240,11 @@
     </header>
     <iframe style:height="calc(100dvh - {$offsetStore.top}px - {$footerSize.clientHeight}px - {$headerSize.clientHeight}px - 2em)" src={iframesrc} title="page preview for restoring"></iframe>
     <footer use:resize={{ store: footerSize }}>
+      {#if restoreFeedback.length}
+        <div class="restore-feedback">{#each restoreFeedback as msg}<div>{msg.message}</div>{/each}</div>
+      {/if}
       <Button type="button" cancel on:click={() => { pageEditorStore.cancelPreview() }}>Cancel</Button>
-      <Button type="button" on:click={() => { pageEditorStore.cancelPreview() }}>Restore this version</Button>
+      <Button type="button" on:click={() => { pageEditorStore.restoreVersion() }} disabled={restoreFeedback.filter(f => f.type === 'error').length > 0}>Restore this version</Button>
     </footer>
   </section>
 {:else}
@@ -389,8 +404,15 @@
   .preview footer {
     display: flex;
     justify-content: center;
+    flex-wrap: wrap;
   }
   .preview footer :global(button) {
-    margin: 2em;
+    margin: 0 2em;
+  }
+  .restore-feedback {
+    text-align: center;
+    color: var(--dosgato-red, #9a3332);
+    width: 100%;
+    padding: 1em 0;
   }
 </style>
