@@ -27,6 +27,7 @@
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { _store as store, type TypedPageItem } from './+page'
   import { sandboxIcon } from './sandboxicon'
+  import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
   import { statusIcon } from './[id]/helpers'
   import './index.css'
 
@@ -75,7 +76,8 @@
     } else {
       movement.actions.push(
         { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
-        { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() }
+        { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() },
+        { label: 'Copy w/ Subpages', icon: contentCopy, disabled: !store.copyEligible() || !page.hasChildren, onClick: () => { console.log('copying with subpages') } }
       )
     }
     movement.actions.push(
@@ -89,7 +91,7 @@
 
     publishing.actions.push(
       { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => { modal = 'publishpages' } },
-      { label: 'Publish w/ Subpages', icon: publishIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages' } },
+      { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages' } },
       { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => { modal = 'unpublishpages' } }
     )
 
