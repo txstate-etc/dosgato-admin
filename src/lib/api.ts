@@ -849,8 +849,8 @@ class API {
     return movePages.success
   }
 
-  async copyPages (pageIds: string[], targetId: string, above: boolean) {
-    const { copyPages } = await this.query<{ copyPages: MutationResponse }>(COPY_PAGES, { pageIds, targetId, above })
+  async copyPages (pageIds: string[], targetId: string, above: boolean, recursive: boolean = false) {
+    const { copyPages } = await this.query<{ copyPages: MutationResponse }>(COPY_PAGES, { pageIds, targetId, above, includeChildren: recursive })
     return copyPages.success
   }
 

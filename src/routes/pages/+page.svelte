@@ -77,11 +77,11 @@
       movement.actions.push(
         { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
         { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() },
-        { label: 'Copy w/ Subpages', icon: contentCopy, disabled: !store.copyEligible() || !page.hasChildren, onClick: () => { console.log('copying with subpages') } }
+        { label: 'Copy w/ Subpages', icon: contentCopy, disabled: !store.copyEligible() || !page.hasChildren, onClick: () => store.copy(true) }
       )
     }
     movement.actions.push(
-      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste() } }
+      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste(undefined, $store.copyRecursive) } }
     )
 
     const publishing: ActionPanelGroup = {

@@ -33,8 +33,8 @@ async function fetchChildren (item?: TypedPageItem) {
 async function moveHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
   return await api.movePages(selectedItems.map(itm => itm.id), dropTarget.id, above)
 }
-async function copyHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
-  return await api.copyPages(selectedItems.map(itm => itm.id), dropTarget.id, above)
+async function copyHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean, userWantsRecursive: boolean = false) {
+  return await api.copyPages(selectedItems.map(itm => itm.id), dropTarget.id, above, userWantsRecursive)
 }
 function dragEligible (items: TypedPageItem[], userWantsCopy: boolean) {
   // site roots cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites
