@@ -53,7 +53,7 @@ function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, 
   } else if (selectedItemsInSameSiteAsTarget.length) {
     return 'none' // mixing pages from target site and some other site - weird, how about no
   } else {
-    return 'copy' // if dragging to another site the operation will be forced into a copy
+    return 'none' // we do not want them dragging pages from one site to another
   }
 }
 
