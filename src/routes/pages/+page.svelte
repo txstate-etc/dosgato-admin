@@ -51,7 +51,7 @@
       createDestroy.actions.push(
         { label: 'Restore Page', icon: deleteRestore, disabled: !page.permissions.undelete, onClick: () => { modal = 'undeletepage' } },
         { label: 'Restore incl. Subpages', icon: deleteRestore, disabled: !page.permissions.undelete || !page.hasChildren, onClick: () => { modal = 'undeletewithsubpages' } },
-        { label: 'Finalize Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { modal = 'publishdelete' } }
+        { label: 'Finalize Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { onClickPublishDeletion() } }
       )
     }
 
@@ -199,7 +199,6 @@
   async function onClickDelete () {
     // get the number of pages to be deleted
     const page = await api.getDeletePageCount($store.selectedItems[0].id)
-    console.log(page)
     pagesToDeleteCount = 1 + page.children.length
     modal = 'deletepage'
   }
@@ -211,9 +210,16 @@
     if (resp.success) await store.refresh()
   }
 
+  async function onClickPublishDeletion () {
+    const page = await api.getDeletePageCount($store.selectedItems[0].id)
+    pagesToDeleteCount = 1 + page.children.length
+    modal = 'publishdelete'
+  }
+
   async function onPublishDeletion () {
     const resp = await api.publishDeletion([$store.selectedItems[0].id])
     modal = undefined
+    pagesToDeleteCount = undefined
     if (resp.success) await store.refresh()
   }
 
@@ -351,7 +357,7 @@
     cancelText='Cancel'
     on:continue={onPublishDeletion}
     on:escape={() => { modal = undefined }}>
-    Publish this deletion? The selected pages will no longer appear in your site.
+    <DialogWarning text={`You are about to finalize the deletion of ${pagesToDeleteCount} pages. You will no longer see these pages in your site.`}/>
   </Dialog>
 {:else if modal === 'undeletepage'}
   <Dialog
