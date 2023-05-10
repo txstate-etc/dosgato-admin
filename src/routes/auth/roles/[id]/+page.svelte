@@ -53,8 +53,9 @@
   }
 
   async function searchUsers (term: string) {
+    term = term.toLowerCase()
     return users.filter(u => {
-      return u.name.includes(term) || u.id.includes(term)
+      return u.name.toLowerCase().includes(term) || u.id.includes(term)
     }).map(u => ({ label: u.name, value: u.id }))
   }
 
@@ -64,8 +65,9 @@
   }
 
   async function searchGroups (term: string) {
+    term = term.toLowerCase()
     return groups.filter(g => {
-      return g.name.includes(term)
+      return g.name.toLowerCase().includes(term)
     }).map(g => ({ label: g.name, value: g.id }))
   }
 

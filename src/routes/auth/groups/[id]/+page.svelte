@@ -37,7 +37,8 @@
   }
 
   async function searchUsersForMembers (term: string) {
-    return allUsers.filter(u => !u.disabled && (u.name.includes(term) || u.id.includes(term))).map(u => ({ label: `${u.name} (${u.id})`, value: u.id }))
+    term = term.toLowerCase()
+    return allUsers.filter(u => !u.disabled && (u.name.toLowerCase().includes(term) || u.id.includes(term))).map(u => ({ label: `${u.name} (${u.id})`, value: u.id }))
   }
 
   async function openAddUsersDialog () {
