@@ -301,7 +301,7 @@
               <div class="component-chooser">
                 {#each templates as availableComponent}
                   <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
-                    <Icon icon={availableComponent.preview ?? availableComponent.icon} width="60%" /><br>{availableComponent.name}
+                    <Icon icon={availableComponent.preview ?? availableComponent.icon} width="85%" height="50%" /><br>{availableComponent.name}
                   </button>
                 {/each}
               </div>
