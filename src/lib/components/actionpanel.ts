@@ -7,6 +7,7 @@ export interface ActionPanelAction {
   class?: string
   hiddenLabel?: string
   icon?: IconifyIcon
+  iconWidth?: number
   disabled?: boolean
   onClick: () => void | Promise<void>
 }

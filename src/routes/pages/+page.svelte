@@ -28,6 +28,7 @@
   import { _store as store, type TypedPageItem } from './+page'
   import { sandboxIcon } from './sandboxicon'
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
+  import { copyWithSubpagesIcon } from './copywithsubpagesicon'
   import { statusIcon } from './[id]/helpers'
   import './index.css'
 
@@ -77,7 +78,7 @@
       movement.actions.push(
         { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
         { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() },
-        { label: 'Copy w/ Subpages', icon: contentCopy, disabled: !store.copyEligible() || !page.hasChildren, onClick: () => store.copy(true) }
+        { label: 'Copy w/ Subpages', icon: copyWithSubpagesIcon, disabled: !store.copyEligible() || !page.hasChildren, onClick: () => store.copy(true) }
       )
     }
     movement.actions.push(
@@ -91,7 +92,7 @@
 
     publishing.actions.push(
       { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => { modal = 'publishpages' } },
-      { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages' } },
+      { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, iconWidth: 1, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => { modal = 'publishwithsubpages' }, class: 'pubsubpages' },
       { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => { modal = 'unpublishpages' } }
     )
 
@@ -379,3 +380,9 @@
     on:escape={() => { modal = undefined }}
     on:saved={onImportSaved} />
 {/if}
+
+<style>
+  :global(.pubsubpages svg){
+    margin-left: 0.2em;
+  }
+</style>
