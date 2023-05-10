@@ -372,7 +372,7 @@
     siteChoices={siteOptions}
     on:saved={onSaved}
     on:escape={() => { modal = undefined }}
-    preload={$store.editing ? { ...$store.editing.data } : {} }/>
+    preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id } : {} }/>
 {:else if modal === 'adddatarule'}
   <DataRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'editdatarule'}

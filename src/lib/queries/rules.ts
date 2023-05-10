@@ -446,6 +446,7 @@ export interface UpdateAssetRuleInput {
   siteId?: string
   path?: string
   mode?: string | undefined
+  pagetreeType?: string
   grants?: {
     create: boolean
     update: boolean
