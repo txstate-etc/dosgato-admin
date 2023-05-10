@@ -32,9 +32,24 @@ services:
       RESET_DB_ON_STARTUP: 'true'
       JWT_TRUSTED_ISSUERS: '[{ "iss": "unified-auth", "url": "http://fakeauth/jwks" }, { "iss": "dg-render", "secret": "rendertoken" }]'
     volumes:
+      - dosgatofiles:/files
       - ../dosgato/src:/usr/app/src
       - ../dosgato/testserver:/usr/app/testserver
       - ../dosgato/bootstrap:/bootstrap
+      - ../dosgato/test/files/blankpdf.pdf:/files/storage/P/K/BUoghpogATqmK14ry1wqKsP-e-S8GVqHKuCxH7k1k
+      - ../dosgato/test/files/bobcat.jpg:/files/storage/Q/7/HN1moFtRWxE_gLyvxM8B2sK5CrjB3482LttjgbWME
+    depends_on:
+      - mysql
+  dosgato-resizer:
+    image: registry.its.txstate.edu/dosgato-resizer:qual
+    environment:
+      TZ: America/Chicago
+      MYSQL_USER: dosgato
+      MYSQL_PASS: password
+      MYSQL_DATABASE: dosgatodev
+      MYSQL_HOST: mysql
+    volumes:
+      - dosgatofiles:/files
       - ../dosgato/test/files/blankpdf.pdf:/files/storage/P/K/BUoghpogATqmK14ry1wqKsP-e-S8GVqHKuCxH7k1k
       - ../dosgato/test/files/bobcat.jpg:/files/storage/Q/7/HN1moFtRWxE_gLyvxM8B2sK5CrjB3482LttjgbWME
     depends_on:
@@ -72,3 +87,4 @@ services:
       - dosgatodb:/var/lib/mysql
 volumes:
   dosgatodb: {}
+  dosgatofiles: {}
