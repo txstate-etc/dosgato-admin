@@ -62,9 +62,8 @@ services:
     environment:
       NODE_ENV: development
       DOSGATO_RENDER_JWT_SECRET: rendertoken
-      DOSGATO_API_URL: http://dosgato-api/graphql
       DOSGATO_ADMIN_BASE: http://localhost:3000/.admin
-      DOSGATO_API_BASE: http://localhost
+      DOSGATO_API_BASE: http://dosgato-api
     volumes:
       - ../dosgato-render/src:/usr/app/src
       - ../dosgato-render/test:/usr/app/test
