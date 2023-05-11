@@ -77,7 +77,12 @@ export class ChooserClient implements Client {
     if (url.startsWith('/')) {
       return await api.chooserPageByPath(url)
     }
-    return await api.chooserPageByUrl(url)
+    try {
+      const _ = new URL(url)
+      return await api.chooserPageByUrl(url)
+    } catch (e: any) {
+      return undefined
+    }
   }
 
   async upload (folder: Folder, files: File[], progress: (ratio: number) => void) {
