@@ -66,7 +66,7 @@
             <StyledList>
               {#each asset.resizes as resize}
                 <li class="flex-row">
-                  <img src="{environmentConfig.apiBase}/resize/{resize.id}/{encodeURIComponent(asset.name)}_{resize.width}.{resize.extension}?admin=1" width={resize.width} height={resize.height} alt="">
+                  <img src="{environmentConfig.renderBase}/.asset/{asset.id}/resize/{resize.id}/{encodeURIComponent(asset.name)}_{resize.width}.{resize.extension}" width={resize.width} height={resize.height} alt="">
                   <span class="mime">{resize.mime}</span>
                   <span class="resolution">{resize.width} x {resize.height}</span>
                   <span class="size">{bytesToHuman(resize.size)}</span>
@@ -79,7 +79,7 @@
   </div>
   {#if image}
     <div class="image">
-      <img src="{environmentConfig.apiBase}/assets/{asset.id}/w/500/{asset.checksum.substring(0, 12)}/{encodeURIComponent(asset.filename)}?admin=1" width={image.width} height={image.height} alt="">
+      <img src="{environmentConfig.renderBase}/.asset/{asset.id}/w/500/{asset.checksum.substring(0, 12)}/{encodeURIComponent(asset.filename)}" width={image.width} height={image.height} alt="">
       <div class="details">
         {image.width}x{image.height}
       </div>
