@@ -1,7 +1,9 @@
 .modified span {
   font-size: 0.9em;
 }
-
+.modified span.short {
+  display: none;
+}
 [data-eq~="600px"] .modified span.full {
   display: none;
 }

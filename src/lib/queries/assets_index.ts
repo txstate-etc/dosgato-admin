@@ -59,6 +59,7 @@ path
 name
 checksum
 filename
+extension
 deleted
 deleteState
 modifiedAt
@@ -84,6 +85,7 @@ export interface TreeAsset {
   name: string
   checksum: string
   filename: string
+  extension: string
   deleted: boolean
   deleteState: number
   modifiedAt: string
