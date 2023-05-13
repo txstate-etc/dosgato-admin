@@ -22,6 +22,9 @@ li .status {
 .status.deleted {
   color: #555;
 }
+.pubsubpages svg {
+  margin-left: 0.2em;
+}
 li .modified span, li .modifiedBy {
   font-size: 0.9em;
 }

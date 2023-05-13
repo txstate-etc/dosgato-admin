@@ -1,22 +1,20 @@
 <script lang="ts" context="module">
   import { DateTime } from 'luxon'
-  function formatDate (dt: DateTime) {
+  function formatDate (dt: DateTime | undefined) {
+    if (!dt) return ''
     return dt.toLocaleString()
   }
 
-  function formatTime (dt: DateTime) {
+  function formatTime (dt: DateTime | undefined) {
+    if (!dt) return ''
     return dt.toLocaleString(DateTime.TIME_SIMPLE).toLocaleLowerCase()
-  }
-
-  function formatDateTime (dt: DateTime) {
-    return dt.toLocaleString(DateTime.DATETIME_SHORT).toLocaleLowerCase()
   }
 </script>
 <script lang="ts">
   import { Checkbox, Icon } from '@dosgato/dialog'
   import bookmarkSimple from '@iconify-icons/ph/bookmark-simple'
   import bookmarkSimpleFill from '@iconify-icons/ph/bookmark-simple-fill'
-  import { ScreenReaderOnly } from '@txstate-mws/svelte-components'
+  import { ScreenReaderOnly, glue } from '@txstate-mws/svelte-components'
   import { isNotBlank, randomid, titleCase } from 'txstate-utils'
   import type { HistoryVersion } from './VersionHistory.svelte'
   import { api } from '$lib/api'
@@ -29,6 +27,9 @@
   export let title: string
   export let versions: HistoryVersion[]
   export let selected: Set<number>
+  export let selectedInTitle: Map<number, string>
+
+  $: isMarkedTable = title === 'Marked Versions'
 
   function onSelect (version: number) {
     return (e: CustomEvent) => {
@@ -46,10 +47,14 @@
           }
         }
         selected.add(version)
+        selectedInTitle.set(version, title)
       } else selected.delete(version)
       selected = selected
     }
   }
+
+  let hoverRow: HTMLElement | undefined
+  $: console.log(hoverRow)
 
   function onMark (version: number) {
     return async (e: MouseEvent) => {
@@ -69,17 +74,25 @@
       <th class="checkbox">&nbsp;</th>
       <th class="date">Date</th>
       <th class="time">Time</th>
-      <th class="tags">Tags</th>
+      {#if isMarkedTable}
+        <th class="tags">Date Marked</th>
+      {:else}
+        <th class="tags">Tags</th>
+      {/if}
       <th class="modified">Modified By</th>
       <th class="mark">Mark</th>
     </tr>
-    {#each versions as version (version.version)}
+    {#each versions as version, i (version.version)}
     {@const restored = /restored/i.test(version.comment)}
-    <tr>
-      <td class="checkbox"><Checkbox name="version-compare-{version.version}" value={selected.has(version.version)} onChange={onSelect(version.version)} id={checkboxid} /><label for={checkboxid}><ScreenReaderOnly>Select for Preview/Compare</ScreenReaderOnly></label></td>
+    <tr on:mouseenter={function () { hoverRow = this }} on:mouseleave={() => { hoverRow = undefined }} data-idx={i}>
+      <td class="checkbox"><Checkbox name="version-compare-{version.version}" value={selected.has(version.version)} disabled={selected.has(version.version) && selectedInTitle.get(version.version) !== title} onChange={onSelect(version.version)} id={checkboxid} /><label for={checkboxid}><ScreenReaderOnly>Select for Preview/Compare</ScreenReaderOnly></label></td>
       <td class="date">{formatDate(version.date)}</td>
       <td class="time">{formatTime(version.date)}</td>
-      <td class="tags">{[version.version === maxVersion ? 'Latest' : undefined, ...version.tags.map(titleCase), restored ? 'Restored' : undefined].filter(isNotBlank).join(', ')}</td>
+      {#if isMarkedTable}
+        <td class="tags">{formatDate(version.markedAt)}</td>
+      {:else}
+        <td class="tags">{[version.version === maxVersion ? 'Latest' : undefined, ...version.tags.map(titleCase), restored ? 'Restored' : undefined].filter(isNotBlank).join(', ')}</td>
+      {/if}
       <td class="modified">{version.user.name}</td>
       <td class="mark">
         <button type="button" class="reset" on:click={onMark(version.version)}>
@@ -90,9 +103,18 @@
     {/each}
   </table>
 </section>
+  {#if hoverRow}
+    {@const comment = versions[Number(hoverRow.getAttribute('data-idx'))]?.comment}
+    {#if comment}
+      <div class="tooltip" use:glue={{ target: hoverRow ?? document.body, align: 'bottomleft' }}>{comment}</div>
+    {/if}
+  {/if}
 {/if}
 
 <style>
+  section {
+    margin-bottom: 1em;
+  }
   header {
     font-size: 1.3em;
   }
@@ -119,5 +141,14 @@
   }
   button {
     cursor: pointer;
+  }
+  .tooltip {
+    position: absolute;
+    padding: 0.5em;
+    background-color: white;
+    border: 1px solid #666666;
+    margin-top: 1px;
+    color: #222222;
+    font-size: 0.9em;
   }
 </style>

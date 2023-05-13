@@ -28,6 +28,7 @@
   export let history: Promise<HistoryVersion[]>
 
   let selected = new Set<number>()
+  const selectedInTitle = new Map<number, string>()
 
   function toPageEditorVersionPreview (v: number) {
     return { version: v, date: versionByIndex[v].date, modifiedBy: versionByIndex[v].user.name }
@@ -61,8 +62,8 @@
 </script>
 
 <Dialog continueText={selected.size > 1 ? 'Compare' : 'Preview'} cancelText="Cancel" disabled={selected.size < 1 || selected.size > 2} on:escape on:continue={visit}>
-  <VersionHistoryTable bind:selected {maxVersion} versions={latest ? [latest] : []} title="Latest Version" {dataId} on:marked={onMarked} />
-  <VersionHistoryTable bind:selected {maxVersion} versions={published ? [published] : []} title="Published Version" {dataId} on:marked={onMarked} />
-  <VersionHistoryTable bind:selected {maxVersion} versions={(oldversions ?? []).filter(v => v.marked)} title="Marked Versions" {dataId} on:marked={onMarked} />
-  <VersionHistoryTable bind:selected {maxVersion} versions={oldversions ?? []} title="All Versions" {dataId} on:marked={onMarked} />
+  <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={latest ? [latest] : []} title="Latest Version" {dataId} on:marked={onMarked} />
+  <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={published ? [published] : []} title="Published Version" {dataId} on:marked={onMarked} />
+  <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={(oldversions ?? []).filter(v => v.marked)} title="Marked Versions" {dataId} on:marked={onMarked} />
+  <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={oldversions ?? []} title="All Versions" {dataId} on:marked={onMarked} />
 </Dialog>

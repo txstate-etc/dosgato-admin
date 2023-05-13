@@ -1,13 +1,8 @@
-<script lang="ts" context="module">
-  function formatDateTime (dt: DateTime) {
-    return dt.toLocaleString(DateTime.DATETIME_SHORT)
-  }
-</script>
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { Button, Dialog, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
-  import type { UITemplate, ValidationFeedback } from '@dosgato/templating'
+  import { Dialog, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
+  import type { UITemplate } from '@dosgato/templating'
   import clipboardText from '@iconify-icons/ph/clipboard-text'
   import copyIcon from '@iconify-icons/ph/copy'
   import copySimple from '@iconify-icons/ph/copy-simple'
@@ -17,11 +12,11 @@
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import scissors from '@iconify-icons/ph/scissors'
   import trash from '@iconify-icons/ph/trash'
-  import { OffsetStore, ResizeStore, offset, resize } from '@txstate-mws/svelte-components'
   import { DateTime } from 'luxon'
   import { printIf, titleCase } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api, VersionHistory } from '$lib'
   import { statusIcon } from './helpers'
+  import VersionView from './VersionView.svelte'
 
   export let data: { page: PageEditorPage, pagetemplate: EnhancedUITemplate }
   $: ({ page, pagetemplate } = data)
@@ -205,48 +200,15 @@
           ? `${environmentConfig.renderBase}/.compare/${$editorStore.previewing.fromVersion.version}/${$editorStore.previewing.version.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
           : `${environmentConfig.renderBase}/.preview/${$editorStore.previewing?.version.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
       )
-  let previewDesc = ''
-  $: {
-    previewDesc = $editorStore.previewing?.version.version
-      ? $editorStore.previewing?.version.version === $editorStore.page.version.version
-        ? 'Latest'
-        : $editorStore.previewing?.version.version === $editorStore.page.versions[0]?.version
-          ? 'Published'
-          : formatDateTime($editorStore.previewing?.version.date)
-      : ''
-  }
-  const offsetStore = new OffsetStore()
-  const footerSize = new ResizeStore()
-  const headerSize = new ResizeStore()
-  let restoreFeedback: ValidationFeedback[] = []
-  let lastValidatedRestoreVersion: number | undefined
-  async function reactToPreviewing (..._: any[]) {
-    const saveVersion = $editorStore.previewing?.version.version
-    if (saveVersion == null || lastValidatedRestoreVersion === saveVersion) return
-    const response = await api.restorePage($editorStore.page.id, saveVersion, true)
-    if ($editorStore.previewing?.version.version === saveVersion) {
-      restoreFeedback = response.messages
-      lastValidatedRestoreVersion = saveVersion
-    }
-  }
-  $: reactToPreviewing($editorStore.previewing?.version.version)
 </script>
 
-{#if previewDesc && previewDesc !== 'Latest'}
-  <section class="preview" use:offset={{ store: offsetStore }}>
-    <header use:resize={{ store: headerSize }}>
-      <div>Version: {previewDesc}</div>
-      <div>Modified By: {$editorStore.previewing?.version.modifiedBy}</div>
-    </header>
-    <iframe style:height="calc(100dvh - {$offsetStore.top}px - {$footerSize.clientHeight}px - {$headerSize.clientHeight}px - 2em)" src={iframesrc} title="page preview for restoring"></iframe>
-    <footer use:resize={{ store: footerSize }}>
-      {#if restoreFeedback.length}
-        <div class="restore-feedback">{#each restoreFeedback as msg}<div>{msg.message}</div>{/each}</div>
-      {/if}
-      <Button type="button" cancel on:click={() => { pageEditorStore.cancelPreview() }}>Cancel</Button>
-      <Button type="button" on:click={() => { pageEditorStore.restoreVersion() }} disabled={restoreFeedback.filter(f => f.type === 'error').length > 0}>Restore this version</Button>
-    </footer>
-  </section>
+{#if $editorStore.previewing && ($editorStore.previewing.version.version !== $editorStore.page.version.version || $editorStore.previewing?.fromVersion)}
+  <div class="version-preview">
+    {#if $editorStore.previewing?.fromVersion}
+      <VersionView version={$editorStore.previewing.fromVersion} sidebyside={true} latestVersion={$editorStore.page.version.version} publishedVersion={$editorStore.page.versions[0]?.version} page={$editorStore.page} on:cancel={() => pageEditorStore.cancelPreview()} on:restore={e => pageEditorStore.initRestore(e.detail)}/>
+    {/if}
+    <VersionView version={$editorStore.previewing.version} sidebyside={!!$editorStore.previewing?.fromVersion} latestVersion={$editorStore.page.version.version} publishedVersion={$editorStore.page.versions[0]?.version} page={$editorStore.page} on:cancel={() => pageEditorStore.cancelPreview()} on:restore={e => pageEditorStore.initRestore(e.detail)}/>
+  </div>
 {:else}
   <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath, $editorStore.previewing, page)} on:returnfocus={onReturnFocus}>
     <div class="page-bar"><span>{$editorStore.page.path}</span>
@@ -330,6 +292,10 @@
 {:else if $editorStore.modal === 'versions'}
   {@const page = $editorStore.page}
   <VersionHistory dataId={page.id} preview={v => pageEditorStore.previewVersion(v)} compare={(v1, v2) => pageEditorStore.compareVersions(v1, v2)} history={api.getPageVersions(page.id)} on:escape={cancelModal} />
+{:else if $editorStore.restoreVersion != null}
+  <Dialog title="Are You Sure?" cancelText="Cancel" continueText="Restore" on:escape={() => pageEditorStore.cancelRestore()} on:continue={() => pageEditorStore.restoreVersion()}>
+    Restoring will create a new "latest" version with all the content from this version. All existing versions will remain.
+  </Dialog>
 {/if}
 
 
@@ -386,33 +352,12 @@
   .status.unpublished {
     color: var(--dosgato-red, #9a3332);
   }
-
-  .preview {
-    width: 100%;
-    max-width: 80em;
-    margin: 0 auto;
-  }
-  .preview header {
+  .version-preview {
     display: flex;
+    flex-wrap: nowrap;
     justify-content: space-between;
-    font-size: 1.1em;
-    padding: 1em;
-  }
-  .preview iframe {
-    border: 1px solid #666666;
-  }
-  .preview footer {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .preview footer :global(button) {
-    margin: 0 2em;
-  }
-  .restore-feedback {
-    text-align: center;
-    color: var(--dosgato-red, #9a3332);
     width: 100%;
-    padding: 1em 0;
+    max-width: 100em;
+    margin: 0 auto;
   }
 </style>

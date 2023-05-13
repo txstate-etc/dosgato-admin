@@ -35,6 +35,7 @@ export interface EditorState {
     version: PageEditorVersionPreview
     fromVersion?: PageEditorVersionPreview
   }
+  restoreVersion?: number
   editing?: {
     path: string
     data: any
@@ -294,14 +295,22 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.updateEditorState(es => ({ ...es, previewing: es.previewing ? { ...es.previewing, mode } : undefined }))
   }
 
+  initRestore (version: number) {
+    this.updateEditorState(es => ({ ...es, restoreVersion: version }))
+  }
+
+  cancelRestore () {
+    this.updateEditorState(es => ({ ...es, restoreVersion: undefined }))
+  }
+
   async restoreVersion () {
     const editorState = this.value.editors[this.value.active!]
     if (!editorState?.page) return
-    const version = editorState.previewing?.version.version
+    const version = editorState.restoreVersion
     if (version == null) return
     const resp = await api.restorePage(editorState.page.id, version)
     if (resp.success) {
-      this.updateEditorState(es => ({ ...es, page: resp.page, previewing: undefined }))
+      this.updateEditorState(es => ({ ...es, page: resp.page, previewing: undefined, restoreVersion: undefined }))
     }
   }
 
