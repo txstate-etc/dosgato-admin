@@ -312,7 +312,7 @@
 
 <DetailPageContent>
   <div class="button-container">
-    <button on:click={() => { modal = 'downloadcsv' }}>
+    <button type="button" on:click={() => { modal = 'downloadcsv' }}>
       <Icon icon={exportIcon} />
       Download CSV
     </button>
@@ -326,7 +326,7 @@
               <div class="dl-row">
                 <span><dt>Name:</dt><dd>{$store.site.name}</dd></span>
                 {#if $store.site.permissions.rename}
-                  <button on:click={() => { modal = 'editbasic' }}>
+                  <button type="button" on:click={() => { modal = 'editbasic' }}>
                     <Icon icon={pencilIcon} hiddenLabel="Edit basic information" width="1.3em" inline/>
                   </button>
                 {/if}
@@ -334,7 +334,7 @@
               <div class="dl-row">
                 <span><dt>URL:</dt><dd>{$store.site.url ? $store.site.url.prefix : 'This site is not launched.'}</dd></span>
                 {#if $store.site.permissions.launch}
-                  <button on:click={() => { modal = 'editlaunch' }}>
+                  <button type="button" on:click={() => { modal = 'editlaunch' }}>
                     <Icon icon={pencilIcon} hiddenLabel="Edit URL or launch site" inline width="1.3em"/>
                   </button>
                 {/if}
@@ -344,7 +344,7 @@
           <div class="detail-area-head">
             <h3>Site Management</h3>
             {#if $store.site.permissions.manageGovernance}
-              <button on:click={() => { modal = 'editsitemanagement' }}>
+              <button type="button" on:click={() => { modal = 'editsitemanagement' }}>
                 <Icon icon={pencilIcon} hiddenLabel="Edit site management" inline width="1.3em"/>
               </button>
             {/if}

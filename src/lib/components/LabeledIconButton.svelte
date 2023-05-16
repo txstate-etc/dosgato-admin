@@ -8,7 +8,7 @@
   export let buttonelement: HTMLButtonElement | undefined = undefined
 </script>
 
-<button bind:this={buttonelement} class="reset" on:click style:max-width="calc(1.2 * {size})"><Icon {icon} width={size} /><div style:font-size="calc(0.3 * {size})">{label}</div></button>
+<button type="button" bind:this={buttonelement} class="reset" on:click style:max-width="calc(1.2 * {size})"><Icon {icon} width={size} /><div style:font-size="calc(0.3 * {size})">{label}</div></button>
 
 <style>
   button {

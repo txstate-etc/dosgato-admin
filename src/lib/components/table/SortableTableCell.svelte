@@ -25,21 +25,21 @@
   <div class="actions-container">
     {#each actions as action (action.label)}
       {@const hiddenLabel = action.hiddenLabel ? (typeof action.hiddenLabel === 'function' ? action.hiddenLabel(item) : action.hiddenLabel) : action.label}
-      <button on:click={() => action.onClick(item)} class="icon-button" class:combine={combineActions}>
+      <button type="button" on:click={() => action.onClick(item)} class="icon-button" class:combine={combineActions}>
         <div class="button-content">
           <span class="button-icon"><Icon icon={action.icon} {hiddenLabel} width="1.5em"/></span>
         </div>
       </button>
     {/each}
     {#if combineActions}
-      <button class="collapse-button" on:click={() => { showModal = true }}>{header.combinedActionsLabel}</button>
+      <button type="button" class="collapse-button" on:click={() => { showModal = true }}>{header.combinedActionsLabel}</button>
     {/if}
   </div>
   {#if combineActions && showModal}
     <Dialog continueText='Cancel' on:continue={() => { showModal = false }} title={header.combinedActionsLabel}>
       <div class="consolidated-actions">
         {#each actions as action (action.label)}
-          <button class='consolidated-action' on:click={() => { showModal = false; action.onClick(item) }}>
+          <button type="button" class='consolidated-action' on:click={() => { showModal = false; action.onClick(item) }}>
             <Icon icon={action.icon} width="60%"/><br>{action.label}
           </button>
         {/each}

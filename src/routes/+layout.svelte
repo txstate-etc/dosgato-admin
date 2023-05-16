@@ -76,7 +76,7 @@
       <div class="profile-compact">
         <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
       </div>
-      <button bind:this={profileelement} class="login-status reset">
+      <button type="button" bind:this={profileelement} class="login-status reset">
         {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}
         <Icon icon={menuDown} inline />
       </button>

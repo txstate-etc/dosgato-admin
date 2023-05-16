@@ -220,7 +220,7 @@
       {:else}
         {#each pagetemplate.pageBarButtons ?? [] as button}
           {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
-            <button class="user-button" on:click={onUserButtonClick(button)}>
+            <button type="button" class="user-button" on:click={onUserButtonClick(button)}>
               <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
               {#if !button.hideLabel}{button.label}{/if}
             </button>

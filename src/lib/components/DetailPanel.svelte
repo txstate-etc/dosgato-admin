@@ -15,7 +15,7 @@
   <div class="header" style="background-color: {headerColor}; color: {color}">
     <h2>{header}</h2>
     {#each buttons as button, i}
-      <button class="reset" class:leftmost={i === 0} on:click={button.onClick}><Icon icon={button.icon} hiddenLabel={button.hiddenLabel} width="1.5em" /></button>
+      <button type="button" class="reset" class:leftmost={i === 0} on:click={button.onClick}><Icon icon={button.icon} hiddenLabel={button.hiddenLabel} width="1.5em" /></button>
     {/each}
   </div>
   <div class="body">
