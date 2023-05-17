@@ -1,5 +1,5 @@
 import { api } from '$lib'
-import type { UITemplate } from '@dosgato/templating'
+import type { ComponentData, UITemplate } from '@dosgato/templating'
 import { Cache } from 'txstate-utils'
 import { uiConfig } from '../local/index.js'
 
@@ -13,6 +13,7 @@ const templateCache = new Cache(async (_, templateMap: Map<string, EnhancedUITem
       old.displayCategory = t.displayCategory ?? 'Standard'
       old.areas = new Map()
       old.global = t.global
+      old.genDefaultContent = typeof old.defaultContent === 'undefined' ? () => ({}) : (typeof old.defaultContent === 'object' ? () => old.defaultContent! : old.defaultContent)
       for (const a of t.areas) old.areas.set(a.name, { name: a.name, availableComponents: new Set(a.availableComponents.map(ac => ac.key)) })
     }
   }
@@ -24,6 +25,7 @@ export interface EnhancedUITemplate extends UITemplate {
   displayCategory?: string
   areas: Map<string, { name: string, availableComponents: Set<string> }>
   global?: boolean
+  genDefaultContent: (data: ComponentData) => Record<string, ComponentData[]>
 }
 
 class TemplateRegistry {

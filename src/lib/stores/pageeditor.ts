@@ -152,7 +152,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.updateEditorState(editorState => ({ ...editorState, creating: { ...editorState.creating!, templateKey, data: undefined } }))
     if (def && def.dialog == null) {
       const data = def.randomId ? { [def.randomId]: randomid() } : {}
-      const resp = await this.addComponentSubmit({ ...data, areas: def.defaultContent })
+      const resp = await this.addComponentSubmit({ ...data, areas: def.genDefaultContent({ ...data, templateKey }) })
       if (resp?.success) await refreshIframe()
     }
   }
@@ -163,7 +163,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const editorState = this.value.editors[pageId]
     if (!editorState?.creating?.templateKey) return { success: false, messages: [] as Feedback[], data }
     const def = templateRegistry.getTemplate(editorState.creating.templateKey)
-    const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey, areas: def?.defaultContent }, { validateOnly })
+    const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: editorState.creating.templateKey }) }, { validateOnly })
     if (!validateOnly && resp.success) {
       this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
     }

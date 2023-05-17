@@ -35,11 +35,11 @@ This component is also used when creating a site or pagetree, both of which requ
 
   async function submitWrapper (state: CreateWithPageState) {
     if (!state.templateKey) return await submit(state, false)
-    return await submit({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey!)?.defaultContent } }, false)
+    return await submit({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey!)?.genDefaultContent({ ...state.data, templateKey: state.templateKey }) } }, false)
   }
   async function validateWrapper (state: CreateWithPageState) {
     if (!state.templateKey) return await validate?.(state) ?? []
-    return await validate?.({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey)?.defaultContent } }) ?? []
+    return await validate?.({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey)?.genDefaultContent({ ...state.data, templateKey: state.templateKey }) } }) ?? []
   }
   function escape () {
     store.reset()
