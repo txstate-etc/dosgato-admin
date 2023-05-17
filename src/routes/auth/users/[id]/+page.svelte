@@ -9,6 +9,7 @@
   import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type GroupListGroup, type RoleListRole, BackButton } from '$lib'
   import { _store as store } from './+page'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
+    import { sortby } from 'txstate-utils';
 
 
   export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
@@ -188,7 +189,7 @@
       <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modal = 'editroles' } } : undefined}>
         <DetailPanelSection>
           {#if $store.user.directRoles.length}
-            <SortableTable items = {$store.user.directRoles}
+            <SortableTable items = {sortby($store.user.directRoles, 'name')}
               headers={[
                 { id: 'name', label: 'Role name', render: (item) => `<a href="${base}/auth/roles/${item.id}">${item.name}</a>` },
                 { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, hiddenLabel: 'Remove role from user', label: 'Delete', onClick: (item) => { onClickRemoveRole(item.id, item.name) } }] }
@@ -197,7 +198,7 @@
           <div>User {$store.user.id} has no roles assigned.</div>
           {/if}
           {#if $store.user.indirectRoles.length}
-            <SortableTable items = {$store.user.indirectRoles}
+            <SortableTable items = {sortby($store.user.indirectRoles, 'name')}
               headers={[
                 { id: 'name', label: 'Inherited role name', render: (item) => `<a href="${base}/auth/roles/${item.id}">${item.name}</a>` },
                 { id: 'origin', label: 'Inherited from', render: (item) => getIndirectRoleGroup(item) }

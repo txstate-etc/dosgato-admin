@@ -40,9 +40,9 @@
   ]
 
   const adminTabs = [
+    { name: 'Site Rules' },
     { name: 'Global Rules' },
-    { name: 'Template Rules' },
-    { name: 'Site Rules' }
+    { name: 'Template Rules' }
   ]
 
   $: groupIds = unique([...$store.role.directGroups.map(g => g.id), ...$store.role.indirectGroups.map(g => g.id)])
@@ -172,8 +172,8 @@
           {#if $store.role.directUsers.length}
             <SortableTable items={$store.role.directUsers}
               headers={[
-                { id: 'name', label: 'User names', render: (item) => `<a href="${base}/auth/users/${item.id}">${item.firstname} ${item.lastname} (${item.id})</a>`, sortable: true, sortFunction: (item) => item.lastname },
-                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Remove', onClick: (item) => onClickUnassign(item.id, `${item.firstname} ${item.lastname}`) }] }
+                { id: 'name', label: 'User names', render: (item) => `<a href="${base}/auth/users/${item.id}">${item.firstname} ${item.lastname} (${item.id})</a>`, sortable: true, sortFunction: (item) => item.lastname, widthPercent: 50 },
+                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Remove', onClick: (item) => onClickUnassign(item.id, `${item.firstname} ${item.lastname}`) }], widthPercent: 50 }
               ]} />
           {:else}
             <span>This role is not directly assigned to any users.</span>
@@ -181,8 +181,8 @@
           {#if $store.role.usersThroughGroups.length}
             <SortableTable items={$store.role.usersThroughGroups}
               headers={[
-                { id: 'name', label: 'User from group', render: (item) => `<a href="${base}/auth/users/${item.id}">${item.firstname} ${item.lastname} (${item.id})</a>`, sortable: true, sortFunction: (item) => item.lastname },
-                { id: 'groups', label: 'Group(s)', render: (item) => getUserGroups(item.groups) }
+                { id: 'name', label: 'User from group', render: (item) => `<a href="${base}/auth/users/${item.id}">${item.firstname} ${item.lastname} (${item.id})</a>`, sortable: true, sortFunction: (item) => item.lastname, widthPercent: 50 },
+                { id: 'groups', label: 'Group(s)', render: (item) => getUserGroups(item.groups), widthPercent: 50 }
               ]} />
           {/if}
         </Accordion>
@@ -192,8 +192,8 @@
           {#if $store.role.directGroups.length}
             <SortableTable items={$store.role.directGroups}
               headers={[
-                { id: 'name', label: 'Assigned Group', render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>`, sortable: true, sortFunction: (item) => item.name },
-                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Remove', onClick: (item) => {} }] }
+                { id: 'name', label: 'Assigned Group', render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>`, sortable: true, sortFunction: (item) => item.name, widthPercent: 50 },
+                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Remove', onClick: (item) => {} }], widthPercent: 50 }
               ]}/>
           {:else}
             <span>This role is not directly assigned to any groups.</span>
@@ -201,8 +201,8 @@
           {#if $store.role.indirectGroups.length}
             <SortableTable items={$store.role.indirectGroups}
               headers={[
-                { id: 'name', label: 'Subgroup', render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>`, sortable: true, sortFunction: (item) => item.name },
-                { id: 'source', label: 'Subgroup parent', render: (item) => item.parents.map(g => g.name).join(', ') }
+                { id: 'name', label: 'Subgroup', render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>`, sortable: true, sortFunction: (item) => item.name, widthPercent: 50 },
+                { id: 'source', label: 'Subgroup parent', render: (item) => item.parents.map(g => g.name).join(', '), widthPercent: 50 }
               ]} />
           {/if}
         </Accordion>
@@ -271,14 +271,14 @@
       <div class="mobile-layout">
         <DetailPanelSection>
           <Tabs tabs={adminTabs} accordionOnMobile={false}>
+            <Tab name="Site Rules">
+              <SiteRuleTable rules={$store.role.siteRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+            </Tab>
             <Tab name="Global Rules">
               <GlobalRuleTable rules={$store.role.globalRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
             </Tab>
             <Tab name="Template Rules">
               <TemplateRuleTable rules={$store.role.templateRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
-            </Tab>
-            <Tab name="Site Rules">
-              <SiteRuleTable rules={$store.role.siteRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
             </Tab>
           </Tabs>
         </DetailPanelSection>

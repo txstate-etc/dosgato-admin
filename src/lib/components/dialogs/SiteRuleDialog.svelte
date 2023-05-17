@@ -115,5 +115,5 @@
 
 <FormDialog submit={ruleId ? onEditSiteRule : onAddSiteRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} preload={preloadToState(preload)} on:escape on:saved>
   <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
-  <FieldChoices path='grants' {choices} leftToRight />
+  <FieldChoices path='grants' {choices} leftToRight label="Permissions"/>
 </FormDialog>

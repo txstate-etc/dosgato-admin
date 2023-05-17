@@ -155,5 +155,5 @@
   <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
   <FieldText path='path' label='Path'/>
   <FieldSelect path='templateId' label='Template' choices={dataTemplateChoices}/>
-  <FieldChoices path='grants' {choices} leftToRight />
+  <FieldChoices path='grants' {choices} leftToRight label="Permissions"/>
 </FormDialog>

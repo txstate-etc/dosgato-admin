@@ -183,7 +183,7 @@
           {#if $store.group.directMembers.length}
             <SortableTable items={$store.group.directMembers}
               headers={[
-                { id: 'name', label: 'Member names', render: (item) => `${item.firstname} ${item.lastname} (${item.id})`, sortable: true, sortFunction: (item) => item.lastname },
+                { id: 'name', label: 'Member names', render: (item) => `<a href="${base}/auth/users/${item.id}">${item.firstname} ${item.lastname}</a> (${item.id})`, sortable: true, sortFunction: (item) => item.lastname },
                 { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickRemoveGroupMember(item.id) }] }
               ]}/>
           {:else}
@@ -192,7 +192,7 @@
           {#if $store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id)).length}
           <SortableTable items={$store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id))}
                   headers={[
-                    { id: 'name', label: 'Inherited members', render: (item) => `${item.firstname} ${item.lastname} (${item.id})`, sortable: true, sortFunction: (item) => item.lastname },
+                    { id: 'name', label: 'Inherited members', render: (item) => `<a href="${base}/auth/users/${item.id}">${item.firstname} ${item.lastname}</a> (${item.id})`, sortable: true, sortFunction: (item) => item.lastname },
                     { id: 'remove', label: 'From group', render: (item) => getMemberDirectGroup(item.groups) }
                 ]}/>
           {/if}

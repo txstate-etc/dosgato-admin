@@ -18,7 +18,6 @@
     headers={[
       { id: 'template', label: 'Template', render: (item) => { return item.template ? item.template.name : 'All Templates' } },
       { id: 'use', label: 'Use', icon: (item) => { return item.grants.use ? { icon: checkIcon, hiddenLabel: 'May use template' } : { icon: minusIcon, hiddenLabel: 'May not use template' } } },
-      { id: 'editaction', label: 'Edit', actions: [{ icon: pencilIcon, label: 'Edit', onClick: (item) => { dispatch('editrule', { id: item.id, type: 'template', rule: item }) } }] },
       { id: 'deleteaction', label: 'Delete', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => { dispatch('deleterule', { id: item.id, type: 'template' }) } }] }
     ]} />
 {:else}
