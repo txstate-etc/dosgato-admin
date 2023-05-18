@@ -37,6 +37,7 @@ class TemplateRegistry {
 
   addTemplates (templates: UITemplate[]) {
     for (const t of templates) this.addTemplate(t)
+    this.enhanceInfo().catch(e => console.error(e))
   }
 
   getTemplate (key: string) {
