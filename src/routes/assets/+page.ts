@@ -60,7 +60,7 @@ async function moveHandler (selectedItems: TypedAnyAssetItem[], dropTarget: Type
 
 function dragEligible (items: (TypedAssetFolderItem | TypedAssetItem)[]) {
   // sites cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites
-  return items.every(item => !!item.parent)
+  return items.every(item => !!item.parent && item.permissions.move)
 }
 
 function dropEffect (selectedItems: (TypedAssetFolderItem | TypedAssetItem)[], dropTarget: TypedAnyAssetItem, above: boolean, userWantsCopy: boolean) {
