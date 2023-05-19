@@ -357,11 +357,11 @@
     <button type="button" on:click={() => { modal = 'addsiterule' }}>
       <Icon icon={appWindowLight} width="60%"/><br>Add Site Rule
     </button>
-    <button type="button" on:click={() => { modal = 'addtemplaterule' }}>
-      <Icon icon={boundingBoxLight} width="60%"/><br>Add Template Rule
-    </button>
     <button type="button" on:click={() => { modal = 'addglobalrule' }}>
       <Icon icon={globeLight} width="60%"/><br>Add Global Rule
+    </button>
+    <button type="button" on:click={() => { modal = 'addtemplaterule' }}>
+      <Icon icon={boundingBoxLight} width="60%"/><br>Add Template Rule
     </button>
   </div>
 </Dialog>

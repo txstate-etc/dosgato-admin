@@ -147,7 +147,7 @@
     { value: 'move', label: 'Move' },
     { value: 'publish', label: 'Publish/Unpublish' },
     { value: 'delete', label: 'Delete' },
-    { value: 'undelete', label: 'Restore' }
+    { value: 'undelete', label: 'Recover' }
   ]
 </script>
 

@@ -138,7 +138,7 @@
     { value: 'update', label: 'Update' },
     { value: 'move', label: 'Move' },
     { value: 'delete', label: 'Delete' },
-    { value: 'undelete', label: 'Restore' }
+    { value: 'undelete', label: 'Recover' }
   ]
 </script>
 <FormDialog submit={ruleId ? onEditAssetRule : onAddAssetRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} preload={convertPreload(preload)} on:escape on:saved let:data>
