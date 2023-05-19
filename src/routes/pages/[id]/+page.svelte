@@ -13,7 +13,7 @@
   import scissors from '@iconify-icons/ph/scissors'
   import trash from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
-  import { printIf, titleCase } from 'txstate-utils'
+  import { isNotNull, printIf, titleCase } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api, VersionHistory } from '$lib'
   import { statusIcon } from './helpers'
   import VersionView from './VersionView.svelte'
@@ -262,8 +262,14 @@
             <Tab name={category}>
               <div class="component-chooser">
                 {#each templates as availableComponent}
+                  {@const templateIcon = availableComponent.preview ?? availableComponent.icon}
                   <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
-                    <Icon icon={availableComponent.preview ?? availableComponent.icon} width="85%" height="50%" /><br>{availableComponent.name}
+                    {#if isNotNull(templateIcon)}
+                      <div class="chooser-icon" class:iconify-icon={!templateIcon?.raw}>
+                        <Icon icon={templateIcon} width="auto" />
+                      </div>
+                    {/if}
+                    {availableComponent.name}
                   </button>
                 {/each}
               </div>
@@ -322,6 +328,17 @@
   .component-chooser button {
     aspect-ratio: 1;
     cursor: pointer;
+  }
+  .component-chooser button .chooser-icon {
+    height: 60%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .component-chooser button .chooser-icon.iconify-icon :global(svg) {
+    width: unset;
+    height: unset;
   }
   .page-bar {
     background-color: var(--dg-page-bar-bg, #501214);
