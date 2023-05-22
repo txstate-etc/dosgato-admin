@@ -330,6 +330,7 @@
     cursor: pointer;
     display: flex;
     flex-direction: column;
+    align-items: center;
   }
   .component-chooser button .chooser-icon {
     height: 60%;
