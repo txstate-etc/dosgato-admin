@@ -5,6 +5,7 @@ export async function GET () {
     apiBase: process.env.API_BASE,
     assetLiveBase: process.env.ASSET_LIVE_BASE,
     authRedirect: process.env.AUTH_REDIRECT,
-    renderBase: process.env.RENDER_BASE
+    renderBase: process.env.RENDER_BASE,
+    tracingServer: process.env.TRACING_SERVER
   })
 }
