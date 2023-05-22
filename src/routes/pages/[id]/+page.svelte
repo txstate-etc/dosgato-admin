@@ -328,6 +328,8 @@
   .component-chooser button {
     aspect-ratio: 1;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
   }
   .component-chooser button .chooser-icon {
     height: 60%;
