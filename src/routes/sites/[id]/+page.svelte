@@ -314,7 +314,7 @@
   <div class="button-container">
     <button type="button" on:click={() => { modal = 'downloadcsv' }}>
       <Icon icon={exportIcon} />
-      Download CSV
+      <span>Download CSV</span>
     </button>
   </div>
   <div class="panel-grid">
@@ -617,6 +617,9 @@
     display: inline-flex;
     align-items: center;
     margin-bottom: 1em;
+  }
+  .button-container button span {
+    margin-left: 0.5em;
   }
   .panel-grid {
     display: grid;
