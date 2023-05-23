@@ -9,7 +9,7 @@
   import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type GroupListGroup, type RoleListRole, BackButton } from '$lib'
   import { _store as store } from './+page'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
-    import { sortby } from 'txstate-utils';
+  import { sortby } from 'txstate-utils'
 
 
   export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
@@ -208,8 +208,19 @@
       </DetailPanel>
     </div>
     <div class="grid-item last">
-      <DetailPanel header='Global Data' headerColor={panelHeaderColor}>
-        <DetailPanelSection></DetailPanelSection>
+      <DetailPanel header='Data' headerColor={panelHeaderColor}>
+        <DetailPanelSection>
+          {#if $store.dataTemplates.length}
+            <SortableTable items={$store.dataTemplates}
+            headers={[
+              { id: 'name', label: 'Template name', get: 'name' },
+              { id: 'permissions', label: 'Permissions', render: item => `<div>${item.permissions.join(', ')}</div>` }
+            ]}
+              />
+          {:else}
+            <div>User {$store.user.id} has no permissions on Data.</div>
+          {/if}
+        </DetailPanelSection>
       </DetailPanel>
     </div>
   </div>

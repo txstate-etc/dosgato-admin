@@ -312,8 +312,20 @@ export const accessDetailRules = `
       id
       name
     }
+    template {
+      key
+      name
+    }
     grants {
       viewForEdit
+      view
+      create
+      delete
+      move
+      update
+      undelete
+      publish
+      unpublish
     }
   }
   siteRules {
@@ -382,8 +394,20 @@ export interface AccessDetailDataRule {
     id: string
     name: string
   }
+  template?: {
+    key: string
+    name: string
+  }
   grants?: {
     viewForEdit: boolean
+    view: boolean
+    create: boolean
+    delete: boolean
+    move: boolean
+    update: boolean
+    undelete: boolean
+    publish: boolean
+    unpublish: boolean
   }
 }
 

@@ -50,3 +50,25 @@ export function getSiteAccess (rules: AccessDetailRule[]) {
   const editor = pageperms.every(p => pageperm[p]) && assetperms.every(p => assetperm[p])
   return [editor ? 'Editor' : (limited ? 'Limited' : (readonly ? 'Read-Only' : '')), other ? 'Other' : ''].filter(isNotBlank)
 }
+
+const dataperms = ['create', 'move', 'update', 'delete']
+
+// TODO: This does not take into account whether the data rule applies to a particular site or all sites
+export function getDataAccess (rules: AccessDetailDataRule[]) {
+  let readonly = false
+  let limited = false
+  let other = false
+  const dataperm = dataperms.reduce((acc, curr) => ({ ...acc, [curr]: false }), {})
+  for (const rule of rules) {
+    if (rule.grants?.view) readonly = true
+    for (const dp of dataperms) {
+      if (rule.grants) {
+        if (rule.grants[dp]) limited = true
+        dataperm[dp] ||= rule.grants[dp]
+      }
+    }
+    if (rule.grants?.undelete) other = true
+  }
+  const editor = dataperms.every(p => dataperm[p])
+  return [editor ? 'Editor' : (limited ? 'Limited' : (readonly ? 'Read-Only' : '')), other ? 'Other' : ''].filter(isNotBlank)
+}
