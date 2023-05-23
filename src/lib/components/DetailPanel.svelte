@@ -52,7 +52,4 @@
   .body {
     background-color: #f4f4f4;
   }
-  .panel :global(.body > *:last-child) {
-    padding-bottom: 1em;
-  }
 </style>
