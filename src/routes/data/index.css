@@ -14,3 +14,6 @@
 .status.deleted {
   color: #555;
 }
+.status.deleted svg {
+  margin-left: -0.2em;
+}
