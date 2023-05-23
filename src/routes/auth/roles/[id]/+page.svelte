@@ -24,8 +24,8 @@
   import TemplateRuleTable from './TemplateRuleTable.svelte'
   import SiteRuleTable from './SiteRuleTable.svelte'
 
-  export let data: { siteOptions: { value: string, label: string }[], users: UserListUser[], groups: GroupListGroup[] }
-  $: ({ siteOptions, users, groups } = data)
+  export let data: { siteOptions: { value: string, label: string }[], users: UserListUser[], groups: GroupListGroup[], dataTemplateOptions: { value: string, label: string }[] }
+  $: ({ siteOptions, users, groups, dataTemplateOptions } = data)
 
   let modal: 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' | 'assignrole' |
     'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | 'assigntogroup' |
@@ -376,12 +376,13 @@
     on:escape={() => { modal = undefined }}
     preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id } : {} }/>
 {:else if modal === 'adddatarule'}
-  <DataRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
+  <DataRuleDialog roleId={$store.role.id} siteChoices={siteOptions} templateChoices={dataTemplateOptions} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
 {:else if modal === 'editdatarule'}
     <DataRuleDialog
       roleId={$store.role.id}
       ruleId={$store.editing?.id}
       siteChoices={siteOptions}
+      templateChoices={dataTemplateOptions}
       on:escape={() => { modal = undefined }}
       on:saved={onSaved}
       preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id, templateId: $store.editing.data.template?.key } : {} }/>

@@ -2,16 +2,14 @@
   import { FieldSelect, FieldAutocomplete, FieldText, FormDialog, FieldChoices } from '@dosgato/dialog'
   import { MessageType } from '@txstate-mws/svelte-forms'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
-  import { onMount } from 'svelte'
   import { api, messageForDialog } from '$lib'
   import { pick } from 'txstate-utils'
 
   export let siteChoices: PopupMenuItem[]
+  export let templateChoices: PopupMenuItem[]
   export let roleId: string
   export let preload: DataRulePreload | undefined = undefined
   export let ruleId: string|undefined = undefined
-
-  let dataTemplateChoices: PopupMenuItem[] = []
 
   const name = ruleId ? 'editdatarule' : 'adddatruale'
   const title = ruleId ? 'Edit Data Rule' : 'Add Data Rule'
@@ -72,11 +70,6 @@
     } as DataRulePreload
   }
 
-  onMount(async () => {
-    const templates = await api.getTemplatesByType('DATA')
-    dataTemplateChoices = templates.map(t => ({ label: t.name, value: t.key }))
-  })
-
   async function onAddDataRule (state: DataRuleDialogState) {
     const resp = await api.addDataRule({ ...stateToPreload(state), roleId })
     return {
@@ -120,7 +113,6 @@
   }
 
   async function validateEdit (state: DataRuleDialogState) {
-    console.log(state)
     if (!ruleId) return [{ type: MessageType.ERROR, message: 'Something went wrong' }]
     const args = {
       ruleId,
@@ -154,6 +146,6 @@
 <FormDialog submit={ruleId ? onEditDataRule : onAddDataRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} preload={preloadToState(preload)} on:escape on:saved>
   <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
   <FieldText path='path' label='Path'/>
-  <FieldSelect path='templateId' label='Template' choices={dataTemplateChoices}/>
+  <FieldSelect path='templateId' label='Template' choices={templateChoices}/>
   <FieldChoices path='grants' {choices} leftToRight label="Permissions"/>
 </FormDialog>
