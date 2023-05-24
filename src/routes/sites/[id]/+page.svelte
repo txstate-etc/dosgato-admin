@@ -466,7 +466,7 @@
     title="Add Pagetree"
     propertyDialogTitle= 'Root Page Properties'
     addName={false}
-    templateChoices={$store.site.pageTemplates.map(t => ({ label: t.name, value: t.key }))}
+    templateChoices={data.allPageTemplates.map(t => ({ label: t.name, value: t.key }))}
     on:escape={() => { modal = undefined }}
     on:saved={onAddPagetreeComplete}/>
 {:else if modal === 'editpagetree'}
