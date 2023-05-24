@@ -24,8 +24,9 @@
   import TemplateRuleTable from './TemplateRuleTable.svelte'
   import SiteRuleTable from './SiteRuleTable.svelte'
 
-  export let data: { siteOptions: { value: string, label: string }[], users: UserListUser[], groups: GroupListGroup[], dataTemplateOptions: { value: string, label: string }[] }
-  $: ({ siteOptions, users, groups, dataTemplateOptions } = data)
+  export let data: { siteOptions: { value: string, label: string }[], users: UserListUser[], groups: GroupListGroup[], templates: TemplateListTemplate[] }
+  $: ({ siteOptions, users, groups, templates } = data)
+  $: dataTemplateOptions = templates.filter(t => t.type === 'DATA').map(t => ({ label: t.name, value: t.key }))
 
   let modal: 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' | 'assignrole' |
     'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | 'assigntogroup' |
@@ -416,7 +417,7 @@
     on:saved={onSaved}
     preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id } : undefined }/>
 {:else if modal === 'addtemplaterule'}
-  <TemplateRuleDialog roleId={$store.role.id} on:escape={() => { modal = undefined }} on:saved={onSaved}/>
+  <TemplateRuleDialog roleId={$store.role.id} on:escape={() => { modal = undefined }} on:saved={onSaved} templateChoices={templates.map(t => ({ label: t.name, value: t.key }))}/>
 {:else if modal === 'deleterule'}
   <Dialog
   title={'Delete Rule'}

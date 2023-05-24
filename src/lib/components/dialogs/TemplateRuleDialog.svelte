@@ -3,12 +3,10 @@
   import { FieldCheckbox, FieldSelect, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { SubForm } from '@txstate-mws/svelte-forms'
-  import { onMount } from 'svelte'
 
   export let roleId: string
   export let preload: TemplateRuleDialogState|undefined = undefined
-
-  let templateChoices: PopupMenuItem[] = []
+  export let templateChoices: PopupMenuItem[]
 
   const name = 'addtemplaterule'
   const title = 'Add Template Rule'
@@ -21,6 +19,7 @@
   }
 
   async function onAddTemplateRule (state: TemplateRuleDialogState) {
+    if (state.templateId === 'alltemplates') state.templateId = undefined
     const resp = await api.addTemplateRule({ ...state, roleId })
     return {
       success: resp.success,
@@ -35,18 +34,14 @@
   }
 
   async function validateAdd (state: TemplateRuleDialogState) {
+    if (state.templateId === 'alltemplates') state.templateId = undefined
     const resp = await api.addTemplateRule({ ...state, roleId }, true)
     return messageForDialog(resp.messages, '')
   }
-
-  onMount(async () => {
-    const templates = await api.getAllTemplates()
-    templateChoices = templates.map(t => ({ label: t.name, value: t.key }))
-  })
 </script>
 
 <FormDialog submit={onAddTemplateRule} validate={validateAdd} {name} {title} {preload} on:escape on:saved>
-  <FieldSelect path='templateId' label='Template' choices={templateChoices}/>
+  <FieldSelect path='templateId' label='Template' choices={[{ label: 'All Templates', value: 'alltemplates' }, ...templateChoices]} defaultValue='alltemplates' notNull/>
   <SubForm path='grants'>
     <FieldCheckbox path='use' boxLabel='Use' defaultValue={false}/>
   </SubForm>
