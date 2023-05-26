@@ -5,7 +5,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog } from '$lib'
 
   type TypedRoleItem = TypedTreeItem<RoleListRole>
 
@@ -61,6 +61,7 @@
     modal = undefined
   }
   let filter = ''
+  $: uiLog.target = uiLog.targetFromTreeStore($store, 'name')
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Roles'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()} filterinput on:filter={e => { filter = e.detail }}>

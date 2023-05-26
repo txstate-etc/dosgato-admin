@@ -14,7 +14,7 @@
   import trash from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
   import { isNotNull, printIf, titleCase } from 'txstate-utils'
-  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api, VersionHistory } from '$lib'
+  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api, VersionHistory, uiLog } from '$lib'
   import { statusIcon } from './helpers'
   import VersionView from './VersionView.svelte'
 
@@ -200,6 +200,7 @@
           ? `${environmentConfig.renderBase}/.compare/${$editorStore.previewing.fromVersion.version}/${$editorStore.previewing.version.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
           : `${environmentConfig.renderBase}/.preview/${$editorStore.previewing?.version.version ?? 'latest'}${$pageStore.path}?token=${api.token}`
       )
+  $: uiLog.target = $editorStore.page.path
 </script>
 
 {#if $editorStore.previewing && ($editorStore.previewing.version.version !== $editorStore.page.version.version || $editorStore.previewing?.fromVersion)}

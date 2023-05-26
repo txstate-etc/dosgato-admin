@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ActionPanel, type ActionPanelAction, api, type TemplateListTemplate, templateRegistry } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type TemplateListTemplate, templateRegistry, uiLog } from '$lib'
   import { Dialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
   import checkIcon from '@iconify-icons/mdi/check'
   import earthIcon from '@iconify-icons/mdi/earth'
@@ -32,7 +32,7 @@
       modal = undefined
     }
   }
-
+  $: uiLog.target = uiLog.targetFromTreeStore($store, 'name')
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Templates'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : []}>

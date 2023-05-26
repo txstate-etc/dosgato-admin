@@ -22,7 +22,7 @@
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { unique } from 'txstate-utils'
-  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, type EnhancedUITemplate } from '$lib'
+  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, type EnhancedUITemplate, uiLog } from '$lib'
   import '../index.css'
   import { afterNavigate } from '$app/navigation'
 
@@ -453,6 +453,7 @@
   }
 
   afterNavigate(() => store.refresh().catch(console.error))
+  $: uiLog.target = uiLog.targetFromTreeStore($store, 'path')
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Data'} actions={getActions($store.selectedItems)}>

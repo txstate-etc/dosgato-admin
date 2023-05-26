@@ -1,3 +1,4 @@
+import type { ITreeStore } from '@dosgato/dialog'
 import { uiConfig } from '../local'
 
 
@@ -27,13 +28,21 @@ export interface UserEvent extends BaseEvent {
   target: string
 }
 
+/** Rather than determining contextual properties of `UserEvent`s when doing each logging call we're
+ * instantiating an InteractionLogger class that can have its `screen`, `target` and `logger` properties
+ * reactively set by the pages and screens that have components that make use of the logger. */
 class InteractionLogger {
   screen: string | undefined
   target: string | undefined
+  logger: (info: any) => void
+
   log (info: BaseEvent) {
     if (!this.screen) return
-    console.log({ ...info, screen: this.screen, target: this.target })
-    uiConfig.uiInteractionsLogger?.({ ...info, screen: this.screen, target: this.target })
+    this.logger({ ...info, screen: this.screen, target: this.target ?? '' })
+  }
+
+  targetFromTreeStore (state: ITreeStore<any>, prop: string) {
+    return state.selectedItems.length > 1 ? 'multiple' : state.selectedItems[0]?.[prop]
   }
 }
 

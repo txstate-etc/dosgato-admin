@@ -8,7 +8,7 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog } from '$lib'
+  import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog } from '$lib'
   import { buildAuditCSV } from './audit'
 
   type TypedSiteItem = TypedTreeItem<SiteListSite>
@@ -88,6 +88,7 @@
     j.href = URL.createObjectURL(new Blob([sitesCSV]))
     j.click()
   }
+  $: uiLog.target = uiLog.targetFromTreeStore($store, 'name')
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Sites'} actions={getActions($store.selectedItems)}>

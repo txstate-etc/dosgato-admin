@@ -16,7 +16,7 @@
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState, humanFileType } from '$lib'
+  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState, humanFileType, uiLog } from '$lib'
   import { _store as store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
   import './index.css'
 
@@ -153,6 +153,7 @@
     }
     modal = undefined
   }
+  $: uiLog.target = uiLog.targetFromTreeStore($store, 'path')
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Assets'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>

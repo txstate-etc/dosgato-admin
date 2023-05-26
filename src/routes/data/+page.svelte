@@ -2,9 +2,11 @@
   import cubeOutline from '@iconify-icons/mdi/cube-outline'
   import { Icon } from '@dosgato/dialog'
   import { base } from '$app/paths'
-  import { ActionPanel, templateRegistry, type TemplateListTemplate } from '$lib'
+  import { ActionPanel, templateRegistry, type TemplateListTemplate, uiLog } from '$lib'
 
   export let data: { templates: TemplateListTemplate[] }
+  // TODO: Determine the target for  data type page.
+  $: uiLog.target = undefined
 </script>
 
 <ActionPanel actionsTitle="Data Types" actions={[]}>

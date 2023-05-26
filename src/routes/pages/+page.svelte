@@ -256,7 +256,7 @@
     await store.refresh($store.selectedItems[0].parent)
   }
 
-  $: uiLog.target = $store.selectedItems.length > 1 ? 'multiple' : $store.selectedItems[0]?.path
+  $: uiLog.target = uiLog.targetFromTreeStore($store, 'path')
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>

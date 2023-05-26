@@ -5,7 +5,7 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
-  import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog, uiLog } from '$lib'
 
   type TypedGroupItem = TypedTreeItem<GroupListGroup>
 
@@ -61,7 +61,8 @@
     if (resp.success) store.refresh()
     modal = undefined
   }
-
+  // TODO: Need to get with Rachel on what we want defined for target in this screen's context.
+  $: uiLog.target = undefined
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Groups'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
