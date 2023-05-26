@@ -14,11 +14,11 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
-  import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig } from '$lib'
+  import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig, uiLog } from '$lib'
   import { uiConfig } from '../local'
   import '../local/tracking.js'
 
-  uiConfig.tracing?.init?.(environmentConfig)
+  $: uiLog.screen = $page.route.id ?? undefined
 
   export let data: { errObj: any }
 

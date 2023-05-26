@@ -10,6 +10,7 @@
   import { createEventDispatcher, onMount } from 'svelte'
   import { writable } from 'svelte/store'
   import type { ActionPanelAction, ActionPanelGroup } from './actionpanel'
+  import { uiLog } from '$lib/logging'
 
   export let actionsTitle: string|undefined = ''
   export let actions: (ActionPanelAction | ActionPanelGroup)[]
@@ -21,6 +22,13 @@
     filter: CustomEvent<string>
   }
   const dispatch = createEventDispatcher()
+
+  function onAction (action: ActionPanelAction) {
+    return () => {
+      uiLog.log({ eventType: 'ActionPanel', action: action.label, additionalProperties: { hiddenLabel: action.hiddenLabel } })
+      action.onClick()
+    }
+  }
 
   $: grouped = actions.reduce((grouped: ActionPanelGroup[], a) => {
     if ('actions' in a) grouped.push(a)
@@ -94,7 +102,7 @@
       {#each grouped as group (group.id)}
         <ul>
           {#each group.actions as action (action.id || action.label)}
-            <li class:enabled={!action.disabled} class={action.class}><button type="button" class="reset" disabled={action.disabled} on:click={action.onClick} on:keydown={onKeydown}><Icon width="{`${action.iconWidth ?? 1.2}em`}" icon={action.icon} />{action.label}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly></button></li>
+            <li class:enabled={!action.disabled} class={action.class}><button type="button" class="reset" disabled={action.disabled} on:click={onAction(action)} on:keydown={onKeydown}><Icon width="{`${action.iconWidth ?? 1.2}em`}" icon={action.icon} />{action.label}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly></button></li>
           {/each}
         </ul>
       {/each}

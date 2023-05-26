@@ -23,7 +23,7 @@
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning } from '$lib'
+  import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { _store as store, type TypedPageItem } from './+page'
   import { sandboxIcon } from './sandboxicon'
@@ -255,6 +255,8 @@
     modal = undefined
     await store.refresh($store.selectedItems[0].parent)
   }
+
+  $: uiLog.target = $store.selectedItems.length > 1 ? 'multiple' : $store.selectedItems[0]?.path
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
