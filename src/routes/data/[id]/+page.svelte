@@ -24,7 +24,8 @@
   import { unique } from 'txstate-utils'
   import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, type EnhancedUITemplate, uiLog } from '$lib'
   import '../index.css'
-  import { afterNavigate } from '$app/navigation'
+  import { afterNavigate, goto } from '$app/navigation'
+  import { base } from '$app/paths'
 
   let loadedData: { mayManageGlobalData: boolean, template: EnhancedUITemplate }
   export { loadedData as data }
@@ -213,7 +214,7 @@
   function singleActions (item: TypedDataTreeItem) {
     if (item.type === DataTreeNodeType.DATA) {
       const actions: ActionPanelAction[] = [
-        { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: () => { onClickEdit() } },
+        { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: onClickEdit },
         { label: 'Rename', icon: renameIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamedata' } }
       ]
       if ($store.copied.size) {
@@ -462,7 +463,7 @@
     { label: 'Status', id: 'status', fixed: '5em', icon: item => ({ icon: item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? deleteOutline : statusIcon[item.status]) : undefined, label: item.type === DataTreeNodeType.DATA ? item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' : undefined }), class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
     { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
     { label: 'By', id: 'modifiedBy', fixed: '3em', get: 'modifiedBy.id' }
-  ]} searchable='name' />
+  ]} searchable='name' on:choose={onClickEdit} />
 </ActionPanel>
 {#if modal === 'addfolder'}
   <FormDialog
