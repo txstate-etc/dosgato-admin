@@ -211,9 +211,12 @@ class API {
       })
       if (res.status !== 200) throw new Error(res.statusText)
 
+      let filename = new URL(url, location.href).pathname.split('/').slice(-1)[0]
       const header = res.headers.get('Content-Disposition')
-      const parts = header!.split(';')
-      const filename = parts[1].split('=')[1]
+      if (header) {
+        const parts = header.split(';')
+        filename = parts[1].split('=')[1]
+      }
 
       const fileStream = streamSaver.createWriteStream(filename)
       const writer = fileStream.getWriter()
