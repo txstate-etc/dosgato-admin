@@ -10,11 +10,12 @@
   import userCircleLight from '@iconify-icons/ph/user-circle-light'
   import usersLight from '@iconify-icons/ph/users-light'
   import { eq, PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
+  import { onMount } from 'svelte'
   import { isNotNull } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
-  import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig, uiLog } from '$lib'
+  import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig, uiLog, api } from '$lib'
   import { uiConfig } from '../local'
   import '../local/tracking.js'
 
@@ -50,6 +51,10 @@
       if (href) goto(href)
     }
   }
+
+  onMount(() => {
+    fetch(`${environmentConfig.renderBase}/.token?token=${api.token}`).catch(() => {})
+  })
 </script>
 
 {#if data.errObj}

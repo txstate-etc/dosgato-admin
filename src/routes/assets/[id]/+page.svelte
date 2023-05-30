@@ -87,7 +87,7 @@
   {/if}
 </div>
 {#if modal === 'upload'}
-  <UploadUI title="Upload new file for {asset.path}" uploadPath="{environmentConfig.apiBase}/assets/replace/{asset.id}?admin=1" maxFiles={1} on:escape={onUploadEscape} on:saved={onUploadSaved} />
+  <UploadUI title="Upload new file for {asset.path}" uploadPath="{environmentConfig.apiBase}/assets/replace/{asset.id}" maxFiles={1} on:escape={onUploadEscape} on:saved={onUploadSaved} />
 {/if}
 
 <style>

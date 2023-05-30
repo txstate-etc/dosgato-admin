@@ -168,7 +168,7 @@
   />
   <svelte:fragment slot="preview">
     {#if selectedItem?.kind === 'asset' && selectedItem.box}
-      <img src="{environmentConfig.renderBase}/.asset/{selectedItem.id}/w/400/{selectedItem.checksum.substring(0, 12)}/{encodeURIComponent(selectedItem.filename)}?admin=1" width={selectedItem.box.width} height={selectedItem.box.height} alt="">
+      <img src="{environmentConfig.renderBase}/.asset/{selectedItem.id}/w/400/{selectedItem.checksum.substring(0, 12)}/{encodeURIComponent(selectedItem.filename)}" width={selectedItem.box.width} height={selectedItem.box.height} alt="">
     {/if}
   </svelte:fragment>
 </ActionPanel>
