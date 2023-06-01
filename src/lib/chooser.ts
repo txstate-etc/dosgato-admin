@@ -13,9 +13,9 @@ export class ChooserClient implements Client {
 
   async getChildren (source: string, path: string): Promise<AnyItem[]> {
     if (source === 'pages') {
-      return await api.chooserSubPagesByPath(path)
+      return await api.chooserSubPagesByPath(path, this.pagetreeId)
     } else {
-      const assetsFolders = await api.chooserSubFoldersAndAssetsByPath(path)
+      const assetsFolders = await api.chooserSubFoldersAndAssetsByPath(path, this.pagetreeId)
       return sortby(assetsFolders, 'name')
     }
   }

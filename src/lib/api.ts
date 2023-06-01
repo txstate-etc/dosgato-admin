@@ -262,15 +262,16 @@ class API {
     return pages
   }
 
-  async chooserSubPagesByPath (path: string) {
-    if (path === '/') return await this.chooserRootPages()
+  async chooserSubPagesByPath (path: string, pagetreeId: string | undefined) {
+    if (path === '/') return await this.chooserRootPages(pagetreeId)
     const { pages } = await this.query<ChooserSubPagesByPath>(CHOOSER_SUBPAGES_BY_PATH, { path })
     return pages.map(apiPageToChooserPage)
   }
 
-  async chooserRootPages () {
+  async chooserRootPages (pagetreeId: string | undefined) {
     const pages = await this.getRootPages()
-    return pages.map(apiPageToChooserPage)
+    const siteId = (pagetreeId ? pages.find(p => p.pagetree.id === pagetreeId) : undefined)?.site.id
+    return pages.filter(p => p.pagetree.id === pagetreeId || (p.site.id !== siteId && p.pagetree.type === 'PRIMARY')).map(apiPageToChooserPage)
   }
 
   async chooserPageByLink (link: PageLink, pagetreeId?: string) {
@@ -288,8 +289,12 @@ class API {
     return apiPageToChooserPage(pages[0])
   }
 
-  async chooserSubFoldersAndAssetsByPath (path: string) {
-    if (path === '/') return (await this.getRootAssetFolders()).map(apiAssetFolderToChooserFolder)
+  async chooserSubFoldersAndAssetsByPath (path: string, pagetreeId: string | undefined) {
+    if (path === '/') {
+      const folders = await this.getRootAssetFolders()
+      const siteId = (pagetreeId ? folders.find(f => f.pagetree.id === pagetreeId) : undefined)?.site.id
+      return folders.filter(f => f.pagetree.id === pagetreeId || (f.site.id !== siteId && f.pagetree.type === 'PRIMARY')).map(apiAssetFolderToChooserFolder)
+    }
     const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(CHOOSER_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
     return [...assets.map(a => apiAssetToChooserAsset(a)!), ...assetfolders.map(f => apiAssetFolderToChooserFolder(f))]
   }

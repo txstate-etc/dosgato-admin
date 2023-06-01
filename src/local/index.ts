@@ -10,6 +10,7 @@ import { pageTemplate1 } from './pagetemplate1.js'
 import { pageTemplate2 } from './pagetemplate2.js'
 import { richText } from './richtext.js'
 import { HorizontalRule } from './horizontalrule.js'
+import { textImage } from './textimage.js'
 
 export const uiConfig: UIConfig = {
   templates: [
@@ -22,7 +23,8 @@ export const uiConfig: UIConfig = {
     panelTemplate,
     pageTemplate1,
     pageTemplate2,
-    richText
+    richText,
+    textImage
   ],
   login: {
     handleUnauthorized (environmentConfig: any) {
