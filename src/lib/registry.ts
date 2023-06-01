@@ -1,6 +1,6 @@
 import { api } from '$lib'
 import type { ComponentData, UITemplate } from '@dosgato/templating'
-import { Cache } from 'txstate-utils'
+import { Cache, rescue } from 'txstate-utils'
 import { uiConfig } from '../local/index.js'
 
 const templateCache = new Cache(async (_, templateMap: Map<string, EnhancedUITemplate>) => {
@@ -45,7 +45,7 @@ class TemplateRegistry {
   }
 
   async enhanceInfo () {
-    await templateCache.get(undefined, this.templateMap)
+    await rescue(templateCache.get(undefined, this.templateMap))
   }
 }
 
