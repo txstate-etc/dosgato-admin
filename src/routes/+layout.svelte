@@ -53,7 +53,16 @@
   }
 
   onMount(() => {
-    fetch(`${environmentConfig.renderBase}/.token?token=${api.token}`).catch(() => {})
+    // populate the user's token to the render service so that it can create a cookie for itself
+    // this way we can load images that require authentication in <img> tags and the editing iframe
+    // will be authenticated
+    // iframe works better here than `fetch` because of CORS and a firefox bug where iframes don't send
+    // cookies created during a `fetch`
+    const iframe = document.createElement('iframe')
+    iframe.onload = () => iframe.remove()
+    iframe.src = `${environmentConfig.renderBase}/.token?token=${api.token}`
+    iframe.style.height = '0px'
+    document.body.append(iframe)
   })
 </script>
 
