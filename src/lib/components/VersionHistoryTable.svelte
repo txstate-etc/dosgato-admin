@@ -54,7 +54,6 @@
   }
 
   let hoverRow: HTMLElement | undefined
-  $: console.log(hoverRow)
 
   function onMark (version: number) {
     return async (e: MouseEvent) => {
