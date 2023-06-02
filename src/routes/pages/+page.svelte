@@ -6,6 +6,7 @@
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import archive from '@iconify-icons/ph/archive'
   import fileX from '@iconify-icons/ph/file-x'
+  import historyIcon from '@iconify-icons/mdi/history'
   import layout from '@iconify-icons/ph/layout'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
@@ -61,7 +62,8 @@
         { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
         { label: 'Rename', icon: renameIcon, disabled: !page.permissions.move, onClick: () => { modal = 'renamepage' } },
         { label: 'Change Template', icon: layout, disabled: !page.permissions.update, onClick: onClickTemplateChange },
-        { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${page.path}.html`), '_blank') } }
+        { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${page.path}.html`), '_blank') } },
+        { label: 'Show Versions', icon: historyIcon, onClick: () => goto(base + '/pages/' + page.id + '#versions') }
       ]
     }
 
