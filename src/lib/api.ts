@@ -989,6 +989,13 @@ class API {
     `, { dataId, version })
     return { ...v, date: DateTime.fromISO(v.date), markedAt: v.markedAt ? DateTime.fromISO(v.markedAt) : undefined }
   }
+
+  async updateAssetMeta (assetId: string, data: any, validateOnly?: boolean) {
+    const { updateAsset } = await this.query<{ updateAsset: MutationResponse }>(`
+      mutation updateAssetMeta ($assetId: ID!, $data: JsonData!, $validateOnly: Boolean) { updateAsset (assetId: $assetId, data: $data, validateOnly: $validateOnly) { success messages { message type arg } } }
+    `, { assetId, data, validateOnly })
+    return { ...updateAsset, messages: messageForDialog(updateAsset.messages, 'meta.'), data }
+  }
 }
 
 export const api = new API()

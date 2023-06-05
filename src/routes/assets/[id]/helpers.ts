@@ -1,21 +1,22 @@
 import { iconForMime } from '@dosgato/dialog'
 import { base } from '$app/paths'
 import { api, subnavStore } from '$lib'
+import type { AssetData } from '@dosgato/templating'
 
 export interface AssetDetail {
   id: string
   name: string
   filename: string
   uploadedFilename: string
-  modifiedBy: { id: string, name: string }
+  createdAt: string
+  createdBy: { id: string, name: string }
   modifiedAt: string
+  modifiedBy: { id: string, name: string }
   path: string
   size: number
   mime: string
   checksum: string
-  data: {
-    legacyId?: string
-  }
+  data: AssetData
   box?: {
     width: number
     height: number
@@ -38,8 +39,10 @@ export async function getAssetDetail (id: string) {
         name
         filename
         uploadedFilename
-        modifiedBy { id name }
+        createdAt
+        createdBy { id name }
         modifiedAt
+        modifiedBy { id name }
         path
         size
         mime

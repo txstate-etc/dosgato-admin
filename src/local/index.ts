@@ -11,6 +11,7 @@ import { pageTemplate2 } from './pagetemplate2.js'
 import { richText } from './richtext.js'
 import { HorizontalRule } from './horizontalrule.js'
 import { textImage } from './textimage.js'
+import AssetDialog from './AssetDialog.svelte'
 
 export const uiConfig: UIConfig = {
   templates: [
@@ -43,5 +44,9 @@ export const uiConfig: UIConfig = {
       const { searchParams } = url
       return searchParams.get('unifiedJwt') ?? undefined
     }
+  },
+  assetMeta: {
+    dialog: AssetDialog,
+    details: meta => ({ Title: meta.title, Description: meta.description })
   }
 }

@@ -3,6 +3,8 @@
   import { Icon } from '@dosgato/dialog'
   import { eq } from '@txstate-mws/svelte-components'
   import { shouldUseWhiteText, toArray } from 'txstate-utils'
+  let className = ''
+  export { className as class }
   export let header: string
   export let button: DetailPanelButton | DetailPanelButton[] | undefined = undefined
   export let headerColor: string = '#00507A'
@@ -11,8 +13,8 @@
 </script>
 
 
-<div class="panel" use:eq>
-  <div class="header" style="background-color: {headerColor}; color: {color}">
+<div class="panel {className}" use:eq>
+  <div class="header" class:useborder={!shouldUseWhiteText(headerColor)} style="background-color: {headerColor}; color: {color}">
     <h2>{header}</h2>
     {#each buttons as button, i}
       <button type="button" class="reset" class:leftmost={i === 0} on:click={button.onClick}><Icon icon={button.icon} hiddenLabel={button.hiddenLabel} width="1.5em" /></button>
@@ -39,6 +41,8 @@
     font-weight: normal;
     margin: 0;
     padding: 0.5em 0;
+  }
+  .header.useborder {
     border-bottom: 2px solid black;
   }
   .header button {
