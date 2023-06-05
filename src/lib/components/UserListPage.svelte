@@ -10,6 +10,7 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, uiLog } from '$lib'
+  import { setContext } from 'svelte'
 
   export let system: boolean
 
@@ -89,10 +90,14 @@
     modal = undefined
     store.refresh()
   }
+
   let filter
+
   $: actions = $store.selected.size ? ($store.selected.size === 1 ? singleactions($store.selectedItems[0]) : multiactions($store.selectedItems)) : emptyactions
+
   // TODO: Get with Rachel on what we want the target to be here. Probably don't want it to be the user.
-  $: uiLog.target = undefined
+  const actionPanelTarget: { target: string | undefined } = { target: 'UserListPage' }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 </script>
 <ActionPanel {actions} actionsTitle={$store.selected.size ? $store.selectedItems[0].id : 'Users'} filterinput on:filter={e => { filter = e.detail }}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/users/' + detail.id)} headers={[

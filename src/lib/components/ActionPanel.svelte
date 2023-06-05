@@ -7,7 +7,7 @@
   import arrowCircleRightLight from '@iconify-icons/ph/arrow-circle-right-light'
   import { elementqueries, eq, modifierKey, offset, OffsetStore, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { Store } from '@txstate-mws/svelte-store'
-  import { createEventDispatcher, onMount } from 'svelte'
+  import { createEventDispatcher, getContext, onMount } from 'svelte'
   import { writable } from 'svelte/store'
   import type { ActionPanelAction, ActionPanelGroup } from './actionpanel'
   import { uiLog } from '$lib/logging'
@@ -22,10 +22,11 @@
     filter: CustomEvent<string>
   }
   const dispatch = createEventDispatcher()
+  const { getTarget } = getContext('ActionPanelTarget') as { getTarget: () => string | undefined }
 
   function onAction (action: ActionPanelAction) {
     return () => {
-      uiLog.log({ eventType: 'ActionPanel', action: action.label, additionalProperties: { hiddenLabel: action.hiddenLabel } })
+      uiLog.log({ eventType: 'ActionPanel', action: action.label, additionalProperties: { hiddenLabel: action.hiddenLabel } }, getTarget())
       action.onClick()
     }
   }

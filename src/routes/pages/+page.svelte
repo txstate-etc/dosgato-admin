@@ -32,6 +32,7 @@
   import { copyWithSubpagesIcon } from './copywithsubpagesicon'
   import { statusIcon } from './[id]/helpers'
   import './index.css'
+  import { setContext } from 'svelte'
 
   let modal: 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | undefined = undefined
 
@@ -139,6 +140,7 @@
 
   async function onAddPage (state) {
     const resp = await api.createPage(state.name, state.templateKey, state.data, $store.selectedItems[0].id, false, false)
+    uiLog.log({ eventType: `${modal}-modal`, action: resp.success ? 'Success' : 'Failed', additionalProperties: { name: state.name, template: state.templateKey } }, actionPanelTarget.target)
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
@@ -159,6 +161,7 @@
 
   async function onRenamePage (state) {
     const resp = await api.renamePage($store.selectedItems[0].id, state.name)
+    uiLog.log({ eventType: `${modal}-modal`, action: resp.success ? 'Success' : 'Failed' }, actionPanelTarget.target)
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
@@ -173,6 +176,7 @@
 
   async function onDuplicatePage () {
     const resp = await api.duplicatePage($store.selectedItems[0].id, $store.selectedItems[0].parent!.id)
+    uiLog.log({ eventType: `${modal}-modal`, action: resp.success ? 'Success' : 'Failed' }, actionPanelTarget.target)
     if (resp.success) {
       store.refresh()
       modal = undefined
@@ -181,18 +185,21 @@
 
   async function onPublishPages () {
     const resp = await api.publishPages($store.selectedItems.map(d => d.id), false)
+    uiLog.log({ eventType: `${modal}-modal`, action: resp.success ? 'Success' : 'Failed' }, actionPanelTarget.target)
     modal = undefined
     if (resp.success) await store.refresh()
   }
 
   async function onPublishPagesWithSubpages () {
     const resp = await api.publishPages($store.selectedItems.map(d => d.id), true)
+    uiLog.log({ eventType: `${modal}-modal`, action: resp.success ? 'Success' : 'Failed' }, actionPanelTarget.target)
     modal = undefined
     if (resp.success) await store.refresh()
   }
 
   async function onUnpublishPages () {
     const resp = await api.unpublishPages($store.selectedItems.map(d => d.id))
+    uiLog.log({ eventType: `${modal}-modal`, action: resp.success ? 'Success' : 'Failed' }, actionPanelTarget.target)
     modal = undefined
     if (resp.success) await store.refresh()
   }
@@ -207,6 +214,7 @@
 
   async function onDeletePage () {
     const resp = await api.deletePages([$store.selectedItems[0].id])
+    uiLog.log({ eventType: `${modal}-modal`, action: resp.success ? 'Success' : 'Failed' }, actionPanelTarget.target)
     modal = undefined
     pagesToDeleteCount = undefined
     if (resp.success) await store.refresh()
@@ -220,6 +228,7 @@
 
   async function onPublishDeletion () {
     const resp = await api.publishDeletion([$store.selectedItems[0].id])
+    uiLog.log({ eventType: `${modal}-modal`, action: resp.success ? 'Success' : 'Failed' }, actionPanelTarget.target)
     modal = undefined
     pagesToDeleteCount = undefined
     if (resp.success) await store.refresh()
@@ -227,17 +236,20 @@
 
   async function onUndeletePage () {
     const resp = await api.undeletePages([$store.selectedItems[0].id])
+    uiLog.log({ eventType: `${modal}-modal`, action: resp.success ? 'Success' : 'Failed' }, actionPanelTarget.target)
     modal = undefined
     if (resp.success) await store.refresh()
   }
 
   async function onUndeletePageWithChildren () {
     const resp = await api.undeletePages([$store.selectedItems[0].id], true)
+    uiLog.log({ eventType: `${modal}-modal`, action: resp.success ? 'Success' : 'Failed' }, actionPanelTarget.target)
     modal = undefined
     if (resp.success) await store.refresh()
   }
 
   async function onImportSaved () {
+    uiLog.log({ eventType: `${modal}-modal`, action: 'Success' }, actionPanelTarget.target)
     modal = undefined
     await store.openAndRefresh($store.selectedItems[0])
   }
@@ -247,7 +259,9 @@
     modal = 'changetemplate'
   }
   async function onChangeTemplateSubmit (data: { templateKey: string }) {
-    return await api.changeTemplate($store.selectedItems[0].id, data.templateKey)
+    const resp = await api.changeTemplate($store.selectedItems[0].id, data.templateKey)
+    uiLog.log({ eventType: `${modal}-modal`, action: resp.success ? 'Success' : 'Failed', additionalProperties: { templateKey: data.templateKey } }, actionPanelTarget.target)
+    return resp
   }
   async function validateChangeTemplate (data: { templateKey: string }) {
     const resp = await api.changeTemplate($store.selectedItems[0].id, data.templateKey, { validateOnly: true })
@@ -258,7 +272,14 @@
     await store.refresh($store.selectedItems[0].parent)
   }
 
-  $: uiLog.target = uiLog.targetFromTreeStore($store, 'path')
+  const actionPanelTarget: { target: string | undefined } = { target: undefined }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+  $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'path')
+
+  const onEscapeModal = () => {
+    uiLog.log({ eventType: `${modal}-modal`, action: 'Cancel' }, actionPanelTarget.target)
+    modal = undefined
+  }
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
@@ -280,7 +301,7 @@
     title="Add New Page"
     pagetreeId={$store.selectedItems[0].pagetree.id}
     templateChoices={availableTemplates}
-    on:escape={() => { modal = undefined }}
+    on:escape={onEscapeModal}
     on:saved={onAddPageComplete}/>
 {:else if modal === 'renamepage'}
   <FormDialog
@@ -289,7 +310,7 @@
     name='renamepage'
     title='Rename Page'
     preload={{ name: $store.selectedItems[0].name }}
-    on:escape={() => { modal = undefined }}
+    on:escape={onEscapeModal}
     on:saved={onRenamePageComplete}>
     <FieldText path='name' label='Name' required />
   </FormDialog>
@@ -299,7 +320,7 @@
     validate={validateChangeTemplate}
     title='Change Page Template'
     preload={{ templateKey: $store.selectedItems[0].template?.key }}
-    on:escape={() => { modal = undefined }}
+    on:escape={onEscapeModal}
     on:saved={onChangeTemplateSaved}>
     <FieldSelect notNull path="templateKey" choices={availableTemplates} />
   </FormDialog>
@@ -309,7 +330,7 @@
     continueText='Duplicate'
     cancelText='Cancel'
     on:continue={onDuplicatePage}
-    on:escape={() => { modal = undefined }}>
+    on:escape={onEscapeModal}>
     Duplicate this page and all of its subpages?
   </Dialog>
 {:else if modal === 'copiedpage'}
@@ -324,7 +345,7 @@
     continueText='Publish'
     cancelText='Cancel'
     on:continue={onPublishPages}
-    on:escape={() => { modal = undefined }}>
+    on:escape={onEscapeModal}>
     Publish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''}?`}
   </Dialog>
 {:else if modal === 'publishwithsubpages'}
@@ -333,7 +354,7 @@
     continueText='Publish'
     cancelText='Cancel'
     on:continue={onPublishPagesWithSubpages}
-    on:escape={() => { modal = undefined }}>
+    on:escape={onEscapeModal}>
     Publish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''} and ${$store.selectedItems.length > 1 ? 'their' : 'its'} subpages?`}
   </Dialog>
 {:else if modal === 'unpublishpages'}
@@ -342,7 +363,7 @@
     continueText='Unpublish'
     cancelText='Cancel'
     on:continue={onUnpublishPages}
-    on:escape={() => { modal = undefined }}>
+    on:escape={onEscapeModal}>
     Unpublish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''}?`}
   </Dialog>
 {:else if modal === 'deletepage'}
@@ -351,7 +372,7 @@
     continueText='Delete'
     cancelText='Cancel'
     on:continue={onDeletePage}
-    on:escape={() => { modal = undefined }}>
+    on:escape={onEscapeModal}>
     <DialogWarning text={`You are about to delete ${pagesToDeleteCount} pages. Deleted pages will no longer be visible on your live site.`}/>
   </Dialog>
 {:else if modal === 'publishdelete'}
@@ -360,7 +381,7 @@
     continueText='Delete'
     cancelText='Cancel'
     on:continue={onPublishDeletion}
-    on:escape={() => { modal = undefined }}>
+    on:escape={onEscapeModal}>
     <DialogWarning text={`You are about to finalize the deletion of ${pagesToDeleteCount} pages. You will no longer see these pages in your site.`}/>
   </Dialog>
 {:else if modal === 'undeletepage'}
@@ -369,7 +390,7 @@
     continueText='Restore'
     cancelText='Cancel'
     on:continue={onUndeletePage}
-    on:escape={() => { modal = undefined }}>
+    on:escape={onEscapeModal}>
     Restore this deleted page?
   </Dialog>
 {:else if modal === 'undeletewithsubpages'}
@@ -378,7 +399,7 @@
     continueText='Restore'
     cancelText='Cancel'
     on:continue={onUndeletePageWithChildren}
-    on:escape={() => { modal = undefined }}>
+    on:escape={onEscapeModal}>
     Restore this deleted page and its child pages?
   </Dialog>
 {:else if modal === 'import' && $store.selectedItems[0]}
@@ -387,7 +408,7 @@
     uploadPath="{environmentConfig.apiBase}/pages/{$store.selectedItems[0].id}"
     mimeWhitelist={['application/json', 'application/x-gzip']}
     maxFiles={1}
-    on:escape={() => { modal = undefined }}
+    on:escape={onEscapeModal}
     on:saved={onImportSaved} />
 {/if}
 

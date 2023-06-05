@@ -3,22 +3,20 @@ import type { BaseEvent } from '@dosgato/templating'
 import { environmentConfig } from './stores'
 
 /** Rather than determining contextual properties of `UserEvent`s when doing each logging call we're
- * instantiating an InteractionLogger class that can have its `screen`, `target` and `logger` properties
- * reactively set by the pages and screens that have components that make use of the logger. */
+ * instantiating a global InteractionLogger class that can have its `screen` and `logger` properties
+ * set by the pages and screens that have components that make use of the logger. */
 class InteractionLogger {
   screen: string | undefined
-  target: string | undefined
   logger: (...args: any[]) => void
 
-  log (info: BaseEvent) {
+  log (info: BaseEvent, target?: string) {
     // Don't log anything if we've been asked to log without a screen defined to give context.
     if (!this.screen) return
-    const logInfo = { ...info, screen: this.screen, target: this.target ?? '' }
-    if (this.logger === console.log) {
-      this.logger(logInfo)
-    } else this.logger(logInfo, environmentConfig)
+    const logInfo = target ? { ...info, screen: this.screen, target } : { ...info, screen: this.screen }
+    this.logger(logInfo, environmentConfig)
   }
 
+  /** Convenience function for handling how to get a target from a TreeStore by prop-name. */
   targetFromTreeStore (state: ITreeStore<any>, prop: string) {
     return state.selectedItems.length > 1 ? 'multiple' : state.selectedItems[0]?.[prop]
   }

@@ -10,6 +10,7 @@
   import { base } from '$app/paths'
   import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog } from '$lib'
   import { buildAuditCSV } from './audit'
+  import { setContext } from 'svelte'
 
   type TypedSiteItem = TypedTreeItem<SiteListSite>
 
@@ -22,9 +23,11 @@
     const siteList = await api.getSiteList()
     return siteList
   }
+
   function renderOwner (site: TypedSiteItem) {
     return site.owner ? `${site.owner.name} (${site.owner.id})` : ''
   }
+
   const store: TreeStore<SiteListSite> = new TreeStore(fetchChildren)
 
   function noneSelectedActions () {
@@ -36,6 +39,7 @@
       { label: 'Download CSV', icon: downloadIcon, disabled: !$globalStore.access.createSites, onClick: () => downloadSitesAudit() }
     ]
   }
+
   function singleActions (item: TypedSiteItem) {
     const actions: ActionPanelAction[] = []
     if (item.deleted) {
@@ -88,7 +92,10 @@
     j.href = URL.createObjectURL(new Blob([sitesCSV]))
     j.click()
   }
-  $: uiLog.target = uiLog.targetFromTreeStore($store, 'name')
+
+  const actionPanelTarget: { target: string | undefined } = { target: undefined }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+  $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Sites'} actions={getActions($store.selectedItems)}>

@@ -6,6 +6,7 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog } from '$lib'
+  import { setContext } from 'svelte'
 
   type TypedRoleItem = TypedTreeItem<RoleListRole>
 
@@ -60,8 +61,12 @@
     if (resp.success) store.refresh()
     modal = undefined
   }
+
   let filter = ''
-  $: uiLog.target = uiLog.targetFromTreeStore($store, 'name')
+
+  const actionPanelTarget: { target: string | undefined } = { target: undefined }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+  $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Roles'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()} filterinput on:filter={e => { filter = e.detail }}>

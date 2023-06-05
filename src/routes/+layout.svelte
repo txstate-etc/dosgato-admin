@@ -10,16 +10,16 @@
   import userCircleLight from '@iconify-icons/ph/user-circle-light'
   import usersLight from '@iconify-icons/ph/users-light'
   import { eq, PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
-  import { onMount } from 'svelte'
+  import { onMount, setContext } from 'svelte'
   import { isNotNull } from 'txstate-utils'
-  import { goto } from '$app/navigation'
+  import { afterNavigate, goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
   import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig, uiLog, api } from '$lib'
   import { uiConfig } from '../local'
   import '../local/tracking.js'
 
-  uiLog.logger = uiConfig.uiInteractionsLogger ?? console.log
+  uiLog.logger = uiConfig.uiInteractionsLogger ?? ((arg: any) => console.log(arg))
   $: uiLog.screen = $page.route.id ?? undefined
 
   export let data: { errObj: any }
@@ -64,6 +64,14 @@
     iframe.style.height = '0px'
     document.body.append(iframe)
   })
+
+  afterNavigate((nav) => {
+    // Making a direct call to logger since after we navigate our uiLog.screen will be the target, not the originating screen.
+    uiLog.logger({ eventType: 'navigation', action: nav.type.toString(), screen: nav.from?.url.pathname, target: nav.to?.url.pathname }, environmentConfig)
+  })
+
+  const labeledIconButtonTarget: { target: string | undefined } = { target: 'Profile-PopupMenu' }
+  setContext('LabeledIconButtonTarget', { getTarget: () => labeledIconButtonTarget.target })
 </script>
 
 {#if data.errObj}
@@ -91,7 +99,7 @@
       <div class="profile-compact">
         <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
       </div>
-      <button type="button" bind:this={profileelement} class="login-status reset">
+      <button type="button" bind:this={profileelement} class="login-status reset" on:click={() => { uiLog.log({ eventType: 'button', action: 'LoginStatus' }, 'Login-PopupMenu') }} >
         {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}
         <Icon icon={menuDown} inline />
       </button>

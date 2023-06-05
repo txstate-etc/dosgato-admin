@@ -3,10 +3,17 @@
   import { Icon } from '@dosgato/dialog'
   import { base } from '$app/paths'
   import { ActionPanel, templateRegistry, type TemplateListTemplate, uiLog } from '$lib'
+  import { setContext } from 'svelte'
 
   export let data: { templates: TemplateListTemplate[] }
-  // TODO: Determine the target for  data type page.
-  $: uiLog.target = undefined
+
+  // TODO: Determine the target for  data templates page.
+  const actionPanelTarget: { target: string | undefined } = { target: 'DataTemplates' }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+
+  function logInteraction (action: string, target: string) {
+    uiLog.log({ eventType: 'DataTemplatesMenu', action }, target)
+  }
 </script>
 
 <ActionPanel actionsTitle="Data Types" actions={[]}>
@@ -15,7 +22,8 @@
       {#each data.templates as template (template.key)}
         {@const tmpl = templateRegistry.getTemplate(template.key)}
         {#if tmpl}
-          <a href={`${base}/data/${template.key}`}>
+          <a href={`${base}/data/${template.key}`}
+           on:click={() => logInteraction(template.name, `${base}/data/${template.key}`)} >
             <Icon icon={tmpl.icon ?? cubeOutline} width="6em"/>
             <div class="template-name">{template.name}</div>
           </a>

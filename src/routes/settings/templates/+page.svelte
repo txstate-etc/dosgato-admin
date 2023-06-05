@@ -5,6 +5,7 @@
   import earthIcon from '@iconify-icons/mdi/earth'
   import earthOffIcon from '@iconify-icons/mdi/earth-off'
   import boundingBoxLight from '@iconify-icons/ph/bounding-box-light'
+  import { setContext } from 'svelte'
 
   type TypedTemplateItem = TypedTreeItem<TemplateListTemplate>
 
@@ -32,7 +33,10 @@
       modal = undefined
     }
   }
-  $: uiLog.target = uiLog.targetFromTreeStore($store, 'name')
+
+  const actionPanelTarget: { target: string | undefined } = { target: undefined }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+  $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Templates'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : []}>

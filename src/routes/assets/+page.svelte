@@ -19,6 +19,7 @@
   import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState, humanFileType, uiLog } from '$lib'
   import { _store as store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
   import './index.css'
+  import { setContext } from 'svelte'
 
   let modal: 'upload' | 'create' | 'rename' | 'delete' | 'finalizeDelete' | 'restore' | undefined
   let selectedFolder: TypedAssetFolderItem | undefined
@@ -153,7 +154,10 @@
     }
     modal = undefined
   }
-  $: uiLog.target = uiLog.targetFromTreeStore($store, 'path')
+
+  const actionPanelTarget: { target: string | undefined } = { target: undefined }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+  $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'path')
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Assets'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
