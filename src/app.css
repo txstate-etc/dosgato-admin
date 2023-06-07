@@ -19,58 +19,55 @@ button.reset {
   cursor: pointer;
 }
 
-.name, .template {
+.tree-node .name, .tree-node .template {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-li .status {
+.tree-node .status {
   text-align: center;
 }
-.status:not(.deleted) .icon svg {
+.tree-node .status:not(.deleted) .icon svg {
   width: 1.2em;
   height: 1.2em;
 }
-.status.published {
+.tree-node .status.published {
   color: var(--dosgato-green, #689600);
 }
-.status.modified {
+.tree-node .status.modified {
   color: var(--dosgato-yellow, #ffbf28);
 }
-.status.unpublished {
+.tree-node .status.unpublished {
   color: var(--dosgato-red, #9a3332);
 }
-.status.deleted {
+.tree-node .status.deleted {
   color: #555;
-}
-.pubsubpages svg {
-  margin-left: 0.2em;
 }
 .tooltip-wrapper {
   display: flex;
   justify-content: center;
 }
-li .modified span, li .modifiedBy {
+.tree-node .modified span, .tree-node .modifiedBy {
   font-size: 0.9em;
 }
-.modified span.short {
+.tree-node .modified span.short {
   display: none;
 }
-[data-eq~="600px"] .modified span.full {
+[data-eq~="600px"] .tree-node .modified span.full {
   display: none;
 }
-[data-eq~="600px"] .modified span.short {
+[data-eq~="600px"] .tree-node .modified span.short {
   display: block;
 }
-[data-eq~="600px"] .modified {
+[data-eq~="600px"] .tree-node .modified {
   width: 7em !important;
 }
-[data-eq~="600px"] .status {
+[data-eq~="600px"] .tree-node .status {
   width: 3.2em !important;
 }
-[data-eq~="500px"] .template,
-[data-eq~="300px"] .title,
-[data-eq~="400px"] .modified,
-[data-eq~="400px"] .modifiedBy {
+[data-eq~="500px"] .tree-node .template,
+[data-eq~="300px"] .tree-node .title,
+[data-eq~="400px"] .tree-node .modified,
+[data-eq~="400px"] .tree-node .modifiedBy {
   display: none;
 }
