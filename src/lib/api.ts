@@ -565,8 +565,6 @@ class API {
   }
 
   async addDataEntry (data: any, templateKey: string, siteId?: string, folderId?: string, validateOnly?: boolean) {
-    const resp = validateRequired<{ data: undefined }>({ name }, ['name'])
-    if (resp) return resp
     const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
     const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem } }>(CREATE_DATA_ITEM, { args: { data: dataToSave, siteId, folderId }, validateOnly })
     return createDataEntry
