@@ -1,5 +1,5 @@
 import { api } from '$lib'
-import type { ComponentData, UITemplate } from '@dosgato/templating'
+import type { ComponentData, UITemplate, UITemplateData } from '@dosgato/templating'
 import { Cache, rescue } from 'txstate-utils'
 import { uiConfig } from '../local/index.js'
 
@@ -12,20 +12,26 @@ const templateCache = new Cache(async (_, templateMap: Map<string, EnhancedUITem
       old.templateProperties = t.templateProperties
       old.displayCategory = t.displayCategory ?? 'Standard'
       old.areas = new Map()
-      old.global = t.global
+      ;(old as any).global = t.global
       old.genDefaultContent = typeof old.defaultContent === 'undefined' ? () => ({}) : (typeof old.defaultContent === 'object' ? () => old.defaultContent! : old.defaultContent)
       for (const a of t.areas) old.areas.set(a.name, { name: a.name, availableComponents: new Set(a.availableComponents.map(ac => ac.key)) })
     }
   }
 })
 
-export interface EnhancedUITemplate extends UITemplate {
+interface UITemplateEnhancement {
   name: string
   templateProperties: any
+}
+
+export interface EnhancedUITemplate extends UITemplate, UITemplateEnhancement {
   displayCategory?: string
   areas: Map<string, { name: string, availableComponents: Set<string> }>
-  global?: boolean
   genDefaultContent: (data: ComponentData) => Record<string, ComponentData[]>
+}
+
+export interface EnhancedDataTemplate extends UITemplateData, UITemplateEnhancement {
+  global?: boolean
 }
 
 class TemplateRegistry {
@@ -42,6 +48,10 @@ class TemplateRegistry {
 
   getTemplate (key: string) {
     return this.templateMap.get(key)
+  }
+
+  getDataTemplate (key: string) {
+    return this.templateMap.get(key) as EnhancedDataTemplate
   }
 
   async enhanceInfo () {

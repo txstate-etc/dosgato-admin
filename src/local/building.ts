@@ -1,7 +1,7 @@
-import type { UITemplate } from '@dosgato/templating'
+import type { UITemplateData } from '@dosgato/templating'
 import BuildingDialog from './BuildingDialog.svelte'
 
-export const buildingDataTemplate: UITemplate = {
+export const buildingDataTemplate: UITemplateData = {
   templateKey: 'keyd2',
   dialog: BuildingDialog,
   icon: {
@@ -13,5 +13,8 @@ export const buildingDataTemplate: UITemplate = {
       <rect x="3.04" y="89.72" width="54" height="2" fill="#666"/>
       <rect x="3.04" y="93.72" width="54" height="2" fill="#666"/>
     </svg>`
-  }
+  },
+  columns: [
+    { title: 'Floors', get: 'floors', fixed: '4em' }
+  ]
 }

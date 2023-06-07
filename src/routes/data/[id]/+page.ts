@@ -7,6 +7,7 @@ export const load: Load<{ id: string }> = async ({ params }) => {
   const template = templateRegistry.getTemplate(params.id)
   if (!template) throw error(404)
 
+  await templateRegistry.enhanceInfo()
   subnavStore.open('data', { href: base + '/data/' + template.templateKey, label: template.name, icon: template.icon ?? codeJson })
 
   const mayManageGlobalData = await api.getGlobalDataAccessByTemplateKey(template.templateKey)

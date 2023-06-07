@@ -281,17 +281,6 @@ export const CREATE_DATA_ITEM = `
   }
 `
 
-export const RENAME_DATA = `
-  mutation renameDataEntry ($dataId: ID!, $name: UrlSafeString!, $validateOnly: Boolean) {
-    renameDataEntry (dataId: $dataId, name: $name, validateOnly: $validateOnly) {
-      ${mutationResponse}
-      data {
-        ${dataDetails}
-      }
-    }
-  }
-`
-
 export const GET_DATA_BY_ID = `
   query getDataById ($id: ID!) {
     data (filter: { ids: [$id]}) {

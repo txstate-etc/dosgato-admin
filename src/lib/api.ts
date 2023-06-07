@@ -27,7 +27,7 @@ import {
   type GlobalRule, ADD_GLOBAL_RULE, UPDATE_GLOBAL_RULE, type PageRule, type CreatePageRuleInput, type UpdatePageRuleInput,
   ADD_PAGE_RULE, UPDATE_PAGE_RULE, type SiteRule, type CreateSiteRuleInput, type UpdateSiteRuleInput, ADD_SITE_RULE, UPDATE_SITE_RULE,
   type CreateTemplateRuleInput, type UpdateTemplateRuleInput, type TemplateRule, ADD_TEMPLATE_RULE, UPDATE_TEMPLATE_RULE,
-  GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER, RENAME_DATA,
+  GET_TEMPLATES_BY_PAGE, type PageWithTemplates, DELETE_SITE, UNDELETE_SITE, type CreateAssetFolderInput, CREATE_ASSET_FOLDER,
   GET_DATA_BY_ID, type DataWithData, UPDATE_DATA, SET_GROUP_USERS, ADD_ROLE_TO_GROUPS, REMOVE_ROLE_FROM_GROUP, REMOVE_USER_FROM_GROUPS,
   PUBLISH_DELETION, UNDELETE_PAGES, SET_USER_GROUPS, RENAME_ASSET_FOLDER, CREATE_ROLE, DELETE_ROLE, RENAME_PAGE, COPY_PAGES,
   PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES,
@@ -564,19 +564,12 @@ class API {
     return moveDataFolders
   }
 
-  async addDataEntry (name: string, data: any, templateKey: string, siteId?: string, folderId?: string, validateOnly?: boolean) {
+  async addDataEntry (data: any, templateKey: string, siteId?: string, folderId?: string, validateOnly?: boolean) {
     const resp = validateRequired<{ data: undefined }>({ name }, ['name'])
     if (resp) return resp
     const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
-    const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem } }>(CREATE_DATA_ITEM, { args: { name, data: dataToSave, siteId, folderId }, validateOnly })
+    const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem } }>(CREATE_DATA_ITEM, { args: { data: dataToSave, siteId, folderId }, validateOnly })
     return createDataEntry
-  }
-
-  async renameDataEntry (dataId: string, name: string, validateOnly?: boolean) {
-    const resp = validateRequired<{ data: undefined }>({ name }, ['name'])
-    if (resp) return resp
-    const { renameDataEntry } = await this.query<{ renameDataEntry: MutationResponse & { data: DataItem } }>(RENAME_DATA, { dataId, name, validateOnly })
-    return renameDataEntry
   }
 
   async getDataEntryById (dataId: string) {

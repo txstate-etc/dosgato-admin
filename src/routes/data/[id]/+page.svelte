@@ -21,18 +21,19 @@
   import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
-  import { unique } from 'txstate-utils'
-  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, type EnhancedUITemplate, uiLog } from '$lib'
+  import { htmlEncode, unique, get } from 'txstate-utils'
+  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, uiLog, templateRegistry, type EnhancedDataTemplate } from '$lib'
   import '../index.css'
-  import { afterNavigate, goto } from '$app/navigation'
-  import { base } from '$app/paths'
+  import { afterNavigate } from '$app/navigation'
   import { setContext } from 'svelte'
 
-  let loadedData: { mayManageGlobalData: boolean, template: EnhancedUITemplate }
+  let loadedData: { mayManageGlobalData: boolean, template: EnhancedDataTemplate }
   export { loadedData as data }
 
   $: templateKey = loadedData.template.templateKey
-  let modal: 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'renamedata' | 'editdata' | 'publishdata' | 'unpublishdata' | 'deletedata' | 'publishdeletedata' | 'undeletedata' | undefined
+  $: tmpl = loadedData.template
+
+  let modal: 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'editdata' | 'publishdata' | 'unpublishdata' | 'deletedata' | 'publishdeletedata' | 'undeletedata' | undefined
 
   const chooserClient = new ChooserClient()
 
@@ -215,8 +216,7 @@
   function singleActions (item: TypedDataTreeItem) {
     if (item.type === DataTreeNodeType.DATA) {
       const actions: ActionPanelAction[] = [
-        { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: onClickEdit },
-        { label: 'Rename', icon: renameIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamedata' } }
+        { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: onClickEdit }
       ]
       if ($store.copied.size) {
         actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
@@ -393,7 +393,7 @@
 
   async function validateAddData (state) {
     const { siteId, folderId } = getSiteAndFolder()
-    const resp = await api.addDataEntry(state.name, state.data, templateKey, siteId, folderId, true)
+    const resp = await api.addDataEntry(state.data, templateKey, siteId, folderId, true)
     const messages = messageForDialog(resp.messages, 'args')
     const nameError = resp.messages.find(m => m.arg === 'name')
     if (nameError) messages.push({ type: nameError.type, message: nameError.message, path: nameError.arg })
@@ -402,7 +402,7 @@
 
   async function onAddData (state) {
     const { siteId, folderId } = getSiteAndFolder()
-    const resp = await api.addDataEntry(state.name, state.data, templateKey, siteId, folderId)
+    const resp = await api.addDataEntry(state.data, templateKey, siteId, folderId)
     uiLog.log(
       {
         eventType: `${modal}-modal`,
@@ -424,26 +424,6 @@
   async function onAddDataComplete () {
     store.openAndRefresh($store.selectedItems[0])
     modal = undefined
-  }
-
-  async function onRenameData (state) {
-    const resp = await api.renameDataEntry($store.selectedItems[0].id, state.name)
-    uiLog.log(
-      {
-        eventType: `${modal}-modal`,
-        action: resp.success ? 'Success' : 'Failed',
-        additionalProperties: { newName: resp.data?.name }
-      }, actionPanelTarget.target)
-    return {
-      success: resp.success,
-      messages: messageForDialog(resp.messages, ''),
-      data: resp.success ? { name: resp.data!.name } : state
-    }
-  }
-
-  async function onValidateRename (state) {
-    const resp = await api.renameDataEntry($store.selectedItems[0].id, state.name, true)
-    return messageForDialog(resp.messages, '')
   }
 
   let itemEditing: DataWithData | undefined = undefined
@@ -520,6 +500,13 @@
     modal = undefined
   }
 
+  function getIcon (c: NonNullable<EnhancedDataTemplate['columns']>[0]) {
+    if (!c || !c.icon) return undefined
+    return (item: TypedTreeItem<TreeDataItem>) => {
+      return { icon: c.icon!(item.data) }
+    }
+  }
+
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
@@ -528,6 +515,14 @@
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Data'} actions={getActions($store.selectedItems)}>
   <Tree {store} headers={[
     { label: 'Path', id: 'name', grow: 1, icon: item => ({ icon: getPathIcon(item) }), get: 'name' },
+    ...(tmpl?.columns?.map(c => ({
+      label: c.title,
+      id: 'custom-' + c.title,
+      grow: c.grow,
+      fixed: c.fixed,
+      icon: getIcon(c),
+      render: item => 'data' in item ? ((typeof c.get === 'string' ? htmlEncode(String(get(item.data, c.get))) : c.get(item.data)) ?? '') : ''
+    })) ?? []),
     { label: 'Status', id: 'status', fixed: '5em', icon: item => ({ icon: item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? deleteOutline : statusIcon[item.status]) : undefined, label: item.type === DataTreeNodeType.DATA ? item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' : undefined }), class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
     { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
     { label: 'By', id: 'modifiedBy', fixed: '3em', get: 'modifiedBy.id' }
@@ -589,23 +584,11 @@
     title='Add Data'
     on:escape={onEscapeModal}
     on:saved={onAddDataComplete} let:data>
-    <!-- TODO: Need some description text explaining this field -->
-    <FieldText path='name' label='Data Name' required></FieldText>
     {#if loadedData.template.dialog}
       <SubForm path='data' let:value>
         <svelte:component this={loadedData.template.dialog} creating={true} {environmentConfig} data={value ?? {}} />
       </SubForm>
     {/if}
-  </FormDialog>
-{:else if modal === 'renamedata'}
-  <FormDialog
-    submit={onRenameData}
-    validate={onValidateRename}
-    title='Rename Data'
-    on:escape={onEscapeModal}
-    on:saved={onSaved}
-    preload={{ name: $store.selectedItems[0].name }}>
-    <FieldText path='name' label='Data Name' required></FieldText>
   </FormDialog>
 {:else if modal === 'editdata'}
   <FormDialog
@@ -618,7 +601,7 @@
     preload={{ data: itemEditing ? itemEditing.data : {} }}>
     {#if loadedData.template.dialog}
       <SubForm path='data' let:value>
-        <svelte:component this={loadedData.template.dialog} creating={false} data={value} {environmentConfig} />
+        <svelte:component this={loadedData.template.dialog} creating={false} {environmentConfig} data={value ?? {}} />
       </SubForm>
     {/if}
   </FormDialog>
