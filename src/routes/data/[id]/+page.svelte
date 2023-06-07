@@ -22,8 +22,7 @@
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { htmlEncode, unique, get } from 'txstate-utils'
-  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, uiLog, templateRegistry, type EnhancedDataTemplate } from '$lib'
-  import '../index.css'
+  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, uiLog, templateRegistry, type EnhancedDataTemplate, dateStamp, dateStampShort } from '$lib'
   import { afterNavigate } from '$app/navigation'
   import { setContext } from 'svelte'
 
@@ -524,7 +523,7 @@
       render: item => 'data' in item ? ((typeof c.get === 'string' ? htmlEncode(String(get(item.data, c.get))) : c.get(item.data)) ?? '') : ''
     })) ?? []),
     { label: 'Status', id: 'status', fixed: '5em', icon: item => ({ icon: item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? deleteOutline : statusIcon[item.status]) : undefined, label: item.type === DataTreeNodeType.DATA ? item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' : undefined }), class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
-    { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span>${item.modifiedAt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())}</span>` : '' },
+    { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
     { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
   ]} searchable='name' on:choose={onClickEdit} />
 </ActionPanel>

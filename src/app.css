@@ -18,3 +18,59 @@ button.reset {
   font: inherit;
   cursor: pointer;
 }
+
+.name, .template {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+li .status {
+  text-align: center;
+}
+.status:not(.deleted) .icon svg {
+  width: 1.2em;
+  height: 1.2em;
+}
+.status.published {
+  color: var(--dosgato-green, #689600);
+}
+.status.modified {
+  color: var(--dosgato-yellow, #ffbf28);
+}
+.status.unpublished {
+  color: var(--dosgato-red, #9a3332);
+}
+.status.deleted {
+  color: #555;
+}
+.pubsubpages svg {
+  margin-left: 0.2em;
+}
+.tooltip-wrapper {
+  display: flex;
+  justify-content: center;
+}
+li .modified span, li .modifiedBy {
+  font-size: 0.9em;
+}
+.modified span.short {
+  display: none;
+}
+[data-eq~="600px"] .modified span.full {
+  display: none;
+}
+[data-eq~="600px"] .modified span.short {
+  display: block;
+}
+[data-eq~="600px"] .modified {
+  width: 7em !important;
+}
+[data-eq~="600px"] .status {
+  width: 3.2em !important;
+}
+[data-eq~="500px"] .template,
+[data-eq~="300px"] .title,
+[data-eq~="400px"] .modified,
+[data-eq~="400px"] .modifiedBy {
+  display: none;
+}

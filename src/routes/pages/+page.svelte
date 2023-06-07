@@ -31,7 +31,6 @@
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
   import { copyWithSubpagesIcon } from './copywithsubpagesicon'
   import { statusIcon } from './[id]/helpers'
-  import './index.css'
   import { setContext } from 'svelte'
 
   let modal: 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | undefined = undefined

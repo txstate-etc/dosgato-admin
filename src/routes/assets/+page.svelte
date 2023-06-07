@@ -18,7 +18,6 @@
   import { base } from '$app/paths'
   import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState, humanFileType, uiLog } from '$lib'
   import { _store as store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
-  import './index.css'
   import { setContext } from 'svelte'
 
   let modal: 'upload' | 'create' | 'rename' | 'delete' | 'finalizeDelete' | 'restore' | undefined
