@@ -167,7 +167,7 @@
       { label: 'Size', id: 'size', fixed: '6em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },
       { label: 'Type', id: 'type', fixed: '10em', render: itm => itm.kind === 'asset' ? humanFileType(itm.mime, itm.extension) : '' },
       { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.kind === 'asset' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
-      { label: 'By', id: 'modifiedBy', fixed: '3em', get: 'modifiedBy.id' }
+      { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
     ]} searchable='name'
   />
   <svelte:fragment slot="preview">
