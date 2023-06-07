@@ -11,15 +11,18 @@ export interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
 export type TypedAssetItem = TypedTreeItem<AssetItem>
 export interface AssetFolderItem extends TreeAssetFolder {
   kind: 'folder'
+  gqlId: string
   hasChildren: boolean
 }
 export type TypedAssetFolderItem = TypedTreeItem<AssetFolderItem>
 export type TypedAnyAssetItem = TypedTreeItem<AssetItem | AssetFolderItem>
 
 async function fetchChildren (item?: TypedAssetFolderItem) {
-  const { folders, assets } = item ? (await api.getSubFoldersAndAssets(item.id))! : { folders: await api.getRootAssetFolders(), assets: [] as TreeAsset[] }
+  const { folders, assets } = item ? (await api.getSubFoldersAndAssets(item.gqlId))! : { folders: await api.getRootAssetFolders(), assets: [] as TreeAsset[] }
   const typedfolders = folders.map<AssetFolderItem>((f: TreeAssetFolder) => ({
     ...f,
+    id: 'folder-' + f.id,
+    gqlId: f.id,
     kind: 'folder' as const,
     hasChildren: !!(f.folders.length + f.assets.length)
   }))
@@ -32,15 +35,15 @@ async function fetchChildren (item?: TypedAssetFolderItem) {
   return sortby([...typedfolders, ...typedassets], 'name')
 }
 
-async function copyHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean) {
+async function copyHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAssetFolderItem, above: boolean) {
   const resp = await api.query(`mutation copyAssetsAndFolders ($assetIds: [ID!]!, $folderIds: [ID!]!, $targetFolderId: ID!) {
     copyAssetsAndFolders (assetIds: $assetIds, folderIds: $folderIds, targetFolderId: $targetFolderId) {
       ${mutationResponse}
     }
   }`, {
     assetIds: selectedItems.filter(itm => itm.kind === 'asset').map(itm => itm.id),
-    folderIds: selectedItems.filter(itm => itm.kind === 'folder').map(itm => itm.id),
-    targetFolderId: dropTarget.id
+    folderIds: selectedItems.filter(itm => itm.kind === 'folder').map((itm: TypedAssetFolderItem) => itm.gqlId),
+    targetFolderId: dropTarget.gqlId
   })
   return resp.success
 }
@@ -52,7 +55,7 @@ async function moveHandler (selectedItems: TypedAnyAssetItem[], dropTarget: Type
     }
   }`, {
     assetIds: selectedItems.filter(itm => itm.kind === 'asset').map(itm => itm.id),
-    folderIds: selectedItems.filter(itm => itm.kind === 'folder').map(itm => itm.id),
+    folderIds: selectedItems.filter(itm => itm.kind === 'folder').map((itm: TypedAssetFolderItem) => itm.gqlId),
     targetFolderId: dropTarget.id
   })
   return resp.success

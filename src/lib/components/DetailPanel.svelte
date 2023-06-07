@@ -42,7 +42,7 @@
     margin: 0;
     padding: 0.5em 0;
   }
-  .header.useborder {
+  .header.useborder h2 {
     border-bottom: 2px solid black;
   }
   .header button {

@@ -6,6 +6,7 @@
   import { createEventDispatcher } from 'svelte'
 
   export let title: string
+  export let helptext: string | undefined = undefined
   export let uploadPath: string
   export let maxFiles: number = 200
   export let escapable = true
@@ -109,16 +110,18 @@
         {/each}
       </ul>
     </form>
+    {helptext ?? ''}
   {/if}
 </Dialog>
 
 <style>
-    .uploader {
+  .uploader {
     border: 2px dashed #666666;
     border-radius: 0.5em;
     text-align: center;
     padding: 1em;
     min-height: 10em;
+    margin-bottom: 0.5em;
   }
   .uploader.dragover {
     border-color: #333333;
