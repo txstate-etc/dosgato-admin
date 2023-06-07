@@ -102,8 +102,8 @@
     const exportimport: ActionPanelGroup = {
       id: 'exportimport',
       actions: [
-        { label: 'Export', icon: exportIcon, disabled: false, onClick: () => api.download(`${environmentConfig.apiBase}/pages/${page.id}`) },
-        { label: 'Export w/Subpages', icon: exportIcon, disabled: false, onClick: () => api.download(`${environmentConfig.apiBase}/pages/${page.id}?withSubpages=1`) },
+        { label: 'Export', icon: exportIcon, disabled: false, onClick: () => api.download(`${environmentConfig.renderBase}/.page/${page.id}`) },
+        { label: 'Export w/Subpages', icon: exportIcon, disabled: false, onClick: () => api.download(`${environmentConfig.renderBase}/.page/${page.id}?withSubpages=1`) },
         { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => { modal = 'import' } }
       ]
     }

@@ -29,11 +29,11 @@
     const actions: ActionPanelAction[] = item.kind === 'asset'
       ? [
           { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: () => goto(base + '/assets/' + item.id) },
-          { label: 'Download', icon: download, onClick: () => { api.download(`${environmentConfig.apiBase}/assets/${item.id}/${item.filename}`) } }
+          { label: 'Download', icon: download, onClick: () => { api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } }
         ]
       : [
           { label: 'Upload', icon: uploadIcon, disabled: !item.permissions.create, onClick: () => { modal = 'upload'; selectedFolder = item as TypedAssetFolderItem } },
-          { label: 'Download', icon: download, onClick: () => api.download(`${environmentConfig.apiBase}/assets/zip/${item.gqlId}/${item.name}.zip`) },
+          { label: 'Download', icon: download, onClick: () => api.download(`${environmentConfig.renderBase}/.asset/zip/${item.gqlId}/${item.name}.zip`) },
           { label: 'Rename Folder', icon: renameIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { modal = 'rename'; selectedFolder = item as TypedAssetFolderItem } },
           { label: 'Create Folder', icon: folderPlus, disabled: !item.permissions.create, onClick: () => { modal = 'create'; selectedFolder = item as TypedAssetFolderItem } }
         ]

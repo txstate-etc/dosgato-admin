@@ -201,42 +201,11 @@ class API {
 
   async download (url: string) {
     await this.readyPromise
-    const streamSaver = await import('streamsaver')
-    try {
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${this.token ?? ''}`
-        }
-      })
-      if (res.status !== 200) throw new Error(res.statusText)
-
-      let filename = new URL(url, location.href).pathname.split('/').slice(-1)[0]
-      const header = res.headers.get('Content-Disposition')
-      if (header) {
-        const parts = header.split(';')
-        filename = parts[1].split('=')[1]
-      }
-
-      const fileStream = streamSaver.createWriteStream(filename)
-      const writer = fileStream.getWriter()
-
-      const reader = res.body!.getReader()
-
-      const pump = async () => await reader.read()
-        .then(({ value, done }) => {
-          if (done) writer.close()
-          else {
-            writer.write(value)
-            return writer.ready.then(pump)
-          }
-        })
-
-      await pump()
-    } catch (e: any) {
-      toast(`Download failed. ${e.message as string}`)
-      throw e
-    }
+    const iframe = document.createElement('iframe')
+    iframe.addEventListener('load', () => iframe.remove())
+    iframe.setAttribute('hidden', '')
+    iframe.setAttribute('src', url)
+    document.body.append(iframe)
   }
 
   async config () {

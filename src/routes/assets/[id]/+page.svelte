@@ -69,7 +69,7 @@
 <div class="container">
   <DetailPanel header="Asset" class="image" headerColor="#E5D1BD" button={[
     { icon: swapIcon, hiddenLabel: 'upload new file for asset', onClick: onUploadClick },
-    { icon: downloadIcon, hiddenLabel: 'download asset', onClick: () => { api.download(`${environmentConfig.apiBase}/assets/${asset.id}/${asset.filename}`) } }
+    { icon: downloadIcon, hiddenLabel: 'download asset', onClick: () => { api.download(`${environmentConfig.renderBase}/.asset/${asset.id}/${asset.filename}`) } }
   ]}>
     <DetailPanelSection>
       {#if image}
