@@ -33,7 +33,7 @@
         ]
       : [
           { label: 'Upload', icon: uploadIcon, disabled: !item.permissions.create, onClick: () => { modal = 'upload'; selectedFolder = item as TypedAssetFolderItem } },
-          { label: 'Download', icon: download, onClick: () => api.download(`${environmentConfig.apiBase}/assets/zip/${item.id}/${item.name}.zip`) },
+          { label: 'Download', icon: download, onClick: () => api.download(`${environmentConfig.apiBase}/assets/zip/${item.gqlId}/${item.name}.zip`) },
           { label: 'Rename Folder', icon: renameIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { modal = 'rename'; selectedFolder = item as TypedAssetFolderItem } },
           { label: 'Create Folder', icon: folderPlus, disabled: !item.permissions.create, onClick: () => { modal = 'create'; selectedFolder = item as TypedAssetFolderItem } }
         ]
@@ -90,25 +90,25 @@
 
   async function onCreateSubmit (data: CreateAssetFolderInput) {
     if (!selectedFolder) return { success: false, messages: [], data }
-    const resp = await api.createAssetFolder({ ...data, parentId: selectedFolder.id })
+    const resp = await api.createAssetFolder({ ...data, parentId: selectedFolder.gqlId })
     return mutationForDialog(resp, { prefix: 'args', dataName: 'assetFolder' })
   }
 
   async function onCreateValidate (data: CreateAssetFolderInput) {
     if (!selectedFolder) return []
-    const { success, messages } = await api.createAssetFolder({ ...data, parentId: selectedFolder.id }, true)
+    const { success, messages } = await api.createAssetFolder({ ...data, parentId: selectedFolder.gqlId }, true)
     return messageForDialog(messages, 'args')
   }
 
   async function onRenameSubmit (data: { name: string }) {
     if (!selectedFolder) return { success: false, messages: [], data }
-    const resp = await api.renameAssetFolder(selectedFolder.id, data.name)
+    const resp = await api.renameAssetFolder(selectedFolder.gqlId, data.name)
     return mutationForDialog(resp, { dataName: 'assetFolder' })
   }
 
   async function onRenameValidate (data: CreateAssetFolderInput) {
     if (!selectedFolder) return []
-    const { success, messages } = await api.renameAssetFolder(selectedFolder.id, data.name, true)
+    const { success, messages } = await api.renameAssetFolder(selectedFolder.gqlId, data.name, true)
     return messageForDialog(messages)
   }
 
@@ -121,7 +121,7 @@
     if ($store.selectedItems[0].kind === 'asset') {
       resp = await api.deleteAsset($store.selectedItems[0].id)
     } else {
-      resp = await api.deleteAssetFolder($store.selectedItems[0].id)
+      resp = await api.deleteAssetFolder($store.selectedItems[0].gqlId)
     }
     if (resp.success) {
       store.refresh()
@@ -134,7 +134,7 @@
     if ($store.selectedItems[0].kind === 'asset') {
       resp = await api.finalizeDeleteAsset($store.selectedItems[0].id)
     } else {
-      resp = await api.finalizeDeleteAssetFolder($store.selectedItems[0].id)
+      resp = await api.finalizeDeleteAssetFolder($store.selectedItems[0].gqlId)
     }
     if (resp.success) {
       store.refresh()
@@ -147,7 +147,7 @@
     if ($store.selectedItems[0].kind === 'asset') {
       resp = await api.undeleteAsset($store.selectedItems[0].id)
     } else {
-      resp = await api.undeleteAssetFolder($store.selectedItems[0].id)
+      resp = await api.undeleteAssetFolder($store.selectedItems[0].gqlId)
     }
     if (resp.success) {
       store.refresh()
@@ -177,7 +177,7 @@
   </svelte:fragment>
 </ActionPanel>
 {#if modal === 'upload' && selectedFolder}
-  <UploadUI title="Upload Files to {selectedFolder.path}" uploadPath="{environmentConfig.apiBase}/assets/{selectedFolder.id}" on:escape={onModalEscape} on:saved={onChildSaved} />
+  <UploadUI title="Upload Files to {selectedFolder.path}" uploadPath="{environmentConfig.apiBase}/assets/{selectedFolder.gqlId}" on:escape={onModalEscape} on:saved={onChildSaved} />
 {:else if modal === 'create' && selectedFolder}
   <FormDialog title="Create Folder beneath {selectedFolder.path}" on:escape={onModalEscape} submit={onCreateSubmit} validate={onCreateValidate} on:saved={onChildSaved}>
     <FieldText path="name" label="Name" required />
