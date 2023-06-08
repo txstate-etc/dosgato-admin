@@ -84,7 +84,8 @@
       )
     }
     movement.actions.push(
-      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste(undefined, $store.copyRecursive) } }
+      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste(undefined, $store.copyRecursive) } },
+      { label: 'Move Above', disabled: !$store.cut || !store.pasteEligible(true), hiddenLabel: `Move above ${page.name}`, onClick: () => { store.paste(true, $store.copyRecursive) }, icon: contentPaste }
     )
 
     const publishing: ActionPanelGroup = {
