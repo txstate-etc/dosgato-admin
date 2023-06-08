@@ -219,6 +219,7 @@
       ]
       if ($store.copied.size) {
         actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
+        actions.push({ label: 'Move Above', hiddenLabel: `Move above ${item.name}`, disabled: !store.pasteEligible(true), onClick: () => { store.paste(true, false) }, icon: contentPaste })
       } else {
         actions.push({ label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() })
       }
