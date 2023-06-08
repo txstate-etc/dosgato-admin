@@ -163,6 +163,7 @@
     z-index: 1;
     display: inline-flex;
     flex-direction: column;
+    overflow-y: auto;
   }
 
   .action-panel-preview {
@@ -205,7 +206,6 @@
     line-height: 1.6;
   }
   .actions ul {
-    overflow-y: auto;
     padding: 0.3em 0;
     margin: 0;
     list-style: none;
