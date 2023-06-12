@@ -12,6 +12,7 @@ import { richText } from './richtext.js'
 import { HorizontalRule } from './horizontalrule.js'
 import { textImage } from './textimage.js'
 import AssetDialog from './AssetDialog.svelte'
+import { columnLayoutComponentTemplate } from './columnlayout.js'
 
 export const uiConfig: UIConfig = {
   templates: [
@@ -25,7 +26,8 @@ export const uiConfig: UIConfig = {
     pageTemplate1,
     pageTemplate2,
     richText,
-    textImage
+    textImage,
+    columnLayoutComponentTemplate
   ],
   login: {
     handleUnauthorized (environmentConfig: any) {
