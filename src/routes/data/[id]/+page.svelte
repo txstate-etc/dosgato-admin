@@ -503,7 +503,8 @@
   function getIcon (c: NonNullable<EnhancedDataTemplate['columns']>[0]) {
     if (!c || !c.icon) return undefined
     return (item: TypedTreeItem<TreeDataItem>) => {
-      return { icon: c.icon!(item.data) }
+      const icon = c.icon!(item.data)
+      return icon ? { icon } : undefined
     }
   }
 
@@ -514,7 +515,7 @@
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Data'} actions={getActions($store.selectedItems)}>
   <Tree {store} headers={[
-    { label: 'Path', id: 'name', grow: 1, icon: item => ({ icon: getPathIcon(item) }), get: 'name' },
+    ...(tmpl?.hideName ? [] : [{ label: 'Path', id: 'name', grow: 1, icon: item => ({ icon: getPathIcon(item) }), get: 'name' }]),
     ...(tmpl?.columns?.map(c => ({
       label: c.title,
       id: 'custom-' + c.title,
