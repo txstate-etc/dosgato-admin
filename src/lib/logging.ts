@@ -16,6 +16,7 @@ class InteractionLogger {
     this.logger(logInfo, environmentConfig)
   }
 
+  // Thinking we should move this function to general utilities.
   /** Convenience function for handling how to get a target from a TreeStore by prop-name. */
   targetFromTreeStore (state: ITreeStore<any>, prop: string) {
     return state.selectedItems.length > 1 ? 'multiple' : state.selectedItems[0]?.[prop]

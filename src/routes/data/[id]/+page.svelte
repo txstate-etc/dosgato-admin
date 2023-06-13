@@ -1,7 +1,6 @@
 <script lang="ts">
   import applicationOutline from '@iconify-icons/mdi/application-outline'
   import circleIcon from '@iconify-icons/mdi/circle'
-  import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
   import cube from '@iconify-icons/ph/cube'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
@@ -23,7 +22,7 @@
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { htmlEncode, unique, get } from 'txstate-utils'
-  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, uiLog, templateRegistry, type EnhancedDataTemplate, dateStamp, dateStampShort } from '$lib'
+  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, uiLog, ModalContext, templateRegistry, type EnhancedDataTemplate, dateStamp, dateStampShort } from '$lib'
   import { afterNavigate } from '$app/navigation'
   import { setContext } from 'svelte'
 
@@ -33,7 +32,11 @@
   $: templateKey = loadedData.template.templateKey
   $: tmpl = loadedData.template
 
-  let modal: 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'editdata' | 'publishdata' | 'unpublishdata' | 'deletedata' | 'publishdeletedata' | 'undeletedata' | undefined
+  const actionPanelTarget: { target: string | undefined } = { target: undefined }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+
+  type Modals = 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'editdata' | 'publishdata' | 'unpublishdata' | 'deletedata' | 'publishdeletedata' | 'undeletedata'
+  const modalContext = new ModalContext<Modals>(() => actionPanelTarget.target)
 
   const chooserClient = new ChooserClient()
 
@@ -167,9 +170,11 @@
         }
       }
       await api.moveData(ids, target)
+      // TODO: log the response?
     } else if (selectedItems[0].type === DataTreeNodeType.FOLDER) {
       const siteId = dropTarget.id.includes('global-') ? undefined : (dropTarget as TreeDataSite).siteId
       await api.moveDataFolders(ids, siteId)
+      // TODO: log the response?
     }
     return true
   }
@@ -225,28 +230,28 @@
         actions.push({ label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() })
       }
       if (item.deleteState === DeleteState.NOTDELETED) {
-        actions.push({ label: 'Publish', icon: publishIcon, disabled: !item.permissions?.publish, onClick: () => { modal = 'publishdata' } })
+        actions.push({ label: 'Publish', icon: publishIcon, disabled: !item.permissions?.publish, onClick: () => { modalContext.modal = 'publishdata' } })
       } else if (item.deleteState === DeleteState.MARKEDFORDELETE) {
-        actions.push({ label: 'Publish Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => { modal = 'publishdeletedata' } })
+        actions.push({ label: 'Publish Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => { modalContext.modal = 'publishdeletedata' } })
       }
-      actions.push({ label: 'Unpublish', icon: publishOffIcon, disabled: !item.permissions?.unpublish, onClick: () => { modal = 'unpublishdata' } })
-      if (item.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => { modal = 'deletedata' } })
+      actions.push({ label: 'Unpublish', icon: publishOffIcon, disabled: !item.permissions?.unpublish, onClick: () => { modalContext.modal = 'unpublishdata' } })
+      if (item.deleteState === DeleteState.NOTDELETED) actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => { modalContext.modal = 'deletedata' } })
       else if (item.deleteState === DeleteState.MARKEDFORDELETE) {
-        actions.push({ label: 'Restore Data', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => { modal = 'undeletedata' } })
+        actions.push({ label: 'Restore Data', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => { modalContext.modal = 'undeletedata' } })
       }
       return actions
     } else if (item.type === DataTreeNodeType.FOLDER) {
       return [
-        { label: 'Rename', icon: renameIcon, disabled: !item.permissions?.update, onClick: () => { modal = 'renamefolder' } },
-        { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => { modal = 'adddata' } },
-        { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => { modal = 'deletefolder' } },
+        { label: 'Rename', icon: renameIcon, disabled: !item.permissions?.update, onClick: () => { modalContext.modal = 'renamefolder' } },
+        { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => { modalContext.modal = 'adddata' } },
+        { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => { modalContext.modal = 'deletefolder' } },
         { label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} },
         { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste() } }
       ]
     } else {
       return [
-        { label: 'Add Data', icon: plusIcon, disabled: !item.permissions.create, onClick: () => { modal = 'adddata' } },
-        { label: 'Add Data Folder', icon: folderPlusOutline, disabled: !item.permissions.create, onClick: () => { modal = 'addfolder' } }
+        { label: 'Add Data', icon: plusIcon, disabled: !item.permissions.create, onClick: () => { modalContext.modal = 'adddata' } },
+        { label: 'Add Data Folder', icon: folderPlusOutline, disabled: !item.permissions.create, onClick: () => { modalContext.modal = 'addfolder' } }
       ]
     }
   }
@@ -263,17 +268,17 @@
     if (items.some((item) => item.type === DataTreeNodeType.SITE)) return []
     if (items.every((item) => item.type === DataTreeNodeType.FOLDER)) {
       return [
-        { label: 'Delete', icon: deleteOutline, disabled: false, onClick: () => { modal = 'deletefolder' } },
+        { label: 'Delete', icon: deleteOutline, disabled: false, onClick: () => { modalContext.modal = 'deletefolder' } },
         { label: 'Undelete', icon: deleteRestore, disabled: false, onClick: () => {} }
       ]
     }
     if (items.every((item) => item.type === DataTreeNodeType.DATA)) {
       const actions: ActionPanelAction[] = [
-        { label: 'Publish', icon: publishIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.publish), onClick: () => { modal = 'publishdata' } },
-        { label: 'Unpublish', icon: publishOffIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.unpublish), onClick: () => { modal = 'unpublishdata' } },
-        { label: 'Delete', icon: deleteOutline, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.delete), onClick: () => { modal = 'deletedata' } },
-        { label: 'Publish Deletion', icon: deleteOutline, disabled: publishMultipleDeletionDisabled(items as TypedTreeItem<TreeDataItem>[]), onClick: () => { modal = 'publishdeletedata' } },
-        { label: 'Restore Data', icon: deleteRestore, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.undelete), onClick: () => { modal = 'undeletedata' } }
+        { label: 'Publish', icon: publishIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.publish), onClick: () => { modalContext.modal = 'publishdata' } },
+        { label: 'Unpublish', icon: publishOffIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.unpublish), onClick: () => { modalContext.modal = 'unpublishdata' } },
+        { label: 'Delete', icon: deleteOutline, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.delete), onClick: () => { modalContext.modal = 'deletedata' } },
+        { label: 'Publish Deletion', icon: deleteOutline, disabled: publishMultipleDeletionDisabled(items as TypedTreeItem<TreeDataItem>[]), onClick: () => { modalContext.modal = 'publishdeletedata' } },
+        { label: 'Restore Data', icon: deleteRestore, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.undelete), onClick: () => { modalContext.modal = 'undeletedata' } }
       ]
       if ($store.copied.size) {
         actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
@@ -294,12 +299,7 @@
   async function onAddFolder (state) {
     const siteId: string|undefined = ($store.selectedItems[0] as TreeDataSite).siteId
     const resp = await api.addDataFolder(state.name, templateKey, siteId)
-    uiLog.log(
-      {
-        eventType: `${modal}-modal`,
-        action: resp.success ? 'Success' : 'Failed',
-        additionalProperties: { parent: actionPanelTarget.target }
-      }, resp.dataFolder?.name)
+    modalContext.logModalResponse(resp, resp.dataFolder?.name, { parent: actionPanelTarget.target })
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, 'args'),
@@ -313,7 +313,7 @@
 
   async function onAddFolderComplete () {
     store.openAndRefresh($store.selectedItems[0])
-    modal = undefined
+    modalContext.modal = undefined
   }
 
   async function validateFolder (state) {
@@ -324,23 +324,14 @@
 
   async function onDeleteFolder () {
     const resp = await api.deleteDataFolders($store.selectedItems.map(f => f.id))
-    uiLog.log(
-      {
-        eventType: `${modal}-modal`,
-        action: resp.success ? 'Success' : 'Failed'
-      }, actionPanelTarget.target)
+    modalContext.logModalResponse(resp, actionPanelTarget.target)
     if (resp.success) store.refresh()
-    modal = undefined
+    modalContext.modal = undefined
   }
 
   async function onRenameFolder (state) {
     const resp = await api.renameDataFolder($store.selectedItems[0].id, state.name)
-    uiLog.log(
-      {
-        eventType: `${modal}-modal`,
-        action: resp.success ? 'Success' : 'Failed',
-        additionalProperties: { newName: resp.dataFolder?.name }
-      }, actionPanelTarget.target)
+    modalContext.logModalResponse(resp, actionPanelTarget.target, { newName: resp.dataFolder?.name })
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
@@ -359,24 +350,16 @@
 
   async function onPublishData () {
     const resp = await api.publishDataEntries($store.selectedItems.map(d => d.id))
-    uiLog.log(
-      {
-        eventType: `${modal}-modal`,
-        action: resp.success ? 'Success' : 'Failed'
-      }, actionPanelTarget.target)
+    modalContext.logModalResponse(resp, actionPanelTarget.target)
     if (resp.success) store.refresh()
-    modal = undefined
+    modalContext.modal = undefined
   }
 
   async function onUnpublishData () {
     const resp = await api.unpublishDataEntries($store.selectedItems.map(d => d.id))
-    uiLog.log(
-      {
-        eventType: `${modal}-modal`,
-        action: resp.success ? 'Success' : 'Failed'
-      }, actionPanelTarget.target)
+    modalContext.logModalResponse(resp, actionPanelTarget.target)
     if (resp.success) store.refresh()
-    modal = undefined
+    modalContext.modal = undefined
   }
 
   function getSiteAndFolder () {
@@ -404,12 +387,7 @@
   async function onAddData (state) {
     const { siteId, folderId } = getSiteAndFolder()
     const resp = await api.addDataEntry(state.data, templateKey, siteId, folderId)
-    uiLog.log(
-      {
-        eventType: `${modal}-modal`,
-        action: resp.success ? 'Success' : 'Failed',
-        additionalProperties: { siteId, folderId }
-      }, resp.data?.name)
+    modalContext.logModalResponse(resp, resp.data?.name, { siteId, folderId })
     return {
       success: resp.success,
       messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')],
@@ -424,24 +402,20 @@
 
   async function onAddDataComplete () {
     store.openAndRefresh($store.selectedItems[0])
-    modal = undefined
+    modalContext.modal = undefined
   }
 
   let itemEditing: DataWithData | undefined = undefined
 
   async function onClickEdit () {
     itemEditing = await api.getDataEntryById($store.selectedItems[0].id)
-    modal = 'editdata'
+    modalContext.modal = 'editdata'
   }
 
   async function onEditData (state) {
     if (!itemEditing) return { success: false, messages: [{ message: 'Something went wrong. Please contact support for help.', type: MessageType.ERROR }], data: state }
     const resp = await api.editDataEntry(itemEditing.id, state.data, templateKey, itemEditing.version.version)
-    uiLog.log(
-      {
-        eventType: `${modal}-modal`,
-        action: resp.success ? 'Success' : 'Failed'
-      }, actionPanelTarget.target)
+    modalContext.logModalResponse(resp, actionPanelTarget.target)
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, 'args'),
@@ -457,49 +431,33 @@
 
   function onSaved () {
     store.refresh()
-    modal = undefined
+    modalContext.modal = undefined
     if (itemEditing) itemEditing = undefined
   }
 
   async function onDeleteData () {
     const resp = await api.deleteDataEntries($store.selectedItems.map(d => d.id))
-    uiLog.log(
-      {
-        eventType: `${modal}-modal`,
-        action: resp.success ? 'Success' : 'Failed'
-      }, actionPanelTarget.target)
+    modalContext.logModalResponse(resp, actionPanelTarget.target)
     if (resp.success) store.refresh()
-    modal = undefined
+    modalContext.modal = undefined
   }
 
   async function onPublishDeletion () {
     const resp = await api.publishDeleteData($store.selectedItems.map(d => d.id))
-    uiLog.log(
-      {
-        eventType: `${modal}-modal`,
-        action: resp.success ? 'Success' : 'Failed'
-      }, actionPanelTarget.target)
+    modalContext.logModalResponse(resp, actionPanelTarget.target)
     if (resp.success) store.refresh()
-    modal = undefined
+    modalContext.modal = undefined
   }
 
   async function onUndeleteData () {
     const resp = await api.undeleteData($store.selectedItems.map(d => d.id))
-    uiLog.log(
-      {
-        eventType: `${modal}-modal`,
-        action: resp.success ? 'Success' : 'Failed'
-      }, actionPanelTarget.target)
+    modalContext.logModalResponse(resp, actionPanelTarget.target)
     if (resp.success) store.refresh()
-    modal = undefined
+    modalContext.modal = undefined
   }
 
   afterNavigate(() => store.refresh().catch(console.error))
 
-  const onEscapeModal = () => {
-    uiLog.log({ eventType: `${modal}-modal`, action: 'Cancel' }, actionPanelTarget.target)
-    modal = undefined
-  }
 
   function getIcon (c: NonNullable<EnhancedDataTemplate['columns']>[0]) {
     if (!c || !c.icon) return undefined
@@ -518,8 +476,6 @@
     }
   }
 
-  const actionPanelTarget: { target: string | undefined } = { target: undefined }
-  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
 </script>
 
@@ -539,61 +495,61 @@
     { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
   ]} searchable='name' on:choose={onClickEdit} />
 </ActionPanel>
-{#if modal === 'addfolder'}
+{#if modalContext.modal === 'addfolder'}
   <FormDialog
     submit={onAddFolder}
     validate={validateFolder}
     name='addfolder'
     title= 'Add Data Folder'
-    on:escape={onEscapeModal}
+    on:escape={modalContext.onModalEscape}
     on:saved={onAddFolderComplete}>
     <FieldText path='name' label='Name' required></FieldText>
   </FormDialog>
-{:else if modal === 'deletefolder'}
+{:else if modalContext.modal === 'deletefolder'}
   <Dialog
     title={`Delete Data Folder${$store.selectedItems.length > 1 ? 's' : ''}`}
     continueText='Delete Folder{$store.selectedItems.length > 1 ? 's' : ''}'
     cancelText='Cancel'
     on:continue={onDeleteFolder}
-    on:escape={onEscapeModal} >
+    on:escape={modalContext.onModalEscape} >
     {$store.selectedItems.length > 1 ? `Delete ${$store.selectedItems.length} data folders?` : `Delete data folder ${$store.selectedItems[0].name}?`}
   </Dialog>
-{:else if modal === 'renamefolder'}
+{:else if modalContext.modal === 'renamefolder'}
   <FormDialog
     submit={onRenameFolder}
     validate={validateRenameFolder}
     name='renamefolder'
     title='Rename Data Folder'
     preload={{ name: $store.selectedItems[0].name }}
-    on:escape={onEscapeModal}
+    on:escape={modalContext.onModalEscape}
     on:saved={onSaved}>
     <FieldText path='name' label='Name' required></FieldText>
   </FormDialog>
-{:else if modal === 'publishdata'}
+{:else if modalContext.modal === 'publishdata'}
   <Dialog
     title='Publish Data'
     continueText='Publish'
     cancelText='Cancel'
     on:continue={onPublishData}
-    on:escape={onEscapeModal} >
+    on:escape={modalContext.onModalEscape} >
     {$store.selectedItems.length > 1 ? `Publish ${$store.selectedItems.length} data entries?` : `Publish data ${$store.selectedItems[0].name}?`}
   </Dialog>
-{:else if modal === 'unpublishdata'}
+{:else if modalContext.modal === 'unpublishdata'}
   <Dialog
     title='Unpublish Data'
     continueText='Unpublish'
     cancelText='Cancel'
     on:continue={onUnpublishData}
-    on:escape={onEscapeModal} >
+    on:escape={modalContext.onModalEscape} >
     {$store.selectedItems.length > 1 ? `Unpublish ${$store.selectedItems.length} data entries?` : `Unpublish data ${$store.selectedItems[0].name}?`}
   </Dialog>
-{:else if modal === 'adddata'}
+{:else if modalContext.modal === 'adddata'}
   <FormDialog
     {chooserClient}
     submit={onAddData}
     validate={validateAddData}
     title='Add Data'
-    on:escape={onEscapeModal}
+    on:escape={modalContext.onModalEscape}
     on:saved={onAddDataComplete} let:data>
     {#if loadedData.template.dialog}
       <SubForm path='data' let:value>
@@ -601,13 +557,13 @@
       </SubForm>
     {/if}
   </FormDialog>
-{:else if modal === 'editdata'}
+{:else if modalContext.modal === 'editdata'}
   <FormDialog
     {chooserClient}
     submit={onEditData}
     validate={validateEdit}
     title='Edit Data'
-    on:escape={onEscapeModal}
+    on:escape={modalContext.onModalEscape}
     on:saved={onSaved}
     preload={{ data: itemEditing ? itemEditing.data : {} }}>
     {#if loadedData.template.dialog}
@@ -616,31 +572,31 @@
       </SubForm>
     {/if}
   </FormDialog>
-{:else if modal === 'deletedata'}
+{:else if modalContext.modal === 'deletedata'}
   <Dialog
     title='Delete'
     continueText='Delete'
     cancelText='Cancel'
     on:continue={onDeleteData}
-    on:escape={onEscapeModal}>
+    on:escape={modalContext.onModalEscape}>
     Delete this data?
   </Dialog>
-{:else if modal === 'publishdeletedata'}
+{:else if modalContext.modal === 'publishdeletedata'}
   <Dialog
     title='Publish Deletion'
     continueText='Delete'
     cancelText='Cancel'
     on:continue={onPublishDeletion}
-    on:escape={onEscapeModal}>
+    on:escape={modalContext.onModalEscape}>
     Publish this deletion? The selected data will no longer appear in sites.
   </Dialog>
-{:else if modal === 'undeletedata'}
+{:else if modalContext.modal === 'undeletedata'}
   <Dialog
     title='Restore Deleted Data'
     continueText='Restore'
     cancelText='Cancel'
     on:continue={onUndeleteData}
-    on:escape={onEscapeModal}>
+    on:escape={modalContext.onModalEscape}>
     Restore this deleted data?
   </Dialog>
 {/if}
