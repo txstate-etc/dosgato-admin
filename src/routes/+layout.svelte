@@ -67,7 +67,7 @@
 
   afterNavigate((nav) => {
     // Making a direct call to logger since after we navigate our uiLog.screen will be the target, not the originating screen.
-    uiLog.logger({ eventType: 'navigation', action: nav.type.toString(), screen: nav.from?.url.pathname, target: nav.to?.url.pathname }, environmentConfig)
+    uiLog.logger({ eventType: 'navigation', action: nav.type.toString(), screen: nav.from?.url?.pathname, target: nav.to?.url?.pathname }, environmentConfig)
   })
 
   const labeledIconButtonTarget: { target: string | undefined } = { target: 'Profile-PopupMenu' }
