@@ -512,7 +512,7 @@
   function renderCustomColumn (getter?: string | ((data: DataData) => string), fallback?: (item: AnyDataTreeItem) => string) {
     return (item: AnyDataTreeItem) => {
       if (item.type === DataTreeNodeType.DATA) {
-        return ((typeof getter === 'string' ? htmlEncode(get(item.data, getter)) : getter?.(item.data)) ?? fallback?.(item) ?? '')
+        return typeof getter === 'string' ? htmlEncode(get(item.data, getter) ?? fallback?.(item)) : getter?.(item.data) ?? fallback?.(item) ?? ''
       }
       return fallback?.(item) ?? ''
     }
