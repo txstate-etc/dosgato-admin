@@ -19,6 +19,7 @@
   import triangleIcon from '@iconify-icons/mdi/triangle'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
+  import type { DataData } from '@dosgato/templating'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { htmlEncode, unique, get } from 'txstate-utils'
@@ -508,6 +509,15 @@
     }
   }
 
+  function renderCustomColumn (getter?: string | ((data: DataData) => string), fallback?: (item: AnyDataTreeItem) => string) {
+    return (item: AnyDataTreeItem) => {
+      if (item.type === DataTreeNodeType.DATA) {
+        return ((typeof getter === 'string' ? htmlEncode(get(item.data, getter)) : getter?.(item.data)) ?? fallback?.(item) ?? '')
+      }
+      return fallback?.(item) ?? ''
+    }
+  }
+
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
@@ -515,14 +525,14 @@
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Data'} actions={getActions($store.selectedItems)}>
   <Tree {store} headers={[
-    ...(tmpl?.hideName ? [] : [{ label: 'Path', id: 'name', grow: 1, icon: item => ({ icon: getPathIcon(item) }), get: 'name' }]),
+    { label: tmpl?.nameColumn?.title ?? 'Name', id: 'name', grow: 1, icon: item => item.type === DataTreeNodeType.DATA ? { icon: tmpl?.nameColumn?.icon?.(item.data) ?? getPathIcon(item) } : { icon: getPathIcon(item) }, render: renderCustomColumn(tmpl?.nameColumn?.get, item => item.name) },
     ...(tmpl?.columns?.map(c => ({
       label: c.title,
       id: 'custom-' + c.title,
       grow: c.grow,
       fixed: c.fixed,
       icon: getIcon(c),
-      render: item => 'data' in item ? ((typeof c.get === 'string' ? htmlEncode(String(get(item.data, c.get))) : c.get(item.data)) ?? '') : ''
+      render: renderCustomColumn(c.get)
     })) ?? []),
     { label: 'Status', id: 'status', fixed: '5em', icon: item => ({ icon: item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? deleteOutline : statusIcon[item.status]) : undefined, label: item.type === DataTreeNodeType.DATA ? item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' : undefined }), class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
     { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
