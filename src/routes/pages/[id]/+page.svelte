@@ -13,12 +13,11 @@
   import scissors from '@iconify-icons/ph/scissors'
   import trash from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
-  import { onMount } from 'svelte'
+  import { onMount, setContext } from 'svelte'
   import { isNotNull, printIf, titleCase } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api, VersionHistory, uiLog } from '$lib'
   import { statusIcon } from './helpers'
   import VersionView from './VersionView.svelte'
-  import { setContext } from 'svelte'
 
   export let data: { page: PageEditorPage, pagetemplate: EnhancedUITemplate }
   $: ({ page, pagetemplate } = data)
