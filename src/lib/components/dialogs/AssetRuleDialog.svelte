@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { FieldSelect, FieldText, FieldAutocomplete, FieldCheckbox, FormDialog, FieldChoices } from '@dosgato/dialog'
-  import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
+  import { FieldSelect, FieldText, FormDialog, FieldChoices } from '@dosgato/dialog'
+  import { MessageType } from '@txstate-mws/svelte-forms'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { api } from '$lib'
   import { messageForDialog } from '$lib/helpers'
@@ -50,7 +50,7 @@
   function convertState (state: AssetRuleDialogState) {
     const { siteId, pagetreeType, mode, path } = pick(state, 'siteId', 'pagetreeType', 'path', 'mode')
     return {
-      siteId,
+      siteId: siteId === 'allsites' ? undefined : siteId,
       pagetreeType,
       mode,
       path,
@@ -74,6 +74,7 @@
     if (preload.grants.undelete) grants.push('undelete')
     return {
       ...preload,
+      siteId: preload.siteId === undefined ? 'allsites' : preload.siteId,
       path: preload.path === '/' ? undefined : preload.path,
       grants
     } as AssetRuleDialogState
@@ -142,7 +143,7 @@
   ]
 </script>
 <FormDialog submit={ruleId ? onEditAssetRule : onAddAssetRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} preload={convertPreload(preload)} on:escape on:saved let:data>
-  <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
+  <FieldSelect path='siteId' label='Site' choices={[{ label: 'All Sites', value: 'allsites' }, ...siteChoices]} defaultValue="allsites" notNull/>
   <FieldText path='path' label='Path' conditional={!!data?.siteId} related helptext="If the editor should be limited to a sub-section of the site, enter that path here. Otherwise leave blank."/>
   <FieldSelect path='mode' label='Path Mode' conditional={!!data?.siteId && !!data.path && data.path?.startsWith('/') && data.path !== '/'} related choices={modeChoices} helptext="If you enter a path, choose whether rule should affect child pages."/>
   <FieldSelect path='pagetreeType' label='Pagetree Type' placeholder='Any pagetree' choices={pageTreeTypes} />

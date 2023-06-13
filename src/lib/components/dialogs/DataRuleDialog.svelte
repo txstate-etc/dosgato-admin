@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FieldSelect, FieldAutocomplete, FieldText, FormDialog, FieldChoices } from '@dosgato/dialog'
+  import { FieldSelect, FieldText, FormDialog, FieldChoices } from '@dosgato/dialog'
   import { MessageType } from '@txstate-mws/svelte-forms'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { api, messageForDialog } from '$lib'
@@ -47,6 +47,8 @@
     if (preload.grants.undelete) grants.push('undelete')
     return {
       ...preload,
+      siteId: preload.siteId === undefined ? 'allsites' : preload.siteId,
+      templateId: preload.templateId === undefined ? 'alltemplates' : preload.templateId,
       path: preload.path === '/' ? undefined : preload.path,
       grants
     } as DataRuleDialogState
@@ -55,9 +57,9 @@
   function stateToPreload (state: DataRuleDialogState) {
     const { siteId, templateId, path } = pick(state, 'siteId', 'path', 'templateId')
     return {
-      siteId,
+      siteId: siteId === 'allsites' ? undefined : siteId,
       path,
-      templateId,
+      templateId: templateId === 'alltemplates' ? undefined : templateId,
       grants: {
         create: state.grants.includes('create'),
         update: state.grants.includes('update'),
@@ -115,19 +117,8 @@
   async function validateEdit (state: DataRuleDialogState) {
     if (!ruleId) return [{ type: MessageType.ERROR, message: 'Something went wrong' }]
     const args = {
-      ruleId,
-      siteId: state.siteId,
-      path: state.path,
-      templateId: state.templateId,
-      grants: {
-        create: state.grants.includes('create'),
-        update: state.grants.includes('update'),
-        move: state.grants.includes('move'),
-        publish: state.grants.includes('publish'),
-        unpublish: state.grants.includes('unpublish'),
-        delete: state.grants.includes('delete'),
-        undelete: state.grants.includes('undelete')
-      }
+      ...stateToPreload(state),
+      ruleId
     }
     const resp = await api.editDataRule(args, true)
     return messageForDialog(resp.messages, '')
@@ -144,8 +135,8 @@
 </script>
 
 <FormDialog submit={ruleId ? onEditDataRule : onAddDataRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} preload={preloadToState(preload)} on:escape on:saved>
-  <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
+  <FieldSelect path='siteId' label='Site' choices={[{ label: 'All Sites', value: 'allsites' }, ...siteChoices]} notNull defaultValue="allsites"/>
   <FieldText path='path' label='Path'/>
-  <FieldSelect path='templateId' label='Template' choices={templateChoices}/>
+  <FieldSelect path='templateId' label='Template' choices={[{ label: 'All Templates', value: 'alltemplates' }, ...templateChoices]} notNull defaultValue='alltemplates'/>
   <FieldChoices path='grants' {choices} leftToRight label="Permissions"/>
 </FormDialog>

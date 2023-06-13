@@ -1,6 +1,6 @@
 <script lang='ts'>
   import { api, messageForDialog } from '$lib'
-  import { FieldAutocomplete, FieldChoices, FormDialog } from '@dosgato/dialog'
+  import { FieldSelect, FieldChoices, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { MessageType } from '@txstate-mws/svelte-forms'
 
@@ -38,6 +38,7 @@
     if (preload.grants.delete) grants.push('delete')
     return {
       ...preload,
+      siteId: preload.siteId === undefined ? 'allsites' : preload.siteId,
       grants
     } as SiteRuleDialogState
   }
@@ -45,7 +46,7 @@
   function stateToPreload (state: SiteRuleDialogState) {
     const siteId = state.siteId
     return {
-      siteId,
+      siteId: siteId === 'allsites' ? undefined : siteId,
       grants: {
         launch: state.grants.includes('launch'),
         rename: state.grants.includes('rename'),
@@ -114,6 +115,6 @@
 </script>
 
 <FormDialog submit={ruleId ? onEditSiteRule : onAddSiteRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} preload={preloadToState(preload)} on:escape on:saved>
-  <FieldAutocomplete path='siteId' label='Site' choices={siteChoices}/>
+  <FieldSelect path='siteId' label='Site' choices={[{ label: 'All Sites', value: 'allsites' }, ...siteChoices]} defaultValue="allsites" notNull/>
   <FieldChoices path='grants' {choices} leftToRight label="Permissions"/>
 </FormDialog>
