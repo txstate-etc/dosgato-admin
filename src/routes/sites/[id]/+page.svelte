@@ -80,7 +80,7 @@
 
   async function onEditSiteManagement (state) {
     const resp = await api.updateSiteManagement($store.site.id, state.organization, state.owner, state.managers)
-    modalContext.logModalResponse(resp, $store.site.id, { organization: state.organization/*, owner: state.owner, managers: state.managers */ })
+    modalContext.logModalResponse(resp, $store.site.id, { organization: state.organization, owner: state.owner, managers: state.managers })
     if (resp.success) {
       store.refresh($store.site.id)
       modalContext.reset()

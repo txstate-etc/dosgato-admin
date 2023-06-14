@@ -18,14 +18,13 @@
 
   type Modals = 'edit' | 'upload' | 'preview'
   const modalContext = new ModalContextStore<Modals>()
-  // TODO: Figure out an appropriate target getter to pass to ModalContextStore.
 
   function onEditClick () {
-    modalContext.setModal('edit')
+    modalContext.setModal('edit', asset.path)
   }
 
   function onUploadClick () {
-    modalContext.setModal('upload')
+    modalContext.setModal('upload', asset.path)
   }
   async function onUploadSaved () {
     modalContext.reset()
@@ -121,7 +120,7 @@
   </div>
 </div>
 {#if $modalContext.modal === 'upload'}
-  <UploadUI title="Upload new file for {asset.path}" helptext="Uploading a new file will replace this asset everywhere it appears." uploadPath="{environmentConfig.apiBase}/assets/replace/{asset.id}" maxFiles={1} on:escape={onUploadEscape} on:saved={onUploadSaved} />
+  <UploadUI title="Upload new file for {asset.path}" helptext="Uploading a new file will replace this asset everywhere it appears." uploadPath="{environmentConfig.apiBase}/assets/replace/{asset.id}" maxFiles={1} on:escape={modalContext.onModalEscape} on:saved={onUploadSaved} />
 {:else if $modalContext.modal === 'edit' && uiConfig.assetMeta}
   <FormDialog icon={fileMagnifyingGlass} title="Edit Asset Details" submit={onMetaSubmit} validate={onMetaValidate} preload={asset.data.meta ?? {}} on:escape={modalContext.onModalEscape} on:saved={onMetaSaved} let:data {chooserClient}>
     <svelte:component this={uiConfig.assetMeta.dialog} {asset} {data} {environmentConfig} />

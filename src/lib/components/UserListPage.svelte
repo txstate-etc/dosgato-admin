@@ -9,7 +9,7 @@
   import { sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContextStore } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContextStore, uiLog } from '$lib'
   import { setContext } from 'svelte'
 
   export let system: boolean
@@ -58,21 +58,21 @@
 
   async function onDisable () {
     const resp = await api.disableUsers($store.selectedItems.map(u => u.id))
-    modalContext.logModalResponse(resp, actionPanelTarget.target/*, { id: uiLog.targetFromTreeStore($store, 'id') } */)
+    modalContext.logModalResponse(resp, actionPanelTarget.target, { id: uiLog.targetFromTreeStore($store, 'id') })
     if (resp.success) store.refresh()
     modalContext.reset()
   }
 
   async function onEnable () {
     const resp = await api.enableUsers($store.selectedItems.map(u => u.id))
-    modalContext.logModalResponse(resp, actionPanelTarget.target/*, { id: uiLog.targetFromTreeStore($store, 'id') } */)
+    modalContext.logModalResponse(resp, actionPanelTarget.target, { id: uiLog.targetFromTreeStore($store, 'id') })
     if (resp.success) store.refresh()
     modalContext.reset()
   }
 
   async function onCreate (data: CreateUserInput) {
     const resp = await api.createUser({ ...data, system })
-    modalContext.logModalResponse(resp, actionPanelTarget.target/*, { id: resp.user?.id } */)
+    modalContext.logModalResponse(resp, actionPanelTarget.target, { id: resp.user?.id })
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),

@@ -20,7 +20,7 @@
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   type Modals = 'addsite' | 'deletesite' | 'restoresite'
-  const modalContext = new ModalContextStore<Modals>()
+  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   async function fetchChildren (site?: TypedSiteItem) {
     if (site) return []
@@ -39,7 +39,7 @@
     // because very few people will be able to do that. We don't want everyone who can see a subset of the site list to be able to
     // see all sites information.
     return [
-      { label: 'Add Site', icon: plusIcon, disabled: !$globalStore.access.createSites, onClick: () => modalContext.setModal('addsite') },
+      { label: 'Add Site', icon: plusIcon, disabled: !$globalStore.access.createSites, onClick: () => modalContext.setModal('addsite', 'CreateWithPageDialog') },
       { label: 'Download CSV', icon: downloadIcon, disabled: !$globalStore.access.createSites, onClick: () => downloadSitesAudit() }
     ]
   }

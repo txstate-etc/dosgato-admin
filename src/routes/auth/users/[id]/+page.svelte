@@ -45,7 +45,7 @@
 
   async function onEditBasic (state) {
     const resp = await api.updateUserInfo($store.user.id, state)
-    modalContext.logModalResponse(resp, undefined/* $store.user.id */)
+    modalContext.logModalResponse(resp, $store.user.id)
     if (resp.success) store.refresh($store.user.id)
     modalContext.reset()
     return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
@@ -73,7 +73,7 @@
 
   async function onAddGroups (state) {
     const resp = await api.setUserGroups($store.user.id, state.groups)
-    modalContext.logModalResponse(resp, undefined/* $store.user.id, *//* { groups: state.groups.join(',') } */)
+    modalContext.logModalResponse(resp, $store.user.id, { groups: state.groups })
     if (resp.success) {
       store.refresh($store.user.id)
       modalContext.reset()
@@ -97,7 +97,7 @@
 
   async function onAddRoles (state: { roleIds: string[] }) {
     const resp = await api.addRolesToUser(state.roleIds, $store.user.id)
-    modalContext.logModalResponse(resp, undefined/* $store.user.id, *//* { roles: state.roleIds } */)
+    modalContext.logModalResponse(resp, $store.user.id, { roles: state.roleIds.join(',') })
     if (resp.success) {
       store.refresh($store.user.id)
       modalContext.reset()
@@ -108,7 +108,7 @@
   async function onRemoveRole (state) {
     if (!$store.roleRemoving) return
     const resp = await api.removeRoleFromUser($store.roleRemoving.id, $store.user.id)
-    modalContext.logModalResponse(resp, undefined/* $store.user.id */, { role: $store.roleRemoving.id })
+    modalContext.logModalResponse(resp, $store.user.id, { role: $store.roleRemoving.id })
     if (resp.success) {
       store.resetRoleRemoving()
       onSaved()
@@ -119,7 +119,7 @@
   async function onRemoveFromGroup (state) {
     if (!$store.groupRemoving) return
     const resp = await api.removeUserFromGroup($store.user.id, $store.groupRemoving.id)
-    modalContext.logModalResponse(resp, undefined/* $store.user.id */, { group: $store.groupRemoving.id })
+    modalContext.logModalResponse(resp, $store.user.id, { group: $store.groupRemoving.id })
     if (resp.success) {
       store.resetGroupRemoving()
       onSaved()
@@ -192,7 +192,7 @@
     </div>
 
     <div class="grid-item">
-      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => modalContext.setModal('editroles') } : undefined}>
+      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modalContext.setModal('editroles') } } : undefined}>
         <DetailPanelSection>
           {#if $store.user.directRoles.length}
             <SortableTable items = {sortby($store.user.directRoles, 'name')}

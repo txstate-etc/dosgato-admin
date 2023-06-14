@@ -71,7 +71,7 @@
   async function onRemoveGroupMember (state) {
     if (!groupMemberRemovingId) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Something went wrong' }], data: state }
     const resp = await api.removeMemberFromGroup($store.group.id, groupMemberRemovingId)
-    modalContext.logModalResponse(resp, $store.group.id/*, { memberId: groupMemberRemovingId } */)
+    modalContext.logModalResponse(resp, $store.group.id, { memberId: groupMemberRemovingId })
     if (resp.success) {
       groupMemberRemovingId = undefined
       onSaved()

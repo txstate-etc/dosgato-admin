@@ -32,6 +32,11 @@ class SubNavStore extends Store<{ sections: Record<string, { links: SubNavLink[]
     })
   }
 
+  getLabel (idx: number) {
+    if (!this.value.active) return undefined
+    return this.value.sections[this.value.active].links[this.value.sections[this.value.active].active].label
+  }
+
   close (idx: number) {
     if (!this.value.active) return
     const oldlink = this.value.sections[this.value.active].links[this.value.sections[this.value.active].active]

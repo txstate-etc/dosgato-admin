@@ -20,6 +20,9 @@
   import { _store as store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
   import { setContext } from 'svelte'
 
+  const actionPanelTarget: { target: string | undefined } = { target: undefined }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+
   type Modals = 'upload' | 'create' | 'rename' | 'delete' | 'finalizeDelete' | 'restore'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
@@ -164,8 +167,6 @@
     modalContext.reset()
   }
 
-  const actionPanelTarget: { target: string | undefined } = { target: undefined }
-  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'path')
 </script>
 

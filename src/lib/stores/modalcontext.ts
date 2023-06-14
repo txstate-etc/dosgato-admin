@@ -14,8 +14,8 @@ export interface IModalContextStore <ModalTypes extends Exclude<string, ModalTyp
  * you want to have a modal set for).
  * - Can be passed a `target()` callback function for use in getting the associated target
  * string in logging functions.
- * - Can `set(...)` `modal` property to any of the string literal types used to create the
- * context instance, OR `undefined` the property.
+ * - Can `setModal(...)` `modal` property to any of the string literal types used to create the
+ * context instance or `reset()` to the class `default` value.
  * - Constructed with a string literal union list as the type for the `modal` prop and
  * an optional pass in of the `target()` callback.
  * @example
@@ -29,12 +29,13 @@ export interface IModalContextStore <ModalTypes extends Exclude<string, ModalTyp
  * // - default the modal value and inform subscribers */
 export class ModalContextStore<ModalTypes extends Exclude<string, ModalTypes>> extends Store<IModalContextStore<ModalTypes>> {
   default: ModalTypes | undefined
+  targetDescriptor: string | undefined
   target: () => string | undefined
 
   constructor (defaultModal?: ModalTypes, target?: () => string | undefined) {
     super({ modal: defaultModal })
     this.default = defaultModal
-    this.target = target ?? (() => undefined)
+    this.target = target ?? (() => this.targetDescriptor)
   }
 
   /** Convenience function for logging response information associated with an action triggered by a
@@ -62,13 +63,19 @@ export class ModalContextStore<ModalTypes extends Exclude<string, ModalTypes>> e
     this.reset()
   }
 
-  /** Sets the modal context and notifies subscribers. */
-  setModal (modal: ModalTypes) {
+  /** Sets the modal context and notifies subscribers.
+   * - Takes an optional target-descriptor for use if modal is promptly escaped and a custom `target()`
+   * function hasn't been supplied. Makes for fewer lines of code than setting it in a global context
+   * separate from this `ModalContextStore` and referencing from a custom `target()` but has the same
+   * potential drawback of containing whatever was last set if not updated between calls to `reset()`. */
+  setModal (modal: ModalTypes, targetDesc?: string) {
+    if (targetDesc) this.targetDescriptor = targetDesc
     super.set({ modal })
   }
 
   /** Resets the modal context to default and notifies subscribers. */
   reset () {
     super.set({ modal: this.default })
+    this.targetDescriptor = undefined
   }
 }
