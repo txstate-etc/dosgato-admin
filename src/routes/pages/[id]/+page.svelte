@@ -61,7 +61,7 @@
               { label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, icon: fileX, onClick: () => pageEditorStore.clearClipboard() }
             ]
           : [
-              { label: 'Cut', icon: scissors, onClick: () => pageEditorStore.cutComponent(selectedPath) },
+              { label: 'Cut', icon: scissors, disabled: !$editorStore.selectedMayDelete, onClick: () => pageEditorStore.cutComponent(selectedPath) },
               { label: 'Copy', icon: copyIcon, onClick: () => pageEditorStore.copyComponent(selectedPath) }
             ]),
         { label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardText, disabled: !$editorStore.pasteAllowed, onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) }
@@ -75,7 +75,7 @@
     }
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean, editbarpaths?: string[] }) {
     if (message.action === 'scroll') {
       $editorStore.scrollY = message.scrollTop!
       return
@@ -86,6 +86,14 @@
         if (pageEditorStore.validMove($editorStore.page.data, message.path, p)) validdrops.add(p)
       }
       iframe.contentWindow?.postMessage({ validdrops }, '*')
+    } else if (message.action === 'maymove') {
+      const movablePaths = new Set<string>()
+      for (const p of message.editbarpaths ?? []) {
+        for (const t of message.allpaths ?? []) {
+          if (pageEditorStore.validMove($editorStore.page.data, p, t)) movablePaths.add(p)
+        }
+      }
+      iframe.contentWindow?.postMessage({ movablePaths }, '*')
     } else if (message.action === 'select') {
       pageEditorStore.select(message.path, message.label, message.maxreached, message.mayDelete)
     } else if (message.action === 'edit') {
