@@ -21,7 +21,7 @@
   import { setContext } from 'svelte'
 
   type Modals = 'upload' | 'create' | 'rename' | 'delete' | 'finalizeDelete' | 'restore'
-  const modalContext = new ModalContext<Modals>(() => actionPanelTarget.target)
+  const modalContext = new ModalContext<Modals>(undefined, () => actionPanelTarget.target)
 
   let selectedFolder: TypedAssetFolderItem | undefined
   $: selectedItem = $store.selected.size === 1 ? $store.selectedItems[0] : undefined

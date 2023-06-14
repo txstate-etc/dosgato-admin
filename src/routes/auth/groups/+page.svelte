@@ -37,7 +37,7 @@
   setContext('ActionPanelTarget', { getTarget: () => uiLog.targetFromTreeStore($store, 'id') })
 
   type Modals = 'addgroup' | 'deletegroup'
-  const modalContext = new ModalContext<Modals>(() => actionPanelTarget.target)
+  const modalContext = new ModalContext<Modals>(undefined, () => actionPanelTarget.target)
 
   async function onAddGroup (state) {
     const parentId: string|undefined = $store.selectedItems.length ? $store.selectedItems[0].id : undefined

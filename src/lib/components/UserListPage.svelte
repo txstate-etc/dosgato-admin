@@ -20,7 +20,7 @@
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   type Modals = 'create' | 'disable' | 'enable'
-  const modalContext = new ModalContext<Modals>(() => actionPanelTarget.target)
+  const modalContext = new ModalContext<Modals>(undefined, () => actionPanelTarget.target)
 
   async function fetchChildren (user?: TypedUserItem) {
     if (user) return []

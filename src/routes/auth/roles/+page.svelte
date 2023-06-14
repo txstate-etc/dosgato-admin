@@ -5,7 +5,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContext } from '$lib'
   import { setContext } from 'svelte'
 
   type TypedRoleItem = TypedTreeItem<RoleListRole>
@@ -19,19 +19,23 @@
 
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [
-      { label: 'Add Role', icon: plusIcon, disabled: false, onClick: () => { modal = 'addrole' } }
+      { label: 'Add Role', icon: plusIcon, disabled: false, onClick: () => { modalContext.modal = 'addrole' } }
     ]
     return actions
   }
 
   function singleactions (role: TypedRoleItem) {
     const actions: ActionPanelAction[] = [
-      { label: 'Delete', icon: deleteOutline, disabled: !role.permissions.delete, onClick: () => { modal = 'deleterole' } }
+      { label: 'Delete', icon: deleteOutline, disabled: !role.permissions.delete, onClick: () => { modalContext.modal = 'deleterole' } }
     ]
     return actions
   }
 
-  let modal: 'addrole'|'deleterole'|undefined
+  const actionPanelTarget: { target: string | undefined } = { target: undefined }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+
+  type Modals = 'addrole' | 'deleterole'
+  const modalContext = new ModalContext<Modals>(undefined, () => actionPanelTarget.target)
 
   async function validateAddRole (state) {
     const resp = await api.addRole(state.name, true)
@@ -40,6 +44,7 @@
 
   async function onAddRole (state) {
     const resp = await api.addRole(state.name)
+    modalContext.logModalResponse(resp, resp.role?.name)
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
@@ -53,20 +58,19 @@
 
   function onCompleteAddRole () {
     store.refresh()
-    modal = undefined
+    modalContext.modal = undefined
   }
 
   async function onDeleteRole () {
     const resp = await api.deleteRole($store.selectedItems[0].id)
+    modalContext.logModalResponse(resp, actionPanelTarget.target)
     if (resp.success) store.refresh()
-    modal = undefined
+    modalContext.modal = undefined
   }
 
   let filter = ''
 
-  const actionPanelTarget: { target: string | undefined } = { target: undefined }
-  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
-  $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
+  $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'id')
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Roles'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()} filterinput on:filter={e => { filter = e.detail }}>
@@ -75,22 +79,22 @@
   ]} searchable='name' {filter}>
   </Tree>
 </ActionPanel>
-{#if modal === 'addrole'}
+{#if modalContext.modal === 'addrole'}
   <FormDialog
     submit={onAddRole}
     validate={validateAddRole}
     title='Add Role'
     name='addrole'
-    on:escape={() => { modal = undefined }}
+    on:escape={modalContext.onModalEscape}
     on:saved={onCompleteAddRole}>
     <FieldText path='name' label='Name' required />
   </FormDialog>
-{:else if modal === 'deleterole'}
+{:else if modalContext.modal === 'deleterole'}
   <Dialog
     title='Delete Role'
     continueText='Delete'
     cancelText='Cancel'
-    on:escape={() => { modal = undefined }}
+    on:escape={modalContext.onModalEscape}
     on:continue={onDeleteRole}>
     {`Delete ${$store.selectedItems[0].name} role?`}
   </Dialog>

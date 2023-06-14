@@ -4,7 +4,7 @@ Two dialogs in sequence used to create a page.
 This component is also used when creating a site or pagetree, both of which require creating a root page.
 -->
 <script lang="ts">
-  import { ChooserClient, environmentConfig, templateRegistry } from '$lib'
+  import { ChooserClient, ModalContext, environmentConfig, templateRegistry } from '$lib'
   import { Dialog, FieldHidden, FieldSelect, FieldText, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { type SubmitResponse, type Feedback, FormStore, SubForm, MessageType } from '@txstate-mws/svelte-forms'
@@ -27,24 +27,35 @@ This component is also used when creating a site or pagetree, both of which requ
   /** whether or not to add a name field to the first dialog. true when adding sites and pages, false when adding pagetrees because their root page name defaults to the site name */
   export let addName: boolean = true
   export let creatingSite: boolean = false
-  let modal: 'name' | 'properties' = 'name'
+
+  /** Global to track our onEscape target between call contexts. */
+  let escapeTarget: string | undefined
+  type Modals = 'name' | 'properties'
+  const modalContext = new ModalContext<Modals>('name', () => escapeTarget)
   let nameDialogData: { name?: string, templateKey: string } | undefined = undefined
+
 
   const chooserClient = new ChooserClient(pagetreeId)
   const store = new FormStore<CreateWithPageState>(submitWrapper, validateWrapper)
 
   async function submitWrapper (state: CreateWithPageState) {
-    if (!state.templateKey) return await submit(state, false)
-    return await submit({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey!)?.genDefaultContent({ ...state.data, templateKey: state.templateKey }) } }, false)
+    if (!state.templateKey) {
+      const resp = await submit(state, false)
+      modalContext.logModalResponse(resp, resp.data.name, { templateKey: resp.data.templateKey })
+      return resp
+    }
+    const resp = await submit({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey!)?.genDefaultContent({ ...state.data, templateKey: state.templateKey }) } }, false)
+    modalContext.logModalResponse(resp, resp.data.name, { templateKey: resp.data.templateKey })
+    return resp
   }
   async function validateWrapper (state: CreateWithPageState) {
     if (!state.templateKey) return await validate?.(state) ?? []
     return await validate?.({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey)?.genDefaultContent({ ...state.data, templateKey: state.templateKey }) } }) ?? []
   }
-  function escape () {
+  function onEscape () {
     store.reset()
+    modalContext.onModalEscape()
     nameDialogData = undefined
-    modal = 'name'
     dispatch('escape')
   }
 
@@ -57,11 +68,16 @@ This component is also used when creating a site or pagetree, both of which requ
     } else {
       nameDialogData = state
     }
+    /* TODO: I need to test this. I'm having trouble following the state with the different event paths here and I need a way for
+     * modalContext.onModalEscape to have a target that fits with each onEscape call context such that the templateKey is the
+     * target. I would simply return nameDialogData.templateKey but it's capable of being undefined on call contexts. */
+    escapeTarget = ret.data.templateKey
+    modalContext.logModalResponse(ret, ret.data.name, { templateKey: ret.data.templateKey })
     return ret
   }
 
   function onNameAndTemplateComplete () {
-    modal = 'properties'
+    modalContext.modal = 'properties'
   }
 
   async function validateNameAndTemplate (state: CreateWithPageState) {
@@ -70,17 +86,17 @@ This component is also used when creating a site or pagetree, both of which requ
   }
 </script>
 
-{#if modal === 'name'}
-  <FormDialog {chooserClient} {title} submit={onSaveNameAndTemplate} validate={validateNameAndTemplate} on:escape={escape} on:saved={onNameAndTemplateComplete}>
+{#if modalContext.modal === 'name'}
+  <FormDialog {chooserClient} {title} submit={onSaveNameAndTemplate} validate={validateNameAndTemplate} on:escape={onEscape} on:saved={onNameAndTemplateComplete}>
     {#if addName}
       <FieldText path='name' label={creatingSite ? 'Name' : 'URL Slug'} required/>
     {/if}
   <FieldSelect path='templateKey' label={`${creatingSite ? 'Root' : ''} Page Template`} placeholder='Select' choices={templateChoices} required/>
   </FormDialog>
-{:else if modal === 'properties' && nameDialogData}
+{:else if modalContext.modal === 'properties' && nameDialogData}
   {@const template = templateRegistry.getTemplate(nameDialogData.templateKey)}
   {#if template && template.dialog}
-    <FormDialog {chooserClient} title={propertyDialogTitle} submit={submitWrapper} validate={validateWrapper} {store} on:escape={escape} on:saved let:data>
+    <FormDialog {chooserClient} title={propertyDialogTitle} submit={submitWrapper} validate={validateWrapper} {store} on:escape={onEscape} on:saved let:data>
       {#if addName}
         <FieldHidden path='name' value={nameDialogData.name} />
       {/if}
@@ -90,7 +106,7 @@ This component is also used when creating a site or pagetree, both of which requ
       </SubForm>
     </FormDialog>
   {:else}
-    <Dialog title="Unrecognized Template" on:continue={escape} escapable on:escape={ () => escape() }>
+    <Dialog title="Unrecognized Template" on:continue={onEscape} escapable on:escape={onEscape}>
       <span>This content uses an unrecognized template. Please contact support for assistance.</span>
     </Dialog>
   {/if}

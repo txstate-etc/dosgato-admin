@@ -3,7 +3,7 @@ import type { BaseEvent } from '@dosgato/templating'
 import { uiLog } from './logging'
 
 interface ISuccess { success: boolean }
-/** Class for tracking tracking modal context and providing support functionality around it.
+/** Class for tracking modal context and providing support functionality around it.
  * Intended for use as a global instance object per modal associative context (group of things
  * you want to have modals for).
  * - Can be passed a `target()` callback function for use in getting the associated target
@@ -22,6 +22,7 @@ interface ISuccess { success: boolean }
  * // - undefine the modal value */
 export class ModalContext <ModalTypes extends Exclude<string, ModalTypes>> {
   modal: ModalTypes | undefined
+  default: ModalTypes | undefined
   target: () => string | undefined
 
   /** Convenience function for logging response information associated with an action triggered by a
@@ -46,10 +47,11 @@ export class ModalContext <ModalTypes extends Exclude<string, ModalTypes>> {
   /** Handle for generic modal escape handler that logs the escape and undefines `modal`. */
   onModalEscape = () => {
     uiLog.log({ eventType: `${this.modal ?? 'undefined'}-modal`, action: 'Cancel' }, this.target())
-    this.modal = undefined
+    this.modal = this.default
   }
 
-  constructor (target?: () => string | undefined) {
+  constructor (defaultType?: ModalTypes, target?: () => string | undefined) {
+    this.modal = this.default = defaultType
     this.target = target ?? (() => undefined)
   }
 }

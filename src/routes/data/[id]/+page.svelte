@@ -36,7 +36,7 @@
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   type Modals = 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'editdata' | 'publishdata' | 'unpublishdata' | 'deletedata' | 'publishdeletedata' | 'undeletedata'
-  const modalContext = new ModalContext<Modals>(() => actionPanelTarget.target)
+  const modalContext = new ModalContext<Modals>(undefined, () => actionPanelTarget.target)
 
   const chooserClient = new ChooserClient()
 

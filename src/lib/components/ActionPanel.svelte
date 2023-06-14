@@ -26,7 +26,7 @@
 
   function onAction (action: ActionPanelAction) {
     return () => {
-      uiLog.log({ eventType: 'ActionPanel', action: action.label, additionalProperties: { hiddenLabel: action.hiddenLabel } }, getTarget())
+      uiLog.log({ eventType: 'ActionPanel', action: action.label, ...(action.hiddenLabel && { additionalProperties: { hiddenLabel: action.hiddenLabel } }) }, getTarget())
       action.onClick()
     }
   }
