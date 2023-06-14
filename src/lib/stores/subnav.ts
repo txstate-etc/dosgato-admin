@@ -32,9 +32,11 @@ class SubNavStore extends Store<{ sections: Record<string, { links: SubNavLink[]
     })
   }
 
-  getLabel (idx: number) {
+  getActiveIdentifiers (tab: number) {
     if (!this.value.active) return undefined
-    return this.value.sections[this.value.active].links[this.value.sections[this.value.active].active].label
+    const currentNav = this.value.sections[this.value.active]
+    const original = currentNav.links[tab]
+    return { label: original.label, href: original.href }
   }
 
   close (idx: number) {

@@ -18,7 +18,6 @@
   import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig, uiLog, api } from '$lib'
   import { uiConfig } from '../local'
   import '../local/tracking.js'
-    import type { BaseEvent } from '@dosgato/templating';
 
   uiLog.logger = uiConfig.uiInteractionsLogger ?? ((arg: any) => console.log('UI:', arg))
   $: uiLog.screen = $page.route.id ?? undefined
@@ -48,7 +47,8 @@
 
   function closeSubNav (i: number) {
     return () => {
-      uiLog.log({ eventType: 'SubNav', action: 'Close Tab' }, subnavStore.getLabel(i))
+      const identifiers = subnavStore.getActiveIdentifiers(i)
+      uiLog.log({ eventType: 'SubNav', action: 'Close Tab', additionalProperties: { label: identifiers?.label } }, identifiers?.href)
       const href = subnavStore.close(i)
       if (href) goto(href)
     }
