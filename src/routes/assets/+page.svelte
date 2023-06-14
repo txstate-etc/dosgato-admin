@@ -16,12 +16,12 @@
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState, uiLog, ModalContext } from '$lib'
+  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState, uiLog, ModalContextStore } from '$lib'
   import { _store as store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
   import { setContext } from 'svelte'
 
   type Modals = 'upload' | 'create' | 'rename' | 'delete' | 'finalizeDelete' | 'restore'
-  const modalContext = new ModalContext<Modals>(undefined, () => actionPanelTarget.target)
+  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   let selectedFolder: TypedAssetFolderItem | undefined
   $: selectedItem = $store.selected.size === 1 ? $store.selectedItems[0] : undefined
@@ -33,10 +33,10 @@
           { label: 'Download', icon: download, onClick: () => { api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } }
         ]
       : [
-          { label: 'Upload', icon: uploadIcon, disabled: !item.permissions.create, onClick: () => { modalContext.modal = 'upload'; selectedFolder = item as TypedAssetFolderItem } },
+          { label: 'Upload', icon: uploadIcon, disabled: !item.permissions.create, onClick: () => { modalContext.setModal('upload'); selectedFolder = item as TypedAssetFolderItem } },
           { label: 'Download', icon: download, onClick: () => api.download(`${environmentConfig.renderBase}/.asset/zip/${item.gqlId}/${item.name}.zip`) },
-          { label: 'Rename Folder', icon: renameIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { modalContext.modal = 'rename'; selectedFolder = item as TypedAssetFolderItem } },
-          { label: 'Create Folder', icon: folderPlus, disabled: !item.permissions.create, onClick: () => { modalContext.modal = 'create'; selectedFolder = item as TypedAssetFolderItem } }
+          { label: 'Rename Folder', icon: renameIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { modalContext.setModal('rename'); selectedFolder = item as TypedAssetFolderItem } },
+          { label: 'Create Folder', icon: folderPlus, disabled: !item.permissions.create, onClick: () => { modalContext.setModal('create'); selectedFolder = item as TypedAssetFolderItem } }
         ]
     if ($store.copied.size) {
       actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
@@ -50,11 +50,11 @@
       { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste() } }
     )
     if (item.deleteState === DeleteState.NOTDELETED) {
-      actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => { modalContext.modal = 'delete' } })
+      actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('delete') })
     } else {
       actions.push(
-        { label: 'Restore', icon: deleteRestore, disabled: !item.permissions.undelete, onClick: () => { modalContext.modal = 'restore' } },
-        { label: 'Finalize Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => { modalContext.modal = 'finalizeDelete' } }
+        { label: 'Restore', icon: deleteRestore, disabled: !item.permissions.undelete, onClick: () => modalContext.setModal('restore') },
+        { label: 'Finalize Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('finalizeDelete') }
       )
     }
     return actions
@@ -75,12 +75,12 @@
   }
 
   async function onChildSaved () {
-    modalContext.modal = undefined
+    modalContext.reset()
     await store.openAndRefresh(selectedFolder!)
     selectedFolder = undefined
   }
   async function onSelfSaved () {
-    modalContext.modal = undefined
+    modalContext.reset()
     if (selectedFolder?.parent) await store.openAndRefresh(selectedFolder.parent)
     selectedFolder = undefined
   }
@@ -131,7 +131,7 @@
     if (resp.success) {
       store.refresh()
     }
-    modalContext.modal = undefined
+    modalContext.reset()
   }
 
   async function onFinalizeDelete () {
@@ -146,7 +146,7 @@
     if (resp.success) {
       store.refresh()
     }
-    modalContext.modal = undefined
+    modalContext.reset()
   }
 
   async function onRestore () {
@@ -161,7 +161,7 @@
     if (resp.success) {
       store.refresh()
     }
-    modalContext.modal = undefined
+    modalContext.reset()
   }
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
@@ -185,17 +185,17 @@
     {/if}
   </svelte:fragment>
 </ActionPanel>
-{#if modalContext.modal === 'upload' && selectedFolder}
+{#if $modalContext.modal === 'upload' && selectedFolder}
   <UploadUI title="Upload Files to {selectedFolder.path}" uploadPath="{environmentConfig.apiBase}/assets/{selectedFolder.gqlId}" on:escape={onModalEscape} on:saved={onChildSaved} />
-{:else if modalContext.modal === 'create' && selectedFolder}
+{:else if $modalContext.modal === 'create' && selectedFolder}
   <FormDialog title="Create Folder beneath {selectedFolder.path}" on:escape={onModalEscape} submit={onCreateSubmit} validate={onCreateValidate} on:saved={onChildSaved}>
     <FieldText path="name" label="Name" required />
   </FormDialog>
-{:else if modalContext.modal === 'rename' && selectedFolder}
+{:else if $modalContext.modal === 'rename' && selectedFolder}
   <FormDialog title="Rename Folder {selectedFolder.path}" preload={{ name: selectedFolder.name }} on:escape={onModalEscape} submit={onRenameSubmit} validate={onRenameValidate} on:saved={onSelfSaved}>
     <FieldText path="name" label="Name" required />
   </FormDialog>
-{:else if modalContext.modal === 'delete' }
+{:else if $modalContext.modal === 'delete' }
   <Dialog title={`Delete ${$store.selectedItems[0].kind === 'asset' ? 'Asset' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onDelete} on:escape={onModalEscape}>
     {#if $store.selectedItems[0].kind === 'asset'}
       Delete this asset?
@@ -203,7 +203,7 @@
       Delete this asset folder? All contents will be marked for deletion.
     {/if}
   </Dialog>
-{:else if modalContext.modal === 'finalizeDelete'}
+{:else if $modalContext.modal === 'finalizeDelete'}
   <Dialog title={`Delete ${$store.selectedItems[0].kind === 'asset' ? 'Asset' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onFinalizeDelete} on:escape={onModalEscape}>
     {#if $store.selectedItems[0].kind === 'asset'}
       Delete this asset?
@@ -211,7 +211,7 @@
       Delete this asset folder and its contents?
     {/if}
   </Dialog>
-{:else if modalContext.modal === 'restore'}
+{:else if $modalContext.modal === 'restore'}
   <Dialog title={`Restore ${$store.selectedItems[0].kind === 'asset' ? 'Asset' : 'Folder'}`} continueText='Restore' cancelText='Cancel' on:continue={onRestore} on:escape={onModalEscape}>
     {#if $store.selectedItems[0].kind === 'asset'}
       Restore this asset?

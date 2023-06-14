@@ -12,7 +12,7 @@ class InteractionLogger {
   log (info: BaseEvent, target?: string) {
     // Don't log anything if we've been asked to log without a screen defined to give context.
     if (!this.screen) return
-    const logInfo = target ? { ...info, screen: this.screen, target } : { ...info, screen: this.screen }
+    const logInfo = { ...info, screen: this.screen, ...(target && { target }) }
     this.logger(logInfo, environmentConfig)
   }
 

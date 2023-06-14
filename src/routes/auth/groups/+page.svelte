@@ -5,7 +5,7 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
-  import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog, ModalContext, uiLog } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog, ModalContextStore, uiLog } from '$lib'
   import { setContext } from 'svelte'
 
   type TypedGroupItem = TypedTreeItem<GroupListGroup>
@@ -17,15 +17,15 @@
 
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [
-      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => { modalContext.modal = 'addgroup' } }
+      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => modalContext.setModal('addgroup') }
     ]
     return actions
   }
 
   function singleactions (user: TypedGroupItem) {
     const actions: ActionPanelAction[] = [
-      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => { modalContext.modal = 'addgroup' } },
-      { label: 'Delete', icon: accountMultipleRemoveOutline, disabled: false, onClick: () => { modalContext.modal = 'deletegroup' } }
+      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => modalContext.setModal('addgroup') },
+      { label: 'Delete', icon: accountMultipleRemoveOutline, disabled: false, onClick: () => modalContext.setModal('deletegroup') }
     ]
     return actions
   }
@@ -37,7 +37,7 @@
   setContext('ActionPanelTarget', { getTarget: () => uiLog.targetFromTreeStore($store, 'id') })
 
   type Modals = 'addgroup' | 'deletegroup'
-  const modalContext = new ModalContext<Modals>(undefined, () => actionPanelTarget.target)
+  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   async function onAddGroup (state) {
     const parentId: string|undefined = $store.selectedItems.length ? $store.selectedItems[0].id : undefined
@@ -45,7 +45,7 @@
     modalContext.logModalResponse(resp, resp.group?.name, parentId ? { parentId } : undefined)
     if (resp.success) {
       store.refresh()
-      modalContext.modal = undefined
+      modalContext.reset()
     }
     return {
       success: resp.success,
@@ -67,7 +67,7 @@
     const resp = await api.deleteGroup($store.selectedItems[0].id)
     modalContext.logModalResponse(resp, modalContext.target())
     if (resp.success) store.refresh()
-    modalContext.modal = undefined
+    modalContext.reset()
   }
 </script>
 
@@ -78,7 +78,7 @@
     { id: 'roles', label: 'Roles', render: item => (item.roles.map(r => r.name)).join(', '), grow: 5 }
   ]} searchable='name'/>
 </ActionPanel>
-{#if modalContext.modal === 'addgroup'}
+{#if $modalContext.modal === 'addgroup'}
   <FormDialog
     submit={onAddGroup}
     validate={validateAddGroup}
@@ -87,7 +87,7 @@
     on:escape={modalContext.onModalEscape}>
     <FieldText path='name' label='Group Name' required></FieldText>
   </FormDialog>
-{:else if modalContext.modal === 'deletegroup' }
+{:else if $modalContext.modal === 'deletegroup' }
   <Dialog
     title='Delete Group'
     continueText='Delete'

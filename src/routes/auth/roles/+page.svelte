@@ -5,7 +5,7 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContext } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContextStore } from '$lib'
   import { setContext } from 'svelte'
 
   type TypedRoleItem = TypedTreeItem<RoleListRole>
@@ -19,14 +19,14 @@
 
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [
-      { label: 'Add Role', icon: plusIcon, disabled: false, onClick: () => { modalContext.modal = 'addrole' } }
+      { label: 'Add Role', icon: plusIcon, disabled: false, onClick: () => modalContext.setModal('addrole') }
     ]
     return actions
   }
 
   function singleactions (role: TypedRoleItem) {
     const actions: ActionPanelAction[] = [
-      { label: 'Delete', icon: deleteOutline, disabled: !role.permissions.delete, onClick: () => { modalContext.modal = 'deleterole' } }
+      { label: 'Delete', icon: deleteOutline, disabled: !role.permissions.delete, onClick: () => modalContext.setModal('deleterole') }
     ]
     return actions
   }
@@ -35,7 +35,7 @@
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   type Modals = 'addrole' | 'deleterole'
-  const modalContext = new ModalContext<Modals>(undefined, () => actionPanelTarget.target)
+  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   async function validateAddRole (state) {
     const resp = await api.addRole(state.name, true)
@@ -58,14 +58,14 @@
 
   function onCompleteAddRole () {
     store.refresh()
-    modalContext.modal = undefined
+    modalContext.reset()
   }
 
   async function onDeleteRole () {
     const resp = await api.deleteRole($store.selectedItems[0].id)
     modalContext.logModalResponse(resp, actionPanelTarget.target)
     if (resp.success) store.refresh()
-    modalContext.modal = undefined
+    modalContext.reset()
   }
 
   let filter = ''
@@ -79,7 +79,7 @@
   ]} searchable='name' {filter}>
   </Tree>
 </ActionPanel>
-{#if modalContext.modal === 'addrole'}
+{#if $modalContext.modal === 'addrole'}
   <FormDialog
     submit={onAddRole}
     validate={validateAddRole}
@@ -89,7 +89,7 @@
     on:saved={onCompleteAddRole}>
     <FieldText path='name' label='Name' required />
   </FormDialog>
-{:else if modalContext.modal === 'deleterole'}
+{:else if $modalContext.modal === 'deleterole'}
   <Dialog
     title='Delete Role'
     continueText='Delete'

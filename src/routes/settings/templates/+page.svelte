@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ActionPanel, type ActionPanelAction, api, type TemplateListTemplate, templateRegistry, uiLog, ModalContext } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type TemplateListTemplate, templateRegistry, uiLog, ModalContextStore } from '$lib'
   import { Dialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
   import checkIcon from '@iconify-icons/mdi/check'
   import earthIcon from '@iconify-icons/mdi/earth'
@@ -13,7 +13,7 @@
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   type Modals = 'setuniversal' | 'setrestricted'
-  const modalContext = new ModalContext<Modals>(undefined, () => actionPanelTarget.target)
+  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   async function fetchChildren (template?: TypedTemplateItem) {
     if (template) return []
@@ -25,8 +25,8 @@
 
   function singleactions (template: TypedTemplateItem) {
     const actions: ActionPanelAction[] = []
-    if (template.universal) actions.push({ id: 'universalrestricted', label: 'Set Restricted', disabled: !template.permissions.setUniversal, onClick: () => { modalContext.modal = 'setrestricted' }, icon: earthOffIcon })
-    else actions.push({ id: 'universalrestricted', label: 'Set Universal', disabled: !template.permissions.setUniversal, onClick: () => { modalContext.modal = 'setuniversal' }, icon: earthIcon })
+    if (template.universal) actions.push({ id: 'universalrestricted', label: 'Set Restricted', disabled: !template.permissions.setUniversal, onClick: () => modalContext.setModal('setrestricted'), icon: earthOffIcon })
+    else actions.push({ id: 'universalrestricted', label: 'Set Universal', disabled: !template.permissions.setUniversal, onClick: () => modalContext.setModal('setuniversal'), icon: earthIcon })
     return actions
   }
 
@@ -35,7 +35,7 @@
     modalContext.logModalResponse(resp, $store.selectedItems[0].key, { universal })
     if (resp.success) {
       store.refresh()
-      modalContext.modal = undefined
+      modalContext.reset()
     }
   }
 
@@ -49,11 +49,11 @@
     { id: 'universal', label: 'Universal', icon: item => item.universal ? { icon: checkIcon, label: 'Universal' } : undefined, fixed: '6em' }
   ]}/>
 </ActionPanel>
-{#if modalContext.modal === 'setuniversal'}
+{#if $modalContext.modal === 'setuniversal'}
   <Dialog title="Make Template Universal" cancelText="Cancel" continueText="Set Universal" on:escape={modalContext.onModalEscape} on:continue={() => setUniversal(true)}>
     <span>{`Making the ${$store.selectedItems[0].name} template universal will allow it to be used on all sites and pagetrees.`}</span>
   </Dialog>
-{:else if modalContext.modal === 'setrestricted'}
+{:else if $modalContext.modal === 'setrestricted'}
   <Dialog title="Restrict Template Usage" cancelText="Cancel" continueText="Restrict" on:escape={modalContext.onModalEscape} on:continue={() => setUniversal(false)}>
     <span>Restricted templates must be improved for usage on individual sites and/or pagetrees. Proceed?</span>
   </Dialog>

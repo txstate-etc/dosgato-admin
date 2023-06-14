@@ -19,7 +19,7 @@
   import { uiConfig } from '../local'
   import '../local/tracking.js'
 
-  uiLog.logger = uiConfig.uiInteractionsLogger ?? ((arg: any) => console.log(arg))
+  uiLog.logger = uiConfig.uiInteractionsLogger ?? ((arg: any) => console.log('UI:', arg))
   $: uiLog.screen = $page.route.id ?? undefined
 
   export let data: { errObj: any }

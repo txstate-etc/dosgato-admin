@@ -9,7 +9,7 @@
   import { sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContext } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContextStore } from '$lib'
   import { setContext } from 'svelte'
 
   export let system: boolean
@@ -20,7 +20,7 @@
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   type Modals = 'create' | 'disable' | 'enable'
-  const modalContext = new ModalContext<Modals>(undefined, () => actionPanelTarget.target)
+  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   async function fetchChildren (user?: TypedUserItem) {
     if (user) return []
@@ -40,8 +40,8 @@
     const actions: ActionPanelAction[] = [
       { label: 'Edit', icon: pencilIcon, disabled: !user.permissions.update, onClick: () => goto(base + '/auth/users/' + user.id) }
     ]
-    if (user.disabled) actions.push({ id: 'enabledisable', label: 'Enable', icon: accountCheck, disabled: !user.permissions.disable, onClick: () => { modalContext.modal = 'enable' } })
-    else actions.push({ id: 'enabledisable', label: 'Disable', icon: accountCancel, disabled: !user.permissions.disable, onClick: () => { modalContext.modal = 'disable' } })
+    if (user.disabled) actions.push({ id: 'enabledisable', label: 'Enable', icon: accountCheck, disabled: !user.permissions.disable, onClick: () => modalContext.setModal('enable') })
+    else actions.push({ id: 'enabledisable', label: 'Disable', icon: accountCancel, disabled: !user.permissions.disable, onClick: () => modalContext.setModal('disable') })
     return actions
   }
 
@@ -53,21 +53,21 @@
   }
 
   const emptyactions: ActionPanelAction[] = [
-    { label: 'Create', icon: accountPlus, disabled: !$globalStore.access.createUsers, onClick: () => { modalContext.modal = 'create' } }
+    { label: 'Create', icon: accountPlus, disabled: !$globalStore.access.createUsers, onClick: () => modalContext.setModal('create') }
   ]
 
   async function onDisable () {
     const resp = await api.disableUsers($store.selectedItems.map(u => u.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target/*, { id: uiLog.targetFromTreeStore($store, 'id') } */)
     if (resp.success) store.refresh()
-    modalContext.modal = undefined
+    modalContext.reset()
   }
 
   async function onEnable () {
     const resp = await api.enableUsers($store.selectedItems.map(u => u.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target/*, { id: uiLog.targetFromTreeStore($store, 'id') } */)
     if (resp.success) store.refresh()
-    modalContext.modal = undefined
+    modalContext.reset()
   }
 
   async function onCreate (data: CreateUserInput) {
@@ -94,7 +94,7 @@
   }
 
   function onCreateComplete () {
-    modalContext.modal = undefined
+    modalContext.reset()
     store.refresh()
   }
 
@@ -112,7 +112,7 @@
     { id: 'roles', label: 'Roles', render: renderRoles, grow: 5 }
   ]} searchable={['id', 'firstname', 'lastname']} {filter}/>
 </ActionPanel>
-{#if modalContext.modal === 'disable'}
+{#if $modalContext.modal === 'disable'}
   <Dialog
     title={`Disable ${$store.selectedItems[0].name} (${$store.selectedItems[0].id})${$store.selectedItems.length > 1 ? ` and ${$store.selectedItems.length - 1} more` : ''}`}
     continueText="Disable User{$store.selectedItems.length > 1 ? 's' : ''}"
@@ -121,7 +121,7 @@
     on:escape={modalContext.onModalEscape}>
     Are you sure you want to disable {#if $store.selectedItems.length > 1}{$store.selectedItems.length} users{:else}this user{/if}? They will be unable to log in, but their roles will be preserved so that they can be re-enabled with minimal work.
   </Dialog>
-{:else if modalContext.modal === 'enable'}
+{:else if $modalContext.modal === 'enable'}
   <Dialog
     title={`Enable ${$store.selectedItems[0].name} (${$store.selectedItems[0].id})${$store.selectedItems.length > 1 ? ` and ${$store.selectedItems.length - 1} more` : ''}`}
     continueText="Enable User{$store.selectedItems.length > 1 ? 's' : ''}"
@@ -130,7 +130,7 @@
     on:escape={modalContext.onModalEscape}>
     Are you sure you want to enable {#if $store.selectedItems.length > 1}{$store.selectedItems.length} users{:else}this user{/if}? They will be able to log in again and will have all the same roles as when they were disabled.
   </Dialog>
-{:else if modalContext.modal === 'create'}
+{:else if $modalContext.modal === 'create'}
   <FormDialog title="Create User" submit={onCreate} validate={onCreateValidate} on:escape={modalContext.onModalEscape} on:saved={onCreateComplete}>
     <FieldText path="userId" label="Login"></FieldText>
     {#if !system}

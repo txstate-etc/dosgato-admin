@@ -4,7 +4,7 @@
   import deleteIcon from '@iconify-icons/ph/trash'
   import { Dialog, FieldText, FieldMultiselect, FieldSelect, FormDialog } from '@dosgato/dialog'
   import { base } from '$app/paths'
-  import { api, BackButton, DetailList, DetailPanel, DetailPanelSection, messageForDialog, StyledList, type RoleListRole, type UserListUser, ModalContext } from '$lib'
+  import { api, BackButton, DetailList, DetailPanel, DetailPanelSection, messageForDialog, StyledList, type RoleListRole, type UserListUser, ModalContextStore } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   import DetailPageContent from '$lib/components/DetailPageContent.svelte'
@@ -14,7 +14,7 @@
   let allRoles: RoleListRole[]
 
   type Modals = 'editbasic' | 'addmembers' | 'removegroupmember' | 'addrole' | 'removerole'
-  const modalContext = new ModalContext<Modals>()
+  const modalContext = new ModalContextStore<Modals>()
 
   const panelHeaderColor = '#007096'
 
@@ -48,7 +48,7 @@
 
   async function openAddUsersDialog () {
     allUsers ??= await api.getUserList({ enabled: true })
-    modalContext.modal = 'addmembers'
+    modalContext.setModal('addmembers')
   }
 
   async function onAddMembers (state) {
@@ -65,7 +65,7 @@
 
   function onClickRemoveGroupMember (id: string) {
     groupMemberRemovingId = id
-    modalContext.modal = 'removegroupmember'
+    modalContext.setModal('removegroupmember')
   }
 
   async function onRemoveGroupMember (state) {
@@ -92,7 +92,7 @@
 
   async function openAddRoleDialog () {
     allRoles ??= await api.getRoleList()
-    modalContext.modal = 'addrole'
+    modalContext.setModal('addrole')
   }
 
   async function onAddRole (state) {
@@ -109,7 +109,7 @@
 
   function onClickRemoveRole (id: string) {
     roleRemovingId = id
-    modalContext.modal = 'removerole'
+    modalContext.setModal('removerole')
   }
 
   async function onRemoveRole (state) {
@@ -125,7 +125,7 @@
 
   function onSaved () {
     store.refresh($store.group.id)
-    modalContext.modal = undefined
+    modalContext.reset()
   }
 </script>
 
@@ -133,7 +133,7 @@
   <BackButton destination="group list" url={`${base}/auth/groups/`}/>
   <div class="panel-grid">
     <div class="vertical-group">
-      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={{ icon: pencilIcon, onClick: () => { modalContext.modal = 'editbasic' } }}>
+      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={{ icon: pencilIcon, onClick: () => modalContext.setModal('editbasic') }}>
         <DetailPanelSection>
           <DetailList records={{ Name: $store.group.name }}/>
         </DetailPanelSection>
@@ -212,7 +212,7 @@
 
 </DetailPageContent>
 
-{#if modalContext.modal === 'editbasic'}
+{#if $modalContext.modal === 'editbasic'}
   <FormDialog
     submit={onEditBasic}
     validate={validateBasic}
@@ -223,7 +223,7 @@
     on:saved={onSaved}>
     <FieldText path='name' label='Group Name' required></FieldText>
   </FormDialog>
-{:else if modalContext.modal === 'addmembers'}
+{:else if $modalContext.modal === 'addmembers'}
   <FormDialog
     submit={onAddMembers}
     name="addmembers"
@@ -236,7 +236,7 @@
       label='Add Members'
       getOptions={searchUsersForMembers}/>
   </FormDialog>
-{:else if modalContext.modal === 'removegroupmember'}
+{:else if $modalContext.modal === 'removegroupmember'}
   <Dialog
     title="Remove Group Member"
     continueText="Remove"
@@ -245,7 +245,7 @@
     on:escape={() => { modalContext.onModalEscape(); groupMemberRemovingId = undefined }}>
     Remove this member from group {$store.group.name}?
   </Dialog>
-{:else if modalContext.modal === 'addrole'}
+{:else if $modalContext.modal === 'addrole'}
   <FormDialog
     submit={onAddRole}
     name="addroles"
@@ -255,7 +255,7 @@
     preload={{ roles: $store.group.directRoles.map(r => r.id) }}>
     <FieldSelect path='role' label='Role' choices={allRoles.filter(r => !directRoleIds.includes(r.id)).map(r => ({ label: r.name, value: r.id }))}/>
   </FormDialog>
-{:else if modalContext.modal === 'removerole'}
+{:else if $modalContext.modal === 'removerole'}
   <Dialog
     title="Remove Role"
     continueText="Remove"

@@ -6,7 +6,7 @@
   import deleteIcon from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
   import { base } from '$app/paths'
-  import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type GroupListGroup, type RoleListRole, BackButton, ModalContext } from '$lib'
+  import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type GroupListGroup, type RoleListRole, BackButton, ModalContextStore } from '$lib'
   import { _store as store } from './+page'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
   import { sortby } from 'txstate-utils'
@@ -15,7 +15,7 @@
   export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
 
   type Modals = 'editbasic' | 'editgroups' | 'editroles' | 'removefromgroup' | 'removerole'
-  const modalContext = new ModalContext<Modals>()
+  const modalContext = new ModalContextStore<Modals>()
 
   const panelHeaderColor = '#BCD2CA'
 
@@ -33,7 +33,7 @@
 
   function onSaved () {
     store.refresh($store.user.id)
-    modalContext.modal = undefined
+    modalContext.reset()
   }
 
   function getIndirectRoleGroup (role) {
@@ -47,7 +47,7 @@
     const resp = await api.updateUserInfo($store.user.id, state)
     modalContext.logModalResponse(resp, undefined/* $store.user.id */)
     if (resp.success) store.refresh($store.user.id)
-    modalContext.modal = undefined
+    modalContext.reset()
     return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
   }
 
@@ -76,7 +76,7 @@
     modalContext.logModalResponse(resp, undefined/* $store.user.id, *//* { groups: state.groups.join(',') } */)
     if (resp.success) {
       store.refresh($store.user.id)
-      modalContext.modal = undefined
+      modalContext.reset()
     }
     return {
       success: resp.success,
@@ -100,7 +100,7 @@
     modalContext.logModalResponse(resp, undefined/* $store.user.id, *//* { roles: state.roleIds } */)
     if (resp.success) {
       store.refresh($store.user.id)
-      modalContext.modal = undefined
+      modalContext.reset()
     }
     return { ...resp, data: state }
   }
@@ -129,12 +129,12 @@
 
   function onClickRemoveGroup (groupId, groupName) {
     store.setGroupRemoving(groupId, groupName)
-    modalContext.modal = 'removefromgroup'
+    modalContext.setModal('removefromgroup')
   }
 
   function onClickRemoveRole (roleId, roleName) {
     store.setRoleRemoving(roleId, roleName)
-    modalContext.modal = 'removerole'
+    modalContext.setModal('removerole')
   }
 
 </script>
@@ -145,7 +145,7 @@
 
   <div class="panel-grid">
     <div class="grid-item">
-      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? [{ icon: pencilIcon, onClick: () => { modalContext.modal = 'editbasic' } }, { icon: plusIcon, onClick: () => { modalContext.modal = 'editgroups' } }] : undefined}>
+      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? [{ icon: pencilIcon, onClick: () => modalContext.setModal('editbasic') }, { icon: plusIcon, onClick: () => modalContext.setModal('editgroups') }] : undefined}>
         <DetailPanelSection>
           <DetailList records={{
             'First Name': $store.user.system ? ' ' : $store.user.firstname,
@@ -192,7 +192,7 @@
     </div>
 
     <div class="grid-item">
-      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modalContext.modal = 'editroles' } } : undefined}>
+      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => modalContext.setModal('editroles') } : undefined}>
         <DetailPanelSection>
           {#if $store.user.directRoles.length}
             <SortableTable items = {sortby($store.user.directRoles, 'name')}
@@ -232,7 +232,7 @@
   </div>
 </DetailPageContent>
 
-{#if modalContext.modal === 'editbasic'}
+{#if $modalContext.modal === 'editbasic'}
   <FormDialog
     submit={onEditBasic}
     validate={validateBasicInfo}
@@ -247,7 +247,7 @@
     <FieldText path='email' label='Email' required={true}/>
     <FieldCheckbox path='trained' label='Trained' defaultValue={false} boxLabel='User has received training'/>
   </FormDialog>
-{:else if modalContext.modal === 'editgroups'}
+{:else if $modalContext.modal === 'editgroups'}
   <FormDialog
     submit={onAddGroups}
     name='editgroups'
@@ -261,7 +261,7 @@
       lookupByValue={lookupGroupByValue}
     />
   </FormDialog>
-{:else if modalContext.modal === 'removefromgroup'}
+{:else if $modalContext.modal === 'removefromgroup'}
   <Dialog
     title='Remove from Group'
     continueText='Remove'
@@ -270,7 +270,7 @@
     on:escape={() => { modalContext.onModalEscape(); $store.groupRemoving = undefined }}>
     Remove user {$store.user.id} from group {$store.groupRemoving?.name ?? ''}?
   </Dialog>
-{:else if modalContext.modal === 'removerole'}
+{:else if $modalContext.modal === 'removerole'}
   <Dialog
     title='Remove Role'
     continueText='Remove'
@@ -279,7 +279,7 @@
     on:escape={() => { modalContext.onModalEscape(); $store.roleRemoving = undefined }}>
     Remove role {$store.roleRemoving?.name ?? ''} from user {$store.user.id}?
   </Dialog>
-{:else if modalContext.modal === 'editroles'}
+{:else if $modalContext.modal === 'editroles'}
   <FormDialog
     submit={onAddRoles}
     name='editroles'

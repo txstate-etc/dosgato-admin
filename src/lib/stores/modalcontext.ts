@@ -1,29 +1,41 @@
-
+import { Store } from '@txstate-mws/svelte-store'
+// import { set } from 'txstate-utils'
+import { uiLog } from '$lib'
 import type { BaseEvent } from '@dosgato/templating'
-import { uiLog } from './logging'
 
 interface ISuccess { success: boolean }
-/** Class for tracking modal context and providing support functionality around it.
- * Intended for use as a global instance object per modal associative context (group of things
- * you want to have modals for).
+
+export interface IModalContextStore <ModalTypes extends Exclude<string, ModalTypes>> {
+  modal: ModalTypes | undefined
+}
+
+/** Store class for tracking modal context and providing support functionality around it.
+ * Intended for use as an instance store per modal associative context (group of things
+ * you want to have a modal set for).
  * - Can be passed a `target()` callback function for use in getting the associated target
  * string in logging functions.
- * - Can assign `modal` property to any of the string literal types used to create the
+ * - Can `set(...)` `modal` property to any of the string literal types used to create the
  * context instance, OR `undefined` the property.
  * - Constructed with a string literal union list as the type for the `modal` prop and
  * an optional pass in of the `target()` callback.
  * @example
- * const menuContext = new ModalContext<'addFile'|'editFile'>()
- * menuContext.modal = 'print' // error
- * menuContext.modal = 'addFile' // OK
+ * // Create a ModalContextStore with 'addFile' as the default modal state.
+ * const menuContext = new ModalContextStore<'addFile'|'editFile'>('addFile')
+ * menuContext.setModal('print') // error
+ * menuContext.setModal('addFile') // OK
  * menuContext.target = () => { return menuTarget.target }
  * menuContext.onModalEscape // handler reference that will:
  * // - log modal escape with the result of menuContext.target()
- * // - undefine the modal value */
-export class ModalContext <ModalTypes extends Exclude<string, ModalTypes>> {
-  modal: ModalTypes | undefined
+ * // - default the modal value and inform subscribers */
+export class ModalContextStore<ModalTypes extends Exclude<string, ModalTypes>> extends Store<IModalContextStore<ModalTypes>> {
   default: ModalTypes | undefined
   target: () => string | undefined
+
+  constructor (defaultModal?: ModalTypes, target?: () => string | undefined) {
+    super({ modal: defaultModal })
+    this.default = defaultModal
+    this.target = target ?? (() => undefined)
+  }
 
   /** Convenience function for logging response information associated with an action triggered by a
    * modal.
@@ -37,21 +49,26 @@ export class ModalContext <ModalTypes extends Exclude<string, ModalTypes>> {
   logModalResponse<R extends ISuccess> (resp: R, target?: string, additionalProperties?: Record<string, string | undefined>) {
     // Conditional use of the spread operator will only add additionalProperties if defined.
     const logInfo: BaseEvent = {
-      eventType: `${this.modal ?? 'undefined'}-modal`,
+      eventType: `${this.value.modal ?? 'undefined'}-modal`,
       action: resp.success ? 'Success' : 'Failed',
       ...(additionalProperties && { additionalProperties })
     }
     uiLog.log(logInfo, target)
   }
 
-  /** Handle for generic modal escape handler that logs the escape and undefines `modal`. */
+  /** Handle for generic modal escape handler that logs the escape and resets the modal notifying subscribers. */
   onModalEscape = () => {
-    uiLog.log({ eventType: `${this.modal ?? 'undefined'}-modal`, action: 'Cancel' }, this.target())
-    this.modal = this.default
+    uiLog.log({ eventType: `${this.value.modal ?? 'undefined'}-modal`, action: 'Cancel' }, this.target())
+    this.reset()
   }
 
-  constructor (defaultType?: ModalTypes, target?: () => string | undefined) {
-    this.modal = this.default = defaultType
-    this.target = target ?? (() => undefined)
+  /** Sets the modal context and notifies subscribers. */
+  setModal (modal: ModalTypes) {
+    super.set({ modal })
+  }
+
+  /** Resets the modal context to default and notifies subscribers. */
+  reset () {
+    super.set({ modal: this.default })
   }
 }

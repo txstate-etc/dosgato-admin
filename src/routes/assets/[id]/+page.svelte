@@ -8,7 +8,7 @@
   import xLight from '@iconify-icons/ph/x-light'
   import { Modal } from '@txstate-mws/svelte-components'
   import { roundTo } from 'txstate-utils'
-  import { DetailList, DetailPanel, DetailPanelSection, environmentConfig, UploadUI, StyledList, dateStamp, ChooserClient, api, ModalContext } from '$lib'
+  import { DetailList, DetailPanel, DetailPanelSection, environmentConfig, UploadUI, StyledList, dateStamp, ChooserClient, api, ModalContextStore } from '$lib'
   import { getAssetDetail, type AssetDetail } from './helpers'
   import { uiConfig } from '../../../local'
 
@@ -17,18 +17,18 @@
   $: image = asset.box
 
   type Modals = 'edit' | 'upload' | 'preview'
-  const modalContext = new ModalContext<Modals>()
-  // TODO: Figure out an appropriate target getter to pass to ModalContext.
+  const modalContext = new ModalContextStore<Modals>()
+  // TODO: Figure out an appropriate target getter to pass to ModalContextStore.
 
   function onEditClick () {
-    modalContext.modal = 'edit'
+    modalContext.setModal('edit')
   }
 
   function onUploadClick () {
-    modalContext.modal = 'upload'
+    modalContext.setModal('upload')
   }
   async function onUploadSaved () {
-    modalContext.modal = undefined
+    modalContext.reset()
     asset = await getAssetDetail(asset.id)
     watchForResizes()
   }
@@ -46,7 +46,7 @@
   }
 
   async function onMetaSaved () {
-    modalContext.modal = undefined
+    modalContext.reset()
     asset = await getAssetDetail(asset.id)
   }
 
@@ -76,7 +76,7 @@
       {#if image}
         <div class="image-container">
           <img src="{environmentConfig.renderBase}/.asset/{asset.id}/w/500/{asset.checksum.substring(0, 12)}/{encodeURIComponent(asset.filename)}" width={image.width} height={image.height} alt="">
-          <button type="button" on:click={() => { modalContext.modal = 'preview' }}><Icon icon={magnifyingGlassPlus} width="1.3em" hiddenLabel="Show image full screen"/></button>
+          <button type="button" on:click={() => { modalContext.setModal('preview') }}><Icon icon={magnifyingGlassPlus} width="1.3em" hiddenLabel="Show image full screen"/></button>
         </div>
       {:else}
         <div class="file-icon"><FileIcon width="50%" mime={asset.mime} /></div>
@@ -120,13 +120,13 @@
     {/if}
   </div>
 </div>
-{#if modalContext.modal === 'upload'}
+{#if $modalContext.modal === 'upload'}
   <UploadUI title="Upload new file for {asset.path}" helptext="Uploading a new file will replace this asset everywhere it appears." uploadPath="{environmentConfig.apiBase}/assets/replace/{asset.id}" maxFiles={1} on:escape={onUploadEscape} on:saved={onUploadSaved} />
-{:else if modalContext.modal === 'edit' && uiConfig.assetMeta}
+{:else if $modalContext.modal === 'edit' && uiConfig.assetMeta}
   <FormDialog icon={fileMagnifyingGlass} title="Edit Asset Details" submit={onMetaSubmit} validate={onMetaValidate} preload={asset.data.meta ?? {}} on:escape={modalContext.onModalEscape} on:saved={onMetaSaved} let:data {chooserClient}>
     <svelte:component this={uiConfig.assetMeta.dialog} {asset} {data} {environmentConfig} />
   </FormDialog>
-{:else if modalContext.modal === 'preview' && image}
+{:else if $modalContext.modal === 'preview' && image}
   <Modal escapable on:escape={modalContext.onModalEscape}>
     <div class="preview" style:max-width="min({image.width * 3}px, {roundTo(90 * image.width / image.height, 4)}dvh)" style:padding-bottom="{roundTo(100 * image.height / image.width, 4)}%">
       <img src="{environmentConfig.renderBase}/.asset/{asset.id}/w/{window.innerWidth}/{asset.checksum.substring(0, 12)}/{encodeURIComponent(asset.filename)}" width={image.width} height={image.height} alt="">
