@@ -55,7 +55,7 @@
       // editing mode, edit bar selected
       return [
         { label: 'Edit', icon: pencilIcon, onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
-        { label: 'Delete', icon: trash, onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) },
+        { label: 'Delete', icon: trash, disabled: !$editorStore.selectedMayDelete, onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) },
         ...($actionsStore.clipboardActive
           ? [
               { label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, icon: fileX, onClick: () => pageEditorStore.clearClipboard() }
@@ -75,7 +75,7 @@
     }
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean }) {
     if (message.action === 'scroll') {
       $editorStore.scrollY = message.scrollTop!
       return
@@ -87,7 +87,7 @@
       }
       iframe.contentWindow?.postMessage({ validdrops }, '*')
     } else if (message.action === 'select') {
-      pageEditorStore.select(message.path, message.label, message.maxreached)
+      pageEditorStore.select(message.path, message.label, message.maxreached, message.mayDelete)
     } else if (message.action === 'edit') {
       pageEditorStore.editComponentShowModal(message.path)
     } else if (message.action === 'cut') {

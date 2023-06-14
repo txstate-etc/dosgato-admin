@@ -26,6 +26,7 @@ export interface EditorState {
   selectedPath?: string
   selectedLabel?: string
   selectedMaxReached?: boolean
+  selectedMayDelete?: boolean
   state?: any
   cutAllowed?: boolean
   copyAllowed?: boolean
@@ -245,8 +246,8 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.updateEditorState(editorState => ({ ...editorState, modal: undefined, editing: undefined, creating: undefined }))
   }
 
-  select (path?: string, label?: string, maxreached?: boolean) {
-    this.updateEditorState(editorState => ({ ...editorState, selectedPath: path, selectedLabel: label, selectedMaxReached: maxreached }))
+  select (path?: string, label?: string, maxreached?: boolean, mayDelete?: boolean) {
+    this.updateEditorState(editorState => ({ ...editorState, selectedPath: path, selectedLabel: label, selectedMaxReached: !!maxreached, selectedMayDelete: !!mayDelete }))
   }
 
   cutComponent (path?: string) {
