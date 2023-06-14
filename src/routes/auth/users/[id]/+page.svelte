@@ -129,12 +129,12 @@
 
   function onClickRemoveGroup (groupId, groupName) {
     store.setGroupRemoving(groupId, groupName)
-    modalContext.setModal('removefromgroup')
+    modalContext.setModal('removefromgroup', groupName)
   }
 
   function onClickRemoveRole (roleId, roleName) {
     store.setRoleRemoving(roleId, roleName)
-    modalContext.setModal('removerole')
+    modalContext.setModal('removerole', roleName)
   }
 
 </script>
@@ -145,7 +145,7 @@
 
   <div class="panel-grid">
     <div class="grid-item">
-      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? [{ icon: pencilIcon, onClick: () => modalContext.setModal('editbasic') }, { icon: plusIcon, onClick: () => modalContext.setModal('editgroups') }] : undefined}>
+      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? [{ icon: pencilIcon, onClick: () => modalContext.setModal('editbasic', $store.user.id) }, { icon: plusIcon, onClick: () => modalContext.setModal('editgroups', $store.user.id) }] : undefined}>
         <DetailPanelSection>
           <DetailList records={{
             'First Name': $store.user.system ? ' ' : $store.user.firstname,
@@ -192,7 +192,7 @@
     </div>
 
     <div class="grid-item">
-      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => { modalContext.setModal('editroles') } } : undefined}>
+      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => modalContext.setModal('editroles', $store.user.id) } : undefined}>
         <DetailPanelSection>
           {#if $store.user.directRoles.length}
             <SortableTable items = {sortby($store.user.directRoles, 'name')}

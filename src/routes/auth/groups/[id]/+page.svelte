@@ -14,7 +14,7 @@
   let allRoles: RoleListRole[]
 
   type Modals = 'editbasic' | 'addmembers' | 'removegroupmember' | 'addrole' | 'removerole'
-  const modalContext = new ModalContextStore<Modals>()
+  const modalContext = new ModalContextStore<Modals>(undefined, () => $store.group.id)
 
   const panelHeaderColor = '#007096'
 

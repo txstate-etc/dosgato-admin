@@ -8,6 +8,13 @@
   import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog, ModalContextStore, uiLog } from '$lib'
   import { setContext } from 'svelte'
 
+  // TODO: Need to get with Rachel on what we want defined for target in this screen's context.
+  const actionPanelTarget: { target: string | undefined } = { target: 'AuthGroupsPage' }
+  setContext('ActionPanelTarget', { getTarget: () => uiLog.targetFromTreeStore($store, 'id') })
+
+  type Modals = 'addgroup' | 'deletegroup'
+  const modalContext = new ModalContextStore<Modals>(undefined, () => modalContext.targetDescriptor ?? actionPanelTarget.target)
+
   type TypedGroupItem = TypedTreeItem<GroupListGroup>
 
   async function fetchChildren (group?: TypedGroupItem) {
@@ -17,27 +24,21 @@
 
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [
-      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => modalContext.setModal('addgroup') }
+      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => modalContext.setModal('addgroup', 'FormDialog') }
     ]
     return actions
   }
 
   function singleactions (user: TypedGroupItem) {
     const actions: ActionPanelAction[] = [
-      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => modalContext.setModal('addgroup') },
-      { label: 'Delete', icon: accountMultipleRemoveOutline, disabled: false, onClick: () => modalContext.setModal('deletegroup') }
+      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => modalContext.setModal('addgroup', 'FormDialog') },
+      { label: 'Delete', icon: accountMultipleRemoveOutline, disabled: false, onClick: () => modalContext.setModal('deletegroup', $store.selectedItems[0].name) }
     ]
     return actions
   }
 
   const store: TreeStore<GroupListGroup> = new TreeStore(fetchChildren)
 
-  // TODO: Need to get with Rachel on what we want defined for target in this screen's context.
-  const actionPanelTarget: { target: string | undefined } = { target: 'AuthGroupsPage' }
-  setContext('ActionPanelTarget', { getTarget: () => uiLog.targetFromTreeStore($store, 'id') })
-
-  type Modals = 'addgroup' | 'deletegroup'
-  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   async function onAddGroup (state) {
     const parentId: string|undefined = $store.selectedItems.length ? $store.selectedItems[0].id : undefined

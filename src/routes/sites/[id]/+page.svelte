@@ -26,7 +26,7 @@
 
   type Modals = 'editbasic' | 'editsitemanagement' | 'editlaunch' | 'addcomment' | 'addpagetree' | 'editpagetree' | 'deletepagetree' | 'authorizetemplate' |
     'promotepagetree' | 'archivepagetree' | 'edittemplates' | 'addpagetemplates' | 'addcomponenttemplates' | 'deletetemplateauth' | 'downloadcsv'
-  const modalContext = new ModalContextStore<Modals>()
+  const modalContext = new ModalContextStore<Modals>(undefined, () => $store.site.name)
 
   $: authorizedPageTemplateKeys = new Set($store.pageTemplates.map(t => t.key))
   $: authorizedComponentTemplateKeys = new Set($store.componentTemplates.map(t => t.key))

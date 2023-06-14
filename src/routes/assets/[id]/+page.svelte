@@ -75,7 +75,7 @@
       {#if image}
         <div class="image-container">
           <img src="{environmentConfig.renderBase}/.asset/{asset.id}/w/500/{asset.checksum.substring(0, 12)}/{encodeURIComponent(asset.filename)}" width={image.width} height={image.height} alt="">
-          <button type="button" on:click={() => { modalContext.setModal('preview') }}><Icon icon={magnifyingGlassPlus} width="1.3em" hiddenLabel="Show image full screen"/></button>
+          <button type="button" on:click={() => { modalContext.setModal('preview', asset.filename) }}><Icon icon={magnifyingGlassPlus} width="1.3em" hiddenLabel="Show image full screen"/></button>
         </div>
       {:else}
         <div class="file-icon"><FileIcon width="50%" mime={asset.mime} /></div>

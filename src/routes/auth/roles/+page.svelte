@@ -8,8 +8,13 @@
   import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContextStore } from '$lib'
   import { setContext } from 'svelte'
 
-  type TypedRoleItem = TypedTreeItem<RoleListRole>
+  const actionPanelTarget: { target: string | undefined } = { target: undefined }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
+  type Modals = 'addrole' | 'deleterole'
+  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
+
+  type TypedRoleItem = TypedTreeItem<RoleListRole>
   async function fetchChildren (role?: TypedRoleItem) {
     if (role) return []
     return await api.getRoleList()
@@ -31,11 +36,6 @@
     return actions
   }
 
-  const actionPanelTarget: { target: string | undefined } = { target: undefined }
-  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
-
-  type Modals = 'addrole' | 'deleterole'
-  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   async function validateAddRole (state) {
     const resp = await api.addRole(state.name, true)
