@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { iconForMime, bytesToHuman, FieldText, FormDialog, Tree, Dialog } from '@dosgato/dialog'
+  import { iconForMime, bytesToHuman, FieldText, FormDialog, Tree, Dialog, humanFileType } from '@dosgato/dialog'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
@@ -16,7 +16,7 @@
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState, humanFileType, uiLog } from '$lib'
+  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState, uiLog } from '$lib'
   import { _store as store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
   import { setContext } from 'svelte'
 

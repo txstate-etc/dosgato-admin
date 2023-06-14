@@ -236,7 +236,7 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
   return {
     type: 'asset',
     source: 'assets',
-    ...pick(asset, 'name', 'path', 'mime'),
+    ...pick(asset, 'name', 'path', 'mime', 'extension'),
     // assets use linkId in their internal links but we call it `id` for compatibility with other sources that don't have a linkId concept
     id: stringify({ id: asset.linkId, source: 'assets', type: 'asset', checksum: asset.checksum, siteId: asset.site.id, path: asset.path }),
     bytes: asset.size,

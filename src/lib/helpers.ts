@@ -59,10 +59,3 @@ export enum DeleteState {
   MARKEDFORDELETE = 1,
   DELETED = 2
 }
-
-export function humanFileType (mime: string, extension: string) {
-  if (mime.startsWith('image/') || mime.startsWith('video/')) return mime
-  if (mime.startsWith('text/')) return 'text - ' + extension
-  if (extension === 'js') return 'javascript'
-  return extension
-}
