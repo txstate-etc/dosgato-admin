@@ -46,15 +46,15 @@ class SubNavStore extends Store<ISubNavStore> {
   }
 
   /** Convenience function for getting a copy of the `label` and `href` of the active section's active link.
-   * - Accepts an optional `idx` value to get a particular link's info from the active section instead of
-   * the `active` link.
-   * - If passed an `idx` greater than the length of the active section's links array a copy of the active
-   * link's identifiers will be returned instead. */
+   * @param `idx` Optonal value to get a particular link's info from the active section instead of the `active` link.
+   * @returns `undefined`
+   * - If there's no active section.
+   * - If passed an `idx` greater than or equal to the length of the active section's links array. */
   getActiveIdentifiers (idx?: number) {
     if (!this.value.active) return undefined
     const activeSection = this.value.sections[this.value.active]
-    const link = (idx && idx < activeSection.links.length) ? idx : activeSection.active
-    const original = activeSection.links[link]
+    if (idx && idx >= activeSection.links.length) return undefined
+    const original = activeSection.links[idx ?? activeSection.active]
     return { label: original.label, href: original.href }
   }
 
