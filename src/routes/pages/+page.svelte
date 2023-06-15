@@ -30,6 +30,8 @@
   import { sandboxIcon } from './sandboxicon'
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
   import { copyWithSubpagesIcon } from './copywithsubpagesicon'
+  import { moveIntoIcon } from './moveintoicon'
+  import { moveAboveIcon } from './moveaboveicon'
   import { statusIcon } from './[id]/helpers'
   import { setContext } from 'svelte'
 
@@ -88,8 +90,8 @@
       )
     }
     movement.actions.push(
-      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste(undefined, $store.copyRecursive) } },
-      { label: 'Move Above', disabled: !$store.cut || !store.pasteEligible(true), hiddenLabel: `Move above ${page.name}`, onClick: () => { store.paste(true, $store.copyRecursive) }, icon: contentPaste }
+      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: $store.cut ? moveIntoIcon : contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste(undefined, $store.copyRecursive) } },
+      { label: 'Move Above', disabled: !$store.cut || !store.pasteEligible(true), hiddenLabel: `Move above ${page.name}`, onClick: () => { store.paste(true, $store.copyRecursive) }, icon: moveAboveIcon }
     )
 
     const publishing: ActionPanelGroup = {
