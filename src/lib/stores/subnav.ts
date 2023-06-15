@@ -2,6 +2,19 @@ import type { IconifyIcon } from '@iconify/svelte'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
 import { findIndex, set, splice } from 'txstate-utils'
 
+export interface ISubNavStore {
+  /** SubNavs can contain multiple sections (groups of links) identified by a string. */
+  sections: Record<string, ISubNavSection>
+  /** A string identifying which section is active - if any. */
+  active?: string
+}
+
+export interface ISubNavSection {
+  /** The set of links within a specific SubNav section. */
+  links: SubNavLink[]
+  /** Number identifying the currently active link in the section's 'links'. */
+  active: number
+}
 export interface SubNavLink {
   href: string
   label: string
@@ -10,7 +23,7 @@ export interface SubNavLink {
   onClose?: (link: this) => void
 }
 
-class SubNavStore extends Store<{ sections: Record<string, { links: SubNavLink[], active: number }>, active?: string }> {
+class SubNavStore extends Store<ISubNavStore> {
   init (section: string, links: SubNavLink[]) {
     this.update(v => ({ ...v, sections: { ...v.sections, [section]: v.sections[section] ?? { active: 0, links } }, active: section }))
   }
@@ -32,10 +45,16 @@ class SubNavStore extends Store<{ sections: Record<string, { links: SubNavLink[]
     })
   }
 
-  getActiveIdentifiers (tab: number) {
+  /** Convenience function for getting a copy of the `label` and `href` of the active section's active link.
+   * - Accepts an optional `idx` value to get a particular link's info from the active section instead of
+   * the `active` link.
+   * - If passed an `idx` greater than the length of the active section's links array a copy of the active
+   * link's identifiers will be returned instead. */
+  getActiveIdentifiers (idx?: number) {
     if (!this.value.active) return undefined
-    const currentNav = this.value.sections[this.value.active]
-    const original = currentNav.links[tab]
+    const activeSection = this.value.sections[this.value.active]
+    const link = (idx && idx < activeSection.links.length) ? idx : activeSection.active
+    const original = activeSection.links[link]
     return { label: original.label, href: original.href }
   }
 

@@ -205,6 +205,7 @@ class API {
     iframe.addEventListener('load', () => iframe.remove())
     iframe.setAttribute('hidden', '')
     iframe.setAttribute('src', url)
+    // TODO: Look into adding logging to messages from this download iframe.
     document.body.append(iframe)
   }
 
