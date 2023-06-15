@@ -164,7 +164,9 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const editorState = this.value.editors[pageId]
     if (!editorState?.creating?.templateKey) return { success: false, messages: [] as Feedback[], data }
     const def = templateRegistry.getTemplate(editorState.creating.templateKey)
-    const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: editorState.creating.templateKey }) }, { validateOnly })
+    const saveData = { ...data, templateKey: editorState.creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: editorState.creating.templateKey }) }
+    if (def?.randomId) saveData[def.randomId] = randomid()
+    const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, saveData, { validateOnly })
     if (!validateOnly && resp.success) {
       this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
     }
@@ -273,7 +275,10 @@ class PageEditorStore extends Store<IPageEditorStore> {
       if (this.value.active === this.value.clipboardPage) await this.moveComponent(this.value.clipboardPath, path)
     } else if (this.value.clipboardData) { // copy
       // copy, potentially from another page
-      const resp = await api.insertComponent(editorState.page.id, editorState.page.version.version, editorState.page.data, path, this.value.clipboardData)
+      const saveData = { ...this.value.clipboardData }
+      const def = templateRegistry.getTemplate(saveData.templateKey)
+      if (def?.randomId) saveData[def.randomId] = randomid()
+      const resp = await api.insertComponent(editorState.page.id, editorState.page.version.version, editorState.page.data, path, saveData)
       if (resp.success) {
         this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }), true)
       }
