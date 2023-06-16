@@ -863,9 +863,9 @@ class API {
     return undeletePages
   }
 
-  async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { validateOnly?: boolean, comment?: string }) {
-    const { validateOnly, comment } = opts ?? {}
-    const { createPageComponent } = await this.query<CreateComponentResponse>(CREATE_COMPONENT, { pageId, data, dataVersion, schemaversion: page.savedAtVersion, path, validateOnly, comment })
+  async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { isCopy?: boolean, validateOnly?: boolean, comment?: string }) {
+    const { isCopy, validateOnly, comment } = opts ?? {}
+    const { createPageComponent } = await this.query<CreateComponentResponse>(CREATE_COMPONENT, { pageId, data, dataVersion, schemaversion: page.savedAtVersion, path, isCopy, validateOnly, comment })
     const area = get<any[]>(page, path) ?? []
     const pathIsTargeted = !isNaN(Number(path.split('.').slice(-1)[0]))
     const finalPath = path + (pathIsTargeted ? '' : `.${area.length}`)
@@ -904,7 +904,7 @@ class API {
   }
 
   async insertComponent (pageId: string, dataVersion: number, pageData: PageData, to: string, componentData: ComponentData) {
-    const ret = await this.createComponent(pageId, dataVersion, pageData, to, componentData)
+    const ret = await this.createComponent(pageId, dataVersion, pageData, to, componentData, { isCopy: true })
     if (!ret.success) toast(ret.messages.find(m => m.type === 'error')!.message)
     return ret
   }

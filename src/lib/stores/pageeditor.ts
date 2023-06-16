@@ -195,8 +195,6 @@ class PageEditorStore extends Store<IPageEditorStore> {
     if (!active?.editor.creating?.templateKey) return { success: false, messages: [] as Feedback[], data }
     const [page, creating] = [active.editor.page, active.editor.creating]
     const def = templateRegistry.getTemplate(creating.templateKey!)
-    const saveData = { ...data, templateKey: creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: creating.templateKey }) }
-    if (def?.randomId) saveData[def.randomId] = randomid()
     const resp = await api.createComponent(active.pageId, page.version.version, page.data, creating.path, { ...data, templateKey: creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: creating.templateKey }) }, { validateOnly })
     if (!validateOnly) {
       this.logActionResponse(resp, 'addComponent', creating.componentEventualPath, { componentKey: def?.templateKey, component: def?.name })
@@ -331,10 +329,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
       if (this.value.active === this.value.clipboardPage) await this.moveComponent(this.value.clipboardPath, path)
     } else if (this.value.clipboardData) { // copy
       // copy, potentially from another page
-      const saveData = { ...this.value.clipboardData }
-      const def = templateRegistry.getTemplate(saveData.templateKey)
-      if (def?.randomId) saveData[def.randomId] = randomid()
-      const resp = await api.insertComponent(editorState.page.id, editorState.page.version.version, editorState.page.data, path, saveData)
+      const resp = await api.insertComponent(editorState.page.id, editorState.page.version.version, editorState.page.data, path, this.value.clipboardData)
       this.logActionResponse(resp, 'pasteComponent', path, editorState ? { component: this.value.clipboardLabel } : {})
       if (resp.success) {
         this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }), true)
