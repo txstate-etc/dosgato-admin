@@ -41,7 +41,7 @@ function dragEligible (items: TypedPageItem[], userWantsCopy: boolean) {
   // move permission is required for moves but you can copy things you can't move
   return items.every(item => !!item.parent && (userWantsCopy || item.permissions.move))
 }
-function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean, userWantsCopy: boolean) {
+function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean, userWantsCopy: boolean, dragging: boolean) {
   const actualTargetParent = above ? dropTarget.parent : dropTarget
   if (!actualTargetParent?.permissions.create) return 'none'
   // if we don't have permission to move one of the selected items then the user needs to request a copy operation
@@ -53,7 +53,7 @@ function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, 
   } else if (selectedItemsInSameSiteAsTarget.length) {
     return 'none' // mixing pages from target site and some other site - weird, how about no
   } else {
-    return 'none' // we do not want them dragging pages from one site to another
+    return dragging ? 'none' : 'copy' // we do not want them dragging pages from one site to another
   }
 }
 
