@@ -194,10 +194,10 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const editor = this.getActiveState()
     if (!editor?.state.creating?.templateKey) return { success: false, messages: [] as Feedback[], data }
     const [page, creating] = [editor.state.page, editor.state.creating]
-    const def = templateRegistry.getTemplate(editorState.creating.templateKey)
+    const def = templateRegistry.getTemplate(creating.templateKey!)
     const saveData = { ...data, templateKey: creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: creating.templateKey }) }
     if (def?.randomId) saveData[def.randomId] = randomid()
-    const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: editorState.creating.templateKey }) }, { validateOnly })
+    const resp = await api.createComponent(editor.pageId, page.version.version, page.data, creating.path, { ...data, templateKey: creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: creating.templateKey }) }, { validateOnly })
     if (!validateOnly && resp.success) {
       this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
     }
