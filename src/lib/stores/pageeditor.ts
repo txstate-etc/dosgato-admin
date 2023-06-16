@@ -109,7 +109,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
    * - Private to keep risks of inappropriately mutating values to this class. */
   private getActiveState () {
     const pageId = this.value.active
-    return pageId ? { pageId, state: this.value.editors[pageId]! } : undefined
+    return (pageId && this.value.editors[pageId]) ? { pageId, state: this.value.editors[pageId]! } : undefined
   }
 
   validMove (pageData: PageData, from: string, to: string) {
