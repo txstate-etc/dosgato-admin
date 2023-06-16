@@ -1,10 +1,11 @@
 import type { ComponentData, PageData, UITemplate } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
-import { get, groupby, isBlank, randomid, set, sortby } from 'txstate-utils'
-import { api, type PageEditorPage, templateRegistry, toast } from '$lib'
+import { get, groupby, isBlank, randomid, set, isEmpty, sortby } from 'txstate-utils'
+import { api, type PageEditorPage, templateRegistry, toast, uiLog } from '$lib'
 import type { Feedback } from '@txstate-mws/svelte-forms'
 import type { DateTime } from 'luxon'
 
+interface ISuccess { success: boolean }
 export interface IPageEditorStore {
   editors: Record<string, EditorState | undefined>
   active?: string
@@ -53,6 +54,8 @@ export interface EditorState {
   scrollY?: number
 }
 
+const eventType = 'PageEditor'
+
 class PageEditorStore extends Store<IPageEditorStore> {
   constructor () {
     super({ editors: {} })
@@ -73,10 +76,40 @@ class PageEditorStore extends Store<IPageEditorStore> {
 
   open (page: PageEditorPage) {
     this.update(v => ({ ...v, editors: { ...v.editors, [page.id]: { ...v.editors[page.id], page } }, active: page.id }))
+    uiLog.log({ eventType, action: 'Open', additionalProperties: { id: page.id } }, page.path)
   }
 
   free (pageId: string) {
     this.update(v => ({ ...v, editors: { ...v.editors, [pageId]: undefined } }))
+    uiLog.log({ eventType, action: 'Free' }, pageId)
+  }
+
+  /** Convenience function for logging when actions trigger the setting of a modal state that displays a modal. */
+  logActionShown (action: string, target?: string, extraInfo?: Record<string, string | undefined>) {
+    const editor = this.getActiveState()
+    const additionalProperties = { ...(editor && { id: editor.state.page.id, path: editor.state.page.path }), ...extraInfo }
+    uiLog.log({ eventType, action, ...(!isEmpty(additionalProperties) && { additionalProperties }) }, target)
+  }
+
+  /** Convenience function for logging response information associated with an action implemented by a PageEditorStore api call.
+   * - `additionalProperties` is a good location to put info needed for the action, including
+   * the initial target in cases where the action response ends up acting on a different target. */
+  logActionResponse<R extends ISuccess> (resp: R, eventContext: string, target?: string, extraInfo?: Record<string, string | undefined>) {
+    const editor = this.getActiveState()
+    const additionalProperties = { ...(editor && { id: editor.state.page.id, path: editor.state.page.path }), ...extraInfo }
+    const logInfo = {
+      eventType: `${eventType}-${eventContext}-modal`,
+      action: resp.success ? 'Success' : 'Failed',
+      ...(!isEmpty(additionalProperties) && { additionalProperties })
+    }
+    uiLog.log(logInfo, target)
+  }
+
+  /** Convenience function for getting a reference to the active editor state along with the active pageId.
+   * - Private to keep risks of inappropriately mutating values to this class. */
+  private getActiveState () {
+    const pageId = this.value.active
+    return pageId ? { pageId, state: this.value.editors[pageId]! } : undefined
   }
 
   validMove (pageData: PageData, from: string, to: string) {
@@ -133,18 +166,17 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   async addComponentShowModal (path: string, refreshIframe: () => Promise<void>) {
-    const pageId = this.value.active
-    if (!pageId) return
-    const editorState = this.value.editors[pageId]
-    if (!editorState) return
+    const editor = this.getActiveState()
+    if (!editor) return
     const m = path.match(/(.*)\.?areas\.(\w+)$/)
     if (!m) return
     const [_, componentPath, area] = Array.from(m)
-    const parentData = isBlank(componentPath) ? editorState.page.data : get<ComponentData>(editorState.page.data, componentPath)
+    const parentData = isBlank(componentPath) ? editor.state.page.data : get<ComponentData>(editor.state.page.data, componentPath)
     const templateKey = parentData.templateKey
-    const availableComponents = await api.getAvailableComponents(templateKey, area, pageId)
+    const availableComponents = await api.getAvailableComponents(templateKey, area, editor.pageId)
     const availableComponentsByCategory = Object.entries(groupby(availableComponents, 'displayCategory')).map(([category, templates]) => ({ category, templates }))
-    this.update(v => set(v, `editors["${pageId}"]`, { ...editorState, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + (String(parentData.areas?.[area]?.length) ?? '0'), data: undefined, availableComponents, availableComponentsByCategory } }))
+    this.update(v => set(v, `editors["${editor.pageId}"]`, { ...editor.state, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + (String(parentData.areas?.[area]?.length) ?? '0'), data: undefined, availableComponents, availableComponentsByCategory } }))
+    this.logActionShown('Add Component', path)
     if (availableComponents.length === 1) await this.addComponentChooseTemplate(availableComponents[0].templateKey, refreshIframe)
   }
 
@@ -159,14 +191,13 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   async addComponentSubmit (data: any, validateOnly?: boolean) {
-    const pageId = this.value.active
-    if (!pageId) return { success: false, messages: [] as Feedback[], data }
-    const editorState = this.value.editors[pageId]
-    if (!editorState?.creating?.templateKey) return { success: false, messages: [] as Feedback[], data }
+    const editor = this.getActiveState()
+    if (!editor?.state.creating?.templateKey) return { success: false, messages: [] as Feedback[], data }
+    const [page, creating] = [editor.state.page, editor.state.creating]
     const def = templateRegistry.getTemplate(editorState.creating.templateKey)
-    const saveData = { ...data, templateKey: editorState.creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: editorState.creating.templateKey }) }
+    const saveData = { ...data, templateKey: creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: creating.templateKey }) }
     if (def?.randomId) saveData[def.randomId] = randomid()
-    const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, saveData, { validateOnly })
+    const resp = await api.createComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.creating.path, { ...data, templateKey: editorState.creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: editorState.creating.templateKey }) }, { validateOnly })
     if (!validateOnly && resp.success) {
       this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
     }
@@ -174,6 +205,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   editComponentShowModal (path: string) {
+    this.logActionShown('Edit Component', path)
     this.updateEditorState(editorState => {
       const data = get<ComponentData>(editorState.page.data, path)
       return { ...editorState, modal: 'edit', editing: { path, data, templateKey: data.templateKey }, creating: undefined }
@@ -181,18 +213,21 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   async editComponentSubmit (data: any, validateOnly?: boolean) {
-    const pageId = this.value.active
-    if (!pageId) return { success: false, messages: [] as Feedback[], data }
-    const editorState = this.value.editors[pageId]
-    if (!editorState?.editing) return { success: false, messages: [] as Feedback[], data }
-    const resp = await api.editComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.editing.path, data, { validateOnly })
-    if (!validateOnly && resp.success) {
-      this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
+    const editor = this.getActiveState()
+    if (!editor?.state?.editing) return { success: false, messages: [] as Feedback[], data }
+    const [page, editing] = [editor.state.page, editor.state.editing]
+    const resp = await api.editComponent(editor.pageId, page.version.version, page.data, editing.path, data, { validateOnly })
+    if (!validateOnly) {
+      this.logActionResponse(resp, 'editComponent', editing.path, { componentKey: editing.templateKey, component: editor.state.selectedLabel })
+      if (resp.success) {
+        this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
+      }
     }
     return resp
   }
 
   removeComponentShowModal (path: string) {
+    this.logActionShown('Remove Component', path)
     this.updateEditorState(editorState => {
       const data = get<ComponentData>(editorState.page.data, path)
       return { ...editorState, modal: 'delete', editing: { path, data, templateKey: data.templateKey }, creating: undefined }
@@ -200,11 +235,11 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   async removeComponentSubmit () {
-    const pageId = this.value.active
-    if (!pageId) return
-    const editorState = this.value.editors[pageId]
-    if (!editorState?.editing) return
-    const resp = await api.removeComponent(pageId, editorState.page.version.version, editorState.page.data, editorState.editing.path)
+    const editor = this.getActiveState()
+    if (!editor?.state?.editing) return
+    const [page, editing] = [editor.state.page, editor.state.editing]
+    const resp = await api.removeComponent(editor.pageId, page.version.version, page.data, editing.path)
+    this.logActionResponse(resp, 'removeComponent', editing.path, { componentKey: editing.templateKey, component: editor.state.selectedLabel })
     if (resp.success) {
       this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
     } else {
@@ -218,37 +253,50 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   async editPropertiesSubmit (data: any, validateOnly?: boolean) {
-    const pageId = this.value.active
-    if (!pageId) return
-    const editorState = this.value.editors[pageId]
-    if (!editorState?.editing) return
-    const resp = await api.editPageProperties(pageId, editorState.page.version.version, data, { validateOnly })
-    if (!validateOnly && resp.success) {
-      this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }))
+    const editor = this.getActiveState()
+    if (!editor?.state?.editing) return
+    const resp = await api.editPageProperties(editor.pageId, editor.state.page.version.version, data, { validateOnly })
+    if (!validateOnly) {
+      this.logActionResponse(resp, 'editProperties', eventType)
+      if (resp.success) {
+        this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }))
+      }
     }
     return resp
   }
 
   versionsShowModal () {
+    this.logActionShown('Show Versions')
     this.updateEditorState(editorState => ({ ...editorState, modal: 'versions' }))
   }
 
   async moveComponent (from: string, to: string) {
-    const pageId = this.value.active
-    if (!pageId) return
-    const editorState = this.value.editors[pageId]
-    if (!editorState) return
-    const resp = await api.moveComponent(pageId, editorState.page.version.version, editorState.page.data, from, to)
+    const editor = this.getActiveState()
+    if (!editor) return
+    const resp = await api.moveComponent(editor.pageId, editor.state.page.version.version, editor.state.page.data, from, to)
+    const isDrop = !this.value.clipboardPath
+    const component = isDrop ? editor.state.selectedLabel : this.value.clipboardLabel
+    this.logActionResponse(resp, 'moveComponent', to, { from, component, type: isDrop ? 'Drop' : 'Paste' })
     if (resp.success) {
       this.updateEditorState(editorState => ({ ...editorState, page: resp.page }), true)
     }
   }
 
   cancelModal () {
+    const editor = this.getActiveState()
+    if (editor) {
+      const logInfo = {
+        eventType: `${eventType}-${editor.state.modal ?? 'undefined'}-modal`,
+        action: 'Cancel',
+        additionalProperties: { id: editor.state.page.id, path: editor.state.page.path }
+      }
+      uiLog.log(logInfo, eventType)
+    }
     this.updateEditorState(editorState => ({ ...editorState, modal: undefined, editing: undefined, creating: undefined }))
   }
 
   select (path?: string, label?: string, maxreached?: boolean, mayDelete?: boolean) {
+    // TODO: Determine if we want to log every component select.
     this.updateEditorState(editorState => ({ ...editorState, selectedPath: path, selectedLabel: label, selectedMaxReached: !!maxreached, selectedMayDelete: !!mayDelete }))
   }
 
@@ -256,16 +304,21 @@ class PageEditorStore extends Store<IPageEditorStore> {
     if (!path || !this.value.editors[this.value.active!]?.cutAllowed) return
     this.update(v => ({ ...v, clipboardData: undefined, clipboardLabel: v.editors[v.active!]!.selectedLabel, clipboardPath: path, clipboardPage: v.active }))
     toast(`${this.value.clipboardLabel ?? 'Component'} cut initiated. Paste somewhere to complete the move.`, 'success')
+    const editor = this.getActiveState()
+    this.logActionShown('Component Cut Initiated', path, editor ? { component: editor.state.selectedLabel } : {})
   }
 
   copyComponent (path?: string) {
     if (!path || !this.value.editors[this.value.active!]?.copyAllowed) return
     this.update(v => ({ ...v, clipboardData: get(v.editors[v.active!]!.page.data, path), clipboardLabel: v.editors[v.active!]!.selectedLabel, clipboardPath: undefined, clipboardPage: v.active }))
     toast(`${this.value.clipboardLabel ?? 'Component'} copied.`, 'success')
+    const editor = this.getActiveState()
+    this.logActionShown('Component Copied', path, editor ? { component: editor.state.selectedLabel } : {})
   }
 
   clearClipboard () {
     this.updateEditorState(es => es, true)
+    this.logActionShown('Clipboard Cleared')
   }
 
   async pasteComponent (path?: string) {
@@ -279,6 +332,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
       const def = templateRegistry.getTemplate(saveData.templateKey)
       if (def?.randomId) saveData[def.randomId] = randomid()
       const resp = await api.insertComponent(editorState.page.id, editorState.page.version.version, editorState.page.data, path, saveData)
+      this.logActionResponse(resp, 'pasteComponent', path, editorState ? { component: this.value.clipboardLabel } : {})
       if (resp.success) {
         this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined }), true)
       }
@@ -286,27 +340,33 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   saveState (state: any) {
+    // TODO: Determine if we want to log saveState.
     this.updateEditorState(es => ({ ...es, state }))
   }
 
   compareVersions (from: PageEditorVersionPreview, to: PageEditorVersionPreview) {
     this.updateEditorState(es => ({ ...es, previewing: { version: to, fromVersion: from } }))
+    this.logActionShown('Compare Versions')
   }
 
   previewVersion (version: PageEditorVersionPreview) {
     this.updateEditorState(es => ({ ...es, previewing: { version } }))
+    this.logActionShown('Preview Version - Started')
   }
 
   setPreviewMode (mode: 'desktop' | 'mobile') {
     this.updateEditorState(es => ({ ...es, previewing: es.previewing ? { ...es.previewing, mode } : undefined }))
+    this.logActionShown(`Preview Mode - ${mode}`)
   }
 
   initRestore (version: number) {
     this.updateEditorState(es => ({ ...es, restoreVersion: version }))
+    this.logActionShown('Version Restore - Started')
   }
 
   cancelRestore () {
     this.updateEditorState(es => ({ ...es, restoreVersion: undefined }))
+    this.logActionShown('Version Restore - Cancled')
   }
 
   async restoreVersion () {
@@ -315,6 +375,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const version = editorState.restoreVersion
     if (version == null) return
     const resp = await api.restorePage(editorState.page.id, version)
+    this.logActionResponse(resp, 'restoreVersion', editorState.page.path, { id: editorState.page.id, version: version.toLocaleString() })
     if (resp.success) {
       this.updateEditorState(es => ({ ...es, page: resp.page, previewing: undefined, restoreVersion: undefined }))
     }
@@ -322,6 +383,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
 
   cancelPreview () {
     this.updateEditorState(es => ({ ...es, previewing: undefined }))
+    this.logActionShown('Preview Version - Cancled')
   }
 }
 
