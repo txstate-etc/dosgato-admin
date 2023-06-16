@@ -198,8 +198,11 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const saveData = { ...data, templateKey: creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: creating.templateKey }) }
     if (def?.randomId) saveData[def.randomId] = randomid()
     const resp = await api.createComponent(editor.pageId, page.version.version, page.data, creating.path, { ...data, templateKey: creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: creating.templateKey }) }, { validateOnly })
-    if (!validateOnly && resp.success) {
-      this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
+    if (!validateOnly) {
+      this.logActionResponse(resp, 'addComponent', creating.componentEventualPath, { componentKey: def?.templateKey, component: def?.name })
+      if (resp.success) {
+        this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
+      }
     }
     return resp
   }
