@@ -1,4 +1,4 @@
-import type { ComponentData, PageData, UITemplate } from '@dosgato/templating'
+import type { BaseEvent, ComponentData, PageData, UITemplate } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
 import { get, groupby, isBlank, randomid, set, isNotEmpty, sortby } from 'txstate-utils'
 import { api, type PageEditorPage, templateRegistry, toast, uiLog } from '$lib'
@@ -92,20 +92,19 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   /** Convenience function for logging response information associated with an action implemented by a PageEditorStore api call.
-   * - `additionalProperties` is a good location to put info needed for the action, including
-   * the initial target in cases where the action response ends up acting on a different target. */
+   * - `extraInfo` is a good location to put info needed for the action such as the initial target in cases where the action
+   * response ends up acting on a different target. */
   logActionResponse<R extends ISuccess> (resp: R, eventContext: string, target?: string, extraInfo?: Record<string, string | undefined>) {
     const active = this.getActiveState()
     const additionalProperties = { ...(active && { id: active.editor.page.id, path: active.editor.page.path }), ...extraInfo }
-    const logInfo = {
-      eventType: `${eventType}-${eventContext}-modal`,
-      action: resp.success ? 'Success' : 'Failed',
-      ...(isNotEmpty(additionalProperties) && { additionalProperties })
-    }
+    const logInfo: BaseEvent = { eventType: `${eventType}-${eventContext}-modal`, action: resp.success ? 'Success' : 'Failed' }
+    if (isNotEmpty(additionalProperties)) logInfo.additionalProperties = additionalProperties
     uiLog.log(logInfo, target)
   }
 
-  /** Convenience function for getting a reference to the active editor state along with the active pageId. */
+  /** Convenience function for getting a reference to the active `EditorState` along with the active pageId.
+   * - This is an all-or-nothing return with falsy `undefined | null` checking already handled. If either the
+   * active `pageId` or the associated `editor: EditorState` are falsy then `undefined` is returned. */
   private getActiveState () {
     const pageId = this.value.active
     const editor = pageId ? this.value.editors[pageId] : undefined
@@ -285,14 +284,9 @@ class PageEditorStore extends Store<IPageEditorStore> {
 
   cancelModal () {
     const active = this.getActiveState()
-    if (active) {
-      const logInfo = {
-        eventType: `${eventType}-${active.editor.modal ?? 'undefined'}-modal`,
-        action: 'Cancel',
-        additionalProperties: { id: active.editor.page.id, path: active.editor.page.path }
-      }
-      uiLog.log(logInfo, eventType)
-    }
+    const logInfo: BaseEvent = { eventType: `${eventType}-${active?.editor.modal ?? 'undefined'}-modal`, action: 'Cancel' }
+    if (active) logInfo.additionalProperties = { id: active.editor.page.id, path: active.editor.page.path }
+    uiLog.log(logInfo, eventType)
     this.updateEditorState(editorState => ({ ...editorState, modal: undefined, editing: undefined, creating: undefined }))
   }
 
