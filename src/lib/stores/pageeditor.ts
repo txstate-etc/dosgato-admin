@@ -105,11 +105,11 @@ class PageEditorStore extends Store<IPageEditorStore> {
     uiLog.log(logInfo, target)
   }
 
-  /** Convenience function for getting a reference to the active editor state along with the active pageId.
-   * - Private to keep risks of inappropriately mutating values to this class. */
+  /** Convenience function for getting a reference to the active editor state along with the active pageId. */
   private getActiveState () {
     const pageId = this.value.active
-    return (pageId && this.value.editors[pageId]) ? { pageId, state: this.value.editors[pageId]! } : undefined
+    const state = pageId ? this.value.editors[pageId] : undefined
+    return state ? { pageId, state } : undefined
   }
 
   validMove (pageData: PageData, from: string, to: string) {
