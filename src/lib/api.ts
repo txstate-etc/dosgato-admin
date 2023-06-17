@@ -38,7 +38,7 @@ import {
   CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
-  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGE_AND_DESCENDANTS, EDITOR_PAGE_DETAILS
+  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGE_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -314,6 +314,13 @@ class API {
     if (resp) return resp
     const { renameAssetFolder } = await this.query<{ renameAssetFolder: MutationResponse & { assetFolder: TreeAssetFolder } }>(RENAME_ASSET_FOLDER, { folderId, name, validateOnly })
     return renameAssetFolder
+  }
+
+  async renameAsset (assetId: string, name: string, validateOnly?: boolean) {
+    const resp = validateRequired<{ asset: undefined }>({ name, assetId }, ['name', 'assetId'])
+    if (resp) return resp
+    const { renameAsset } = await this.query<{ renameAsset: MutationResponse & { asset: TreeAsset } }>(RENAME_ASSET, { assetId, name, validateOnly })
+    return renameAsset
   }
 
   async deleteAsset (assetId: string) {

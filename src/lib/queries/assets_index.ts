@@ -155,6 +155,15 @@ export const RENAME_ASSET_FOLDER = `
   }
 `
 
+export const RENAME_ASSET = `
+  mutation renameAsset ($assetId: ID!, $name: FilenameSafeString!, $validateOnly: Boolean) {
+    renameAsset (assetId: $assetId, name: $name, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      asset { ${assetDetails} }
+    }
+  }
+`
+
 export const DELETE_ASSET = `
   mutation deleteAsset ($assetId: ID!) {
     deleteAsset (assetId: $assetId) {

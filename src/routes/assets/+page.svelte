@@ -17,23 +17,25 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState, uiLog, ModalContextStore } from '$lib'
-  import { _store as store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem } from './+page'
+  import { _store as store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem, type TypedAssetItem } from './+page'
   import { setContext } from 'svelte'
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
-  type Modals = 'upload' | 'create' | 'rename' | 'delete' | 'finalizeDelete' | 'restore'
+  type Modals = 'upload' | 'create' | 'rename' | 'renameAsset' | 'delete' | 'finalizeDelete' | 'restore'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   let selectedFolder: TypedAssetFolderItem | undefined
+  let selectedAsset: TypedAssetItem | undefined
   $: selectedItem = $store.selected.size === 1 ? $store.selectedItems[0] : undefined
 
   function singlepageactions (item: TypedAnyAssetItem) {
     const actions: ActionPanelAction[] = item.kind === 'asset'
       ? [
           { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: () => goto(base + '/assets/' + item.id) },
-          { label: 'Download', icon: download, onClick: () => { api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } }
+          { label: 'Download', icon: download, onClick: () => { api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } },
+          { label: 'Rename Asset', icon: renameIcon, disabled: !item.permissions.update, onClick: () => { selectedAsset = item as TypedAssetItem; modalContext.setModal('renameAsset') } }
         ]
       : [
           { label: 'Upload', icon: uploadIcon, disabled: !item.permissions.create, onClick: () => { modalContext.setModal('upload'); selectedFolder = item as TypedAssetFolderItem } },
@@ -95,7 +97,7 @@
   async function onCreateSubmit (data: CreateAssetFolderInput) {
     if (!selectedFolder) return { success: false, messages: [], data }
     const resp = await api.createAssetFolder({ ...data, parentId: selectedFolder.gqlId })
-    modalContext.logModalResponse(resp, resp.assetFolder?.name, { parentId: selectedFolder.gqlId })
+    modalContext.logModalResponse(resp, resp.assetFolder?.path, { parentId: selectedFolder.gqlId })
     return mutationForDialog(resp, { prefix: 'args', dataName: 'assetFolder' })
   }
 
@@ -105,17 +107,33 @@
     return messageForDialog(messages, 'args')
   }
 
-  async function onRenameSubmit (data: { name: string }) {
-    if (!selectedFolder) return { success: false, messages: [], data }
-    const resp = await api.renameAssetFolder(selectedFolder.gqlId, data.name)
-    modalContext.logModalResponse(resp, selectedFolder.gqlId, { oldName: selectedFolder.name, newName: resp.assetFolder?.name })
-    return mutationForDialog(resp, { dataName: 'assetFolder' })
-  }
-
   async function onRenameValidate (data: CreateAssetFolderInput) {
     if (!selectedFolder) return []
     const { success, messages } = await api.renameAssetFolder(selectedFolder.gqlId, data.name, true)
     return messageForDialog(messages)
+  }
+  async function onRenameSubmit (data: { name: string }) {
+    if (!selectedFolder) return { success: false, messages: [], data }
+    const resp = await api.renameAssetFolder(selectedFolder.gqlId, data.name)
+    modalContext.logModalResponse(resp, selectedFolder.path, { oldName: selectedFolder.name, newName: resp.assetFolder?.name })
+    return mutationForDialog(resp, { dataName: 'assetFolder' })
+  }
+
+  async function onRenameAssetValidate (data: CreateAssetFolderInput) {
+    if (!selectedAsset) return []
+    const { success, messages } = await api.renameAsset(selectedAsset.id, data.name, true)
+    return messageForDialog(messages)
+  }
+  async function onRenameAssetSubmit (data: { name: string }) {
+    if (!selectedAsset) return { success: false, messages: [], data }
+    const resp = await api.renameAsset(selectedAsset.id, data.name)
+    modalContext.logModalResponse(resp, selectedAsset.path, { oldName: selectedAsset.name, newName: resp.asset?.name })
+    return mutationForDialog(resp, { dataName: 'asset' })
+  }
+  async function onRenameAssetSaved () {
+    modalContext.reset()
+    if (selectedAsset?.parent) await store.openAndRefresh(selectedAsset.parent)
+    selectedAsset = undefined
   }
 
   function onChoose ({ detail }: CustomEvent<AssetItem | AssetFolderItem>) {
@@ -126,10 +144,10 @@
     let resp
     if ($store.selectedItems[0].kind === 'asset') {
       resp = await api.deleteAsset($store.selectedItems[0].id)
-      modalContext.logModalResponse(resp, $store.selectedItems[0].id)
+      modalContext.logModalResponse(resp, $store.selectedItems[0].path)
     } else {
       resp = await api.deleteAssetFolder($store.selectedItems[0].gqlId)
-      modalContext.logModalResponse(resp, $store.selectedItems[0].gqlId)
+      modalContext.logModalResponse(resp, $store.selectedItems[0].path)
     }
     if (resp.success) {
       store.refresh()
@@ -194,6 +212,10 @@
   </FormDialog>
 {:else if $modalContext.modal === 'rename' && selectedFolder}
   <FormDialog title="Rename Folder {selectedFolder.path}" preload={{ name: selectedFolder.name }} on:escape={onModalEscape} submit={onRenameSubmit} validate={onRenameValidate} on:saved={onSelfSaved}>
+    <FieldText path="name" label="Name" required />
+  </FormDialog>
+{:else if $modalContext.modal === 'renameAsset' && selectedAsset}
+  <FormDialog title="Rename Asset {selectedAsset.name}" preload={{ name: selectedAsset.name }} on:escape={onModalEscape} submit={onRenameAssetSubmit} validate={onRenameAssetValidate} on:saved={onRenameAssetSaved}>
     <FieldText path="name" label="Name" required />
   </FormDialog>
 {:else if $modalContext.modal === 'delete' }
