@@ -54,6 +54,8 @@
     }
   }
 
+  let cookieAcquired = false
+
   onMount(() => {
     // populate the user's token to the render service so that it can create a cookie for itself
     // this way we can load images that require authentication in <img> tags and the editing iframe
@@ -61,7 +63,10 @@
     // iframe works better here than `fetch` because of CORS and a firefox bug where iframes don't send
     // cookies created during a `fetch`
     const iframe = document.createElement('iframe')
-    iframe.onload = () => iframe.remove()
+    iframe.onload = () => {
+      iframe.remove()
+      cookieAcquired = true
+    }
     iframe.src = `${environmentConfig.renderBase}/.token?token=${api.token}`
     iframe.style.height = '0px'
     document.body.append(iframe)
@@ -126,7 +131,7 @@
   <PopupMenu {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
   <PopupMenu buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
   <main use:eq>
-    <slot />
+    {#if cookieAcquired}<slot />{/if}
   </main>
   {#if $toasts.length > 1}
     <ul class="toasts" aria-live="assertive">
