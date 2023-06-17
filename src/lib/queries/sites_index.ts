@@ -268,8 +268,8 @@ export interface FullSite {
 }
 
 export const GET_SITE_LIST = `
-  query getAllSites {
-    sites {
+  query getAllSites ($viewForEdit: Boolean) {
+    sites (filter: { viewForEdit: $viewForEdit }) {
       ${siteDetails}
     }
   }

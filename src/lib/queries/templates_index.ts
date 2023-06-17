@@ -12,7 +12,7 @@ const templateDetails = `
   }
 `
 export interface TemplateListTemplate {
-  type: 'page' | 'component' | 'data'
+  type: 'PAGE' | 'COMPONENT' | 'DATA'
   id: string
   name: string
   key: string

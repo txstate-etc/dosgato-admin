@@ -24,8 +24,7 @@
 
   async function fetchChildren (site?: TypedSiteItem) {
     if (site) return []
-    const siteList = await api.getSiteList()
-    return siteList
+    return await api.getSiteList(true)
   }
 
   function renderOwner (site: TypedSiteItem) {

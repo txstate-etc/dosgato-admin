@@ -647,8 +647,8 @@ class API {
     return updateRole
   }
 
-  async getSiteList () {
-    const { sites } = await this.query<{ sites: SiteListSite[] }>(GET_SITE_LIST)
+  async getSiteList (viewForEdit?: boolean) {
+    const { sites } = await this.query<{ sites: SiteListSite[] }>(GET_SITE_LIST, { viewForEdit })
     return sites
   }
 
