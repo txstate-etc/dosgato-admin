@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Icon, InlineMessage } from '@dosgato/dialog'
+  import caretRightFill from '@iconify-icons/ph/caret-right-fill'
   import closeThick from '@iconify-icons/mdi/close-thick'
   import copySimpleLight from '@iconify-icons/ph/copy-simple-light'
   import dotsThree from '@iconify-icons/ph/dots-three'
@@ -9,7 +10,7 @@
   import menuDown from '@iconify-icons/mdi/menu-down'
   import userCircleLight from '@iconify-icons/ph/user-circle-light'
   import usersLight from '@iconify-icons/ph/users-light'
-  import { eq, PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
+  import { eq, PopupMenu, ResizeStore, type PopupMenuItem, resize } from '@txstate-mws/svelte-components'
   import { onMount, setContext } from 'svelte'
   import { isNotNull } from 'txstate-utils'
   import { afterNavigate, goto } from '$app/navigation'
@@ -26,6 +27,13 @@
 
   let buttonelement: HTMLButtonElement
   let profileelement: HTMLButtonElement
+  let overflowbutton: HTMLButtonElement
+  const subNavSize = new ResizeStore()
+  $: subnavStore.setMaxItems(Math.floor(($subNavSize.clientWidth ?? 800) / 140))
+  $: overflowItems = $currentSubNav?.links.slice($currentSubNav.maxItems).map(l => ({ value: l.href, label: l.label })) ?? []
+  function onOverflowChange (e: any) {
+    goto(e.detail.value)
+  }
 
   const profileItems: PopupMenuItem[] = [
     { value: 'Logout' }
@@ -73,6 +81,7 @@
   })
 
   afterNavigate((nav) => {
+    subnavStore.setMaxItems(Math.floor(($subNavSize.clientWidth ?? 800) / 140))
     // Making a direct call to logger since after we navigate our uiLog.screen will be the target, not the originating screen.
     uiLog.logger({ eventType: 'navigation', action: nav.type.toString(), screen: nav.from?.url?.pathname, target: nav.to?.url?.pathname }, environmentConfig)
   })
@@ -113,23 +122,26 @@
     </div>
     {#if $currentSubNav}
       <div class="subnav">
-        <ul>
-          {#each $currentSubNav.links as link, i}
+        <ul use:resize={{ store: subNavSize }}>
+          {#each $currentSubNav.links.slice(0, $currentSubNav.maxItems) as link, i}
             {@const selected = $page.url.pathname === link.href || (!$currentSubNav.links.some(l => l.href === $page.url.pathname) && $page.url.pathname.startsWith(link.href))}
-            <li class:selected class:closeable={link.closeable}>
+            <li class:selected class:closeable={link.closeable} style:flex-shrink={Math.pow(Math.max(0.00000001, link.label.length - 12), 0.5)}>
               <a href={link.href}>{#if link.icon}<Icon icon={link.icon} inline/>{/if}{link.label}</a>
               {#if link.closeable}
                 <button type="button" class="reset" on:click={closeSubNav(i)}><Icon icon={closeThick} inline hiddenLabel="Close {link.label}" width="1.2em" /></button>
               {/if}
             </li>
           {/each}
+          {#if overflowItems.length}
+            <li class="overflow"><button bind:this={overflowbutton} type="button"><Icon icon={caretRightFill} hiddenLabel="More Tabs Menu" inline /></button></li>
+          {/if}
         </ul>
-        <div></div>
       </div>
     {/if}
   </nav>
   <PopupMenu {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
   <PopupMenu buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
+  {#if overflowItems.length}<PopupMenu buttonelement={overflowbutton} items={overflowItems} value=".never" on:change={onOverflowChange}/>{/if}
   <main use:eq>
     {#if cookieAcquired}<slot />{/if}
   </main>
@@ -196,22 +208,45 @@
     border-left: 2px solid currentColor;
     height: 50%;
   }
-  .subnav {
+  .subnav ul {
+    position: relative;
     width: 100%;
     display: flex;
     background-color: #ccc;
   }
-  .subnav div {
-    flex-grow: 1;
-  }
   .subnav li {
     position: relative;
+    white-space: nowrap;
+  }
+  .subnav li.closeable {
+    min-width: 1.5em;
+    flex-basis: max-content;
+  }
+  .subnav li.overflow {
+    /*
+    position: absolute;
+    top: 50%;
+    right: 0.3em;
+    transform: translateY(-50%);
+    */
+    min-width: 2em;
+    display: flex;
+    align-items: center;
+    background-color: transparent !important;
+  }
+  .subnav li.overflow button {
+    background: none;
+    cursor: pointer;
+    border: 0;
   }
   .subnav li a {
     display: block;
     padding: 0.35em 1.5em;
     text-decoration: none;
+    text-overflow: ellipsis;
+    overflow: hidden;
     color: inherit;
+    width: 100%;
   }
   .subnav li.closeable a {
     padding: 0.35em 1.7em 0.35em 1em;
