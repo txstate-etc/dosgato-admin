@@ -363,7 +363,7 @@
     cancelText='Cancel'
     on:continue={onUnpublishPages}
     on:escape={modalContext.onModalEscape}>
-    Unpublish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''}?`}
+    Unpublish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''} and ${$store.selectedItems.length > 1 ? 'their' : 'its'} subpages?`}
   </Dialog>
 {:else if $modalContext.modal === 'deletepage'}
   <Dialog
