@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { DetailPanel, DetailPanelSection, type SiteComment } from '$lib'
+  import { DetailPanel, DetailPanelSection, type DetailPanelButton, type SiteComment } from '$lib'
   import plusIcon from '@iconify-icons/ph/plus'
   import downloadIcon from '@iconify-icons/ph/download-simple'
   import { createEventDispatcher } from 'svelte'
@@ -8,9 +8,14 @@
 
   export let headerColor: string
   export let comments: SiteComment[]
+  export let mayAddComments: boolean
   const dispatch = createEventDispatcher()
+
+  const auditPanelButtons: DetailPanelButton[] = []
+  if (mayAddComments) auditPanelButtons.push({ icon: plusIcon, hiddenLabel: 'add comment', onClick: () => { dispatch('addauditcomment') } })
+  auditPanelButtons.push({ icon: downloadIcon, hiddenLabel: 'Download Audit Log', onClick: () => { dispatch('downloadaudit') } })
 </script>
-<DetailPanel header="Audit"  {headerColor} button={[{ icon: plusIcon, hiddenLabel: 'add comment', onClick: () => { dispatch('addauditcomment') } }, { icon: downloadIcon, hiddenLabel: 'Download Audit Log', onClick: () => { dispatch('downloadaudit') } }]}>
+<DetailPanel header="Audit"  {headerColor} button={auditPanelButtons}>
   <DetailPanelSection>
     {#if comments.length}
       <ul use:eq>

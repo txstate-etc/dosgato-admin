@@ -388,7 +388,7 @@
         </DetailPanelSection>
       </DetailPanel>
       <div class="audit-panel">
-        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} on:addauditcomment={() => { modalContext.setModal('addcomment') } } on:downloadaudit={() => downloadComments() }/>
+        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} mayAddComments={$store.site.permissions.manageGovernance} on:addauditcomment={() => { modalContext.setModal('addcomment') } } on:downloadaudit={() => downloadComments() }/>
       </div>
     </div>
     <div class="vertical-group">
@@ -430,7 +430,7 @@
         </DetailPanelSection>
       </DetailPanel>
       <div class="audit-panel mobile">
-        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} on:addauditcomment={() => { modalContext.setModal('addcomment') } }/>
+        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} mayAddComments={$store.site.permissions.manageGovernance} on:addauditcomment={() => { modalContext.setModal('addcomment') } }/>
       </div>
     </div>
   </div>
