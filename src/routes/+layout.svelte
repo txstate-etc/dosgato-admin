@@ -90,6 +90,10 @@
   setContext('LabeledIconButtonTarget', { getTarget: () => labeledIconButtonTarget.target })
 </script>
 
+<svelte:head>
+  <title>{uiConfig.title ?? 'DG Editing'}</title>
+</svelte:head>
+
 {#if data.errObj}
   {#if data.errObj.status === 403}
     You are not authorized to use this system. If you believe you should have access, please contact an administrator.
