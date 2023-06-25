@@ -44,6 +44,7 @@ template {
 }
 permissions {
   update
+  publish
 }
 version {
   ${VERSION_DETAILS}
@@ -78,6 +79,7 @@ export interface PageEditorPage extends DialogPageProp {
   }
   permissions: {
     update: boolean
+    publish: boolean
   }
   version: VersionDetails
   versions: { version: number, date: string, user: { name: string } }[]

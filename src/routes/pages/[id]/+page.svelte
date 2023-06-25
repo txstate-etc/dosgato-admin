@@ -10,6 +10,7 @@
   import fileX from '@iconify-icons/ph/file-x'
   import historyIcon from '@iconify-icons/mdi/history'
   import pencilIcon from '@iconify-icons/mdi/pencil'
+  import publishIcon from '@iconify-icons/mdi/publish'
   import scissors from '@iconify-icons/ph/scissors'
   import trash from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
@@ -28,10 +29,20 @@
   $: editable = $editorStore.page.permissions.update
 
   function getActions (selectedPath?: string, ..._:any[]): (ActionPanelAction | ActionPanelGroup)[] {
+    const previewGroup: ActionPanelGroup = {
+      id: 'previewgroup',
+      actions: [
+        { label: 'Preview', icon: eye, onClick: () => pageEditorStore.previewVersion({ version: page.version.version, date: DateTime.fromISO(page.version.date), modifiedBy: page.version.user.name }) },
+        { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${$editorStore.page.path}.html`), '_blank') } },
+        { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions({ version: page.versions[0]!.version, date: DateTime.fromISO(page.versions[0]!.date), modifiedBy: page.versions[0]!.user.name }, { version: page.version.version, date: DateTime.fromISO(page.version.date), modifiedBy: page.version.user.name }), disabled: !page.published || !page.hasUnpublishedChanges }
+      ]
+    }
+
     if ($editorStore.previewing) {
       // preview mode
       return [
-        { label: 'Cancel Preview', icon: pencilIcon, onClick: () => pageEditorStore.cancelPreview() }
+        { label: 'Cancel Preview', icon: pencilIcon, onClick: () => pageEditorStore.cancelPreview() },
+        { label: 'Publish Page', icon: publishIcon, disabled: !$editorStore.page.permissions.publish, onClick: async () => { page = await pageEditorStore.publish() ?? page } }
       ]
     } else if (!selectedPath) {
       // editing mode, nothing selected
@@ -42,18 +53,10 @@
           { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.version.version === 0 }
         ]
       }
-      const previewGroup: ActionPanelGroup = {
-        id: 'previewgroup',
-        actions: [
-          { label: 'Preview', icon: eye, onClick: () => pageEditorStore.previewVersion({ version: page.version.version, date: DateTime.fromISO(page.version.date), modifiedBy: page.version.user.name }) },
-          { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${$editorStore.page.path}.html`), '_blank') } },
-          { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions({ version: page.versions[0]!.version, date: DateTime.fromISO(page.versions[0]!.date), modifiedBy: page.versions[0]!.user.name }, { version: page.version.version, date: DateTime.fromISO(page.version.date), modifiedBy: page.version.user.name }), disabled: !page.published || !page.hasUnpublishedChanges }
-        ]
-      }
-      return [editGroup, previewGroup]
+      return [previewGroup, editGroup]
     } else if (/\.\d+$/.test(selectedPath)) {
       // editing mode, edit bar selected
-      return [
+      return [previewGroup,
         { label: 'Edit', icon: pencilIcon, onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
         { label: 'Delete', icon: trash, disabled: !$editorStore.selectedMayDelete, onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) },
         ...($actionsStore.clipboardActive

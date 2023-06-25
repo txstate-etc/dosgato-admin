@@ -373,6 +373,19 @@ class PageEditorStore extends Store<IPageEditorStore> {
     }
   }
 
+  async publish () {
+    const editorState = this.value.editors[this.value.active!]
+    if (!editorState?.page) return
+    const resp = await api.publishPages([editorState.page.id], false)
+    if (!resp.success) toast(resp.messages[0]?.message ?? 'Unable to publish page.')
+    if (resp.success) {
+      toast('Published page successfully.', 'success')
+      const page = (await api.getEditorPage(editorState.page.id))!
+      this.updateEditorState(es => ({ ...es, page }))
+      return page
+    }
+  }
+
   cancelPreview () {
     this.updateEditorState(es => ({ ...es, previewing: undefined }))
     this.logActionShown('Preview Version - Cancled')
