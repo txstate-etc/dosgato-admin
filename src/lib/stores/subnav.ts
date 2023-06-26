@@ -63,6 +63,7 @@ class SubNavStore extends Store<ISubNavStore> {
   setMaxItems (maxItems: number) {
     this.update(v => {
       const current = v.sections[v.active!]
+      if (!current) return v
       return {
         ...v,
         sections: {
