@@ -48,7 +48,7 @@ async function copyHandler (selectedItems: TypedAnyAssetItem[], dropTarget: Type
   return resp.success
 }
 
-async function moveHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean) {
+async function moveHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAssetFolderItem, above: boolean) {
   const resp = await api.query(`mutation moveAssetsAndFolders ($assetIds: [ID!]!, $folderIds: [ID!]!, $targetFolderId: ID!) {
     moveAssetsAndFolders (assetIds: $assetIds, folderIds: $folderIds, targetFolderId: $targetFolderId) {
       ${mutationResponse}
@@ -56,7 +56,7 @@ async function moveHandler (selectedItems: TypedAnyAssetItem[], dropTarget: Type
   }`, {
     assetIds: selectedItems.filter(itm => itm.kind === 'asset').map(itm => itm.id),
     folderIds: selectedItems.filter(itm => itm.kind === 'folder').map((itm: TypedAssetFolderItem) => itm.gqlId),
-    targetFolderId: dropTarget.id
+    targetFolderId: dropTarget.gqlId
   })
   return resp.success
 }
