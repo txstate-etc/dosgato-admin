@@ -1,6 +1,9 @@
 import { api } from '$lib'
 
 export const load = async () => {
-  const templates = await api.getTemplatesByType('DATA')
-  return { templates }
+  const [templateSet, templates] = await Promise.all([
+    api.getDataAccessByTemplateKey(),
+    api.getTemplatesByType('DATA')
+  ])
+  return { templates: templates.filter(t => templateSet.has(t.key)) }
 }

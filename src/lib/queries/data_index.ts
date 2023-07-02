@@ -48,12 +48,6 @@ const dataFolderDetails = `
   }
 `
 
-export enum DataTreeNodeType {
-  DATA,
-  FOLDER,
-  SITE
-}
-
 export interface DataItem {
   id: string
   name: string
@@ -101,24 +95,14 @@ export interface DataFolder {
   }
 }
 
-export interface DataSite {
-  id: string
-  name: string
-  data: {
-    id: string
-    name: string
-  }[]
-  datafolders: {
-    id: string
-    name: string
-  }[]
-}
-
 export interface DataRoot {
   id: string
   datafolders: DataFolder[]
   data: DataItem[]
-  site?: DataSite
+  site?: {
+    id: string
+    name: string
+  }
   permissions: {
     create: boolean
   }
@@ -133,26 +117,9 @@ export interface DataWithData {
   }
 }
 
-export const GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY = `
-  query getGlobalDataRootByTemplateKey ($key: ID!) {
-    dataroots(filter: {global:true, templateKeys: [$key]}) {
-      id
-      datafolders {
-        ${dataFolderDetails}
-      }
-      data(filter: {root: true}) {
-        ${dataDetails}
-      }
-      permissions {
-        create
-      }
-    }
-  }
-`
-
-export const GET_SITE_DATAROOTS_BY_TEMPLATE_KEY = `
+export const GET_DATAROOTS_BY_TEMPLATE_KEY = `
   query getSiteDataRootsByTemplateKey ($key: ID!) {
-    dataroots(filter: {templateKeys: [$key], global: false}) {
+    dataroots(filter: {templateKeys: [$key], viewForEdit: true }) {
       id
       site {
         id
@@ -162,7 +129,7 @@ export const GET_SITE_DATAROOTS_BY_TEMPLATE_KEY = `
         id
         name
       }
-      data {
+      data (filter: { root: true }) {
         id
         name
       }
@@ -181,31 +148,24 @@ export const GET_DATA_BY_DATAFOLDER_ID = `
   }
 `
 
-export const GET_SITE_DATA_BY_TEMPLATE_KEY = `
-  query getSiteDataByTemplateKey ($siteId: ID!, $key: ID!) {
-    dataroots (filter: { global: false, siteIds: [$siteId], templateKeys: [$key] }) {
+export const GET_DATA_BY_ROOT_ID = `
+  query getSiteDataByTemplateKey ($id: ID!) {
+    dataroots (filter: { ids: [$id] }) {
       id
-      site {
-        id
-        name
-      }
       datafolders {
         ${dataFolderDetails}
       }
       data(filter: { root: true }) {
         ${dataDetails}
       }
-      permissions {
-        create
-      }
     }
   }
 `
 
-export const GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY = `
-  query getGlobalDataAccessByTemplateKey ($key: UrlSafeString!) {
-    access {
-      createGlobalData(type: $key)
+export const GET_VIEWFOREDIT_DATATEMPLATES = `
+  query getViewForEditDataTemplates {
+    dataroots (filter:{viewForEdit: true }) {
+      template { key }
     }
   }
 `

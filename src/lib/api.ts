@@ -7,9 +7,9 @@ import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
   CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP, GET_DATA_BY_DATAFOLDER_ID, GET_EDITOR_PAGE,
-  GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, GET_SITE_DATA_BY_TEMPLATE_KEY,
+  GET_DATAROOTS_BY_TEMPLATE_KEY, GET_DATA_BY_ROOT_ID,
   GET_GLOBAL_SELF, GET_TEMPLATE_INFO, GET_AVAILABLE_TEMPLATE_INFO, GET_TREE_PAGES, GET_USER_LIST,
-  GET_USER_BY_ID, GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS,
+  GET_USER_BY_ID, GET_VIEWFOREDIT_DATATEMPLATES, GET_ROLE_LIST, GET_ALL_GROUPS, GET_ROOT_GROUPS,
   GET_SUBGROUPS, GET_GROUP_BY_ID, GET_ROLE_BY_ID, GET_SITE_LIST, CHOOSER_SUBPAGES_BY_PATH,
   CHOOSER_SUBFOLDERS_AND_ASSETS_BY_PATH, CHOOSER_PAGE_BY_LINK, GET_AVAILABLE_COMPONENTS, GET_TEMPLATES_BY_TYPE, RENAME_SITE,
   GET_SITE_BY_ID, GET_ORGANIZATION_LIST, UPDATE_SITE_MANAGEMENT, SET_LAUNCH_URL, ADD_SITE_COMMENT, ADD_PAGETREE,
@@ -492,29 +492,24 @@ class API {
     return templates[0]?.areas.find(a => a.name === area)?.availableComponents.filter(ac => ac.permissions.useOnPage).map(ac => templateRegistry.getTemplate(ac.key)!) ?? []
   }
 
-  async getGlobalDataRootByTemplateKey (key: string) {
-    const { dataroots } = await this.query<{ dataroots: DataRoot[] }>(GET_GLOBAL_DATAROOT_BY_TEMPLATE_KEY, { key })
-    return dataroots[0]
-  }
-
-  async getSiteDataRootsByTemplateKey (key: string) {
-    const { dataroots } = await this.query<{ dataroots: DataRoot[] }>(GET_SITE_DATAROOTS_BY_TEMPLATE_KEY, { key })
+  async getDataRootsByTemplateKey (key: string) {
+    const { dataroots } = await this.query<{ dataroots: DataRoot[] }>(GET_DATAROOTS_BY_TEMPLATE_KEY, { key })
     return dataroots
   }
 
-  async getGlobalDataAccessByTemplateKey (key: string) {
-    const { access } = await this.query<{ access: { createGlobalData: boolean } }>(GET_GLOBAL_DATA_ACCESS_BY_TEMPLATE_KEY, { key })
-    return access.createGlobalData
+  async getDataAccessByTemplateKey () {
+    const { dataroots } = await this.query<{ dataroots: { template: { key: string } }[] }>(GET_VIEWFOREDIT_DATATEMPLATES)
+    return new Set(dataroots.map(dr => dr.template.key))
+  }
+
+  async getDataByRootId (id: string) {
+    const { dataroots } = await this.query<{ dataroots: { id: string, data: DataItem[], datafolders: DataFolder[] }[] }>(GET_DATA_BY_ROOT_ID, { id })
+    return dataroots[0]
   }
 
   async getDataByFolderId (id: string) {
     const { data } = await this.query<{ data: DataItem[] }>(GET_DATA_BY_DATAFOLDER_ID, { id })
     return data
-  }
-
-  async getSiteDataByTemplateKey (siteId: string, key: string) {
-    const { dataroots } = await this.query<{ dataroots: DataRoot[] }>(GET_SITE_DATA_BY_TEMPLATE_KEY, { siteId, key })
-    return dataroots[0]
   }
 
   async addDataFolder (name: string, templateKey: string, siteId?: string, validateOnly?: boolean) {

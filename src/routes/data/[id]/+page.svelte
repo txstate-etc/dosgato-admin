@@ -22,7 +22,7 @@
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { htmlEncode, unique, get } from 'txstate-utils'
-  import { api, ActionPanel, DataTreeNodeType, messageForDialog, type DataItem, type DataFolder, type DataSite, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, uiLog, ModalContextStore, templateRegistry, type EnhancedDataTemplate, dateStamp, dateStampShort } from '$lib'
+  import { api, ActionPanel, messageForDialog, type DataItem, type DataFolder, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, uiLog, ModalContextStore, type EnhancedDataTemplate, dateStamp, dateStampShort, type DataRoot } from '$lib'
   import { afterNavigate } from '$app/navigation'
   import { setContext } from 'svelte'
 
@@ -47,7 +47,7 @@
   }
 
   interface TreeDataItem extends Omit<Omit<DataItem, 'modifiedAt'>, 'publishedAt'> {
-    type: DataTreeNodeType.DATA
+    type: 'data'
     hasChildren: boolean
     modifiedAt: DateTime
     publishedAt: DateTime
@@ -56,12 +56,13 @@
   }
 
   interface TreeDataFolder extends Omit<DataFolder, 'data'> {
-    type: DataTreeNodeType.FOLDER
+    type: 'folder'
     hasChildren: boolean
   }
 
-  interface TreeDataSite extends Omit<Omit<DataSite, 'data'>, 'datafolders'> {
-    type: DataTreeNodeType.SITE
+  interface TreeDataRoot extends Omit<Omit<DataRoot, 'data'>, 'datafolders'> {
+    type: 'root'
+    name: string
     hasChildren: boolean
     siteId?: string
     permissions: {
@@ -69,110 +70,82 @@
     }
   }
 
-  type AnyDataTreeItem = TreeDataItem | TreeDataFolder | TreeDataSite
+  type AnyDataTreeItem = TreeDataItem | TreeDataFolder | TreeDataRoot
 
   type TypedDataTreeItem = TypedTreeItem<AnyDataTreeItem>
 
+  function fetchedDataToItem (d: DataItem) {
+    const modifiedAt = DateTime.fromISO(d.modifiedAt)
+    const publishedAt = DateTime.fromISO(d.publishedAt)
+    return {
+      ...d,
+      type: 'data',
+      hasChildren: false,
+      modifiedAt,
+      publishedAt,
+      status: d.published ? (publishedAt >= modifiedAt ? 'published' : 'modified') : 'unpublished'
+    } as TreeDataItem
+  }
+
+  function fetchedFolderToItem (f: DataFolder) {
+    return {
+      ...f,
+      type: 'folder',
+      hasChildren: !!f.data.length
+    } as TreeDataFolder
+  }
+
   async function fetchChildren (item?: TypedDataTreeItem) {
     if (item) {
-      if (item.type === DataTreeNodeType.DATA) return []
-      if (item.type === DataTreeNodeType.FOLDER) {
+      if (item.type === 'folder') {
         const data = await api.getDataByFolderId(item.id)
-        return data.map(d => {
-          const modifiedAt = DateTime.fromISO(d.modifiedAt)
-          const publishedAt = DateTime.fromISO(d.publishedAt)
-          return {
-            ...d,
-            type: DataTreeNodeType.DATA,
-            hasChildren: false,
-            modifiedAt,
-            publishedAt,
-            status: d.published ? (publishedAt >= modifiedAt ? 'published' : 'modified') : 'unpublished'
-          } as AnyDataTreeItem
-        })
+        return data.map(fetchedDataToItem)
       }
-      if (item.type === DataTreeNodeType.SITE) {
-        const dataroot = item.siteId ? await api.getSiteDataByTemplateKey(item.siteId, templateKey) : await api.getGlobalDataRootByTemplateKey(templateKey)
-        const ret: AnyDataTreeItem[] = []
-        for (const f of dataroot.datafolders) {
-          ret.push({
-            ...f,
-            type: DataTreeNodeType.FOLDER,
-            hasChildren: !!f.data.length
-          })
-        }
-        for (const d of dataroot.data) {
-          const modifiedAt = DateTime.fromISO(d.modifiedAt)
-          const publishedAt = DateTime.fromISO(d.publishedAt)
-          ret.push({
-            ...d,
-            type: DataTreeNodeType.DATA,
-            hasChildren: false,
-            modifiedAt,
-            publishedAt,
-            status: d.published ? (publishedAt >= modifiedAt ? 'published' : 'modified') : 'unpublished'
-          })
-        }
-        return ret
+      if (item.type === 'root') {
+        const dataroot = await api.getDataByRootId(item.id)
+        return [...dataroot.datafolders.map(fetchedFolderToItem), ...dataroot.data.map(fetchedDataToItem)]
       }
     } else {
-      const [globaldataroot, sitedataroots] = await Promise.all([
-        api.getGlobalDataRootByTemplateKey(templateKey),
-        loadedData.template?.global ? [] : api.getSiteDataRootsByTemplateKey(templateKey)
-      ])
-      const ret: AnyDataTreeItem[] = []
-      ret.push({
-        type: DataTreeNodeType.SITE,
-        id: globaldataroot.id,
-        hasChildren: !!globaldataroot.datafolders.length || !!globaldataroot.data.length,
-        name: 'Global Data',
-        permissions: {
-          create: loadedData.mayManageGlobalData
-        }
-      })
-      for (const dr of sitedataroots) {
-        ret.push({
-          id: dr.id,
-          name: dr.site!.name,
-          siteId: dr.site!.id,
-          type: DataTreeNodeType.SITE,
-          hasChildren: !!dr.data.length || !!dr.datafolders.length,
-          permissions: { create: dr.permissions.create }
-        })
-      }
-      return ret
+      const dataroots = await api.getDataRootsByTemplateKey(templateKey)
+      return dataroots.map(dr => ({
+        ...dr,
+        type: 'root',
+        siteId: dr.site?.id,
+        hasChildren: !!dr.data.length || !!dr.datafolders.length,
+        name: dr.site ? dr.site.name : 'Global Data'
+      }) as TreeDataRoot)
     }
     return []
   }
 
   function getPathIcon (item: AnyDataTreeItem) {
     const type = item.type
-    if (type === DataTreeNodeType.DATA) return item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : cube
-    else if (type === DataTreeNodeType.FOLDER) return folderOutline
+    if (type === 'data') return item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : cube
+    else if (type === 'folder') return folderOutline
     else return applicationOutline
   }
 
   async function moveHandler (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
     const ids = selectedItems.map(d => d.id)
-    if (selectedItems[0].type === DataTreeNodeType.DATA) {
+    if (selectedItems[0].type === 'data') {
       let target: MoveDataTarget = {}
       if (above) {
-        if (dropTarget.type === DataTreeNodeType.FOLDER) {
-          if (!dropTarget.parent!.id.includes('global-')) target = { siteId: (dropTarget.parent! as TreeDataSite).siteId }
+        if (dropTarget.type === 'folder') {
+          if (!dropTarget.parent!.id.includes('global-')) target = { siteId: (dropTarget.parent! as TreeDataRoot).siteId }
         } else {
           target = { aboveTarget: dropTarget.id }
         }
       } else {
-        if (dropTarget.type === DataTreeNodeType.FOLDER) {
+        if (dropTarget.type === 'folder') {
           target = { folderId: dropTarget.id }
         } else {
-          if (!dropTarget.id.includes('global-')) target = { siteId: (dropTarget as TreeDataSite).siteId }
+          if (!dropTarget.id.includes('global-')) target = { siteId: (dropTarget as TreeDataRoot).siteId }
         }
       }
       await api.moveData(ids, target)
       // TODO: log the response?
-    } else if (selectedItems[0].type === DataTreeNodeType.FOLDER) {
-      const siteId = dropTarget.id.includes('global-') ? undefined : (dropTarget as TreeDataSite).siteId
+    } else if (selectedItems[0].type === 'folder') {
+      const siteId = dropTarget.id.includes('global-') ? undefined : (dropTarget as TreeDataRoot).siteId
       await api.moveDataFolders(ids, siteId)
       // TODO: log the response?
     }
@@ -180,32 +153,32 @@
   }
 
   function dragEligible (items: TypedDataTreeItem[]) {
-    return items.every(itm => itm.type !== DataTreeNodeType.SITE && itm.permissions.move)
+    return items.every(itm => itm.type !== 'root' && itm.permissions.move)
   }
 
   function dropEffect (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
     // only want to drop items if they are the same type of item
     if (unique(selectedItems.map(i => i.type)).length > 1) return 'none'
-    if (selectedItems[0].type === DataTreeNodeType.FOLDER) {
-      if (dropTarget.type !== DataTreeNodeType.SITE) return 'none'
+    if (selectedItems[0].type === 'folder') {
+      if (dropTarget.type !== 'root') return 'none'
       return above || !dropTarget.permissions.create ? 'none' : 'move'
     } else {
       // Data item(s) moving
       if (above) {
         // can't move anything above a site
-        if (dropTarget.type === DataTreeNodeType.SITE) return 'none'
-        else if (dropTarget.type === DataTreeNodeType.FOLDER) {
+        if (dropTarget.type === 'root') return 'none'
+        else if (dropTarget.type === 'folder') {
           // moving it above a folder means moving it into a site
-          const parent = dropTarget.parent as TreeDataSite
+          const parent = dropTarget.parent as TreeDataRoot
           return parent.permissions.create ? 'move' : 'none'
         } else {
           // moving it above another data item
-          const parent = dropTarget.parent!.type === DataTreeNodeType.SITE ? dropTarget.parent as TreeDataSite : dropTarget.parent as TreeDataFolder
+          const parent = dropTarget.parent!.type === 'root' ? dropTarget.parent as TreeDataRoot : dropTarget.parent as TreeDataFolder
           return parent.permissions.create ? 'move' : 'none'
         }
       } else {
         // data items can't contain other data items
-        if (dropTarget.type === DataTreeNodeType.DATA) return 'none'
+        if (dropTarget.type === 'data') return 'none'
         else {
           // It doesn't make sense to drag something into its own parent
           const parents = selectedItems.map(i => i.parent!.id)
@@ -219,7 +192,7 @@
   const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren, { moveHandler, dragEligible, dropEffect })
 
   function singleActions (item: TypedDataTreeItem) {
-    if (item.type === DataTreeNodeType.DATA) {
+    if (item.type === 'data') {
       const actions: ActionPanelAction[] = [
         { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: onClickEdit }
       ]
@@ -240,7 +213,7 @@
         actions.push({ label: 'Restore Data', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => modalContext.setModal('undeletedata') })
       }
       return actions
-    } else if (item.type === DataTreeNodeType.FOLDER) {
+    } else if (item.type === 'folder') {
       return [
         { label: 'Rename', icon: renameIcon, disabled: !item.permissions?.update, onClick: () => modalContext.setModal('renamefolder') },
         { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => modalContext.setModal('adddata') },
@@ -265,14 +238,14 @@
   function multipleActions (items: TypedDataTreeItem[]) {
     // the only data/datafolder actions available for sites are Adding data and datafolders
     // and that doesn't make sense in the context of multiple selections
-    if (items.some((item) => item.type === DataTreeNodeType.SITE)) return []
-    if (items.every((item) => item.type === DataTreeNodeType.FOLDER)) {
+    if (items.some((item) => item.type === 'root')) return []
+    if (items.every((item) => item.type === 'folder')) {
       return [
         { label: 'Delete', icon: deleteOutline, disabled: false, onClick: () => modalContext.setModal('deletefolder') },
         { label: 'Undelete', icon: deleteRestore, disabled: false, onClick: () => {} }
       ]
     }
-    if (items.every((item) => item.type === DataTreeNodeType.DATA)) {
+    if (items.every((item) => item.type === 'data')) {
       const actions: ActionPanelAction[] = [
         { label: 'Publish', icon: publishIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.publish), onClick: () => modalContext.setModal('publishdata') },
         { label: 'Unpublish', icon: publishOffIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.unpublish), onClick: () => modalContext.setModal('unpublishdata') },
@@ -297,7 +270,7 @@
   }
 
   async function onAddFolder (state) {
-    const siteId: string|undefined = ($store.selectedItems[0] as TreeDataSite).siteId
+    const siteId: string|undefined = ($store.selectedItems[0] as TreeDataRoot).siteId
     const resp = await api.addDataFolder(state.name, templateKey, siteId)
     modalContext.logModalResponse(resp, resp.dataFolder?.name, { parent: actionPanelTarget.target })
     return {
@@ -317,7 +290,7 @@
   }
 
   async function validateFolder (state) {
-    const siteId: string|undefined = ($store.selectedItems[0] as TreeDataSite).siteId
+    const siteId: string|undefined = ($store.selectedItems[0] as TreeDataRoot).siteId
     const resp = await api.addDataFolder(state.name, templateKey, siteId, true)
     return messageForDialog(resp.messages, 'args')
   }
@@ -366,11 +339,11 @@
     let siteId: string|undefined
     let folderId: string|undefined
     const selected = $store.selectedItems[0]
-    if (selected.type === DataTreeNodeType.SITE) {
+    if (selected.type === 'root') {
       siteId = selected.siteId
-    } else if (selected.type === DataTreeNodeType.FOLDER) {
+    } else if (selected.type === 'folder') {
       folderId = selected.id
-      siteId = (selected.parent as TreeDataSite).siteId
+      siteId = (selected.parent as TreeDataRoot).siteId
     }
     return { siteId, folderId }
   }
@@ -469,7 +442,7 @@
 
   function renderCustomColumn (getter?: string | ((data: DataData) => string), fallback?: (item: AnyDataTreeItem) => string) {
     return (item: AnyDataTreeItem) => {
-      if (item.type === DataTreeNodeType.DATA) {
+      if (item.type === 'data') {
         return typeof getter === 'string' ? htmlEncode(get(item.data, getter) ?? fallback?.(item)) : getter?.(item.data) ?? fallback?.(item) ?? ''
       }
       return fallback?.(item) ?? ''
@@ -481,7 +454,7 @@
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Data'} actions={getActions($store.selectedItems)}>
   <Tree {store} headers={[
-    { label: tmpl?.nameColumn?.title ?? 'Name', id: 'name', grow: 1, icon: item => item.type === DataTreeNodeType.DATA ? { icon: tmpl?.nameColumn?.icon?.(item.data) ?? getPathIcon(item) } : { icon: getPathIcon(item) }, render: renderCustomColumn(tmpl?.nameColumn?.get, item => item.name) },
+    { label: tmpl?.nameColumn?.title ?? 'Name', id: 'name', grow: 1, icon: item => item.type === 'data' ? { icon: tmpl?.nameColumn?.icon?.(item.data) ?? getPathIcon(item) } : { icon: getPathIcon(item) }, render: renderCustomColumn(tmpl?.nameColumn?.get, item => item.name) },
     ...(tmpl?.columns?.map(c => ({
       label: c.title,
       id: 'custom-' + c.title,
@@ -490,8 +463,8 @@
       icon: getIcon(c),
       render: renderCustomColumn(c.get)
     })) ?? []),
-    { label: 'Status', id: 'status', fixed: '5em', icon: item => ({ icon: item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? deleteOutline : statusIcon[item.status]) : undefined, label: item.type === DataTreeNodeType.DATA ? item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' : undefined }), class: item => item.type === DataTreeNodeType.DATA ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
-    { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === DataTreeNodeType.DATA ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
+    { label: 'Status', id: 'status', fixed: '5em', icon: item => ({ icon: item.type === 'data' ? (item.deleteState === DeleteState.MARKEDFORDELETE ? deleteOutline : statusIcon[item.status]) : undefined, label: item.type === 'data' ? item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' : undefined }), class: item => item.type === 'data' ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
+    { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === 'data' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
     { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
   ]} searchable='name' on:choose={onClickEdit} />
 </ActionPanel>

@@ -57,6 +57,7 @@ export interface AssetRule {
 export const dataRuleDetails = `
   id
   path
+  global
   permissions {
     write
   }
@@ -90,6 +91,7 @@ export const dataRuleDetails = `
 export interface DataRule {
   id: string
   path: string
+  global: boolean
   permissions: {
     write: boolean
   }
@@ -483,6 +485,7 @@ export interface UpdateAssetRuleInput {
 export interface CreateDataRuleInput {
   roleId: string
   siteId?: string
+  global?: boolean
   templateId?: string
   path?: string
   grants?: {
@@ -499,6 +502,7 @@ export interface CreateDataRuleInput {
 export interface UpdateDataRuleInput {
   ruleId: string
   siteId?: string
+  global?: boolean
   path?: string
   templateId?: string
   grants?: {

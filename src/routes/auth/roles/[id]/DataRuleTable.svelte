@@ -16,7 +16,7 @@
 {#if rules.length}
   <SortableTable cardedOnMobile mobileHeader={(item) => { return item.site ? item.site.name : 'All Sites' }} items={rules}
     headers={[
-      { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
+      { id: 'site', label: 'Site', render: (item) => { return item.global ? 'Global' : (item.site ? item.site.name : 'All Sites') } },
       { id: 'path', label: 'Path', get: 'path' },
       { id: 'template', label: 'Template', render: (item) => { return item.template ? item.template.name : 'All Templates' } },
       { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create Permitted' } : { icon: minusIcon, hiddenLabel: 'Create not permitted' } } },

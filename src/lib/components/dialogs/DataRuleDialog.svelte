@@ -16,6 +16,7 @@
 
   interface DataRulePreload {
     siteId?: string
+    global: boolean
     path?: string
     templateId?: string
     grants : {
@@ -47,7 +48,7 @@
     if (preload.grants.undelete) grants.push('undelete')
     return {
       ...preload,
-      siteId: preload.siteId === undefined ? 'allsites' : preload.siteId,
+      siteId: preload.global ? 'global' : (preload.siteId === undefined ? 'allsites' : preload.siteId),
       templateId: preload.templateId === undefined ? 'alltemplates' : preload.templateId,
       path: preload.path === '/' ? undefined : preload.path,
       grants
@@ -57,7 +58,8 @@
   function stateToPreload (state: DataRuleDialogState) {
     const { siteId, templateId, path } = pick(state, 'siteId', 'path', 'templateId')
     return {
-      siteId: siteId === 'allsites' ? undefined : siteId,
+      siteId: siteId === 'allsites' || siteId === 'global' ? undefined : siteId,
+      global: siteId === 'global',
       path,
       templateId: templateId === 'alltemplates' ? undefined : templateId,
       grants: {
@@ -80,6 +82,7 @@
       data: resp.success
         ? preloadToState({
           siteId: resp.dataRule.site?.id,
+          global: resp.dataRule.global,
           path: resp.dataRule.path,
           templateId: resp.dataRule.template?.key,
           grants: resp.dataRule.grants
@@ -107,6 +110,7 @@
         ? preloadToState({
           siteId: resp.dataRule.site?.id,
           path: resp.dataRule.path,
+          global: resp.dataRule.global,
           templateId: resp.dataRule.template?.key,
           grants: resp.dataRule.grants
         })
@@ -135,7 +139,7 @@
 </script>
 
 <FormDialog submit={ruleId ? onEditDataRule : onAddDataRule} validate={ruleId ? validateEdit : validateAdd} {name} {title} preload={preloadToState(preload)} on:escape on:saved>
-  <FieldSelect path='siteId' label='Site' choices={[{ label: 'All Sites', value: 'allsites' }, ...siteChoices]} notNull defaultValue="allsites"/>
+  <FieldSelect path='siteId' label='Site' choices={[{ label: 'All Sites', value: 'allsites' }, { label: 'Global Data', value: 'global' }, ...siteChoices]} notNull defaultValue="allsites"/>
   <FieldText path='path' label='Path'/>
   <FieldSelect path='templateId' label='Template' choices={[{ label: 'All Templates', value: 'alltemplates' }, ...templateChoices]} notNull defaultValue='alltemplates'/>
   <FieldChoices path='grants' {choices} leftToRight label="Permissions"/>
