@@ -109,7 +109,7 @@
       id: 'exportimport',
       actions: [
         { label: 'Export', icon: exportIcon, disabled: false, onClick: () => api.download(`${environmentConfig.renderBase}/.page/${page.id}`) },
-        { label: 'Export w/Subpages', icon: exportIcon, disabled: false, onClick: () => api.download(`${environmentConfig.renderBase}/.page/${page.id}?withSubpages=1`) },
+        { label: 'Export w/ Subpages', icon: exportIcon, disabled: false, onClick: () => api.download(`${environmentConfig.renderBase}/.page/${page.id}?withSubpages=1`) },
         { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => modalContext.setModal('import') }
       ]
     }
