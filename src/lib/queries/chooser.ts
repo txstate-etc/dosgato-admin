@@ -1,7 +1,7 @@
 import { environmentConfig } from '$lib/stores'
 import type { Asset, Folder, Page } from '@dosgato/dialog'
 import type { AssetFolderLink } from '@dosgato/templating'
-import { omit, pick, stringify } from 'txstate-utils'
+import { isNotBlank, omit, pick, stringify } from 'txstate-utils'
 import type { RootAssetFolder } from './assets_index'
 import type { PagetreeTypes, RootTreePage } from './pages_index'
 
@@ -227,7 +227,7 @@ export function apiPageToChooserPage (page: ChooserPageDetails | RootTreePage | 
     ...pick(page, 'name', 'path', 'title'),
     id: stringify({ type: 'page', source: 'pages', linkId: page.linkId, siteId: page.site.id, path: page.path.replace(/^\/[^/]+/, `/${page.site.name}`), hash }),
     hasChildren: page.children.length > 0,
-    url: page.path
+    url: page.path + (isNotBlank(hash) ? '#' + hash : '')
   }
 }
 

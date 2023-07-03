@@ -2,7 +2,7 @@ import { base } from '$app/paths'
 import type { AssetFolderLink, AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
 import { MessageType } from '@txstate-mws/svelte-forms'
-import { get, isBlank, keyby, pick, toArray } from 'txstate-utils'
+import { get, isBlank, isNotBlank, keyby, pick, toArray } from 'txstate-utils'
 import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
@@ -132,7 +132,7 @@ class API {
       this.token = sessionStorage.getItem('token') ?? undefined
     }
     Object.assign(environmentConfig, await this.config())
-    environmentConfig.assetRegex = new RegExp('^(?:' + environmentConfig.assetLiveBase + '|(?:' + environmentConfig.renderBase + ')?/.asset)/([^/]+)/')
+    environmentConfig.assetRegex = isNotBlank(environmentConfig.assetLiveBase) ? new RegExp('^(?:' + environmentConfig.assetLiveBase + '|(?:' + environmentConfig.renderBase + ')?/.asset)/([^/]+)/') : new RegExp('^(?:' + environmentConfig.renderBase + ')?/.asset/([^/]+)/')
     this.ready()
   }
 
