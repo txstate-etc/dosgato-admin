@@ -217,15 +217,15 @@ export interface ChooserAssetFolderByLink {
   assetfolders: [ChooserFolderDetails]
 }
 
-export function apiPageToChooserPage (page: undefined): undefined
-export function apiPageToChooserPage (page: ChooserPageDetails | RootTreePage): Page
-export function apiPageToChooserPage (page: ChooserPageDetails | RootTreePage | undefined): Page | undefined {
+export function apiPageToChooserPage (page: undefined, hash?: string): undefined
+export function apiPageToChooserPage (page: ChooserPageDetails | RootTreePage, hash?: string): Page
+export function apiPageToChooserPage (page: ChooserPageDetails | RootTreePage | undefined, hash?: string): Page | undefined {
   if (!page) return undefined
   return {
     type: 'page',
     source: 'pages',
     ...pick(page, 'name', 'path', 'title'),
-    id: stringify({ type: 'page', source: 'pages', linkId: page.linkId, siteId: page.site.id, path: page.path.replace(/^\/[^/]+/, `/${page.site.name}`) }),
+    id: stringify({ type: 'page', source: 'pages', linkId: page.linkId, siteId: page.site.id, path: page.path.replace(/^\/[^/]+/, `/${page.site.name}`), hash }),
     hasChildren: page.children.length > 0,
     url: page.path
   }

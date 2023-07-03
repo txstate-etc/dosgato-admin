@@ -235,28 +235,30 @@ class API {
   async chooserSubPagesByPath (path: string, pagetreeId: string | undefined) {
     if (path === '/') return await this.chooserRootPages(pagetreeId)
     const { pages } = await this.query<ChooserSubPagesByPath>(CHOOSER_SUBPAGES_BY_PATH, { path })
-    return pages.map(apiPageToChooserPage)
+    return pages.map(p => apiPageToChooserPage(p))
   }
 
   async chooserRootPages (pagetreeId: string | undefined) {
     const pages = await this.getRootPages()
     const siteId = (pagetreeId ? pages.find(p => p.pagetree.id === pagetreeId) : undefined)?.site.id
-    return pages.filter(p => p.pagetree.id === pagetreeId || (p.site.id !== siteId && p.pagetree.type === 'PRIMARY')).map(apiPageToChooserPage)
+    return pages.filter(p => p.pagetree.id === pagetreeId || (p.site.id !== siteId && p.pagetree.type === 'PRIMARY')).map(p => apiPageToChooserPage(p))
   }
 
   async chooserPageByLink (link: PageLink, pagetreeId?: string) {
     const { pages } = await this.query<ChooserPageByLink>(CHOOSER_PAGE_BY_LINK, { pageLink: { ...pick(link, 'linkId', 'siteId', 'path'), context: pagetreeId ? { pagetreeId } : undefined } })
-    return apiPageToChooserPage(pages[0])
+    return apiPageToChooserPage(pages[0], link.hash)
   }
 
   async chooserPageByPath (path: string) {
-    const { pages } = await this.query<ChooserPageByPath>(CHOOSER_PAGE_BY_PATH, { path })
-    return apiPageToChooserPage(pages[0])
+    const [pagePath, hash] = path.split('#')
+    const { pages } = await this.query<ChooserPageByPath>(CHOOSER_PAGE_BY_PATH, { path: pagePath })
+    return apiPageToChooserPage(pages[0], hash)
   }
 
   async chooserPageByUrl (url: string) {
-    const { pages } = await this.query<ChooserPageByPath>(CHOOSER_PAGE_BY_URL, { url })
-    return apiPageToChooserPage(pages[0])
+    const [pageUrl, hash] = url.split('#')
+    const { pages } = await this.query<ChooserPageByPath>(CHOOSER_PAGE_BY_URL, { url: pageUrl })
+    return apiPageToChooserPage(pages[0], hash)
   }
 
   async chooserSubFoldersAndAssetsByPath (path: string, pagetreeId: string | undefined) {
