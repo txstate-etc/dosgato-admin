@@ -935,7 +935,7 @@ class API {
   }
 
   async getPagetreeContext (id: string) {
-    const { pagetrees } = await this.query<{ pagetrees: { name: string, site: { id: string, name: string } }[] }>('query getPagetreeName ($id: ID!) { pagetrees (filter: {ids:[$id]}) { name site { id name } } }')
+    const { pagetrees } = await this.query<{ pagetrees: { name: string, site: { id: string, name: string } }[] }>('query getPagetreeName ($id: ID!) { pagetrees (filter: {ids:[$id]}) { name site { id name } } }', { id })
     return pagetrees[0]
   }
 
