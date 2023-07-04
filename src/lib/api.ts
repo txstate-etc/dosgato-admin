@@ -934,6 +934,11 @@ class API {
     return pages
   }
 
+  async getPagetreeContext (id: string) {
+    const { pagetrees } = await this.query<{ pagetrees: { name: string, site: { id: string, name: string } }[] }>('query getPagetreeName ($id: ID!) { pagetrees (filter: {ids:[$id]}) { name site { id name } } }')
+    return pagetrees[0]
+  }
+
   async getPageVersions (pageId: string): Promise<HistoryVersion[]> {
     const { pages } = await this.query<{ pages: [{ version: VersionDetails, versions: VersionDetails[] }] }>(GET_PAGE_VERSIONS, { pageId })
     const page = pages[0]

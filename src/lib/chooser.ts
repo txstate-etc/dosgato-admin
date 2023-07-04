@@ -1,7 +1,11 @@
-import type { AnyItem, ChooserType, Client, Folder, Source } from '@dosgato/dialog'
+import type { AnyItem, ChooserType, Client, Folder, Page, Source } from '@dosgato/dialog'
 import type { AssetFolderLink, LinkDefinition } from '@dosgato/templating'
-import { isNotBlank, sortby, stringify } from 'txstate-utils'
+import { Cache, isNotBlank, sortby, stringify } from 'txstate-utils'
 import { api, environmentConfig, uploadWithProgress } from '$lib'
+
+const pagetreeInfoCache = new Cache(async (id: string) => {
+  return await api.getPagetreeContext(id)
+}, { freshseconds: 30, staleseconds: 300 })
 
 export class ChooserClient implements Client {
   constructor (public pagetreeId?: string) {}
@@ -35,6 +39,15 @@ export class ChooserClient implements Client {
       } else if (link.type === 'page') {
         link.hash ??= hash
         return await api.chooserPageByLink(link, this.pagetreeId)
+      } else if (link.type === 'url' && link.url?.startsWith('/')) {
+        let target: Page | undefined = await api.chooserPageByPath(link.url)
+        if (!this.pagetreeId) return target
+        const ptInfo = await pagetreeInfoCache.get(this.pagetreeId)
+        // do not allow links to another pagetree in the same site as this.pagetreeId
+        if (target?.path.startsWith('/' + ptInfo.site.name) && !target.path.startsWith('/' + ptInfo.name + '/')) target = undefined
+        // see if an equivalent path exists in this.pagetreeId
+        if (!target && link.url.startsWith('/' + ptInfo.site.name) && ptInfo.site.name !== ptInfo.name) target = await api.chooserPageByPath('/' + ptInfo.name + link.url.replace(/\/[^/]+/, ''))
+        return target
       }
     } catch {
       return undefined
