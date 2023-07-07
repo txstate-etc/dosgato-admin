@@ -47,6 +47,7 @@ export const uiConfig: UIConfig = {
       return searchParams.get('unifiedJwt') ?? undefined
     }
   },
+  environmentTitle: () => 'DEV',
   assetMeta: {
     dialog: AssetDialog,
     details: meta => ({ Title: meta.title, Description: meta.description })

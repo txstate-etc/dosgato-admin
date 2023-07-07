@@ -63,8 +63,9 @@
   }
 
   let cookieAcquired = false
-
+  let environmentTitle = ''
   onMount(() => {
+    environmentTitle = uiConfig.environmentTitle?.(environmentConfig) ?? ''
     // populate the user's token to the render service so that it can create a cookie for itself
     // this way we can load images that require authentication in <img> tags and the editing iframe
     // will be authenticated
@@ -91,7 +92,7 @@
 </script>
 
 <svelte:head>
-  <title>{uiConfig.title ?? 'DG Editing'}</title>
+  <title>{environmentTitle} {uiConfig.title ?? 'DG Editing'}</title>
 </svelte:head>
 
 {#if data.errObj}
@@ -104,7 +105,7 @@
   {/if}
 {:else}
   <nav>
-    <div class="topbar">
+    <div class="topbar" style:background-image={environmentTitle ? `url('data:image/svg+xml;utf8,<svg style="transform:rotate(45deg)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${(environmentTitle.length + 1) * 10} ${environmentTitle.length * 10}"><text x="0" y="25" fill="%23000" fill-opacity="0.1">${environmentTitle} </text></svg>')` : undefined}>
       <div class="logo">
         <Icon icon={uiConfig.logo} width={uiConfig.logo?.width} height={uiConfig.logo?.height}/>
       </div>
@@ -169,6 +170,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: none 0 0/80px 80px;
     background-color: #f5f1ee;
     padding: 0.5em;
     color: #000;
