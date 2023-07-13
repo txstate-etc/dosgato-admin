@@ -53,21 +53,31 @@ button.reset {
 .tree-node .modified span.short {
   display: none;
 }
-[data-eq~="600px"] .tree-node .modified span.full {
+[data-eq~="700px"] .tree-node .modified span.full {
   display: none;
 }
-[data-eq~="600px"] .tree-node .modified span.short {
+[data-eq~="700px"] .tree-node .modified span.short {
   display: block;
 }
-[data-eq~="600px"] .tree-node .modified {
-  width: 7em !important;
+[data-eq~="700px"] .tree-header .modified,
+[data-eq~="700px"] .tree-node .modified {
+    width: 7em !important;
 }
-[data-eq~="600px"] .tree-node .status {
-  width: 3.2em !important;
+[data-eq~="700px"] .tree-header .status,
+[data-eq~="700px"] .tree-node .status {
+    width: 3.2em !important;
 }
-[data-eq~="500px"] .tree-node .template,
-[data-eq~="300px"] .tree-node .title,
-[data-eq~="400px"] .tree-node .modified,
-[data-eq~="400px"] .tree-node .modifiedBy {
-  display: none;
+[data-eq~="600px"] .tree-node .template,
+[data-eq~="600px"] .tree-header .template,
+[data-eq~="400px"] .tree-node .title,
+[data-eq~="400px"] .tree-header .title,
+[data-eq~="500px"] .tree-node .modified,
+[data-eq~="500px"] .tree-header .modified,
+[data-eq~="400px"] .tree-node .size,
+[data-eq~="400px"] .tree-header .size,
+[data-eq~="800px"] .tree-node .type,
+[data-eq~="800px"] .tree-header .type,
+[data-eq~="500px"] .tree-node .modifiedBy,
+[data-eq~="500px"] .tree-header .modifiedBy {
+    display: none;
 }
