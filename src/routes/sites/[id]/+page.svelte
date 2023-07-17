@@ -10,7 +10,7 @@
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { csv, keyby, titleCase } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, ModalContextStore } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, ModalContextStore, DetailList } from '$lib'
   import { base } from '$app/paths'
   import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
@@ -338,9 +338,9 @@
       <DetailPanel header="Site Information" headerColor={panelHeaderColor}>
         <DetailPanelSection>
           <div class="detail-section">
-            <dl>
+            <div>
               <div class="dl-row">
-                <span><dt>Name:</dt><dd>{$store.site.name}</dd></span>
+                <span><span class="label">Name:</span><span>{$store.site.name}</span></span>
                 {#if $store.site.permissions.rename}
                   <button type="button" on:click={() => { modalContext.setModal('editbasic') }}>
                     <Icon icon={pencilIcon} hiddenLabel="Edit basic information" width="1.3em" inline/>
@@ -348,14 +348,14 @@
                 {/if}
               </div>
               <div class="dl-row">
-                <span><dt>URL:</dt><dd>{$store.site.url ? $store.site.url.prefix : 'This site is not launched.'}</dd></span>
+                <span><span class="label">URL:</span><span>{$store.site.url ? $store.site.url.prefix : 'This site is not launched.'}</span></span>
                 {#if $store.site.permissions.launch}
                   <button type="button" on:click={() => { modalContext.setModal('editlaunch') }}>
                     <Icon icon={pencilIcon} hiddenLabel="Edit URL or launch site" inline width="1.3em"/>
                   </button>
                 {/if}
               </div>
-            </dl>
+            </div>
           </div>
           <div class="detail-area-head">
             <h3>Site Management</h3>
@@ -365,17 +365,11 @@
               </button>
             {/if}
           </div>
-          <dl>
-            <div class="dl-row">
-              <span><dt>Organization:</dt><dd>{$store.site.organization?.name ?? ''}</dd></span>
-            </div>
-            <div class="dl-row">
-              <span><dt>Owner:</dt><dd>{#if $store.site.owner}{$store.site.owner.name} ({$store.site.owner.id}){/if}</dd></span>
-            </div>
-            <div class="dl-row">
-              <span><dt>Manager(s):</dt><dd>{$store.site.managers.map(m => `${m.name} (${m.id})`).join(', ')}</dd></span>
-            </div>
-          </dl>
+          <DetailList columns={1} records={{
+            Organization: $store.site.organization?.name ?? '',
+            Owner: $store.site.owner ? `${$store.site.owner.name} (${$store.site.owner.id})` : '',
+            'Manager(s)': $store.site.managers.map(m => `${m.name} (${m.id})`).join(', ')
+          }} />
         </DetailPanelSection>
       </DetailPanel>
       <DetailPanel header='Site Stages' headerColor={panelHeaderColor} button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => modalContext.setModal('addpagetree') } : undefined}>
@@ -578,27 +572,20 @@
     font-weight: bold;
     font-size: 1em;
   }
-  dl {
-    margin: 0;
-  }
-  dl .dl-row {
+  div .dl-row {
     display: flex;
     justify-content: space-between;
     padding: 0.5em 0;
     border-bottom: 1px dashed #707070;
+    margin: 0;
   }
   dl .dl-row span {
     display: flex;
     gap: 5px;
   }
-  dt {
-    font-weight: bold
-  }
-  dd {
-    margin-left: 0;
-  }
-  dd, dt {
-    display: inline;
+  span.label {
+    font-weight: bold;
+    padding-right: 0.5em;
   }
   button {
     background-color: transparent;
