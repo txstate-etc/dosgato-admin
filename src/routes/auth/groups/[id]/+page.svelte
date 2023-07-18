@@ -133,7 +133,7 @@
   <BackButton destination="group list" url={`${base}/auth/groups/`}/>
   <div class="panel-grid">
     <div class="vertical-group">
-      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={{ icon: pencilIcon, onClick: () => modalContext.setModal('editbasic') }}>
+      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={{ icon: pencilIcon, hiddenLabel: 'Edit group name', onClick: () => modalContext.setModal('editbasic') }}>
         <DetailPanelSection>
           <DetailList records={{ Name: $store.group.name }}/>
         </DetailPanelSection>
@@ -148,7 +148,7 @@
         {/if}
       </DetailPanel>
 
-      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => { openAddRoleDialog() } } }>
+      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={{ icon: plusIcon, hiddenLabel: `Add role to ${$store.group.name}`, onClick: () => { openAddRoleDialog() } } }>
         <DetailPanelSection>
           {#if $store.group.directRoles.length}
             <SortableTable items={$store.group.directRoles}
@@ -187,7 +187,7 @@
       {/if}
     </div>
     <div>
-      <DetailPanel header='Members' headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => openAddUsersDialog() }} >
+      <DetailPanel header='Members' headerColor={panelHeaderColor} button={{ icon: plusIcon, hiddenLabel: `Add members to ${$store.group.name}`, onClick: () => openAddUsersDialog() }} >
         <DetailPanelSection>
           {#if $store.group.directMembers.length}
             <SortableTable items={$store.group.directMembers}

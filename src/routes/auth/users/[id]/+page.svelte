@@ -145,7 +145,7 @@
 
   <div class="panel-grid">
     <div class="grid-item">
-      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? [{ icon: pencilIcon, onClick: () => modalContext.setModal('editbasic', $store.user.id) }, { icon: plusIcon, onClick: () => modalContext.setModal('editgroups', $store.user.id) }] : undefined}>
+      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? [{ icon: pencilIcon, hiddenLabel: 'Edit Basic Information', onClick: () => modalContext.setModal('editbasic', $store.user.id) }, { icon: plusIcon, hiddenLabel: `Add ${$store.user.name} to groups`, onClick: () => modalContext.setModal('editgroups', $store.user.id) }] : undefined}>
         <DetailPanelSection>
           <DetailList records={{
             'First Name': $store.user.system ? ' ' : $store.user.firstname,
@@ -192,7 +192,7 @@
     </div>
 
     <div class="grid-item">
-      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, onClick: () => modalContext.setModal('editroles', $store.user.id) } : undefined}>
+      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, hiddenLabel: `Assign roles to ${$store.user.name}`, onClick: () => modalContext.setModal('editroles', $store.user.id) } : undefined}>
         <DetailPanelSection>
           {#if $store.user.directRoles.length}
             <SortableTable items = {sortby($store.user.directRoles, 'name')}
