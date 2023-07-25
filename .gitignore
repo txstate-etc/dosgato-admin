@@ -7,3 +7,6 @@ node_modules
 .env.*
 !.env.example
 docker-compose*.override.yml
+tests/artifacts
+tests/report
+tests/.auth
