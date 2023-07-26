@@ -24,7 +24,7 @@
         {#if tmpl}
           <a href={`${base}/data/${template.key}`}
            on:click={() => logInteraction(template.name, `${base}/data/${template.key}`)} >
-            <Icon icon={tmpl.icon ?? cubeOutline} width="6em"/>
+            <Icon icon={tmpl.icon ?? cubeOutline} height="50%"/>
             <div class="template-name">{template.name}</div>
           </a>
         {/if}
@@ -48,9 +48,10 @@
   }
   :global([data-eq~="800px"]) .template-grid {
     grid-template-columns: 1fr 1fr;
+    grid-gap: 2em 2em;
   }
-  :global([data-eq~="600px"]) .template-grid {
-    grid-template-columns: 1fr;
+  :global([data-eq~="800px"]) .template-grid a {
+    padding: 1em 0;
   }
   .template-grid a {
     background-color: transparent;
@@ -60,6 +61,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     padding: 2em 0;
     text-decoration: none;
   }
