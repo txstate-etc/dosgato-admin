@@ -23,7 +23,9 @@ export default defineConfig({
   // workers: process.env.CI ? 1 : undefined,
   workers:  1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [['html', { open: 'on-failure', outputFolder: './tests/report' }]],
+  reporter: [
+    ['list'],
+    ['html', { open: 'on-failure', outputFolder: './tests/report' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL: 'http://localhost:3000/.admin',
