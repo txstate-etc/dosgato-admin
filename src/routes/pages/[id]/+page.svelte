@@ -280,7 +280,7 @@
   {:else}
     <Dialog title="What would you like to add?" cancelText="Cancel" continueText="" size="large" on:escape={cancelModal}>
       {#if $editorStore.creating.availableComponents.length}
-        <Tabs tabs={$editorStore.creating.availableComponentsByCategory.map(cat => ({ name: cat.category }))}>
+        <Tabs tabs={$editorStore.creating.availableComponentsByCategory.map(cat => ({ name: cat.category }))} accordionOnMobile={false}>
           {#each $editorStore.creating.availableComponentsByCategory as { category, templates } (category)}
             <Tab name={category}>
               <div class="component-chooser">
@@ -289,7 +289,7 @@
                   <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
                     {#if isNotNull(templateIcon)}
                       <div class="chooser-icon" class:iconify-icon={!templateIcon?.raw}>
-                        <Icon icon={templateIcon} width="auto" />
+                        <Icon icon={templateIcon} height="50%" />
                       </div>
                     {/if}
                     {availableComponent.name}
@@ -348,6 +348,9 @@
     place-content: center center;
     grid-auto-rows: 1fr;
   }
+  :global([data-eq~="600px"]) .component-chooser {
+    grid-template-columns: 1fr 1fr;
+  }
   .component-chooser button {
     aspect-ratio: 1;
     cursor: pointer;
@@ -361,10 +364,6 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-  }
-  .component-chooser button .chooser-icon.iconify-icon :global(svg) {
-    width: unset;
-    height: unset;
   }
   .page-bar {
     background-color: var(--dg-page-bar-bg, #501214);
