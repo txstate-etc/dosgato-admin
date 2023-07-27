@@ -283,18 +283,20 @@
         <Tabs tabs={$editorStore.creating.availableComponentsByCategory.map(cat => ({ name: cat.category }))} accordionOnMobile={false}>
           {#each $editorStore.creating.availableComponentsByCategory as { category, templates } (category)}
             <Tab name={category}>
-              <div class="component-chooser">
-                {#each templates as availableComponent}
-                  {@const templateIcon = availableComponent.preview ?? availableComponent.icon}
-                  <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
-                    {#if isNotNull(templateIcon)}
-                      <div class="chooser-icon" class:iconify-icon={!templateIcon?.raw}>
-                        <Icon icon={templateIcon} height="50%" />
-                      </div>
-                    {/if}
-                    {availableComponent.name}
-                  </button>
-                {/each}
+              <div class="chooser-container">
+                <div class="component-chooser">
+                  {#each templates as availableComponent}
+                    {@const templateIcon = availableComponent.preview ?? availableComponent.icon}
+                    <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
+                      {#if isNotNull(templateIcon)}
+                        <div class="chooser-icon" class:iconify-icon={!templateIcon?.raw}>
+                          <Icon icon={templateIcon} height="50%" />
+                        </div>
+                      {/if}
+                      <span class="component-name">{availableComponent.name}</span>
+                    </button>
+                  {/each}
+                </div>
               </div>
             </Tab>
           {/each}
@@ -341,6 +343,10 @@
     margin: 0 auto;
   }
 
+  .chooser-container {
+    container-type: inline-size;
+  }
+
   .component-chooser {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -348,22 +354,39 @@
     place-content: center center;
     grid-auto-rows: 1fr;
   }
-  :global([data-eq~="600px"]) .component-chooser {
-    grid-template-columns: 1fr 1fr;
-  }
   .component-chooser button {
     aspect-ratio: 1;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    container-type: inline-size;
+    container-name: chooser-button;
   }
-  .component-chooser button .chooser-icon {
+  .chooser-icon {
     height: 60%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    width: 100%;
+  }
+  .component-name {
+    font-size: 1em;
+  }
+  @container (max-width: 600px) {
+    .component-chooser {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @container chooser-button (max-width: 100px) {
+    .chooser-icon {
+      height: 50%;
+    }
+    .component-name {
+      font-size: 0.8em;
+    }
   }
   .page-bar {
     background-color: var(--dg-page-bar-bg, #501214);
