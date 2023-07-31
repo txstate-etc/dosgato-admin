@@ -380,7 +380,12 @@
       grid-template-columns: 1fr 1fr;
     }
   }
-  @container chooser-button (max-width: 100px) {
+  @container (max-width: 250px) {
+    .component-chooser {
+      grid-template-columns: 1fr;
+    }
+  }
+  @container chooser-button (max-width: 125px) {
     .chooser-icon {
       height: 50%;
     }
