@@ -47,7 +47,7 @@
     { id: 'name', label: 'Name', get: 'name', grow: 5, icon: itm => ({ icon: templateRegistry.getTemplate(itm.key)?.icon ?? boundingBoxLight }) },
     { id: 'key', label: 'Key', get: 'key', grow: 4 },
     { id: 'universal', label: 'Universal', icon: item => item.universal ? { icon: checkIcon, label: 'Universal' } : undefined, fixed: '6em' }
-  ]}/>
+  ]} enableResize />
 </ActionPanel>
 {#if $modalContext.modal === 'setuniversal'}
   <Dialog title="Make Template Universal" cancelText="Cancel" continueText="Set Universal" on:escape={modalContext.onModalEscape} on:continue={() => setUniversal(true)}>

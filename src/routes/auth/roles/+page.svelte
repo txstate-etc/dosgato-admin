@@ -76,7 +76,7 @@
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Roles'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()} filterinput on:filter={e => { filter = e.detail }}>
   <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/roles/' + detail.id)} headers={[
     { id: 'name', label: 'Name', get: 'name', grow: 4, icon: { icon: keyIcon } }
-  ]} searchable='name' {filter}>
+  ]} searchable='name' {filter} enableResize>
   </Tree>
 </ActionPanel>
 {#if $modalContext.modal === 'addrole'}

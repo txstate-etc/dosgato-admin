@@ -466,7 +466,7 @@
     { label: 'Status', id: 'status', fixed: '5em', icon: item => ({ icon: item.type === 'data' ? (item.deleteState === DeleteState.MARKEDFORDELETE ? deleteOutline : statusIcon[item.status]) : undefined, label: item.type === 'data' ? item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' : undefined }), class: item => item.type === 'data' ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
     { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === 'data' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
     { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
-  ]} searchable='name' on:choose={onClickEdit} />
+  ]} searchable='name' on:choose={onClickEdit} enableResize />
 </ActionPanel>
 {#if $modalContext.modal === 'addfolder'}
   <FormDialog

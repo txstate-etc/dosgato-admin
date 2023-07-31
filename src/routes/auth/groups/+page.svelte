@@ -78,7 +78,7 @@
     { id: 'name', label: 'Name', get: 'name', fixed: '19em', icon: { icon: usersThree } },
     { id: 'members', label: 'Members', render: item => String(item.users.length), fixed: '7em' },
     { id: 'roles', label: 'Roles', render: item => (item.roles.map(r => r.name)).join(', '), grow: 5 }
-  ]} searchable='name' {filter}/>
+  ]} searchable='name' {filter} enableResize />
 </ActionPanel>
 {#if $modalContext.modal === 'addgroup'}
   <FormDialog

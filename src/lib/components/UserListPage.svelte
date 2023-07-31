@@ -110,7 +110,7 @@
     { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', fixed: '10em', icon: u => ({ icon: u.disabled ? accountOff : accountIcon }) },
     { id: 'fullname', label: 'Full Name', get: 'name', fixed: '17em' },
     { id: 'roles', label: 'Roles', render: renderRoles, grow: 5 }
-  ]} searchable={['id', 'firstname', 'lastname']} {filter}/>
+  ]} searchable={['id', 'firstname', 'lastname']} {filter} enableResize />
 </ActionPanel>
 {#if $modalContext.modal === 'disable'}
   <Dialog
