@@ -38,6 +38,7 @@ published
 hasUnpublishedChanges
 pagetree {
   id
+  type
 }
 template {
   name
@@ -73,6 +74,7 @@ export interface PageEditorPage extends DialogPageProp {
   hasUnpublishedChanges: boolean
   pagetree: {
     id: string
+    type: string
   }
   template?: {
     name: string
