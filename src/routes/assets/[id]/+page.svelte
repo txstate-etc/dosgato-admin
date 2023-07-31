@@ -1,5 +1,6 @@
 <script lang="ts">
   import { FileIcon, FormDialog, bytesToHuman, Icon } from '@dosgato/dialog'
+  import clipboardText from '@iconify-icons/ph/clipboard-text'
   import downloadIcon from '@iconify-icons/ph/download'
   import fileMagnifyingGlass from '@iconify-icons/ph/file-magnifying-glass'
   import magnifyingGlassPlus from '@iconify-icons/ph/magnifying-glass-plus'
@@ -8,7 +9,7 @@
   import xLight from '@iconify-icons/ph/x-light'
   import { Modal } from '@txstate-mws/svelte-components'
   import { roundTo } from 'txstate-utils'
-  import { DetailList, DetailPanel, DetailPanelSection, environmentConfig, UploadUI, StyledList, dateStamp, ChooserClient, api, ModalContextStore } from '$lib'
+  import { DetailList, DetailPanel, DetailPanelSection, environmentConfig, UploadUI, StyledList, dateStamp, ChooserClient, api, ModalContextStore, toast } from '$lib'
   import { getAssetDetail, type AssetDetail } from './helpers'
   import { uiConfig } from '../../../local'
 
@@ -49,6 +50,16 @@
     asset = await getAssetDetail(asset.id)
   }
 
+  let externalURLElement: HTMLAnchorElement
+  function onExternal (e: MouseEvent) {
+    if (externalURLElement instanceof HTMLAnchorElement) {
+      navigator.clipboard.writeText(externalURLElement.getAttribute('href')!)
+      toast('Copied external link to clipboard.', 'success')
+    }
+  }
+
+  const assetBase = environmentConfig.assetLiveBase || (environmentConfig.apiBase + '/assets')
+
   let timer
   let refreshes = 0
   function watchForResizes () {
@@ -69,7 +80,7 @@
 <div class="container">
   <DetailPanel header="Asset" class="image" headerColor="#E5D1BD" button={[
     { icon: swapIcon, hiddenLabel: 'upload new file for asset', onClick: onUploadClick },
-    { icon: downloadIcon, hiddenLabel: 'download asset', onClick: () => { api.download(`${environmentConfig.renderBase}/.asset/${asset.id}/${asset.filename}`) } }
+    { icon: downloadIcon, hiddenLabel: 'download asset', onClick: () => { api.download(`${environmentConfig.renderBase}/.asset/${asset.id}/${encodeURIComponent(asset.filename)}`) } }
   ]}>
     <DetailPanelSection>
       {#if image}
@@ -99,6 +110,10 @@
           ...uiConfig.assetMeta?.details?.(asset.data.meta ?? {}),
           'Filename Uploaded': asset.uploadedFilename !== asset.filename ? asset.uploadedFilename : undefined
         }} />
+        <dl>
+          <div><dt>Path:</dt><dd>{asset.path}</dd></div>
+          <div><dt>External URL:</dt><dd><a bind:this={externalURLElement} href="{image ? `${assetBase}/${asset.id}/w/2000/${asset.checksum.substring(0, 12)}/${encodeURIComponent(asset.filename)}` : `${assetBase}/${asset.id}/${encodeURIComponent(asset.filename)}`}" on:click|preventDefault={onExternal}>{asset.filename}</a><button type="button" class="reset" on:click={onExternal}><Icon icon={clipboardText} hiddenLabel="copy external url to clipboard" inline /></button></dd></div>
+        </dl>
       </DetailPanelSection>
     </DetailPanel>
     {#if false && (asset.resizes.length || refreshes)}
@@ -208,5 +223,27 @@
     border: 0;
     color: white;
     cursor: pointer;
+  }
+  dl {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+  }
+  dt, dd {
+    display: inline;
+  }
+  dl > div {
+    padding: 0.5em 0;
+    border-bottom: 1px dashed #707070;
+  }
+  dt {
+    font-weight: bold;
+    padding-right: 0.5em;
+  }
+  dd {
+    margin: 0;
+  }
+  dl button {
+    padding: 0 0.5em;
   }
 </style>
