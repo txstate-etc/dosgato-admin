@@ -28,6 +28,7 @@
   let buttonelement: HTMLButtonElement
   let profileelement: HTMLButtonElement
   let overflowbutton: HTMLButtonElement
+  const subnavLinks: HTMLAnchorElement[] = []
   const subNavSize = new ResizeStore()
   $: subnavStore.setMaxItems(Math.floor(($subNavSize.clientWidth ?? 800) / 140))
   $: overflowItems = $currentSubNav?.links.slice($currentSubNav.maxItems).map(l => ({ value: l.href, label: l.label })) ?? []
@@ -83,6 +84,10 @@
 
   afterNavigate((nav) => {
     subnavStore.setMaxItems(Math.floor(($subNavSize.clientWidth ?? 800) / 140))
+    if ($currentSubNav && subnavLinks.length > 1) {
+      const selectedSubNavLink = subnavLinks.find(link => link.classList.contains('selected')) ?? subnavLinks[0]
+      selectedSubNavLink.focus()
+    }
     // Making a direct call to logger since after we navigate our uiLog.screen will be the target, not the originating screen.
     uiLog.logger({ eventType: 'navigation', action: nav.type.toString(), screen: nav.from?.url?.pathname, target: nav.to?.url?.pathname }, environmentConfig)
   })
@@ -131,7 +136,7 @@
           {#each $currentSubNav.links.slice(0, $currentSubNav.maxItems) as link, i}
             {@const selected = $page.url.pathname === link.href || (!$currentSubNav.links.some(l => l.href === $page.url.pathname) && $page.url.pathname.startsWith(link.href))}
             <li class:selected class:closeable={link.closeable} style:flex-shrink={Math.pow(Math.max(0.00000001, link.label.length - 12), 0.5)}>
-              <a href={link.href}>{#if link.icon}<Icon icon={link.icon} inline/>{/if} {link.label}</a>
+              <a bind:this={subnavLinks[i]} class:selected href={link.href}>{#if link.icon}<Icon icon={link.icon} inline/>{/if} {link.label}</a>
               {#if link.closeable}
                 <button type="button" class="reset" on:click={closeSubNav(i)}><Icon icon={closeThick} inline hiddenLabel="Close {link.label}" width="1.2em" /></button>
               {/if}
