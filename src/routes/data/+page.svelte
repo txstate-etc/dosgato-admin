@@ -73,5 +73,6 @@
   }
   .template-name {
     padding: 0.8em;
+    text-align: center;
   }
 </style>
