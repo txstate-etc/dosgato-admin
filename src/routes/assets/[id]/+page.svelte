@@ -112,7 +112,7 @@
         }} />
         <dl>
           <div><dt>Path:</dt><dd>{asset.path}</dd></div>
-          <div><dt>External URL:</dt><dd><a bind:this={externalURLElement} href="{image ? `${assetBase}/${asset.id}/w/2000/${asset.checksum.substring(0, 12)}/${encodeURIComponent(asset.filename)}` : `${assetBase}/${asset.id}/${encodeURIComponent(asset.filename)}`}" on:click|preventDefault={onExternal}>{asset.filename}</a><button type="button" class="reset" on:click={onExternal}><Icon icon={clipboardText} hiddenLabel="copy external url to clipboard" inline /></button></dd></div>
+          {#if asset.pagetree.type !== 'ARCHIVE'}<div><dt>External URL:</dt><dd><a bind:this={externalURLElement} href="{image ? `${assetBase}/${asset.id}/w/2000/${asset.checksum.substring(0, 12)}/${encodeURIComponent(asset.filename)}` : `${assetBase}/${asset.id}/${encodeURIComponent(asset.filename)}`}" on:click|preventDefault={onExternal}>{asset.filename}</a><button type="button" class="reset" on:click={onExternal}><Icon icon={clipboardText} hiddenLabel="copy external url to clipboard" inline /></button></dd></div>{/if}
         </dl>
       </DetailPanelSection>
     </DetailPanel>

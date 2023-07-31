@@ -1,6 +1,6 @@
 import { iconForMime } from '@dosgato/dialog'
 import { base } from '$app/paths'
-import { api, subnavStore } from '$lib'
+import { api, subnavStore, type PagetreeTypes } from '$lib'
 import type { AssetData } from '@dosgato/templating'
 
 export interface AssetDetail {
@@ -29,6 +29,9 @@ export interface AssetDetail {
     extension: string
     size: number
   }[]
+  pagetree: {
+    type: PagetreeTypes
+  }
 }
 
 export async function getAssetDetail (id: string) {
@@ -50,6 +53,7 @@ export async function getAssetDetail (id: string) {
         data
         box { width height }
         resizes { id width height mime extension size }
+        pagetree { type }
       }
     }
   `, { id })
