@@ -5,9 +5,10 @@
   import { Icon } from '@dosgato/dialog'
   import arrowCircleLeftLight from '@iconify-icons/ph/arrow-circle-left-light'
   import arrowCircleRightLight from '@iconify-icons/ph/arrow-circle-right-light'
+  import magnifyingGlass from '@iconify-icons/ph/magnifying-glass'
   import { elementqueries, eq, modifierKey, offset, OffsetStore, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { Store } from '@txstate-mws/svelte-store'
-  import { createEventDispatcher, getContext, onMount } from 'svelte'
+  import { createEventDispatcher, getContext, onMount, tick } from 'svelte'
   import { writable } from 'svelte/store'
   import type { ActionPanelAction, ActionPanelGroup } from './actionpanel'
   import { uiLog } from '$lib/logging'
@@ -16,6 +17,7 @@
   export let actions: (ActionPanelAction | ActionPanelGroup)[]
   export let panelelement: HTMLElement | undefined = undefined
   export let filterinput = false
+  let searchInput: HTMLInputElement
 
   interface $$Events {
     returnfocus: CustomEvent
@@ -45,6 +47,11 @@
   $: allowCollapse = $eqstore.width <= 900
   function onClick () {
     $hidden = !$hidden
+  }
+  async function onClickSearchButton () {
+    onClick()
+    await tick()
+    searchInput.focus()
   }
 
   function onKeydown (e: KeyboardEvent) {
@@ -89,9 +96,13 @@
         {#if allowCollapse}<button type="button" class="reset" on:click|stopPropagation={onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
       </header>
       {#if filterinput}
-        <div class="search-area">
-          <input type="text" placeholder="Search..." on:keyup={onFilterChange} on:change={onFilterChange} />
-        </div>
+          <div class="search-area">
+            {#if $hidden}
+              <button type="button" class="reset" on:click|stopPropagation={onClickSearchButton}><Icon icon={magnifyingGlass} hiddenLabel="Search"/></button>
+            {:else}
+              <input bind:this={searchInput} type="text" placeholder="Search..." on:keyup={onFilterChange} on:change={onFilterChange} />
+            {/if}
+          </div>
       {/if}
       <ScreenReaderOnly {arialive}>
         {#if actions.length}
@@ -200,6 +211,9 @@
   .search-area {
     padding: 0.3em;
     border-bottom: 2px solid var(--action-panel-divider, #999999);
+  }
+  .search-area button {
+    padding-left: 0.2em;
   }
   .search-area input {
     width: 100%;
