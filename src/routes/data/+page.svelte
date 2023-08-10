@@ -50,6 +50,10 @@
     grid-template-columns: 1fr 1fr;
     grid-gap: 2em 2em;
   }
+  :global([data-eq~="250px"]) .template-grid {
+    grid-template-columns: 1fr;
+    grid-gap: 1em;
+  }
   :global([data-eq~="800px"]) .template-grid a {
     padding: 1em 0;
   }
