@@ -28,11 +28,12 @@ export default defineConfig({
     ['html', { open: 'on-failure', outputFolder: './tests/report' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    baseURL: 'http://localhost:3000/.admin',
+    // baseURL: 'http://localhost:3000/.admin',
+    baseURL: 'http://dosgato-admin-test:3000/.admin',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'on-first-retry',
-    headless: false
+    headless: true
   },
 
   /* Configure projects for major browsers */
@@ -47,7 +48,7 @@ export default defineConfig({
         screenshot: 'on',
         video:'on',
         trace: 'on',
-        headless: false,
+        headless: true,
         // Use prepared auth state.
         // storageState: 'tests/.auth/session.json',
       },
