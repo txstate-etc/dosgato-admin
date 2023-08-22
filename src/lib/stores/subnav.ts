@@ -1,6 +1,7 @@
 import type { IconifyIcon } from '@iconify/svelte'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
 import { findIndex, set, splice } from 'txstate-utils'
+import { ResizeStore } from '@txstate-mws/svelte-components'
 
 export interface ISubNavStore {
   /** SubNavs can contain multiple sections (groups of links) identified by a string. */
@@ -33,6 +34,7 @@ class SubNavStore extends Store<ISubNavStore> {
   open<LinkType extends SubNavLink = SubNavLink> (section: string, link: LinkType) {
     this.update(v => {
       const current = v.sections[section]
+      if (!current) return v
       let active = findIndex(current.links, l => l.href === link.href)
       const linkToMove = current.links[active!] ?? { ...link, closeable: true }
       if (active == null || active >= current.maxItems) {
@@ -70,7 +72,7 @@ class SubNavStore extends Store<ISubNavStore> {
           ...v.sections,
           [v.active!]: {
             ...current,
-            maxItems: Math.max(current.links.filter(l => !l.closeable).length + 1, maxItems)
+            maxItems
           }
         }
       }
@@ -112,3 +114,4 @@ class SubNavStore extends Store<ISubNavStore> {
 export const subnavStore = new SubNavStore({ sections: {} })
 export const currentSubNav = derivedStore(subnavStore, v => v.active ? v.sections[v.active] : undefined)
 export const activeHref = derivedStore(currentSubNav, state => state?.links[state?.active]?.href)
+export const subNavSize = new ResizeStore()

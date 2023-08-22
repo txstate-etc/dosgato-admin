@@ -16,7 +16,7 @@
   import { afterNavigate, goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
-  import { currentSubNav, globalStore, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig, uiLog, api } from '$lib'
+  import { currentSubNav, globalStore, subNavSize, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig, uiLog, api } from '$lib'
   import { uiConfig } from '../local'
   import '../local/tracking.js'
 
@@ -29,7 +29,6 @@
   let profileelement: HTMLButtonElement
   let overflowbutton: HTMLButtonElement
   const subnavLinks: HTMLAnchorElement[] = []
-  const subNavSize = new ResizeStore()
   $: subnavStore.setMaxItems(Math.floor(($subNavSize.clientWidth ?? 800) / 140))
   $: overflowItems = $currentSubNav?.links.slice($currentSubNav.maxItems).map(l => ({ value: l.href, label: l.label })) ?? []
   function onOverflowChange (e: any) {
@@ -125,7 +124,7 @@
       <div class="profile-compact">
         <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
       </div>
-      <button type="button" bind:this={profileelement} class="login-status reset" on:click={() => { uiLog.log({ eventType: 'button', action: 'LoginStatus' }, 'Login-PopupMenu') }} >
+      <button type="button" bind:this={profileelement} class="login-status reset" on:click={() => { uiLog.log({ eventType: 'button', action: 'LoginStatus' }, 'Login-PopupMenu') }} aria-expanded={false}>
         {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}
         <Icon icon={menuDown} inline />
       </button>

@@ -1,5 +1,6 @@
 import { error, type Load } from '@sveltejs/kit'
 import { api, RoleDetailStore, type SiteListSite } from '$lib'
+import { updateAuthSubnav } from '../../authsubnav'
 
 export const _store = new RoleDetailStore(api.getRoleById.bind(api))
 
@@ -13,5 +14,6 @@ export const load: Load<{ id: string }> = async ({ params }) => {
     api.getAllTemplates()
   ])
   const siteOptions = sites.map((s: SiteListSite) => ({ value: s.id, label: s.name }))
+  updateAuthSubnav('roles')
   return { siteOptions, users, groups, templates }
 }

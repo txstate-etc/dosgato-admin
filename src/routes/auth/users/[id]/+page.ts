@@ -1,5 +1,6 @@
 import { error, type Load } from '@sveltejs/kit'
 import { api, UserDetailStore } from '$lib'
+import { updateAuthSubnav } from '../../authsubnav'
 
 export const _store = new UserDetailStore(api.getUserById.bind(api))
 
@@ -10,5 +11,6 @@ export const load: Load<{ id: string }> = async ({ params }) => {
     api.getAllGroups(),
     api.getRoleList()
   ])
+  updateAuthSubnav('users')
   return { allGroups, allRoles }
 }
