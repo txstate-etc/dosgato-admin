@@ -29,6 +29,7 @@ services:
       - 80:80
       - 9229:9229
     environment:
+      VALID_ORIGIN_HOSTS: 'dosgato-admin-test,dosgato-render-test'
       NODE_ENV: development
       TZ: America/Chicago
       MYSQL_USER: dosgato
@@ -71,6 +72,7 @@ services:
     ports:
       - 3002:80
     environment:
+      VALID_ORIGIN_HOSTS: 'dosgato-admin-test,dosgato-api-test'
       NODE_ENV: development
       DOSGATO_RENDER_JWT_SECRET: rendertoken
       DOSGATO_ADMIN_BASE: http://localhost:3000/.admin
@@ -112,6 +114,10 @@ services:
         - dosgato-resizer-test
         - dosgato-render-test
         - fakeauth-test
+      volumes:
+        - ./tests/.authn:/app/tests/.authn
+        - ./tests/artifacts:/app/tests/artifacts
+        - ./tests/report:/app/tests/report
 volumes:
   dosgatodbtest: {}
   dosgatofilestest: {}
