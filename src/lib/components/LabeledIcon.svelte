@@ -9,7 +9,7 @@
   export let size = '2.5em'
 
   function logInteraction () {
-    uiLog.log({ eventType: 'LabeledIconButton', action: label }, href)
+    uiLog.log({ eventType: 'LabeledIcon', action: label }, href)
   }
 </script>
 
