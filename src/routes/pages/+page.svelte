@@ -284,7 +284,7 @@
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) goto(base + '/pages/' + detail.id) }}
     headers={[
-      { label: 'Path', id: 'name', grow: 4, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : item.parent ? browserIcon : siteIcon[item.type] }), get: 'name' },
+      { label: 'Path', id: 'name', grow: 4, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : item.parent ? browserIcon : siteIcon[item.type] }), render: item => `<div class="page-name">${item.name}</div>` },
       { label: 'Title', id: 'title', grow: 3, get: 'title' },
       { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
       { label: 'Status', id: 'status', fixed: '4em', icon: item => ({ icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' }), class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
@@ -414,5 +414,8 @@
 <style>
   :global(.pubsubpages svg){
     margin-left: 0.2em;
+  }
+  :global(.tree-node.selected .page-name) {
+    overflow-x: scroll;
   }
 </style>
