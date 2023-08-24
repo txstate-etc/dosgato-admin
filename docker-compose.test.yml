@@ -115,7 +115,7 @@ services:
         - dosgato-render-test
         - fakeauth-test
       volumes:
-        - ./tests/.authn:/app/tests/.authn
+        - ./tests/.auth:/app/tests/.auth
         - ./tests/artifacts:/app/tests/artifacts
         - ./tests/report:/app/tests/report
 volumes:
