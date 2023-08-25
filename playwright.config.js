@@ -47,7 +47,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         screenshot: 'on',
         video:'on',
-        trace: 'on',
+        trace: 'off',
         headless: true,
         // Use prepared auth state.
         // storageState: 'tests/.auth/session.json',
