@@ -4,6 +4,10 @@ cd "`dirname "$0"`"
 
 docker-compose -f docker-compose.test.yml down
 
+#clean previous run data
+rm -r ./tests/.auth
+rm -r ./tests/artifacts
+rm -r ./tests/report
 
 override=''
 if [ -e docker-compose.test.override.yml ]; then
