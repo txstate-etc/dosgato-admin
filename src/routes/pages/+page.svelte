@@ -417,5 +417,6 @@
   }
   :global(.tree-node.selected .page-name) {
     overflow-x: scroll;
+    padding: 0.25em 0;
   }
 </style>
