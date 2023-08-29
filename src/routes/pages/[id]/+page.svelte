@@ -181,9 +181,9 @@
     return resp!
   }
 
-  function onUserButtonClick (button: NonNullable<UITemplate['pageBarButtons']>[0]) {
+  function onUserButtonClick (button: NonNullable<UITemplate['pageBarButtons']>[0], buttonId: string) {
     return () => {
-      iframe.contentWindow?.postMessage({ action: 'pagebar', label: button.label }, '*')
+      iframe.contentWindow?.postMessage({ action: 'pagebar', label: button.label, buttonId }, '*')
     }
   }
 
@@ -241,9 +241,10 @@
           <option value="mobile">Mobile</option>
         </select>
       {:else}
-        {#each pagetemplate.pageBarButtons ?? [] as button}
+        {#each pagetemplate.pageBarButtons ?? [] as button, idx}
+          {@const buttonId = `pagebar-button-${idx}`}
           {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
-            <button type="button" class="user-button" on:click={onUserButtonClick(button)}>
+            <button id={buttonId} type="button" class="user-button" on:click={onUserButtonClick(button, buttonId)}>
               <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
               {#if !button.hideLabel}{button.label}{/if}
             </button>
