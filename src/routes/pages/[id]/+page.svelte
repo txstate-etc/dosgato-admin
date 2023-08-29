@@ -78,7 +78,7 @@
     }
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean, editbarpaths?: string[] }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean, editbarpaths?: string[], buttonIndex?: number }) {
     if (message.action === 'scroll') {
       $editorStore.scrollY = message.scrollTop!
       return
@@ -127,6 +127,10 @@
       panelelement.querySelector<HTMLElement>('.actions li button')?.focus()
     } else if (message.action === 'save') {
       pageEditorStore.saveState(message.state)
+    } else if (message.action === 'pagebarFocus') {
+      if (isNotNull(message.buttonIndex)) {
+        document.getElementById(`pagebar-button-${message.buttonIndex}`)?.focus()
+      }
     }
   }
 
@@ -181,9 +185,9 @@
     return resp!
   }
 
-  function onUserButtonClick (button: NonNullable<UITemplate['pageBarButtons']>[0], buttonId: string) {
+  function onUserButtonClick (button: NonNullable<UITemplate['pageBarButtons']>[0], buttonIndex: number) {
     return () => {
-      iframe.contentWindow?.postMessage({ action: 'pagebar', label: button.label, buttonId }, '*')
+      iframe.contentWindow?.postMessage({ action: 'pagebar', label: button.label, buttonIndex }, '*')
     }
   }
 
@@ -242,9 +246,8 @@
         </select>
       {:else}
         {#each pagetemplate.pageBarButtons ?? [] as button, idx}
-          {@const buttonId = `pagebar-button-${idx}`}
           {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
-            <button id={buttonId} type="button" class="user-button" on:click={onUserButtonClick(button, buttonId)}>
+            <button id={`pagebar-button-${idx}`} type="button" class="user-button" on:click={onUserButtonClick(button, idx)}>
               <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
               {#if !button.hideLabel}{button.label}{/if}
             </button>
@@ -430,5 +433,8 @@
     width: 100%;
     max-width: 100em;
     margin: 0 auto;
+  }
+  .user-button:focus {
+    background-color: yellow;
   }
 </style>
