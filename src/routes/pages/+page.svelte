@@ -415,8 +415,4 @@
   :global(.pubsubpages svg){
     margin-left: 0.2em;
   }
-  :global(.tree-node.selected .page-name) {
-    overflow-x: scroll;
-    padding: 0.25em 0;
-  }
 </style>
