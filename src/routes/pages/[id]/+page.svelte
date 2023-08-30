@@ -434,7 +434,4 @@
     max-width: 100em;
     margin: 0 auto;
   }
-  .user-button:focus {
-    background-color: yellow;
-  }
 </style>
