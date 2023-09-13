@@ -10,3 +10,4 @@ docker-compose*.override.yml
 tests/artifacts
 tests/report
 tests/.auth
+temp

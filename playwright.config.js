@@ -54,7 +54,7 @@ export default defineConfig({
         trace: 'off',
         headless: true,
         // Use prepared auth state.
-        storageState: 'tests/.auth/storageState.json',
+        // storageState: 'tests/.auth/storageState.json',
       },
       dependencies: ['setup'],
     },
