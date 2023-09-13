@@ -53,11 +53,15 @@ const fullGroupDetails = `
     id
     firstname
     lastname
+    name
+    disabled
   }
   indirectMembers: users(direct: false) {
     id
     firstname
     lastname
+    name
+    disabled
     groups(direct: true) {
       id
       name
@@ -97,11 +101,15 @@ export interface FullGroup {
     id: string
     firstname: string
     lastname: string
+    name: string
+    disabled: boolean
   }[]
   indirectMembers: {
     id: string
     firstname: string
     lastname: string
+    name: string
+    disabled: boolean
     groups: {
       id: string
       name: string
