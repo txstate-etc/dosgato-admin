@@ -3,6 +3,7 @@ import { test, expect } from '../fixtures'
 test('edit', async ({ page }) => {
   console.log((await page.context().storageState()).cookies, 'KKKKK')
   await page.goto('/')
+  console.log(await page.context().cookies(), 'page.context().cookies()')
   await page.getByRole('treeitem').nth(0).locator('svg').nth(1).click()
   // await page.locator('#h1b3 > .checkbox').click()
   await page.getByRole('button', { name: 'Edit undefined' }).click()
