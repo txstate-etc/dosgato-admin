@@ -181,7 +181,7 @@
           {#if $store.role.directUsers.length}
             <SortableTable items={$store.role.directUsers}
               headers={[
-                { id: 'name', label: 'User names', render: (item) => `<a href="${base}/auth/users/${item.id}">${item.firstname} ${item.lastname} (${item.id})</a>`, sortable: true, sortFunction: (item) => item.lastname, widthPercent: 50 },
+                { id: 'name', label: 'User names', render: (item) => `<a href="${base}/auth/users/${item.id}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a>`, sortable: true, sortFunction: (item) => item.lastname, widthPercent: 50 },
                 { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Remove', onClick: (item) => onClickUnassign(item.id, `${item.firstname} ${item.lastname}`) }], widthPercent: 50 }
               ]} />
           {:else}
@@ -190,7 +190,7 @@
           {#if $store.role.usersThroughGroups.length}
             <SortableTable items={$store.role.usersThroughGroups}
               headers={[
-                { id: 'name', label: 'User from group', render: (item) => `<a href="${base}/auth/users/${item.id}">${item.firstname} ${item.lastname} (${item.id})</a>`, sortable: true, sortFunction: (item) => item.lastname, widthPercent: 50 },
+                { id: 'name', label: 'User from group', render: (item) => `<a href="${base}/auth/users/${item.id}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a>`, sortable: true, sortFunction: (item) => item.lastname, widthPercent: 50 },
                 { id: 'groups', label: 'Group(s)', render: (item) => getUserGroups(item.groups), widthPercent: 50 }
               ]} />
           {/if}
@@ -461,5 +461,8 @@
   }
   :global([data-eq~="800px"]) .mobile-layout {
     display: block;
+  }
+  :global(span.inactive) {
+    text-decoration: line-through;
   }
 </style>

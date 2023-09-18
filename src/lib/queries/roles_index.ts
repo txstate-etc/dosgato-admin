@@ -48,11 +48,15 @@ const fullRoleDetails = `
     id
     firstname
     lastname
+    name
+    disabled
   }
   usersThroughGroups: users (direct: false) {
     id
     firstname
     lastname
+    name
+    disabled
     groups (direct: true) {
       id
       name
@@ -84,12 +88,16 @@ export interface FullRole {
   directUsers: {
     id: string
     firstname: string
-    lastname
+    lastname: string
+    name: string
+    disabled: boolean
   }[]
   usersThroughGroups: {
     id: string
     firstname: string
     lastname: string
+    name: string
+    disabled: boolean
     groups: {
       id: string
       firstname: string

@@ -398,7 +398,7 @@
           { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
         ]}/>
         <SortableTable slot="users" items={$store.users} headers={[
-          { id: 'name', label: 'Name', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.firstname} ${user.lastname}</a>`, widthPercent: 50 },
+          { id: 'name', label: 'Name', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.disabled ? '<span class="inactive">' : ''}${user.firstname} ${user.lastname}${user.disabled ? '</span>' : ''}${user.disabled ? ' (Inactive)' : ''}</a>`, widthPercent: 50 },
           { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
           { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
         ]} />
@@ -592,6 +592,9 @@
     border: 0px;
     cursor: pointer;
     margin-left: 0.5em;
+  }
+  :global(.inactive) {
+    text-decoration: line-through;
   }
   .templates-mobile { display: none; }
   :global([data-eq~="450px"]) .templates-mobile {

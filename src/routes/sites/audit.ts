@@ -21,11 +21,11 @@ export async function buildAuditCSV () {
       const row: string[] = []
       row.push(pagetree.name)
       row.push(pagetree.rootPage.title ?? '')
-      if (isNotNull(site.url) && pagetree.type === 'PRIMARY') row.push(site.url.prefix)
+      if (isNotNull(site.url)) row.push(site.url.prefix)
       else row.push('')
-      if (isNotNull(site.organization) && pagetree.type === 'PRIMARY') row.push(site.organization.name)
+      if (isNotNull(site.organization)) row.push(site.organization.name)
       else row.push('')
-      if (isNotNull(site.owner) && pagetree.type === 'PRIMARY') row.push(site.owner.name, site.owner.email)
+      if (isNotNull(site.owner)) row.push(site.owner.name, site.owner.email)
       else row.push('', '')
       for (let i = 0; i < maxManagers; i++) {
         if (site.managers[i]) row.push(site.managers[i].name, site.managers[i].email)

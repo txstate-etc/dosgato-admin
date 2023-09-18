@@ -94,7 +94,7 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
         }
         // users might have multiple roles that give them access to this site
         for (const user of role.users) {
-          userRoles[user.id] ||= { name: user.name, firstname: user.firstname, lastname: user.lastname, roles: [] }
+          userRoles[user.id] ||= { name: user.name, firstname: user.firstname, lastname: user.lastname, disabled: user.disabled, roles: [] }
           userRoles[user.id].roles.push(role.name)
         }
       }
@@ -116,7 +116,7 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
       }
       access = unique(access)
       const accessList = (access.includes('Editor') ? access.filter(a => a !== 'Limited') : access).join(', ')
-      return { id: k, firstname: userRoles[k].firstname, lastname: userRoles[k].lastname, name: userRoles[k].name, roles: userRoles[k].roles.join(', '), access: accessList }
+      return { id: k, firstname: userRoles[k].firstname, lastname: userRoles[k].lastname, name: userRoles[k].name, disabled: userRoles[k].disabled, roles: userRoles[k].roles.join(', '), access: accessList }
     }), 'lastname', 'firstname')
 
     const sitePageTemplateKeys = site.pageTemplates.map(t => t.key)

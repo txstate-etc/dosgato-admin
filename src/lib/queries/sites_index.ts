@@ -185,6 +185,7 @@ export const fullSiteDetails = `
       name
       firstname
       lastname
+      disabled
     }
     ${accessDetailRules}
   }
@@ -251,6 +252,7 @@ export interface FullSite {
       name: string
       firstname: string
       lastname: string
+      disabled: boolean
     }[]
     siteRules: AccessDetailSiteRule[]
     pageRules: AccessDetailPageRule[]
