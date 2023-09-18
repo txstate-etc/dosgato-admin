@@ -16,19 +16,18 @@ const fixture = base.extend({
       }
     }, sessionStorage);
     // for setting cookies right to access render for editing
-    const token = JSON.parse(sessionStorage).token
-    await context.addCookies([
-      {name:"dg_token", value: token, domain: "dosgato-render-test", path: "/.edit/", httpOnly: true, secure: false, sameSite: "Lax"},
-      {name:"dg_token", value: token, domain: "dosgato-render-test", path: "/.preview/", httpOnly: true, secure: false, sameSite: "Lax"},
-      {name:"dg_token", value: token, domain: "dosgato-render-test", path: "/.compare/", httpOnly: true, secure: false, sameSite: "Lax"},
-      {name:"dg_token", value: token, domain: "dosgato-render-test", path: "/.asset/", httpOnly: true, secure: false, sameSite: "Lax"},
-      {name:"dg_token", value: token, domain: "dosgato-render-test", path: "/.page/", httpOnly: true, secure: false, sameSite: "Lax"}
-    ])
+    // const token = JSON.parse(sessionStorage).token
+    // await context.addCookies([
+    //   {name:"dg_token", value: token, domain: "dosgato-render-test", path: "/.edit/", httpOnly: true, secure: false, sameSite: "Lax"},
+    //   {name:"dg_token", value: token, domain: "dosgato-render-test", path: "/.preview/", httpOnly: true, secure: false, sameSite: "Lax"},
+    //   {name:"dg_token", value: token, domain: "dosgato-render-test", path: "/.compare/", httpOnly: true, secure: false, sameSite: "Lax"},
+    //   {name:"dg_token", value: token, domain: "dosgato-render-test", path: "/.asset/", httpOnly: true, secure: false, sameSite: "Lax"},
+    //   {name:"dg_token", value: token, domain: "dosgato-render-test", path: "/.page/", httpOnly: true, secure: false, sameSite: "Lax"}
+    // ])
     // await context.storageState({path: 'tests/.auth/storageState.json'})
     await use(context);
-    console.log((await context.storageState()).cookies, 'COOOOOOOOOOOOOOOOKKKKKKIIIIIIEEEE')
   },
-});
+})
 
 export const test = fixture;
 export const expect = fixture.expect;
