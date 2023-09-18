@@ -31,24 +31,5 @@ setup('authenticate', async ({ page }) => {
   const sessionStorage = await page.evaluate(() => JSON.stringify(sessionStorage))
   fs.writeFileSync('tests/.auth/session.json', JSON.stringify(sessionStorage), 'utf-8')
 
-  // await page.context().addInitScript((storage) => {
-  //   const entries = Object.entries(JSON.parse(storage));
-  //   for (let i = 0; i < entries.length; i += 1) {
-  //     const [key, value]: [key: string, value: any] = entries[i];
-  //     window.sessionStorage.setItem(key, value);
-  //     console.log(window.sessionStorage.toString(), 'window.sessionStorage');
-  //   }
-  // }, sessionStorage);
-
-  // for setting cookies right to access render for editing
-  // const token = JSON.parse(sessionStorage).token
-  // await page.context().addCookies([
-  //   { name: 'dg_token', value: token, domain: 'dosgato-render-test', path: '/.edit/', httpOnly: true, secure: false, sameSite: 'Strict' },
-  //   { name: 'dg_token', value: token, domain: 'dosgato-render-test', path: '/.preview/', httpOnly: true, secure: false, sameSite: 'Strict' },
-  //   { name: 'dg_token', value: token, domain: 'dosgato-render-test', path: '/.compare/', httpOnly: true, secure: false, sameSite: 'Strict' },
-  //   { name: 'dg_token', value: token, domain: 'dosgato-render-test', path: '/.asset/', httpOnly: true, secure: false, sameSite: 'Strict' },
-  //   { name: 'dg_token', value: token, domain: 'dosgato-render-test', path: '/.page/', httpOnly: true, secure: false, sameSite: 'Strict' }
-  // ])
-
   await page.context().storageState({ path: storageState })
 })
