@@ -15,7 +15,7 @@ const opts = {
   delay: 1000, // initial delay in ms, default 0
   interval: 100, // poll interval in ms, default 250ms
   simultaneous: 1, // limit to 1 connection per resource at a time
-  timeout: 60000, // timeout in ms, default Infinity
+  timeout: 40000, // timeout in ms, default Infinity
   tcpTimeout: 1000, // tcp timeout in ms, default 300ms
   window: 1000, // stabilization time in ms, default 750ms
   log: true,
