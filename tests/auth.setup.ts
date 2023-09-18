@@ -1,46 +1,12 @@
 import { test as setup, expect } from '@playwright/test'
 import * as fs from 'fs'
-import waitOn from 'wait-on'
+import { serverStartupCheck } from './server.startup.check'
+
 // used fixtures to get context setup for sessionStorage, need to figure out if 'setup' could resolve multi-workers running.
 const storageState = 'tests/.auth/storageState.json'
-const adminurl = process.env.DOSGATO_ADMIN_BASE
-const authurl = process.env.AUTH_REDIRECT
-const apiurl = process.env.API_BASE
-const renderurl = `${process.env.RENDER_BASE}/.token`
-
-const opts = {
-  resources: [
-    adminurl,
-    authurl,
-    apiurl,
-    renderurl
-  ],
-  delay: 1000, // initial delay in ms, default 0
-  interval: 100, // poll interval in ms, default 250ms
-  simultaneous: 1, // limit to 1 connection per resource at a time
-  timeout: 60000, // timeout in ms, default Infinity
-  tcpTimeout: 1000, // tcp timeout in ms, default 300ms
-  window: 1000, // stabilization time in ms, default 750ms
-  log: true,
-  proxy: false,
-  strictSSL: false,
-  followRedirect: true,
-  headers: {
-    'x-custom': 'headers'
-  },
-  validateStatus: function (status) {
-    return status >= 200 && status < 300 // default if not provided
-  }
-}
 
 setup('authenticate', async ({ page }) => {
-  try {
-    await waitOn(opts)
-    console.log('==============================================================\nAll resources are available, servers started successfully.\n==============================================================')
-  } catch (err) {
-    console.log(err, 'Server startup failed. Exiting ......')
-    process.exit(1)
-  }
+  await serverStartupCheck()
 
   await page.goto('/')
   // await page.goto('http://localhost:3001/login?clientId=dosgato-admin-test&returnUrl=http%3A%2F%2Flocalhost%3A3000%2F.admin&requestedUrl=http%3A%2F%2Flocalhost%3A3000%2F.admin%2Fpages')
