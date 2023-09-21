@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures'
 
-test('confirm logged in', async ({ page }) => {
-  await page.goto('/')
-  await expect(page).toHaveTitle('DEV DG Editing')
+test('confirm logged in', async ({ adminPage }) => {
+  await adminPage.page.goto('/')
+  await expect(adminPage.page).toHaveTitle('DEV DG Editing')
 })

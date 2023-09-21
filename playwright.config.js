@@ -19,6 +19,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
+  timeout: 60000,
   /* Opt out of parallel tests on CI. */
   // workers: process.env.CI ? 1 : undefined,
   workers:  1,
@@ -33,7 +34,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'on-first-retry',
-    headless: true
+    headless: true,
   },
 
   /* Configure projects for major browsers */
@@ -52,7 +53,7 @@ export default defineConfig({
         screenshot: 'on',
         video:'on',
         trace: 'off',
-        headless: true,
+        headless: true
         // Use prepared auth state.
         // storageState: 'tests/.auth/storageState.json',
       },

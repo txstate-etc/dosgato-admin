@@ -1,6 +1,7 @@
 import { test, expect } from '../fixtures'
 
-test('browse', async ({ page }) => {
+test('browse', async ({ adminPage }) => {
+  const page = adminPage.page
   await page.goto('/')
   await page.getByText('Basketry Home', { exact: true }).click()
   await page.getByText('about', { exact: true }).click()
