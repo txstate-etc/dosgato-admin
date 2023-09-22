@@ -135,7 +135,9 @@
   }
 
   function cancelModal () {
+    const returnPath = $editorStore.selectedPath
     pageEditorStore.cancelModal()
+    iframe.contentWindow?.postMessage({ focus: returnPath }, '*')
   }
 
   async function refreshIframe () {

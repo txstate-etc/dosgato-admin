@@ -12,6 +12,7 @@
   import { writable } from 'svelte/store'
   import type { ActionPanelAction, ActionPanelGroup } from './actionpanel'
   import { uiLog } from '$lib/logging'
+  import { isNotNull } from 'txstate-utils'
 
   export let actionsTitle: string|undefined = ''
   export let actions: (ActionPanelAction | ActionPanelGroup)[]
@@ -104,17 +105,11 @@
             {/if}
           </div>
       {/if}
-      <ScreenReaderOnly {arialive}>
-        {#if actions.length}
-          {enabled.length} actions available, {disabledCount} disabled
-        {:else}
-          no actions available
-        {/if}
-      </ScreenReaderOnly>
+      <ScreenReaderOnly {arialive}>{actions.length ? `${enabled.length} actions available for ${actionsTitle}, ${disabledCount} disabled. Press Control-M to read available actions.` : 'no actions available'}</ScreenReaderOnly>
       {#each grouped as group (group.id)}
         <ul>
           {#each group.actions as action (action.id || action.label)}
-            <li class:enabled={!action.disabled} class={action.class}><button type="button" class="reset" disabled={action.disabled} on:click={onAction(action)} on:keydown={onKeydown}><Icon width="{`${action.iconWidth ?? 1.2}em`}" icon={action.icon} />{action.label}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly></button></li>
+            <li class:enabled={!action.disabled} class={action.class}><button type="button" class="reset" disabled={action.disabled} on:click={onAction(action)} on:keydown={onKeydown}><Icon width="{`${action.iconWidth ?? 1.2}em`}" icon={action.icon} />{action.label}{#if isNotNull(action.hiddenLabel)}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly>{/if}</button></li>
           {/each}
         </ul>
       {/each}
