@@ -6,7 +6,8 @@
   import accountOff from '@iconify-icons/mdi/account-off'
   import accountPlus from '@iconify-icons/mdi/account-plus'
   import pencilIcon from '@iconify-icons/mdi/pencil'
-  import { sortby } from 'txstate-utils'
+  import downloadIcon from '@iconify-icons/ph/download-simple'
+  import { csv, sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContextStore, uiLog } from '$lib'
@@ -55,6 +56,7 @@
   const emptyactions: ActionPanelAction[] = [
     { label: 'Create', icon: accountPlus, disabled: !$globalStore.access.createUsers, onClick: () => modalContext.setModal('create') }
   ]
+  if (!system) emptyactions.push({ label: 'Download CSV', icon: downloadIcon, disabled: !$globalStore.access.createUsers, onClick: () => { downloadUserEmails() } })
 
   async function onDisable () {
     const resp = await api.disableUsers($store.selectedItems.map(u => u.id))
@@ -96,6 +98,23 @@
   function onCreateComplete () {
     modalContext.reset()
     store.refresh()
+  }
+
+  export async function buildEmailCSV () {
+    const users = sortby(await api.getUserList({ enabled: true, system: false }), 'lastname')
+    const rows = [['Last Name', 'First Name', 'ID', 'Email']]
+    for (const user of users) {
+      rows.push([user.lastname, user.firstname ?? '', user.id, user.email])
+    }
+    return csv(rows)
+  }
+
+  async function downloadUserEmails () {
+    const sitesCSV = await buildEmailCSV()
+    const j = document.createElement('a')
+    j.download = 'dosgatoemails_' + Date.now() + '.csv'
+    j.href = URL.createObjectURL(new Blob([sitesCSV]))
+    j.click()
   }
 
   let filter
