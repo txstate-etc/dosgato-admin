@@ -6,7 +6,7 @@ test('edit', async ({ adminPage }) => {
   console.log(await page.context().cookies(), 'COOKIES')
   await page.getByRole('treeitem').nth(0).locator('svg').nth(1).click()
   // await page.locator('#h1b3 > .checkbox').click()
-  await page.getByRole('button', { name: 'Edit undefined' }).click()
+  await page.getByRole('button', { name: 'Edit' }).click()
   await page.frameLocator('iframe[title="page preview for editing"]').getByRole('button', { name: 'Add main Content' }).click()
   await page.getByRole('button', { name: 'Column Layout' }).click()
   await page.getByLabel('Title *').click()

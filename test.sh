@@ -20,7 +20,7 @@ docker-compose -f docker-compose.test.yml $override up --build --abort-on-contai
 # docker-compose -f docker-compose.test.yml $override up --build
 
 #test no override
-#docker-compose -f docker-compose.test.yml up --build 
+# docker-compose -f docker-compose.test.yml up --build
 #--abort-on-container-exit --exit-code-from dosgato-e2e-test
 
 #test only for debugging

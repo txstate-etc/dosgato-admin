@@ -1,6 +1,6 @@
 import {test as base, type Page, type Locator} from '@playwright/test'
 import * as fs from 'fs'
-import { adminSession, editorSession } from './constants';
+import { adminSession, adminStorageState, editorSession, editorStorageState } from './constants';
 
 class UserPage {
   page: Page;
@@ -20,7 +20,8 @@ type MyFixtures = {
 const fixture = base.extend<MyFixtures>({
   adminPage: async ({browser}, use) =>{
     const sessionStorage = JSON.parse(fs.readFileSync(adminSession, 'utf-8'));
-    const context = await browser.newContext()
+    const storageState = JSON.parse(fs.readFileSync(adminStorageState, 'utf-8'));
+    const context = await browser.newContext({storageState} )
     await context.addInitScript((storage) => {
       const entries = Object.entries(JSON.parse(storage));
       for (let i = 0; i < entries.length; i += 1) {
@@ -34,7 +35,8 @@ const fixture = base.extend<MyFixtures>({
   },
   editorPage: async ({ browser }, use) =>{
     const sessionStorage = JSON.parse(fs.readFileSync(editorSession, 'utf-8'));
-    const context = await browser.newContext()
+    const storageState = JSON.parse(fs.readFileSync(editorStorageState, 'utf-8'))
+    const context = await browser.newContext({storageState})
     await context.addInitScript((storage) => {
       const entries = Object.entries(JSON.parse(storage));
       for (let i = 0; i < entries.length; i += 1) {

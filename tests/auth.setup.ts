@@ -27,5 +27,7 @@ async function login (user: string, role: string, page: Page, sessionFilePath: s
   const sessionStorage = await page.evaluate(() => JSON.stringify(sessionStorage))
   fs.writeFileSync(sessionFilePath, JSON.stringify(sessionStorage), 'utf-8')
 
+  const token = JSON.parse(sessionStorage).token
+  await page.goto(`${process.env.RENDER_BASE}/.token?token=${token}`)
   await page.context().storageState({ path: storageStateFilePath })
 }
