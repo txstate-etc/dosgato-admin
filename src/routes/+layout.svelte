@@ -10,7 +10,7 @@
   import menuDown from '@iconify-icons/mdi/menu-down'
   import userCircleLight from '@iconify-icons/ph/user-circle-light'
   import usersLight from '@iconify-icons/ph/users-light'
-  import { eq, PopupMenu, ResizeStore, type PopupMenuItem, resize } from '@txstate-mws/svelte-components'
+  import { eq, PopupMenu, type PopupMenuItem, resize } from '@txstate-mws/svelte-components'
   import { onMount, setContext } from 'svelte'
   import { isNotNull } from 'txstate-utils'
   import { afterNavigate, goto } from '$app/navigation'
@@ -148,8 +148,8 @@
       </div>
     {/if}
   </nav>
-  <PopupMenu {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
-  <PopupMenu buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
+  <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
+  <PopupMenu usemenurole buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
   {#if overflowItems.length}<PopupMenu buttonelement={overflowbutton} items={overflowItems} value=".never" on:change={onOverflowChange}/>{/if}
   <main use:eq>
     {#if cookieAcquired}<slot />{/if}
