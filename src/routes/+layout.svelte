@@ -128,6 +128,8 @@
         {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}
         <Icon icon={menuDown} inline />
       </button>
+      <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
+      <PopupMenu usemenurole buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
     </div>
     {#if $currentSubNav}
       <div class="subnav">
@@ -148,8 +150,6 @@
       </div>
     {/if}
   </nav>
-  <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
-  <PopupMenu usemenurole buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
   {#if overflowItems.length}<PopupMenu buttonelement={overflowbutton} items={overflowItems} value=".never" on:change={onOverflowChange}/>{/if}
   <main use:eq>
     {#if cookieAcquired}<slot />{/if}
