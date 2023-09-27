@@ -10,7 +10,7 @@
   import menuDown from '@iconify-icons/mdi/menu-down'
   import userCircleLight from '@iconify-icons/ph/user-circle-light'
   import usersLight from '@iconify-icons/ph/users-light'
-  import { eq, PopupMenu, type PopupMenuItem, resize } from '@txstate-mws/svelte-components'
+  import { eq, PopupMenu, type PopupMenuItem, resize, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { onMount, setContext } from 'svelte'
   import { isNotNull } from 'txstate-utils'
   import { afterNavigate, goto } from '$app/navigation'
@@ -125,7 +125,7 @@
         <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
       </div>
       <button type="button" bind:this={profileelement} class="login-status reset" on:click={() => { uiLog.log({ eventType: 'button', action: 'LoginStatus' }, 'Login-PopupMenu') }} aria-expanded={false}>
-        {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}
+        {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}<ScreenReaderOnly>Application Actions</ScreenReaderOnly>
         <Icon icon={menuDown} inline />
       </button>
       <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
