@@ -5,6 +5,7 @@ WORKDIR /usr/app
 COPY package.json ./
 COPY package-lock.json ./
 COPY svelte.config.js ./
+COPY vite.config.js ./
 COPY tsconfig.json ./
 COPY src src
 
