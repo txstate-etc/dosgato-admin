@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "prepublishOnly": "echo \"Do not publish this project.",
-    "dev": "vite dev --host 0.0.0.0 --port 3000 --port 80",
+    "dev": "vite dev --host 0.0.0.0 --port 80",
     "build": "vite build",
     "preview": "vite preview",
     "test": "playwright test",
