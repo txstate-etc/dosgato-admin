@@ -2,10 +2,11 @@ version: '3'
 services:
   dosgato-admin-test:
     environment:
-      API_BASE: http://dosgato-api-test
-      RENDER_BASE: http://dosgato-render-test
-      AUTH_REDIRECT: http://fakeauth-test/login?clientId=dosgato-admin-test&returnUrl=http%3A%2F%2Fdosgato-admin-test%3A3000%2F%2Eadmin
-  dosgato-render-test:
-    environment:
-      DOSGATO_ADMIN_BASE: http://dosgato-admin-test:3000/.admin
-      DOSGATO_API_BASE: http://dosgato-api-test
+      API_BASE: /.api
+      RENDER_BASE: 
+      AUTH_REDIRECT: http://fakeauth-test/login?clientId=dosgato-admin-test
+      #&returnUrl=http%3A%2F%2Fdosgato-admin-test%3A3000%2F%2Eadmin
+#  dosgato-render-test:
+#    environment:
+#      DOSGATO_ADMIN_BASE: http://dosgato-admin-test/.admin
+#      DOSGATO_API_BASE: http://dosgato-api-test

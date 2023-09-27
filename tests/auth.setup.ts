@@ -13,8 +13,8 @@ setup('authenticate', async ({ browser }) => {
 
 async function login (user: string, role: string, page: Page, sessionFilePath: string, storageStateFilePath: string ) {
   const loginPath = process.env.AUTH_REDIRECT ?? ''
-  await page.goto('/')
-  await page.goto(loginPath)
+  await page.goto('/.admin/pages')
+  // await page.goto(loginPath)
   await page.waitForSelector('div.login-page')
   await page.getByPlaceholder('username').fill(user)
   await page.getByRole('button', { name: 'login' }).click()
