@@ -28,6 +28,8 @@ services:
     build:
       context: ../dosgato
       dockerfile: Dockerfile.dev
+    logging:
+      driver: none
     ports:
       - 127.0.0.1:8080:80
       - 127.0.0.1:9229:9229
@@ -97,6 +99,8 @@ services:
     build:
       dockerfile: proxy/Dockerfile
       context: .
+    logging:
+      driver: none
     ports:
       - 80:80
   fakeauth-test:
@@ -116,31 +120,22 @@ services:
       MYSQL_PASSWORD: password
     volumes:
       - dosgatodbtest:/var/lib/mysql
-#  dosgato-e2e-test:
-#      build:
-#        context: .
-#        dockerfile: ./tests/Dockerfile.test
-#      ports:
-#        - 9323:9323
-#      environment:
-#        API_BASE: http://dosgato-api-test
-#        RENDER_BASE: http://dosgato-render-test
-#        AUTH_REDIRECT: http://fakeauth-test/login?clientId=dosgato-admin-test&returnUrl=http%3A%2F%2Fdosgato-admin-test%3A3000%2F%2Eadmin
-#        DOSGATO_ADMIN_BASE: http://dosgato-admin-test:3000/.admin
-#      depends_on:
-#        - dosgato-api-test
-#        - dosgato-admin-test
-#        - dosgato-render-test
-#        - fakeauth-test
-#        #- dosgato-resizer-test
-#      volumes:
-#        - ./tests/.auth:/app/tests/.auth
-#        - ./tests/artifacts:/app/tests/artifacts
-#        - ./tests/report:/app/tests/report
+  dosgato-e2e-test:
+     build:
+       context: .
+       dockerfile: ./tests/Dockerfile.test
+     ports:
+       - 9323:9323
+     environment:
+       API_BASE: http://dosgato-proxy-test/.api
+       RENDER_BASE: http://dosgato-proxy-test
+       AUTH_REDIRECT: http://fakeauth-test/login?clientId=dosgato-admin-test&returnUrl=http%3A%2F%2Fdosgato-proxy-test%2F%2Eadmin
+       DOSGATO_ADMIN_BASE: http://dosgato-proxy-test/.admin
+     volumes:
+       - ./tests/.auth:/app/tests/.auth
+       - ./tests/artifacts:/app/tests/artifacts
+       - ./tests/report:/app/tests/report
 volumes:
   dosgatodbtest: {}
   dosgatofilestest: {}
-#networks:
-#  default:
-#    external:
-#      name: dosgato-admin_default
+

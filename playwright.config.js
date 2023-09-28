@@ -18,7 +18,7 @@ export default defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 1,
   timeout: 60000,
   /* Opt out of parallel tests on CI. */
   // workers: process.env.CI ? 1 : undefined,
@@ -31,7 +31,7 @@ export default defineConfig({
   use: {
     // baseURL: 'http://localhost:3000/.admin',
     // baseURL: 'http://dosgato-admin-test:3000/.admin',
-    baseURL: 'http://dosgato-proxy-test',
+    baseURL: 'http://dosgato-proxy-test/.admin',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'on-first-retry',

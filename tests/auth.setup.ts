@@ -13,13 +13,12 @@ setup('authenticate', async ({ browser }) => {
 
 async function login (user: string, role: string, page: Page, sessionFilePath: string, storageStateFilePath: string ) {
   const loginPath = process.env.AUTH_REDIRECT ?? ''
-  await page.goto('/.admin/pages')
-  // await page.goto(loginPath)
+  await page.goto(loginPath)
   await page.waitForSelector('div.login-page')
   await page.getByPlaceholder('username').fill(user)
   await page.getByRole('button', { name: 'login' }).click()
 
-  await page.waitForSelector('div.topbar', { timeout: 60000 })
+  await page.waitForSelector('div.topbar')
   await expect(page).toHaveTitle('DEV DG Editing')
   await expect(page.getByRole('link', { name: 'Pages' }).first()).toBeVisible()
 

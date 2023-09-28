@@ -14,10 +14,10 @@ if [ -e docker-compose.test.override.yml ]; then
   override='-f docker-compose.test.override.yml'
 fi
 
-docker-compose -f docker-compose.test.yml $override up --build --abort-on-container-exit --exit-code-from dosgato-e2e-test
+# docker-compose -f docker-compose.test.yml $override up --build --abort-on-container-exit --exit-code-from dosgato-e2e-test
 
 #servers up won't exit when test is over
-# docker-compose -f docker-compose.test.yml $override up --build
+docker-compose -f docker-compose.test.yml $override up --build
 
 #test no override
 # docker-compose -f docker-compose.test.yml up --build
