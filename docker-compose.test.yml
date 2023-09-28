@@ -10,9 +10,6 @@ services:
       API_BASE: /.api
       RENDER_BASE: ""
       AUTH_REDIRECT: http://fakeauth-test/login?clientId=dosgato-admin-test
-      #API_BASE: http://localhost
-      #RENDER_BASE: http://localhost:3002
-      #AUTH_REDIRECT: http://localhost:3001/login?clientId=dosgato-admin-test&returnUrl=http%3A%2F%2Flocalhost%3A3000%2Fadmin
       TRACING_SERVER: http://localhost:8200
     volumes:
       - ./src:/usr/app/src
@@ -48,8 +45,6 @@ services:
       - ../dosgato/src:/usr/app/src
       - ../dosgato/testserver:/usr/app/testserver
       - ../dosgato/bootstrap:/bootstrap
-      #- ../dosgato/test/files/blankpdf.pdf:/files/storage/P/K/BUoghpogATqmK14ry1wqKsP-e-S8GVqHKuCxH7k1k
-      #- ../dosgato/test/files/bobcat.jpg:/files/storage/Q/7/HN1moFtRWxE_gLyvxM8B2sK5CrjB3482LttjgbWME
     depends_on:
       - mysql-test
     healthcheck:
@@ -69,8 +64,6 @@ services:
       DOSGATO_RENDER_JWT_SECRET: rendertoken
       DOSGATO_API_BASE: http://dosgato-api-test
       DOSGATO_ADMIN_BASE: http://dosgato-admin-test/.admin
-      #DOSGATO_ADMIN_BASE: http://localhost:3000/.admin
-      #DOSGATO_API_BASE: http://dosgato-api-test
     volumes:
       - ../dosgato-render/src:/usr/app/src
       - ../dosgato-render/test:/usr/app/test
@@ -81,20 +74,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-#  dosgato-resizer-test:
-#    image: registry.its.txstate.edu/dosgato-resizer:qual
-#    environment:
-#      TZ: America/Chicago
-#      MYSQL_USER: dosgato
-#      MYSQL_PASS: password
-#      MYSQL_DATABASE: dosgatodev
-#      MYSQL_HOST: mysql-test
-#    volumes:
-#      - dosgatofilestest:/files
-#      - ../dosgato/test/files/blankpdf.pdf:/files/storage/P/K/BUoghpogATqmK14ry1wqKsP-e-S8GVqHKuCxH7k1k
-#      - ../dosgato/test/files/bobcat.jpg:/files/storage/Q/7/HN1moFtRWxE_gLyvxM8B2sK5CrjB3482LttjgbWME
-#    depends_on:
-#      - mysql-test
   dosgato-proxy-test:
     build:
       dockerfile: proxy/Dockerfile

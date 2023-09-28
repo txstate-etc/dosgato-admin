@@ -29,9 +29,7 @@ export default defineConfig({
     ['html', { open: 'on-failure', outputFolder: './tests/report' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    // baseURL: 'http://localhost:3000/.admin',
-    // baseURL: 'http://dosgato-admin-test:3000/.admin',
-    baseURL: 'http://dosgato-proxy-test/.admin',
+    baseURL: 'http://dosgato-proxy-test',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'on-first-retry',

@@ -4,7 +4,6 @@ test('edit', async ({ adminPage }) => {
   const page = adminPage.page
   await page.goto('/.admin/pages')
   await page.waitForURL(/pages/)
-  console.log(await page.context().cookies(), 'COOKIES')
   await page.getByRole('treeitem').nth(0).locator('svg').nth(1).click()
   // await page.locator('#h1b3 > .checkbox').click()
   await page.getByRole('button', { name: 'Edit' }).click()
