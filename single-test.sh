@@ -32,3 +32,5 @@ docker run --rm --name dosgato-admin-playwright \
   --env 'AUTH_REDIRECT=http://fakeauth-test/login?clientId=dosgato-admin-test&returnUrl=http%3A%2F%2Fdosgato-proxy-test%2F%2Eadmin' \
   --env 'DOSGATO_ADMIN_BASE=http://dosgato-proxy-test/.admin' \
   registry.its.txstate.edu/dosgato-admin-playwright:dev "$@"
+
+# docker stop dosgato-admin-playwright
