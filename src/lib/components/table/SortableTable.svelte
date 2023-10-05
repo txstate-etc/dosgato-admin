@@ -13,7 +13,7 @@
   export let mobileHeader: (item: any) => string = (item: any) => 'Row'
 
   $: sortedItems = items
-  let sortBy: { column: string, desc: boolean} | undefined = undefined
+  let sortBy: { column: string, desc: boolean } | undefined = undefined
 
   function sortItems (header: SortableTableHeader) {
     const sort = header.sortFunction ?? header.id
@@ -84,7 +84,7 @@
           {#if actions.length}
             <div class="actions">
               {#each actions as action}
-                <button type="button" on:click={() => action.onClick(item)}>
+                <button type="button" on:click={async () => await action.onClick(item)}>
                   <div class="button-content">
                     <span class="button-label">{action.label}</span>
                   </div>

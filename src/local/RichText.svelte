@@ -3,4 +3,4 @@
 </script>
 
 <FieldText path="title" label="Title" />
-<FieldTextArea  path="text" label="Rich Text" />
+<FieldTextArea path="text" label="Rich Text" />

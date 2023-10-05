@@ -31,7 +31,7 @@
     return site.owner ? `${site.owner.name} (${site.owner.id})` : ''
   }
 
-  const store: TreeStore<SiteListSite> = new TreeStore(fetchChildren)
+  const store = new TreeStore<SiteListSite>(fetchChildren)
 
   function noneSelectedActions () {
     // TODO: Do we need another permission for being able to download the audit CSV? I set it to the createSites permission right now
@@ -39,7 +39,7 @@
     // see all sites information.
     return [
       { label: 'Add Site', icon: plusIcon, disabled: !$globalStore.access.createSites, onClick: () => modalContext.setModal('addsite', 'CreateWithPageDialog') },
-      { label: 'Download CSV', icon: downloadIcon, disabled: !$globalStore.access.createSites, onClick: () => downloadSitesAudit() }
+      { label: 'Download CSV', icon: downloadIcon, disabled: !$globalStore.access.createSites, onClick: async () => await downloadSitesAudit() }
     ]
   }
 
@@ -75,14 +75,14 @@
   }
 
   function onCreateSiteComplete () {
-    store.refresh()
+    void store.refresh()
     modalContext.reset()
   }
 
   async function onDeleteSite () {
     const resp = await api.deleteSite($store.selectedItems[0].id)
     modalContext.logModalResponse(resp, $store.selectedItems[0].id)
-    if (resp.success) store.refresh()
+    if (resp.success) void store.refresh()
     modalContext.reset()
   }
 
@@ -108,11 +108,11 @@
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Sites'} actions={getActions($store.selectedItems)} filterinput on:filter={e => { filter = e.detail }}>
-  <Tree singleSelect {store}  on:choose={({ detail }) => goto(base + '/sites/' + detail.id)} headers={[
-     { id: 'name', label: 'Site Name', get: 'name', grow: 10, icon: { icon: globeLight } },
-     { id: 'url', label: 'URL', get: 'url.prefix', grow: 10 },
-     { id: 'organization', label: 'Organization', get: 'organization.name', grow: 8 },
-     { id: 'owner', label: 'Owner', render: renderOwner, grow: 7 }
+  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/sites/' + detail.id)} headers={[
+    { id: 'name', label: 'Site Name', get: 'name', grow: 10, icon: { icon: globeLight } },
+    { id: 'url', label: 'URL', get: 'url.prefix', grow: 10 },
+    { id: 'organization', label: 'Organization', get: 'organization.name', grow: 8 },
+    { id: 'owner', label: 'Owner', render: renderOwner, grow: 7 }
   ]} {searchable} {filter} enableResize>
   </Tree>
 </ActionPanel>

@@ -3,6 +3,6 @@
 </script>
 
 <FieldText path="title" label="Title" />
-<FieldTextArea  path="text" label="Rich Text" />
+<FieldTextArea path="text" label="Rich Text" />
 <FieldChooserLink path="image" label="Image" images />
 <FieldChooserLink path="link" label="Link" pages urlEntry />

@@ -21,7 +21,7 @@
     return templates.map(t => ({ ...t, id: t.key }))
   }
 
-  const store: TreeStore<TemplateListTemplate> = new TreeStore(fetchChildren)
+  const store = new TreeStore<TemplateListTemplate>(fetchChildren)
 
   function singleactions (template: TypedTemplateItem) {
     const actions: ActionPanelAction[] = []
@@ -34,7 +34,7 @@
     const resp = await api.setTemplateUniversal($store.selectedItems[0].key, universal)
     modalContext.logModalResponse(resp, $store.selectedItems[0].key, { universal })
     if (resp.success) {
-      store.refresh()
+      void store.refresh()
       modalContext.reset()
     }
   }
@@ -50,11 +50,11 @@
   ]} enableResize />
 </ActionPanel>
 {#if $modalContext.modal === 'setuniversal'}
-  <Dialog title="Make Template Universal" cancelText="Cancel" continueText="Set Universal" on:escape={modalContext.onModalEscape} on:continue={() => setUniversal(true)}>
+  <Dialog title="Make Template Universal" cancelText="Cancel" continueText="Set Universal" on:escape={modalContext.onModalEscape} on:continue={async () => await setUniversal(true)}>
     <span>{`Making the ${$store.selectedItems[0].name} template universal will allow it to be used on all sites and pagetrees.`}</span>
   </Dialog>
 {:else if $modalContext.modal === 'setrestricted'}
-  <Dialog title="Restrict Template Usage" cancelText="Cancel" continueText="Restrict" on:escape={modalContext.onModalEscape} on:continue={() => setUniversal(false)}>
+  <Dialog title="Restrict Template Usage" cancelText="Cancel" continueText="Restrict" on:escape={modalContext.onModalEscape} on:continue={async () => await setUniversal(false)}>
     <span>Restricted templates must be improved for usage on individual sites and/or pagetrees. Proceed?</span>
   </Dialog>
 {/if}

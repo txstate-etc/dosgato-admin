@@ -33,13 +33,13 @@
   function singlepageactions (item: TypedAnyAssetItem) {
     const actions: ActionPanelAction[] = item.kind === 'asset'
       ? [
-          { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: () => goto(base + '/assets/' + item.id) },
-          { label: 'Download', icon: download, onClick: () => { api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } },
+          { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: async () => await goto(base + '/assets/' + item.id) },
+          { label: 'Download', icon: download, onClick: () => { void api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } },
           { label: 'Rename Asset', icon: renameIcon, disabled: !item.permissions.update, onClick: () => { selectedAsset = item as TypedAssetItem; modalContext.setModal('renameAsset') } }
         ]
       : [
           { label: 'Upload', icon: uploadIcon, disabled: !item.permissions.create, onClick: () => { modalContext.setModal('upload'); selectedFolder = item as TypedAssetFolderItem } },
-          { label: 'Download', icon: download, onClick: () => api.download(`${environmentConfig.renderBase}/.asset/zip/${item.gqlId}/${item.name}.zip`) },
+          { label: 'Download', icon: download, onClick: async () => await api.download(`${environmentConfig.renderBase}/.asset/zip/${item.gqlId}/${item.name}.zip`) },
           { label: 'Rename Folder', icon: renameIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { modalContext.setModal('rename'); selectedFolder = item as TypedAssetFolderItem } },
           { label: 'Create Folder', icon: folderPlus, disabled: !item.permissions.create, onClick: () => { modalContext.setModal('create'); selectedFolder = item as TypedAssetFolderItem } }
         ]
@@ -52,7 +52,7 @@
       )
     }// TODO: Do we want to log these store based actions here or log from the TreeStore API(store.paste())?
     actions.push(
-      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste() } }
+      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { void store.paste() } }
     )
     if (item.deleteState === DeleteState.NOTDELETED) {
       actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('delete') })
@@ -137,7 +137,7 @@
   }
 
   function onChoose ({ detail }: CustomEvent<AssetItem | AssetFolderItem>) {
-    if (detail.kind === 'asset' && detail.permissions.update) goto(base + '/assets/' + detail.id)
+    if (detail.kind === 'asset' && detail.permissions.update) void goto(base + '/assets/' + detail.id)
   }
 
   async function onDelete () {
@@ -150,7 +150,7 @@
       modalContext.logModalResponse(resp, $store.selectedItems[0].path)
     }
     if (resp.success) {
-      store.refresh()
+      void store.refresh()
     }
     modalContext.reset()
   }
@@ -165,7 +165,7 @@
       modalContext.logModalResponse(resp, $store.selectedItems[0].gqlId)
     }
     if (resp.success) {
-      store.refresh()
+      void store.refresh()
     }
     modalContext.reset()
   }
@@ -180,7 +180,7 @@
       modalContext.logModalResponse(resp, $store.selectedItems[0].gqlId)
     }
     if (resp.success) {
-      store.refresh()
+      void store.refresh()
     }
     modalContext.reset()
   }

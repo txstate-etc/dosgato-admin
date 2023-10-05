@@ -37,15 +37,15 @@
     return actions
   }
 
-  const store: TreeStore<GroupListGroup> = new TreeStore(fetchChildren)
+  const store = new TreeStore<GroupListGroup>(fetchChildren)
 
 
   async function onAddGroup (state) {
-    const parentId: string|undefined = $store.selectedItems.length ? $store.selectedItems[0].id : undefined
+    const parentId: string | undefined = $store.selectedItems.length ? $store.selectedItems[0].id : undefined
     const resp = await api.addGroup(state.name, parentId)
     modalContext.logModalResponse(resp, resp.group?.name, parentId ? { parentId } : undefined)
     if (resp.success) {
-      store.refresh()
+      void store.refresh()
       modalContext.reset()
     }
     return {
@@ -67,14 +67,14 @@
   async function onDeleteGroup () {
     const resp = await api.deleteGroup($store.selectedItems[0].id)
     modalContext.logModalResponse(resp, modalContext.target())
-    if (resp.success) store.refresh()
+    if (resp.success) void store.refresh()
     modalContext.reset()
   }
   let filter = ''
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Groups'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()} filterinput on:filter={e => { filter = e.detail }}>
-  <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/groups/' + detail.id)} headers ={[
+  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/groups/' + detail.id)} headers ={[
     { id: 'name', label: 'Name', get: 'name', fixed: '19em', icon: { icon: usersThree } },
     { id: 'members', label: 'Members', render: item => String(item.users.length), fixed: '7em' },
     { id: 'roles', label: 'Roles', render: item => (item.roles.map(r => r.name)).join(', '), grow: 5 }

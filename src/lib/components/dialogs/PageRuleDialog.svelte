@@ -7,8 +7,8 @@
 
   export let roleId: string
   export let siteChoices: PopupMenuItem[]
-  export let preload: PageRulePreload|undefined = undefined
-  export let ruleId: string|undefined = undefined
+  export let preload: PageRulePreload | undefined = undefined
+  export let ruleId: string | undefined = undefined
 
   const modeChoices: PopupMenuItem[] = [
     { value: 'SELF', label: 'This path only' },
@@ -30,7 +30,7 @@
     pagetreeType?: string
     path?: string
     mode?: string
-    grants : {
+    grants: {
       create: boolean
       update: boolean
       move: boolean

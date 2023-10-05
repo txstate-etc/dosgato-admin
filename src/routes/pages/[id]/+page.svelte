@@ -28,7 +28,7 @@
   let panelelement: HTMLElement
   $: editable = $editorStore.page.permissions.update
 
-  function getActions (selectedPath?: string, ..._:any[]): (ActionPanelAction | ActionPanelGroup)[] {
+  function getActions (selectedPath?: string, ..._: any[]): (ActionPanelAction | ActionPanelGroup)[] {
     const previewGroup: ActionPanelGroup = {
       id: 'previewgroup',
       actions: [
@@ -67,13 +67,13 @@
               { label: 'Cut', icon: scissors, disabled: !$editorStore.selectedMayDelete, onClick: () => pageEditorStore.cutComponent(selectedPath) },
               { label: 'Copy', icon: copyIcon, onClick: () => pageEditorStore.copyComponent(selectedPath) }
             ]),
-        { label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardText, disabled: !$editorStore.pasteAllowed, onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) }
+        { label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardText, disabled: !$editorStore.pasteAllowed, onClick: async () => await pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) }
       ]
     } else {
       // new bar selected
       const actions: ActionPanelAction[] = []
       if ($actionsStore.clipboardActive) actions.push({ label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, onClick: () => pageEditorStore.clearClipboard() })
-      actions.push({ label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardText, disabled: !$editorStore.pasteAllowed, onClick: () => pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) })
+      actions.push({ label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardText, disabled: !$editorStore.pasteAllowed, onClick: async () => await pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) })
       return actions
     }
   }
@@ -104,25 +104,25 @@
     } else if (message.action === 'cut') {
       pageEditorStore.cutComponent($editorStore.selectedPath)
     } else if (message.action === 'copy') {
-      pageEditorStore.copyComponent($editorStore.selectedPath!)
+      pageEditorStore.copyComponent($editorStore.selectedPath)
     } else if (message.action === 'paste') {
       if ($editorStore.pasteAllowed) {
         pageEditorStore.pasteComponent($editorStore.selectedPath)
-          .then(refreshIframe)
+          .then(refreshIframe).catch(console.error)
       }
     } else if (message.action === 'cancelCopy') {
       pageEditorStore.clearClipboard()
     } else if (message.action === 'create') {
-      pageEditorStore.addComponentShowModal(message.path, refreshIframe)
+      void pageEditorStore.addComponentShowModal(message.path, refreshIframe)
     } else if (message.action === 'del') {
       pageEditorStore.removeComponentShowModal(message.path)
     } else if (message.action === 'drop') {
       pageEditorStore.moveComponent(message.from!, message.to!)
-        .then(refreshIframe)
+        .then(refreshIframe).catch(console.error)
     } else if (message.action === 'deselect') {
       pageEditorStore.select(undefined)
     } else if (message.action === 'jump') {
-      goto(base + '/pages/' + message.pageId!)
+      void goto(base + '/pages/' + message.pageId!)
     } else if (message.action === 'menu') {
       panelelement.querySelector<HTMLElement>('.actions li button')?.focus()
     } else if (message.action === 'save') {
@@ -146,7 +146,7 @@
   }
 
   function onAddComponentChooseTemplate (templateKey: string) {
-    return () => pageEditorStore.addComponentChooseTemplate(templateKey, refreshIframe)
+    return async () => await pageEditorStore.addComponentChooseTemplate(templateKey, refreshIframe)
   }
 
   async function onAddComponentValidate (data: any) {
@@ -264,7 +264,7 @@
 
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
-  {#if template && template.dialog}
+  {#if template?.dialog}
     <FormDialog {chooserClient} icon={template.icon} title={template.name} preload={$editorStore.editing.data} submit={onEditComponentSubmit} validate={onEditComponentValidate} on:escape={cancelModal} let:data>
       <svelte:component this={template.dialog} creating={false} page={$editorStore.page} path={$editorStore.editing.path} {data} templateProperties={pagetemplate.templateProperties} {environmentConfig} />
     </FormDialog>
@@ -320,7 +320,7 @@
 {:else if $editorStore.modal === 'properties' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
   <FormDialog {chooserClient} icon={template?.icon} title="Edit Page Properties" submit={onEditPagePropertiesSubmit} validate={onEditPagePropertiesValidate} on:escape={cancelModal} preload={$editorStore.editing.data} let:data>
-    {#if template && template.dialog}
+    {#if template?.dialog}
       <svelte:component this={template.dialog} creating={false} page={$editorStore.page} {data} templateProperties={template.templateProperties} {environmentConfig} />
     {:else}
       <span>This content uses an unrecognized template. Please contact support for assistance.</span>
@@ -330,7 +330,7 @@
   {@const page = $editorStore.page}
   <VersionHistory dataId={page.id} preview={v => pageEditorStore.previewVersion(v)} compare={(v1, v2) => pageEditorStore.compareVersions(v1, v2)} history={api.getPageVersions(page.id)} on:escape={cancelModal} />
 {:else if $editorStore.restoreVersion != null}
-  <Dialog title="Are You Sure?" cancelText="Cancel" continueText="Restore" on:escape={() => pageEditorStore.cancelRestore()} on:continue={() => pageEditorStore.restoreVersion()}>
+  <Dialog title="Are You Sure?" cancelText="Cancel" continueText="Restore" on:escape={() => pageEditorStore.cancelRestore()} on:continue={async () => await pageEditorStore.restoreVersion()}>
     Restoring will create a new "latest" version with all the content from this version. All existing versions will remain.
   </Dialog>
 {/if}

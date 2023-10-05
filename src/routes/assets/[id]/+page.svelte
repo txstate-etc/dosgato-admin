@@ -53,8 +53,9 @@
   let externalURLElement: HTMLAnchorElement
   function onExternal (e: MouseEvent) {
     if (externalURLElement instanceof HTMLAnchorElement) {
-      navigator.clipboard.writeText(externalURLElement.getAttribute('href')!)
-      toast('Copied external link to clipboard.', 'success')
+      navigator.clipboard.writeText(externalURLElement.getAttribute('href')!).then(() => {
+        toast('Copied external link to clipboard.', 'success')
+      }).catch(console.error)
     }
   }
 
@@ -80,7 +81,7 @@
 <div class="container">
   <DetailPanel header="Asset" class="image" headerColor="#E5D1BD" button={[
     { icon: swapIcon, hiddenLabel: 'upload new file for asset', onClick: onUploadClick },
-    { icon: downloadIcon, hiddenLabel: 'download asset', onClick: () => { api.download(`${environmentConfig.renderBase}/.asset/${asset.id}/${encodeURIComponent(asset.filename)}`) } }
+    { icon: downloadIcon, hiddenLabel: 'download asset', onClick: () => { void api.download(`${environmentConfig.renderBase}/.asset/${asset.id}/${encodeURIComponent(asset.filename)}`) } }
   ]}>
     <DetailPanelSection>
       {#if image}

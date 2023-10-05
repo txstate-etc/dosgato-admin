@@ -32,7 +32,7 @@
   $: subnavStore.setMaxItems(Math.floor(($subNavSize.clientWidth ?? 800) / 140))
   $: overflowItems = $currentSubNav?.links.slice($currentSubNav.maxItems).map(l => ({ value: l.href, label: l.label })) ?? []
   function onOverflowChange (e: any) {
-    goto(e.detail.value)
+    void goto(e.detail.value)
   }
 
   const profileItems: PopupMenuItem[] = [
@@ -58,7 +58,7 @@
       const identifiers = subnavStore.getActiveIdentifiers(i)
       uiLog.log({ eventType: 'SubNav', action: 'Close Tab', additionalProperties: { label: identifiers?.label } }, identifiers?.href)
       const href = subnavStore.close(i)
-      if (href) goto(href)
+      if (href) void goto(href)
     }
   }
 

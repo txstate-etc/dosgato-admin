@@ -30,6 +30,18 @@
   let selected = new Set<number>()
   const selectedInTitle = new Map<number, string>()
 
+  let oldversions: HistoryVersion[] | undefined
+  function onMarked (e: { detail: HistoryVersion }) {
+    oldversions = oldversions?.map(v => v.version === e.detail.version ? e.detail : v)
+  }
+  onMount(async () => {
+    oldversions = await history
+  })
+  $: versionByIndex = keyby(oldversions, 'version')
+  $: latest = oldversions?.[0]
+  $: maxVersion = latest?.version ?? 0
+  $: published = oldversions?.find(v => v.tags.includes('published'))
+
   function toPageEditorVersionPreview (v: number) {
     return { version: v, date: versionByIndex[v].date, modifiedBy: versionByIndex[v].user.name }
   }
@@ -47,18 +59,6 @@
       compare(toPageEditorVersionPreview(v1m), toPageEditorVersionPreview(v2m))
     }
   }
-
-  let oldversions: HistoryVersion[] | undefined
-  function onMarked (e: { detail: HistoryVersion}) {
-    oldversions = oldversions?.map(v => v.version === e.detail.version ? e.detail : v)
-  }
-  onMount(async () => {
-    oldversions = await history
-  })
-  $: versionByIndex = keyby(oldversions, 'version')
-  $: latest = oldversions?.[0]
-  $: maxVersion = latest?.version ?? 0
-  $: published = oldversions?.find(v => v.tags.includes('published'))
 </script>
 
 <Dialog continueText={selected.size > 1 ? 'Compare' : 'Preview'} cancelText="Cancel" disabled={selected.size < 1 || selected.size > 2} on:escape on:continue={visit}>

@@ -124,7 +124,7 @@
   }
 
   function onSaved () {
-    store.refresh($store.group.id)
+    void store.refresh($store.group.id)
     modalContext.reset()
   }
 </script>
@@ -148,7 +148,7 @@
         {/if}
       </DetailPanel>
 
-      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={{ icon: plusIcon, hiddenLabel: `Add role to ${$store.group.name}`, onClick: () => { openAddRoleDialog() } } }>
+      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={{ icon: plusIcon, hiddenLabel: `Add role to ${$store.group.name}`, onClick: () => { void openAddRoleDialog() } } }>
         <DetailPanelSection>
           {#if $store.group.directRoles.length}
             <SortableTable items={$store.group.directRoles}
@@ -187,7 +187,7 @@
       {/if}
     </div>
     <div>
-      <DetailPanel header='Members' headerColor={panelHeaderColor} button={{ icon: plusIcon, hiddenLabel: `Add members to ${$store.group.name}`, onClick: () => openAddUsersDialog() }} >
+      <DetailPanel header='Members' headerColor={panelHeaderColor} button={{ icon: plusIcon, hiddenLabel: `Add members to ${$store.group.name}`, onClick: async () => await openAddUsersDialog() }} >
         <DetailPanelSection>
           {#if $store.group.directMembers.length}
             <SortableTable items={$store.group.directMembers}
@@ -203,7 +203,7 @@
                   headers={[
                     { id: 'name', label: 'Inherited members', render: (item) => `<a href="${base}/auth/users/${item.id}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a>`, sortable: true, sortFunction: (item) => item.lastname },
                     { id: 'remove', label: 'From group', render: (item) => getMemberDirectGroup(item.groups) }
-                ]}/>
+                  ]}/>
           {/if}
         </DetailPanelSection>
       </DetailPanel>

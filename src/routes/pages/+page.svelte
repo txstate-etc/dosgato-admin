@@ -53,23 +53,23 @@
       actions: []
     }
     createDestroy.actions.push({ label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: onClickAddPage })
-    if (page.deleteState === DeleteState.NOTDELETED) createDestroy.actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { onClickDelete() } })
+    if (page.deleteState === DeleteState.NOTDELETED) createDestroy.actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { void onClickDelete() } })
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) {
       createDestroy.actions.push(
         { label: 'Restore Page', icon: deleteRestore, disabled: !page.permissions.undelete, onClick: () => modalContext.setModal('undeletepage') },
         { label: 'Restore incl. Subpages', icon: deleteRestore, disabled: !page.permissions.undelete || !page.hasChildren, onClick: () => modalContext.setModal('undeletewithsubpages') },
-        { label: 'Finalize Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { onClickPublishDeletion() } }
+        { label: 'Finalize Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { void onClickPublishDeletion() } }
       )
     }
 
     const simple: ActionPanelGroup = {
       id: 'simple',
       actions: [
-        { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: () => goto(base + '/pages/' + page.id) },
+        { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: async () => await goto(base + '/pages/' + page.id) },
         { label: 'Rename', icon: renameIcon, disabled: !page.permissions.move, onClick: () => modalContext.setModal('renamepage') },
         { label: 'Change Template', icon: layout, disabled: !page.permissions.update, onClick: onClickTemplateChange },
         { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${page.path}.html`), '_blank') } },
-        { label: 'Show Versions', icon: historyIcon, onClick: () => goto(base + '/pages/' + page.id + '#versions') }
+        { label: 'Show Versions', icon: historyIcon, onClick: async () => await goto(base + '/pages/' + page.id + '#versions') }
       ]
     }
 
@@ -90,8 +90,8 @@
       )
     }
     movement.actions.push(
-      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: $store.cut ? moveIntoIcon : contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste(undefined, $store.copyRecursive) } },
-      { label: 'Move Above', disabled: !$store.cut || !store.pasteEligible(true), hiddenLabel: `Move above ${page.name}`, onClick: () => { store.paste(true, $store.copyRecursive) }, icon: moveAboveIcon }
+      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: $store.cut ? moveIntoIcon : contentPaste, disabled: !store.pasteEligible(), onClick: () => { void store.paste(undefined, $store.copyRecursive) } },
+      { label: 'Move Above', disabled: !$store.cut || !store.pasteEligible(true), hiddenLabel: `Move above ${page.name}`, onClick: () => { void store.paste(true, $store.copyRecursive) }, icon: moveAboveIcon }
     )
 
     const publishing: ActionPanelGroup = {
@@ -101,15 +101,15 @@
 
     publishing.actions.push(
       { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => modalContext.setModal('publishpages') },
-      { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, iconWidth: 1, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => modalContext.setModal('publishwithsubpages'), class: 'pubsubpages' },
+      { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => modalContext.setModal('publishwithsubpages'), class: 'pubsubpages' },
       { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => modalContext.setModal('unpublishpages') }
     )
 
     const exportimport: ActionPanelGroup = {
       id: 'exportimport',
       actions: [
-        { label: 'Export', icon: exportIcon, disabled: false, onClick: () => api.download(`${environmentConfig.renderBase}/.page/${page.id}`) },
-        { label: 'Export w/ Subpages', icon: exportIcon, disabled: false, onClick: () => api.download(`${environmentConfig.renderBase}/.page/${page.id}?withSubpages=1`) },
+        { label: 'Export', icon: exportIcon, disabled: false, onClick: async () => await api.download(`${environmentConfig.renderBase}/.page/${page.id}`) },
+        { label: 'Export w/ Subpages', icon: exportIcon, disabled: false, onClick: async () => await api.download(`${environmentConfig.renderBase}/.page/${page.id}?withSubpages=1`) },
         { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => modalContext.setModal('import') }
       ]
     }
@@ -176,7 +176,7 @@
   }
 
   function onRenamePageComplete () {
-    store.refresh()
+    void store.refresh()
     modalContext.reset()
   }
 
@@ -184,7 +184,7 @@
     const resp = await api.duplicatePage($store.selectedItems[0].id, $store.selectedItems[0].parent!.id)
     modalContext.logModalResponse(resp, $store.selectedItems[0].id, { parentId: $store.selectedItems[0].parent!.id })
     if (resp.success) {
-      store.refresh()
+      void store.refresh()
       modalContext.reset()
     }
   }
@@ -282,7 +282,7 @@
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
-  <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) goto(base + '/pages/' + detail.id) }}
+  <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }}
     headers={[
       { label: 'Path', id: 'name', grow: 4, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : item.parent ? browserIcon : siteIcon[item.type] }), render: item => `<div class="page-name">${item.name}</div>` },
       { label: 'Title', id: 'title', grow: 3, get: 'title' },
@@ -410,9 +410,3 @@
     on:escape={modalContext.onModalEscape}
     on:saved={onImportSaved} />
 {/if}
-
-<style>
-  :global(.pubsubpages svg){
-    margin-left: 0.2em;
-  }
-</style>

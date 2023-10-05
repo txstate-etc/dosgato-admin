@@ -32,7 +32,7 @@
   }
 
   function onSaved () {
-    store.refresh($store.user.id)
+    void store.refresh($store.user.id)
     modalContext.reset()
   }
 
@@ -46,7 +46,7 @@
   async function onEditBasic (state) {
     const resp = await api.updateUserInfo($store.user.id, state)
     modalContext.logModalResponse(resp, $store.user.id)
-    if (resp.success) store.refresh($store.user.id)
+    if (resp.success) void store.refresh($store.user.id)
     modalContext.reset()
     return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
   }
@@ -75,7 +75,7 @@
     const resp = await api.setUserGroups($store.user.id, state.groups)
     modalContext.logModalResponse(resp, $store.user.id, { groups: state.groups })
     if (resp.success) {
-      store.refresh($store.user.id)
+      void store.refresh($store.user.id)
       modalContext.reset()
     }
     return {
@@ -99,7 +99,7 @@
     const resp = await api.addRolesToUser(state.roleIds, $store.user.id)
     modalContext.logModalResponse(resp, $store.user.id, { roles: state.roleIds.join(',') })
     if (resp.success) {
-      store.refresh($store.user.id)
+      void store.refresh($store.user.id)
       modalContext.reset()
     }
     return { ...resp, data: state }

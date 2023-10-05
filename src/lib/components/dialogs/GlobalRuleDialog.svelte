@@ -3,14 +3,14 @@
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { api, messageForDialog } from '$lib'
   export let roleId: string
-  export let preload: GlobalRuleDialogState|undefined = undefined
-  export let ruleId: string|undefined = undefined
+  export let preload: GlobalRuleDialogState | undefined = undefined
+  export let ruleId: string | undefined = undefined
 
   const name = ruleId ? 'editglobalrule' : 'addglobalrule'
   const title = ruleId ? 'Edit Global Rule' : 'Add Global Rule'
 
   interface GlobalRuleDialogState {
-    grants : {
+    grants: {
       manageAccess: boolean
       manageParentRoles: boolean
       createSites: boolean
@@ -82,8 +82,8 @@
   <SubForm path='grants'>
     <FieldCheckbox path='manageAccess' boxLabel='Manage Access' defaultValue={false}/>
     <FieldCheckbox path='manageParentRoles' boxLabel='Manage Parent Roles' defaultValue={false}/>
-    <FieldCheckbox path='createSites' boxLabel='Create Sites'  defaultValue={false}/>
-    <FieldCheckbox path='manageGlobalData' boxLabel='Manage Global Data'  defaultValue={false}/>
+    <FieldCheckbox path='createSites' boxLabel='Create Sites' defaultValue={false}/>
+    <FieldCheckbox path='manageGlobalData' boxLabel='Manage Global Data' defaultValue={false}/>
     <FieldCheckbox path='manageTemplates' boxLabel='Manage Templates' defaultValue={false}/>
   </SubForm>
 </FormDialog>

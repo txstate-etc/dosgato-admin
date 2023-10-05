@@ -43,7 +43,7 @@ This component is also used when creating a site or pagetree, both of which requ
       modalContext.logModalResponse(resp, targetName, { name: resp.data.name, templateKey: resp.data.templateKey })
       return resp
     }
-    const resp = await submit({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey!)?.genDefaultContent({ ...state.data, templateKey: state.templateKey }) } }, false)
+    const resp = await submit({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey)?.genDefaultContent({ ...state.data, templateKey: state.templateKey }) } }, false)
     modalContext.logModalResponse(resp, targetName, { name: resp.data.name, templateKey: resp.data.templateKey })
     return resp
   }
@@ -90,7 +90,7 @@ This component is also used when creating a site or pagetree, both of which requ
   </FormDialog>
 {:else if $modalContext.modal === 'addpage-properties' && nameDialogData}
   {@const template = templateRegistry.getTemplate(nameDialogData.templateKey)}
-  {#if template && template.dialog}
+  {#if template?.dialog}
     <FormDialog {chooserClient} title={propertyDialogTitle} submit={submitWrapper} validate={validateWrapper} {store} on:escape={onEscape} on:saved let:data>
       {#if addName}
         <FieldHidden path='name' value={nameDialogData.name} />

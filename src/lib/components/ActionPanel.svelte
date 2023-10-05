@@ -1,4 +1,5 @@
 <script lang="ts" context="module">
+  import { writable } from 'svelte/store'
   const hidden = writable<boolean | undefined>(undefined)
 </script>
 <script lang="ts">
@@ -9,12 +10,11 @@
   import { elementqueries, eq, modifierKey, offset, OffsetStore, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { Store } from '@txstate-mws/svelte-store'
   import { createEventDispatcher, getContext, onMount, tick } from 'svelte'
-  import { writable } from 'svelte/store'
   import type { ActionPanelAction, ActionPanelGroup } from './actionpanel'
   import { uiLog } from '$lib/logging'
   import { isNotNull } from 'txstate-utils'
 
-  export let actionsTitle: string|undefined = ''
+  export let actionsTitle: string | undefined = ''
   export let actions: (ActionPanelAction | ActionPanelGroup)[]
   export let panelelement: HTMLElement | undefined = undefined
   export let filterinput = false
@@ -25,12 +25,12 @@
     filter: CustomEvent<string>
   }
   const dispatch = createEventDispatcher()
-  const { getTarget } = getContext('ActionPanelTarget') as { getTarget: () => string | undefined }
+  const { getTarget } = getContext<any>('ActionPanelTarget')
 
   function onAction (action: ActionPanelAction) {
     return () => {
       uiLog.log({ eventType: 'ActionPanel', action: action.label, ...(action.hiddenLabel && { additionalProperties: { hiddenLabel: action.hiddenLabel } }) }, getTarget())
-      action.onClick()
+      void action.onClick()
     }
   }
 
@@ -75,9 +75,9 @@
 
   let scrollY
   const offsetStore = new OffsetStore()
+  let supportsDVH = false
   $: height = `calc(${supportsDVH ? '100dvh' : '100vh'} - ${Math.max(0, $offsetStore.bottom ?? 0)}px - ${Math.max(0, ($offsetStore.top ?? 0))}px)`
   let arialive
-  let supportsDVH = false
   onMount(() => {
     arialive = 'polite'
     supportsDVH = CSS.supports('height: 100dvh')
@@ -92,6 +92,7 @@
   <div class="right-panel">
     <section class="actions">
       <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
       <header on:click={allowCollapse ? onClick : undefined}>
         {#if $hidden}<ScreenReaderOnly>{actionsTitle}</ScreenReaderOnly>{:else}{actionsTitle}{/if}
         {#if allowCollapse}<button type="button" class="reset" on:click|stopPropagation={onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}

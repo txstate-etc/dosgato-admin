@@ -34,12 +34,12 @@
     )
   }
 
-  const store: TreeStore<UserListUser> = new TreeStore(fetchChildren)
+  const store = new TreeStore<UserListUser>(fetchChildren)
   const { filteredRootItems } = store
 
   function singleactions (user: TypedUserItem) {
     const actions: ActionPanelAction[] = [
-      { label: 'Edit', icon: pencilIcon, disabled: !user.permissions.update, onClick: () => goto(base + '/auth/users/' + user.id) }
+      { label: 'Edit', icon: pencilIcon, disabled: !user.permissions.update, onClick: async () => await goto(base + '/auth/users/' + user.id) }
     ]
     if (user.disabled) actions.push({ id: 'enabledisable', label: 'Enable', icon: accountCheck, disabled: !user.permissions.disable, onClick: () => modalContext.setModal('enable') })
     else actions.push({ id: 'enabledisable', label: 'Disable', icon: accountCancel, disabled: !user.permissions.disable, onClick: () => modalContext.setModal('disable') })
@@ -56,19 +56,19 @@
   const emptyactions: ActionPanelAction[] = [
     { label: 'Create', icon: accountPlus, disabled: !$globalStore.access.createUsers, onClick: () => modalContext.setModal('create') }
   ]
-  if (!system) emptyactions.push({ label: 'Download CSV', icon: downloadIcon, disabled: !$globalStore.access.createUsers, onClick: () => { downloadUserEmails() } })
+  if (!system) emptyactions.push({ label: 'Download CSV', icon: downloadIcon, disabled: !$globalStore.access.createUsers, onClick: () => { void downloadUserEmails() } })
 
   async function onDisable () {
     const resp = await api.disableUsers($store.selectedItems.map(u => u.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target, { id: uiLog.targetFromTreeStore($store, 'id') })
-    if (resp.success) store.refresh()
+    if (resp.success) void store.refresh()
     modalContext.reset()
   }
 
   async function onEnable () {
     const resp = await api.enableUsers($store.selectedItems.map(u => u.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target, { id: uiLog.targetFromTreeStore($store, 'id') })
-    if (resp.success) store.refresh()
+    if (resp.success) void store.refresh()
     modalContext.reset()
   }
 
@@ -97,7 +97,7 @@
 
   function onCreateComplete () {
     modalContext.reset()
-    store.refresh()
+    void store.refresh()
   }
 
   export async function buildEmailCSV () {
@@ -125,7 +125,7 @@
   // $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'id')
 </script>
 <ActionPanel {actions} actionsTitle={$store.selected.size ? $store.selectedItems[0].id : 'Users'} filterinput on:filter={e => { filter = e.detail }}>
-  <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/users/' + detail.id)} headers={[
+  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/users/' + detail.id)} headers={[
     { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', fixed: '10em', icon: u => ({ icon: u.disabled ? accountOff : accountIcon }) },
     { id: 'fullname', label: 'Full Name', get: 'name', fixed: '17em' },
     { id: 'roles', label: 'Roles', render: renderRoles, grow: 5 }

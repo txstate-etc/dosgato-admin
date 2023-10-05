@@ -7,14 +7,14 @@
   export let roleId: string
   export let siteChoices: PopupMenuItem[]
   export let preload: SiteRulePreload | undefined = undefined
-  export let ruleId: string|undefined = undefined
+  export let ruleId: string | undefined = undefined
 
   const name = ruleId ? 'editsiterule' : 'addsiterule'
   const title = ruleId ? 'Edit Site Rule' : 'Add Site Rule'
 
   interface SiteRulePreload {
     siteId?: string
-    grants : {
+    grants: {
       launch: boolean
       rename: boolean
       governance: boolean

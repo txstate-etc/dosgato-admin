@@ -10,7 +10,7 @@
   export let buttonelement: HTMLButtonElement | HTMLElement | undefined = undefined
 
   const dispatch = createEventDispatcher()
-  const { getTarget } = getContext('LabeledIconButtonTarget') as { getTarget: () => string | undefined }
+  const { getTarget } = getContext<any>('LabeledIconButtonTarget')
 
   function logInteraction () {
     uiLog.log({ eventType: 'LabeledIconButton', action: label }, getTarget())
@@ -19,7 +19,7 @@
 
 </script>
 
-<button type="button" bind:this={buttonelement} class="reset"  style:max-width="calc(1.2 * {size})"
+<button type="button" bind:this={buttonelement} class="reset" style:max-width="calc(1.2 * {size})"
  on:click={() => logInteraction()} >
   <Icon {icon} width={size} />
   <div style:font-size="calc(0.3 * {size})">{label}</div>

@@ -29,8 +29,8 @@
   $: dataTemplateOptions = templates.filter(t => t.type === 'DATA').map(t => ({ label: t.name, value: t.key }))
 
   type Modals = 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' | 'assignrole' |
-    'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | 'assigntogroup' |
-    'addsiterule' | 'editsiterule' | 'addtemplaterule' | 'assigntouser' | 'unassignfromuser' | 'addeditorrule' | 'addadminrule'
+  'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | 'assigntogroup' |
+  'addsiterule' | 'editsiterule' | 'addtemplaterule' | 'assigntouser' | 'unassignfromuser' | 'addeditorrule' | 'addadminrule'
   const modalContext = new ModalContextStore<Modals>()
 
   const panelHeaderColor = '#C2BCD2'
@@ -127,16 +127,16 @@
 
   function onSaved () {
     modalContext.reset()
-    store.refresh($store.role.id)
+    void store.refresh($store.role.id)
   }
 
   async function onDeleteRule () {
     if (!$store.editing) return
-    const editingType = $store.editing.type.toLocaleUpperCase() as 'GLOBAL'|'SITE'|'PAGE'|'TEMPLATE'|'ASSET'|'DATA'
+    const editingType = $store.editing.type.toLocaleUpperCase() as 'GLOBAL' | 'SITE' | 'PAGE' | 'TEMPLATE' | 'ASSET' | 'DATA'
     const resp = await api.removeRule($store.editing.id, editingType)
     modalContext.logModalResponse(resp, $store.editing.id, { type: editingType })
     if (resp.success) {
-      store.refresh($store.role.id)
+      void store.refresh($store.role.id)
     }
     store.resetRuleEditing()
     modalContext.reset()

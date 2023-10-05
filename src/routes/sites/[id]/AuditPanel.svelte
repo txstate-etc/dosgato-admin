@@ -15,7 +15,7 @@
   if (mayAddComments) auditPanelButtons.push({ icon: plusIcon, hiddenLabel: 'add comment', onClick: () => { dispatch('addauditcomment') } })
   auditPanelButtons.push({ icon: downloadIcon, hiddenLabel: 'Download Audit Log', onClick: () => { dispatch('downloadaudit') } })
 </script>
-<DetailPanel header="Audit"  {headerColor} button={auditPanelButtons}>
+<DetailPanel header="Audit" {headerColor} button={auditPanelButtons}>
   <DetailPanelSection>
     {#if comments.length}
       <ul use:eq>

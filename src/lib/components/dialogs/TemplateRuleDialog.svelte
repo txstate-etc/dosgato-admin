@@ -4,7 +4,7 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
 
   export let roleId: string
-  export let preload: TemplateRuleDialogState|undefined = undefined
+  export let preload: TemplateRuleDialogState | undefined = undefined
   export let templateChoices: PopupMenuItem[]
 
   const name = 'addtemplaterule'

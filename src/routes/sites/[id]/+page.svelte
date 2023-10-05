@@ -25,7 +25,7 @@
   export let data: { organizations: Organization[], users: UserListUser[], allPageTemplates: TemplateListTemplate[], allComponentTemplates: TemplateListTemplate[] }
 
   type Modals = 'editbasic' | 'editsitemanagement' | 'editlaunch' | 'addcomment' | 'addpagetree' | 'editpagetree' | 'deletepagetree' | 'authorizetemplate' |
-    'promotepagetree' | 'archivepagetree' | 'edittemplates' | 'addpagetemplates' | 'addcomponenttemplates' | 'deletetemplateauth' | 'downloadcsv'
+  'promotepagetree' | 'archivepagetree' | 'edittemplates' | 'addpagetemplates' | 'addcomponenttemplates' | 'deletetemplateauth' | 'downloadcsv'
   const modalContext = new ModalContextStore<Modals>(undefined, () => $store.site.name)
 
   $: authorizedPageTemplateKeys = new Set($store.pageTemplates.map(t => t.key))
@@ -53,7 +53,7 @@
     const resp = await api.addSiteComment($store.site.id, state.comment)
     modalContext.logModalResponse(resp, $store.site.id, { comment: state.comment })
     if (resp.success) {
-      store.refresh($store.site.id)
+      void store.refresh($store.site.id)
       modalContext.reset()
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
@@ -72,7 +72,7 @@
     const resp = await api.renameSite($store.site.id, state.name, false)
     modalContext.logModalResponse(resp, $store.site.id, { oldName: $store.site.name, newName: state.name })
     if (resp.success) {
-      store.refresh($store.site.id)
+      void store.refresh($store.site.id)
       modalContext.reset()
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
@@ -82,7 +82,7 @@
     const resp = await api.updateSiteManagement($store.site.id, state.organization, state.owner, state.managers)
     modalContext.logModalResponse(resp, $store.site.id, { organization: state.organization, owner: state.owner, managers: state.managers })
     if (resp.success) {
-      store.refresh($store.site.id)
+      void store.refresh($store.site.id)
       modalContext.reset()
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
@@ -92,7 +92,7 @@
     const resp = await api.setLaunchURL($store.site.id, state.host, state.path, state.enabled ?? false)
     modalContext.logModalResponse(resp, $store.site.id, { host: state.host, path: state.path, enabled: state.enabled })
     if (resp.success) {
-      store.refresh($store.site.id)
+      void store.refresh($store.site.id)
       modalContext.reset()
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
@@ -114,7 +114,7 @@
   }
 
   function onAddPagetreeComplete () {
-    store.refresh($store.site.id)
+    void store.refresh($store.site.id)
     modalContext.reset()
   }
 
@@ -131,7 +131,7 @@
     const resp = await api.updatePagetree($store.editingPagetree.id, state.name)
     modalContext.logModalResponse(resp, $store.editingPagetree.id, { oldName: $store.editingPagetree.name, newName: state.name })
     if (resp.success) {
-      store.refresh($store.site.id)
+      void store.refresh($store.site.id)
       store.cancelEditPagetree()
       modalContext.reset()
     }
@@ -151,7 +151,7 @@
     const resp = await api.deletePagetree($store.editingPagetree.id)
     modalContext.logModalResponse(resp, $store.editingPagetree.id)
     if (resp.success) {
-      store.refresh($store.site.id)
+      void store.refresh($store.site.id)
       store.cancelEditPagetree()
       modalContext.reset()
     }
@@ -171,7 +171,7 @@
     const resp = await api.promotePagetree($store.editingPagetree.id)
     modalContext.logModalResponse(resp, $store.editingPagetree.id)
     if (resp.success) {
-      store.refresh($store.site.id)
+      void store.refresh($store.site.id)
       store.cancelEditPagetree()
       modalContext.reset()
     }
@@ -191,7 +191,7 @@
     const resp = await api.archivePagetree($store.editingPagetree.id)
     modalContext.logModalResponse(resp, $store.editingPagetree.id)
     if (resp.success) {
-      store.refresh($store.site.id)
+      void store.refresh($store.site.id)
       store.cancelEditPagetree()
       modalContext.reset()
     }
@@ -214,7 +214,7 @@
       const resp = await api.authorizeTemplateForSite($store.templateAuthEditing.key, $store.site.id)
       modalContext.logModalResponse(resp, $store.site.id, { templateKey: $store.templateAuthEditing.key })
       if (resp.success) {
-        store.refresh($store.site.id)
+        void store.refresh($store.site.id)
         modalContext.reset()
       }
       return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
@@ -222,7 +222,7 @@
       const resp = await api.authorizeTemplateForPagetrees($store.templateAuthEditing.key, state.pagetrees)
       modalContext.logModalResponse(resp, state.pagetrees, { templateKey: $store.templateAuthEditing.key })
       if (resp.success) {
-        store.refresh($store.site.id)
+        void store.refresh($store.site.id)
         store.cancelEditTemplateAuth()
         modalContext.reset()
       }
@@ -251,7 +251,7 @@
       modalContext.logModalResponse(resp, state.pagetrees, { templateKey: $store.templateAuthEditing.key })
     }
     if (resp.success) {
-      store.refresh($store.site.id)
+      void store.refresh($store.site.id)
       store.cancelEditTemplateAuth()
       modalContext.reset()
     }
@@ -273,7 +273,7 @@
     const resp = await api.deauthorizeTemplate($store.templateAuthEditing.key, $store.site.id)
     modalContext.logModalResponse(resp, $store.site.id, { templateKey: $store.templateAuthEditing.key })
     if (resp.success) {
-      store.refresh($store.site.id)
+      void store.refresh($store.site.id)
       store.cancelEditTemplateAuth()
       modalContext.reset()
     }
@@ -283,13 +283,13 @@
   function getPagetreeActions (pagetree) {
     const actions: SortableTableRowAction[] = []
     if (pagetree.type === 'SANDBOX' && pagetree.permissions.promote) {
-      actions.push({ icon: launchIcon, label: 'Promote to Primary', hiddenLabel: (tree) => `Promote pagetree ${tree.name} to primary`, onClick: (tree) => onClickPromotePagetree(tree.id, tree.name) })
+      actions.push({ icon: launchIcon, label: 'Promote to Primary', hiddenLabel: (tree) => `Promote pagetree ${tree.name} to primary`, onClick: async (tree) => await onClickPromotePagetree(tree.id, tree.name) })
     }
     if (pagetree.type === 'SANDBOX' && pagetree.permissions.archive) {
-      actions.push({ icon: archiveOutline, label: 'Archive', hiddenLabel: (tree) => `Archive pagetree ${tree.name}`, onClick: (tree) => onClickArchivePagetree(tree.id, tree.name) })
+      actions.push({ icon: archiveOutline, label: 'Archive', hiddenLabel: (tree) => `Archive pagetree ${tree.name}`, onClick: async (tree) => await onClickArchivePagetree(tree.id, tree.name) })
     }
     if (pagetree.type !== 'PRIMARY' && pagetree.permissions.delete) {
-      actions.push({ icon: deleteOutline, label: 'Delete', hiddenLabel: (tree) => `Delete pagetree ${tree.name}`, onClick: (tree) => onClickDeletePagetree(tree.id, tree.name) })
+      actions.push({ icon: deleteOutline, label: 'Delete', hiddenLabel: (tree) => `Delete pagetree ${tree.name}`, onClick: async (tree) => await onClickDeletePagetree(tree.id, tree.name) })
     }
     return actions
   }
@@ -374,7 +374,7 @@
       </DetailPanel>
       <DetailPanel header='Site Stages' headerColor={panelHeaderColor} button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => modalContext.setModal('addpagetree') } : undefined}>
         <DetailPanelSection>
-          <SortableTable  items={$store.site.pagetrees} headers={[
+          <SortableTable items={$store.site.pagetrees} headers={[
             { id: 'name', label: 'Name', get: 'name', widthPercent: 65 },
             { id: 'stage', label: 'Stage', render: (tree) => titleCase(tree.type), widthPercent: 15 },
             { id: 'actions', label: 'pagetree actions', hideHeader: true, actions: (tree) => getPagetreeActions(tree), combinedActionsLabel: 'Manage', widthPercent: 20 }
@@ -382,7 +382,7 @@
         </DetailPanelSection>
       </DetailPanel>
       <div class="audit-panel">
-        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} mayAddComments={$store.site.permissions.manageGovernance} on:addauditcomment={() => { modalContext.setModal('addcomment') } } on:downloadaudit={() => downloadComments() }/>
+        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} mayAddComments={$store.site.permissions.manageGovernance} on:addauditcomment={() => { modalContext.setModal('addcomment') } } on:downloadaudit={async () => await downloadComments() }/>
       </div>
     </div>
     <div class="vertical-group">
@@ -408,18 +408,18 @@
           <div class="templates-mobile">
             <Tabs tabs={[{ name: 'Page templates' }, { name: 'Component templates' }]} accordionOnMobile={false}>
               <Tab name="Page templates">
-                <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={(e) => onClickEditTemplateAuth(e)} on:removeauth={(e) => onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+                <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
               </Tab>
               <Tab name="Component templates">
-                <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={(e) => onClickEditTemplateAuth(e)} on:removeauth={(e) => onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+                <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
               </Tab>
             </Tabs>
           </div>
           <div class="templates-desktop">
             <h3 class="template-header">Page templates</h3>
-            <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={(e) => onClickEditTemplateAuth(e)} on:removeauth={(e) => onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+            <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
             <h3 class="template-header">Specially authorized component templates</h3>
-            <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={(e) => onClickEditTemplateAuth(e)} on:removeauth={(e) => onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+            <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
           </div>
         </DetailPanelSection>
       </DetailPanel>

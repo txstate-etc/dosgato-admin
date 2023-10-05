@@ -20,7 +20,7 @@
     return await api.getRoleList()
   }
 
-  const store: TreeStore<RoleListRole> = new TreeStore(fetchChildren)
+  const store = new TreeStore<RoleListRole>(fetchChildren)
 
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [
@@ -57,14 +57,14 @@
   }
 
   function onCompleteAddRole () {
-    store.refresh()
+    void store.refresh()
     modalContext.reset()
   }
 
   async function onDeleteRole () {
     const resp = await api.deleteRole($store.selectedItems[0].id)
     modalContext.logModalResponse(resp, actionPanelTarget.target)
-    if (resp.success) store.refresh()
+    if (resp.success) void store.refresh()
     modalContext.reset()
   }
 
@@ -74,7 +74,7 @@
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Roles'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()} filterinput on:filter={e => { filter = e.detail }}>
-  <Tree singleSelect {store} on:choose={({ detail }) => goto(base + '/auth/roles/' + detail.id)} headers={[
+  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/roles/' + detail.id)} headers={[
     { id: 'name', label: 'Name', get: 'name', grow: 4, icon: { icon: keyIcon } }
   ]} searchable='name' {filter} enableResize>
   </Tree>

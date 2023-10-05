@@ -9,7 +9,7 @@
   export let templateChoices: PopupMenuItem[]
   export let roleId: string
   export let preload: DataRulePreload | undefined = undefined
-  export let ruleId: string|undefined = undefined
+  export let ruleId: string | undefined = undefined
 
   const name = ruleId ? 'editdatarule' : 'adddatruale'
   const title = ruleId ? 'Edit Data Rule' : 'Add Data Rule'
@@ -19,7 +19,7 @@
     global: boolean
     path?: string
     templateId?: string
-    grants : {
+    grants: {
       create: boolean
       update: boolean
       move: boolean

@@ -43,7 +43,7 @@
       }
     }
   }
-  $: reactToPreviewing(version)
+  $: void reactToPreviewing(version)
 </script>
 
 {#if version}

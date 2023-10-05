@@ -189,7 +189,7 @@
     }
   }
 
-  const store: TreeStore<AnyDataTreeItem> = new TreeStore(fetchChildren, { moveHandler, dragEligible, dropEffect })
+  const store = new TreeStore<AnyDataTreeItem>(fetchChildren, { moveHandler, dragEligible, dropEffect })
 
   function singleActions (item: TypedDataTreeItem) {
     if (item.type === 'data') {
@@ -198,7 +198,7 @@
       ]
       if ($store.copied.size) {
         actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
-        actions.push({ label: 'Move Above', hiddenLabel: `Move above ${item.name}`, disabled: !store.pasteEligible(true), onClick: () => { store.paste(true, false) }, icon: contentPaste })
+        actions.push({ label: 'Move Above', hiddenLabel: `Move above ${item.name}`, disabled: !store.pasteEligible(true), onClick: () => { void store.paste(true, false) }, icon: contentPaste })
       } else {
         actions.push({ label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() })
       }
@@ -219,7 +219,7 @@
         { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => modalContext.setModal('adddata') },
         { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => modalContext.setModal('deletefolder') },
         { label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} },
-        { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { store.paste() } }
+        { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { void store.paste() } }
       ]
     } else {
       return [
@@ -270,7 +270,7 @@
   }
 
   async function onAddFolder (state) {
-    const siteId: string|undefined = ($store.selectedItems[0] as TreeDataRoot).siteId
+    const siteId: string | undefined = ($store.selectedItems[0] as TreeDataRoot).siteId
     const resp = await api.addDataFolder(state.name, templateKey, siteId)
     modalContext.logModalResponse(resp, resp.dataFolder?.name, { parent: actionPanelTarget.target })
     return {
@@ -285,12 +285,12 @@
   }
 
   async function onAddFolderComplete () {
-    store.openAndRefresh($store.selectedItems[0])
+    void store.openAndRefresh($store.selectedItems[0])
     modalContext.reset()
   }
 
   async function validateFolder (state) {
-    const siteId: string|undefined = ($store.selectedItems[0] as TreeDataRoot).siteId
+    const siteId: string | undefined = ($store.selectedItems[0] as TreeDataRoot).siteId
     const resp = await api.addDataFolder(state.name, templateKey, siteId, true)
     return messageForDialog(resp.messages, 'args')
   }
@@ -298,7 +298,7 @@
   async function onDeleteFolder () {
     const resp = await api.deleteDataFolders($store.selectedItems.map(f => f.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target)
-    if (resp.success) store.refresh()
+    if (resp.success) void store.refresh()
     modalContext.reset()
   }
 
@@ -324,20 +324,20 @@
   async function onPublishData () {
     const resp = await api.publishDataEntries($store.selectedItems.map(d => d.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target)
-    if (resp.success) store.refresh()
+    if (resp.success) void store.refresh()
     modalContext.reset()
   }
 
   async function onUnpublishData () {
     const resp = await api.unpublishDataEntries($store.selectedItems.map(d => d.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target)
-    if (resp.success) store.refresh()
+    if (resp.success) void store.refresh()
     modalContext.reset()
   }
 
   function getSiteAndFolder () {
-    let siteId: string|undefined
-    let folderId: string|undefined
+    let siteId: string | undefined
+    let folderId: string | undefined
     const selected = $store.selectedItems[0]
     if (selected.type === 'root') {
       siteId = selected.siteId
@@ -366,7 +366,7 @@
       messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')],
       data: resp.success
         ? {
-            name: resp.data!.name,
+            name: resp.data.name,
             data: state
           }
         : state
@@ -374,7 +374,7 @@
   }
 
   async function onAddDataComplete () {
-    store.openAndRefresh($store.selectedItems[0])
+    void store.openAndRefresh($store.selectedItems[0])
     modalContext.reset()
   }
 
@@ -403,7 +403,7 @@
   }
 
   function onSaved () {
-    store.refresh()
+    void store.refresh()
     modalContext.reset()
     if (itemEditing) itemEditing = undefined
   }
@@ -411,29 +411,29 @@
   async function onDeleteData () {
     const resp = await api.deleteDataEntries($store.selectedItems.map(d => d.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target)
-    if (resp.success) store.refresh()
+    if (resp.success) void store.refresh()
     modalContext.reset()
   }
 
   async function onPublishDeletion () {
     const resp = await api.publishDeleteData($store.selectedItems.map(d => d.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target)
-    if (resp.success) store.refresh()
+    if (resp.success) void store.refresh()
     modalContext.reset()
   }
 
   async function onUndeleteData () {
     const resp = await api.undeleteData($store.selectedItems.map(d => d.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target)
-    if (resp.success) store.refresh()
+    if (resp.success) void store.refresh()
     modalContext.reset()
   }
 
-  afterNavigate(() => store.refresh().catch(console.error))
+  afterNavigate(() => { store.refresh().catch(console.error) })
 
 
   function getIcon (c: NonNullable<EnhancedDataTemplate['columns']>[0]) {
-    if (!c || !c.icon) return undefined
+    if (!c?.icon) return undefined
     return (item: TypedTreeItem<TreeDataItem>) => {
       const icon = c.icon!(item.data)
       return icon ? { icon } : undefined
