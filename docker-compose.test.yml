@@ -16,11 +16,6 @@ services:
       - ./static:/usr/app/static
       - ./svelte.config.js:/usr/app/svelte.config.js
       - ./vite.config.js:/usr/app/vite.config.js
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/.admin"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
   dosgato-api-test:
     build:
       context: ../dosgato
@@ -47,11 +42,6 @@ services:
       - ../dosgato/bootstrap:/bootstrap
     depends_on:
       - mysql-test
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
   dosgato-render-test:
     build:
       context: ../dosgato-render
@@ -69,11 +59,6 @@ services:
       - ../dosgato-render/test:/usr/app/test
     depends_on:
       - dosgato-api-test
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
   dosgato-proxy-test:
     build:
       dockerfile: proxy/Dockerfile
