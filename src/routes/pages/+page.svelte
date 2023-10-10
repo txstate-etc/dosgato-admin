@@ -410,3 +410,10 @@
     on:escape={modalContext.onModalEscape}
     on:saved={onImportSaved} />
 {/if}
+
+<style>
+  :global(.tree-node[tabindex="0"]) :global(.page-name) {
+    word-wrap: break-word;
+    white-space: normal;
+  }
+</style>
