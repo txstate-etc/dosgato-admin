@@ -3,13 +3,16 @@ services:
   dosgato-admin-test:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     ports:
       - 127.0.0.1:3000:80
+    logging:
+      driver: none
     environment:
       API_BASE: /.api
       RENDER_BASE: ""
       AUTH_REDIRECT: http://fakeauth-test/login?clientId=dosgato-admin-test
+      ADMIN_ALLOW_HOST_REGEX: 'dosgato-proxy-test|localhost'
       TRACING_SERVER: http://localhost:8200
     volumes:
       - ./src:/usr/app/src
@@ -48,6 +51,8 @@ services:
     ports:
       - 127.0.0.1:3002:80
       - 127.0.0.1:9230:9229
+    logging:
+      driver: none
     environment:
       VALID_ORIGIN_HOSTS: 'dosgato-admin-test,dosgato-api-test,dosgato-render-test'
       NODE_ENV: development
@@ -102,4 +107,3 @@ services:
 volumes:
   dosgatodbtest: {}
   dosgatofilestest: {}
-
