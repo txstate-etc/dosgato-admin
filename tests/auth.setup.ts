@@ -5,20 +5,21 @@ import { adminSession, adminStorageState, editorSession, editorStorageState } fr
 
 // used fixtures to get context setup for sessionStorage, need to figure out if 'setup' could resolve multi-workers running.
 
-setup('authenticate', async ({ browser }) => {
+setup('authenticate', async ({ browser, baseURL }) => {
   await serverStartupCheck()
-  await login ('system', 'admin', await browser.newPage(), adminSession, adminStorageState )
-  await login ('su01', 'editor', await browser.newPage(), editorSession, editorStorageState )
+  await login ('system', 'admin', await browser.newPage(), adminSession, adminStorageState , baseURL)
+  await login ('su01', 'editor', await browser.newPage(), editorSession, editorStorageState , baseURL)
 })
 
-async function login (user: string, role: string, page: Page, sessionFilePath: string, storageStateFilePath: string ) {
+async function login (user: string, role: string, page: Page, sessionFilePath: string, storageStateFilePath: string, baseURL: string | undefined) {
   const loginPath = process.env.AUTH_REDIRECT ?? ''
   await page.goto(loginPath)
   await page.waitForSelector('div.login-page')
   await page.getByPlaceholder('username').fill(user)
   await page.getByRole('button', { name: 'login' }).click()
-
-  await page.waitForSelector('div.topbar')
+  await expect(page).toHaveURL(new RegExp(`^${baseURL??''}\/.admin/`))
+  const adminpage = page.locator('div.topbar')
+  await adminpage.waitFor({timeout: 30000})
   await expect(page).toHaveTitle('DEV DG Editing')
   await expect(page.getByRole('link', { name: 'Pages' }).first()).toBeVisible()
 
