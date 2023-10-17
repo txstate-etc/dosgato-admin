@@ -10,7 +10,8 @@ export default defineConfig({
   timeout: 60000,
   workers:  1,
   reporter: [
-    ['list', { printSteps: true }],
+    ['./tests/test.reporter.ts'],
+    ['list', { printSteps: false }],
     ['html', { open: 'on-failure', outputFolder: './tests/report' }]],
   use: {
     baseURL: 'http://dosgato-proxy-test',

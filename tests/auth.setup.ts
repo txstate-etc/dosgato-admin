@@ -3,14 +3,6 @@ import * as fs from 'fs'
 import { serverStartupCheck } from './server.startup.check'
 import { adminSession, adminStorageState, editorSession, editorStorageState } from './constants'
 
-// used fixtures to get context setup for sessionStorage, need to figure out if 'setup' could resolve multi-workers running.
-
-setup('authenticate', async ({ browser, baseURL }) => {
-  await serverStartupCheck()
-  await login ('system', 'admin', await browser.newPage(), adminSession, adminStorageState , baseURL)
-  await login ('su01', 'editor', await browser.newPage(), editorSession, editorStorageState , baseURL)
-})
-
 async function login (user: string, role: string, page: Page, sessionFilePath: string, storageStateFilePath: string, baseURL: string | undefined) {
   const loginPath = process.env.AUTH_REDIRECT ?? ''
   await page.goto(loginPath)
@@ -31,3 +23,17 @@ async function login (user: string, role: string, page: Page, sessionFilePath: s
   // await page.goto(`${process.env.RENDER_BASE}/.token?token=${token}`)
   await page.context().storageState({ path: storageStateFilePath })
 }
+
+// used fixtures to get context setup for sessionStorage, need to figure out if 'setup' could resolve multi-workers running.
+setup.beforeAll(async () => {
+  await serverStartupCheck()
+})
+
+setup.describe('Authentications', () => {
+  setup('log in as an admin', async ({browser, baseURL}) => {
+    await login ('system', 'admin', await browser.newPage(), adminSession, adminStorageState , baseURL)
+  })
+  setup('log in as an editor', async ({browser, baseURL}) => {
+    await login ('su01', 'editor', await browser.newPage(), editorSession, editorStorageState , baseURL)
+  })
+})

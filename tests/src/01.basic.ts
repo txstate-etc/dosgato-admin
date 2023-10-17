@@ -1,7 +1,7 @@
 import { test, expect } from '../fixtures'
 
 test.describe('basic', () => {
-  test('confirm logged in', async ({ adminPage, editorPage }) => {
+  test('should be logged in', async ({ adminPage, editorPage }) => {
     await adminPage.page.goto('/.admin/pages')
     await expect(adminPage.page).toHaveTitle('DEV DG Editing')
     await expect(adminPage.greeting).toContainText('System User')
@@ -9,19 +9,19 @@ test.describe('basic', () => {
     await expect(editorPage.page).toHaveTitle('DEV DG Editing')
     await expect(editorPage.greeting).toContainText('Michael Scott')
   })
-  test('browse', async ({ adminPage }) => {
+  test('should be able to browse admin pages', async ({ adminPage }) => {
     const page = adminPage.page
     await page.goto('/.admin/pages')
     await page.getByText('Basketry Home', { exact: true }).click()
     await page.getByText('about', { exact: true }).click()
     await expect(page.getByRole('tree').getByText('people', { exact: true })).toBeVisible()
   })
-  test('render', async ({ adminPage }) => {
+  test('should be able to render a page', async ({ adminPage }) => {
     const page = adminPage.page
     await page.goto('/.edit/bs-site')
     await expect(page.getByRole('button', { name: 'Add Main Content' })).toBeVisible()
   })
-  test('edit', async ({ adminPage }) => {
+  test('should be able to edit a page', async ({ adminPage }) => {
     const page = adminPage.page
     await page.goto('/.admin/pages')
     await page.waitForURL(/pages/)
