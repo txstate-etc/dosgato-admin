@@ -55,8 +55,19 @@ but require adding following line in your /etc/hosts:
 
 > Note: A proxy instance was added to resolve CORS issue in order to save and reuse cookies generated while using render service.
 
-
+###Test run
 To build test environment and run the test, simply run this script:
 ```bash
 ./test.sh
 ```
+###Test data
+Following folders are generated and reset everytime test.sh runs. 
+
+```bash
+ tests/.auth
+ tests/artifacts
+ tests/report
+```
+To view the report in html, in vscode, right click on tests/report/index.html and choose `Open with Live Server` on the top.
+
+> Files generated under tests/.auth are tokens and cookies that were saved for each authenticated users and were reused in the test cases.
