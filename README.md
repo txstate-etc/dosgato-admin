@@ -55,12 +55,12 @@ but require adding following line in your /etc/hosts:
 
 > Note: A proxy instance was added to resolve CORS issue in order to save and reuse cookies generated while using render service.
 
-###Test run
+### Test run
 To build test environment and run the test, simply run this script:
 ```bash
 ./test.sh
 ```
-###Test data
+### Test data
 Following folders are generated and reset everytime test.sh runs. 
 
 ```bash
