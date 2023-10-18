@@ -38,3 +38,25 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+
+## Test
+
+There is a test suite created under dosgato-admin/tests using playwright testing framework. It allows tests to be created for the admin UI and run cross most browsers and mobile devices.
+
+Test suite configuration is in playwight.config.js. Setting up test options for whole suites and each project.
+
+Tests will be executed in the order of the files under tests/src.
+
+### Test Server setup
+For test run, there is a set of test server docker instances configured in docker-compose.test.yml and a test container dosgato-e2e-test that will run all the tests against test server.  The test server app can also be accessed locally via
+`http://localhost/.admin`
+but require adding following line in your /etc/hosts:
+ `127.0.0.1 fakeauth-test`
+
+> Note: A proxy instance was added to resolve CORS issue in order to save and reuse cookies generated while using render service.
+
+
+To build test environment and run the test, simply run this script:
+```bash
+./test.sh
+```
