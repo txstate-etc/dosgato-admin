@@ -29,7 +29,6 @@ services:
       - 127.0.0.1:8080:80
       - 127.0.0.1:9229:9229
     environment:
-      VALID_ORIGIN_HOSTS: 'dosgato-admin-test,dosgato-render-test,dosgato-api-test'
       NODE_ENV: development
       TZ: America/Chicago
       MYSQL_USER: dosgato
@@ -54,7 +53,6 @@ services:
     logging:
       driver: none
     environment:
-      VALID_ORIGIN_HOSTS: 'dosgato-admin-test,dosgato-api-test,dosgato-render-test'
       NODE_ENV: development
       DOSGATO_RENDER_JWT_SECRET: rendertoken
       DOSGATO_API_BASE: http://dosgato-api-test
@@ -76,7 +74,6 @@ services:
     image: registry.its.txstate.edu/unified-auth-stub:dev
     ports:
       - 127.0.0.1:3001:80
-      #- 3001:80
   mysql-test:
     image: mariadb
     command: --max_allowed_packet=32505856
