@@ -592,6 +592,7 @@
     border: 0px;
     cursor: pointer;
     margin-left: 0.5em;
+    color: black;
   }
   :global(.inactive) {
     text-decoration: line-through;

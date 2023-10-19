@@ -369,6 +369,13 @@
     justify-content: center;
     container-type: inline-size;
     container-name: chooser-button;
+    color: black;
+    border-radius: 0.25em;
+    border: 1px solid #808080;
+    background-color: #ebebeb;
+  }
+  .component-chooser button:hover {
+    background-color: #d6d6d6;
   }
   .chooser-icon {
     height: 60%;
@@ -412,6 +419,11 @@
   .page-bar-version {
     font-size: 0.9em;
     margin-left: 0.5em;
+  }
+  .page-bar .user-button {
+    color: black;
+    border-radius: 2px;
+    border: 1px solid #757575;
   }
   .status {
     font-size: 0.9em;

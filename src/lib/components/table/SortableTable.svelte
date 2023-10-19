@@ -119,6 +119,7 @@
   .sort-button {
     border: 0;
     background-color: transparent;
+    color: black;
   }
   tbody tr { border-bottom: 1px dashed #707070 }
   tbody tr td { padding: 0.5em 0; }

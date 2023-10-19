@@ -51,6 +51,7 @@
   button {
     border: 0;
     background-color: transparent;
+    color: black;
   }
   .actions-container {
     display: flex;

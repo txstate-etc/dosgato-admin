@@ -32,6 +32,7 @@
     padding: 0;
     display: flex;
     align-items: center;
+    color: black;
   }
   button.shown {
     padding-bottom: 0.5em;

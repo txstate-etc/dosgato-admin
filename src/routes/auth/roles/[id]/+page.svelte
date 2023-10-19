@@ -453,6 +453,12 @@
     grid-template-columns: 1fr 1fr 1fr;
     gap: 1em;
   }
+  .button-container button {
+    color: black;
+    border-radius: 0.25em;
+    border: 1px solid #808080;
+    background-color: #ebebeb;
+  }
   .mobile-layout {
     display: none;
   }
