@@ -9,12 +9,15 @@ test.describe('basic', () => {
     await expect(editorPage.page).toHaveTitle('DEV DG Editing')
     await expect(editorPage.greeting).toContainText('Michael Scott')
   })
-  test('should be able to browse admin pages', async ({ adminPage }) => {
+  test('should be able to browse admin pages', async ({ adminPage, isMobile }) => {
     const page = adminPage.page
     await page.goto('/.admin/pages')
-    await page.getByText('Basketry Home', { exact: true }).click()
+    if (isMobile) {
+      expect(await page.getByText('Basketry Home').isHidden()).toBeTruthy()
+      await page.getByText('site1', { exact: true }).click()
+    } else { await page.getByText('Basketry Home', { exact: true }).click() }
     await page.getByText('about', { exact: true }).click()
-    await expect(page.getByRole('tree').getByText('people', { exact: true })).toBeVisible()
+    await expect(page.getByRole('treeitem').getByText('people', { exact: true })).toBeVisible()
   })
   test('should be able to render a page', async ({ adminPage }) => {
     const page = adminPage.page
