@@ -21,7 +21,7 @@
   import type { DataData } from '@dosgato/templating'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
-  import { htmlEncode, unique, get } from 'txstate-utils'
+  import { htmlEncode, unique, get, isNull } from 'txstate-utils'
   import { api, ActionPanel, messageForDialog, type DataItem, type DataFolder, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, uiLog, ModalContextStore, type EnhancedDataTemplate, dateStamp, dateStampShort, type DataRoot } from '$lib'
   import { afterNavigate } from '$app/navigation'
   import { setContext } from 'svelte'
@@ -382,6 +382,7 @@
 
   async function onClickEdit () {
     itemEditing = await api.getDataEntryById($store.selectedItems[0].id)
+    if (isNull(itemEditing) || isNull(itemEditing.data?.templateKey)) return
     modalContext.setModal('editdata')
   }
 
