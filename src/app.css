@@ -67,17 +67,3 @@ button.reset {
 [data-eq~="700px"] .tree-node .status {
     width: 3.2em !important;
 }
-[data-eq~="600px"] .tree-node .template,
-[data-eq~="600px"] .tree-header .template,
-[data-eq~="400px"] .tree-node .title,
-[data-eq~="400px"] .tree-header .title,
-[data-eq~="500px"] .tree-node .modified,
-[data-eq~="500px"] .tree-header .modified,
-[data-eq~="400px"] .tree-node .size,
-[data-eq~="400px"] .tree-header .size,
-[data-eq~="800px"] .tree-node .type,
-[data-eq~="800px"] .tree-header .type,
-[data-eq~="500px"] .tree-node .modifiedBy,
-[data-eq~="500px"] .tree-header .modifiedBy {
-    display: none;
-}
