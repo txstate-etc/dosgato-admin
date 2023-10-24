@@ -59,11 +59,3 @@ button.reset {
 [data-eq~="700px"] .tree-node .modified span.short {
   display: block;
 }
-[data-eq~="700px"] .tree-header .modified,
-[data-eq~="700px"] .tree-node .modified {
-    width: 7em !important;
-}
-[data-eq~="700px"] .tree-header .status,
-[data-eq~="700px"] .tree-node .status {
-    width: 3.2em !important;
-}

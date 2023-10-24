@@ -233,12 +233,6 @@
     flex-basis: max-content;
   }
   .subnav li.overflow {
-    /*
-    position: absolute;
-    top: 50%;
-    right: 0.3em;
-    transform: translateY(-50%);
-    */
     min-width: 2em;
     display: flex;
     align-items: center;
@@ -248,6 +242,7 @@
     background: none;
     cursor: pointer;
     border: 0;
+    color: black;
   }
   .subnav li a {
     display: block;
