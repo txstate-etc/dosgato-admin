@@ -1,5 +1,5 @@
 FROM node:16
-FROM mcr.microsoft.com/playwright:v1.38.1-focal
+FROM mcr.microsoft.com/playwright:v1.39.0-focal
  
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
