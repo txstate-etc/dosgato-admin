@@ -925,7 +925,7 @@ class API {
     return {
       ...updatePageProperties,
       messages: updatePageProperties.messages.map(m => ({ type: m.type, message: m.message, path: m.arg })),
-      data: updatePageProperties.page.data
+      data: validateOnly || !updatePageProperties.success ? page : updatePageProperties.page.data
     }
   }
 
