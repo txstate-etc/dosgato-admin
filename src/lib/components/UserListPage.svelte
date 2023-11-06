@@ -117,6 +117,14 @@
     j.click()
   }
 
+  function handleResponsiveHeaders (treeWidth: number) {
+    if (treeWidth > 500) {
+      return ['username', 'fullname', 'roles']
+    } else {
+      return ['username', 'fullname']
+    }
+  }
+
   let filter
 
   $: actions = $store.selected.size ? ($store.selected.size === 1 ? singleactions($store.selectedItems[0]) : multiactions($store.selectedItems)) : emptyactions
@@ -129,7 +137,7 @@
     { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', fixed: '10em', icon: u => ({ icon: u.disabled ? accountOff : accountIcon }) },
     { id: 'fullname', label: 'Full Name', get: 'name', fixed: '17em' },
     { id: 'roles', label: 'Roles', render: renderRoles, grow: 5 }
-  ]} searchable={['id', 'firstname', 'lastname']} {filter} enableResize />
+  ]} searchable={['id', 'firstname', 'lastname']} {filter} enableResize responsiveHeaders={handleResponsiveHeaders}/>
 </ActionPanel>
 {#if $modalContext.modal === 'disable'}
   <Dialog

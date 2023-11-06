@@ -187,6 +187,16 @@
   }
 
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'path')
+
+  function handleResponsiveHeaders (treeWidth: number) {
+    if (treeWidth > 700) {
+      return ['name', 'size', 'type', 'modified', 'modifiedBy']
+    } else if (treeWidth > 400) {
+      return ['name', 'type', 'size']
+    } else {
+      return ['name', 'type']
+    }
+  }
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Assets'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
@@ -197,7 +207,7 @@
       { label: 'Type', id: 'type', fixed: '10em', render: itm => itm.kind === 'asset' ? humanFileType(itm.mime, itm.extension) : '' },
       { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.kind === 'asset' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
       { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
-    ]} searchable='name' enableResize
+    ]} searchable='name' enableResize responsiveHeaders={handleResponsiveHeaders}
   />
   <svelte:fragment slot="preview">
     {#if selectedItem?.kind === 'asset' && selectedItem.box}

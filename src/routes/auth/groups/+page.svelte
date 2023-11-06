@@ -71,14 +71,22 @@
     modalContext.reset()
   }
   let filter = ''
+
+  function handleResponsiveHeaders (treeWidth: number) {
+    if (treeWidth > 500) {
+      return ['name', 'members', 'roles']
+    } else {
+      return ['name', 'roles']
+    }
+  }
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Groups'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()} filterinput on:filter={e => { filter = e.detail }}>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/groups/' + detail.id)} headers ={[
-    { id: 'name', label: 'Name', get: 'name', fixed: '19em', icon: { icon: usersThree } },
+    { id: 'name', label: 'Name', get: 'name', grow: 2, icon: { icon: usersThree } },
     { id: 'members', label: 'Members', render: item => String(item.users.length), fixed: '7em' },
-    { id: 'roles', label: 'Roles', render: item => (item.roles.map(r => r.name)).join(', '), grow: 5 }
-  ]} searchable='name' {filter} enableResize />
+    { id: 'roles', label: 'Roles', render: item => (item.roles.map(r => r.name)).join(', '), grow: 3 }
+  ]} searchable='name' {filter} enableResize responsiveHeaders={handleResponsiveHeaders}/>
 </ActionPanel>
 {#if $modalContext.modal === 'addgroup'}
   <FormDialog

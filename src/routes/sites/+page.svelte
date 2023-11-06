@@ -105,6 +105,14 @@
     return [itm.name, itm.url?.prefix ?? '']
   }
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
+
+  function handleResponsiveHeaders (treeWidth: number) {
+    if (treeWidth > 500) {
+      return ['name', 'url', 'organization', 'owner']
+    } else {
+      return ['name', 'organization']
+    }
+  }
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Sites'} actions={getActions($store.selectedItems)} filterinput on:filter={e => { filter = e.detail }}>
@@ -113,7 +121,7 @@
     { id: 'url', label: 'URL', get: 'url.prefix', grow: 10 },
     { id: 'organization', label: 'Organization', get: 'organization.name', grow: 8 },
     { id: 'owner', label: 'Owner', render: renderOwner, grow: 7 }
-  ]} {searchable} {filter} enableResize>
+  ]} {searchable} {filter} enableResize responsiveHeaders={handleResponsiveHeaders}>
   </Tree>
 </ActionPanel>
 {#if $modalContext.modal === 'addsite'}
