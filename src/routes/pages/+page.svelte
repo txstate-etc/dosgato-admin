@@ -81,7 +81,11 @@
     }
 
     if ($store.copied.size) {
-      movement.actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
+      movement.actions.push(
+        { label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } },
+        { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: $store.cut ? moveIntoIcon : contentPaste, disabled: !store.pasteEligible(), onClick: () => { void store.paste(undefined, $store.copyRecursive) } },
+        { label: 'Move Above', disabled: !$store.cut || !store.pasteEligible(true), hiddenLabel: `Move above ${page.name}`, onClick: () => { void store.paste(true, $store.copyRecursive) }, icon: moveAboveIcon }
+      )
     } else {
       movement.actions.push(
         { label: 'Move', icon: cursorMove, disabled: !store.cutEligible(), onClick: () => store.cut() },
@@ -89,10 +93,6 @@
         { label: 'Copy w/ Subpages', icon: copyWithSubpagesIcon, disabled: !store.copyEligible() || !page.hasChildren, onClick: () => store.copy(true) }
       )
     }
-    movement.actions.push(
-      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${page.name}`, icon: $store.cut ? moveIntoIcon : contentPaste, disabled: !store.pasteEligible(), onClick: () => { void store.paste(undefined, $store.copyRecursive) } },
-      { label: 'Move Above', disabled: !$store.cut || !store.pasteEligible(true), hiddenLabel: `Move above ${page.name}`, onClick: () => { void store.paste(true, $store.copyRecursive) }, icon: moveAboveIcon }
-    )
 
     const publishing: ActionPanelGroup = {
       id: 'publishing',

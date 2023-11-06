@@ -44,16 +44,17 @@
           { label: 'Create Folder', icon: folderPlus, disabled: !item.permissions.create, onClick: () => { modalContext.setModal('create'); selectedFolder = item as TypedAssetFolderItem } }
         ]
     if ($store.copied.size) {
-      actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
+      actions.push(
+        { label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } },
+        { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { void store.paste() } }
+      )
     } else {
       actions.push(
         { label: 'Move', icon: cursorMove, disabled: !item.permissions.move || !store.cutEligible(), onClick: () => store.cut() },
         { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() }
       )
-    }// TODO: Do we want to log these store based actions here or log from the TreeStore API(store.paste())?
-    actions.push(
-      { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { void store.paste() } }
-    )
+    }
+    // TODO: Do we want to log these store based actions here or log from the TreeStore API(store.paste())?
     if (item.deleteState === DeleteState.NOTDELETED) {
       actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('delete') })
     } else {
