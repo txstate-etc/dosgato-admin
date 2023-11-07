@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  parser: undefined,
+  parser: 'babel-eslint', // This line is required to fix "unexpected token" errors
   extends: 'standard',
   plugins: [],
   ignorePatterns: [],
