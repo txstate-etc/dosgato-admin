@@ -18,11 +18,14 @@ test.beforeEach(async ({ adminPage }) => {
 })
 
 test.describe('page actions', () => {
-  test('should be able to add a page', async ({ adminPage }) => {
+  test('should be able to add a page', async ({ adminPage, isMobile }) => {
     const page = adminPage.page
     await addPage(page, NEW_PAGE.name, NEW_PAGE.title, 'keyp1')
     await expect(page.getByRole('group').getByText(NEW_PAGE.name)).toBeVisible()
-    await expect(page.locator('div.title.tree-cell').getByText(NEW_PAGE.title)).toBeVisible()
+    if(isMobile)
+      await expect(page.locator('div.title.tree-cell').getByText(NEW_PAGE.title)).toHaveCount(0)
+    else
+      await expect(page.locator('div.title.tree-cell').getByText(NEW_PAGE.title)).toBeVisible()
   })
   test('should not be able to add a page with same URL Slug on same location ', async ({adminPage}) => {
     const page = adminPage.page
@@ -36,7 +39,7 @@ test.describe('page actions', () => {
     await expect(page.locator('div.error').filter({ hasText: `Page name: ${NEW_PAGE.name} already exists in this location.` })).toHaveCount(1)
     await page.getByRole('button', { name: 'Cancel' }).click()
   })
-  test('should be able to soft delete a page', async ({ adminPage }) => {
+  test('should be able to soft delete a page', async ({ adminPage, isMobile }) => {
     const page = adminPage.page
     await page.getByRole('group').getByText(NEW_PAGE.name).click()
     await page.getByRole('button', { name: 'Delete Page' }).click()
@@ -45,7 +48,14 @@ test.describe('page actions', () => {
     await page.locator('div.right-panel section header').click()
     await expect(page.getByRole('button', { name: 'Restore Page' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Finalize Deletion' })).toBeVisible()
-    await expect(page.getByRole('treeitem', { name: NEW_PAGE.name })
+    if(isMobile) {
+      await expect(page.getByRole('treeitem', { name: NEW_PAGE.name }))
+      .toHaveCount(1)
+      await expect(page.getByRole('treeitem', { name: NEW_PAGE.name })
+      .locator('div.title.tree-cell', { hasText: NEW_PAGE.title }))
+      .toHaveCount(0)
+    }
+    else await expect(page.getByRole('treeitem', { name: NEW_PAGE.name })
                  .locator('div.title.tree-cell', { hasText: NEW_PAGE.title }))
                  .toHaveCount(1)
     await expect(page.getByRole('treeitem', { name: NEW_PAGE.name }).locator('div.deleted.status.tree-cell')).toBeVisible()
@@ -59,19 +69,22 @@ test.describe('page actions', () => {
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect (page.getByRole('group').getByText(NEW_PAGE.name)).toHaveCount(0)
   })
-  test('should be able to add a page with same URL Slug on diff location ', async ({adminPage}) => {
+  test('should be able to add a page with same URL Slug on diff location ', async ({adminPage, isMobile}) => {
     const page = adminPage.page
     await expect(page.getByRole('treeitem', {name: TEST_SITE.name})).toHaveCount(1)
     await expect(page.getByRole('group').getByText(TEST_SITE.name)).toHaveCount(0)
-    await expect(page.locator('div.title.tree-cell').getByText(TEST_SITE.title)).toHaveCount(1)
+    if(!isMobile)
+      await expect(page.locator('div.title.tree-cell').getByText(TEST_SITE.title)).toHaveCount(1)
     await addPage(page, TEST_SITE.name, TEST_SITE.title, 'keyp1')
     await expect(page.getByRole('treeitem', {name: TEST_SITE.name})).toHaveCount(2)
     await expect(page.getByRole('group').getByText(TEST_SITE.name)).toHaveCount(1)
-    await expect(page.locator('div.title.tree-cell').getByText(TEST_SITE.title)).toHaveCount(2)
+    if(!isMobile)
+      await expect(page.locator('div.title.tree-cell').getByText(TEST_SITE.title)).toHaveCount(2)
     await removePage(page, TEST_SITE.name)
     await expect(page.getByRole('treeitem', {name: TEST_SITE.name})).toHaveCount(1)
     await expect(page.getByRole('group').getByText(TEST_SITE.name)).toHaveCount(0)
-    await expect(page.locator('div.title.tree-cell').getByText(TEST_SITE.title)).toHaveCount(1)
+    if(!isMobile)
+      await expect(page.locator('div.title.tree-cell').getByText(TEST_SITE.title)).toHaveCount(1)
   })
 })
 
