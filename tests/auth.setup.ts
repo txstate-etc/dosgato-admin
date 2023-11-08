@@ -4,7 +4,7 @@ import { serverStartupCheck } from './server.startup.check'
 import { adminSession, adminStorageState, editorSession, editorStorageState } from './constants'
 
 async function login (user: string, role: string, page: Page, sessionFilePath: string, storageStateFilePath: string, baseURL: string | undefined) {
-  const loginPath = process.env.AUTH_REDIRECT ?? ''
+  const loginPath = process.env.AUTH_REDIRECT ?? 'http://fakeauth-test/login?clientId=dosgato-admin-test&returnUrl=http%3A%2F%2Fdosgato-proxy-test%2F%2eadmin'
   await page.goto(loginPath)
   await page.waitForSelector('div.login-page')
   await page.getByPlaceholder('username').fill(user)
