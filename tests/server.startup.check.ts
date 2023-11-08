@@ -1,9 +1,10 @@
 import waitOn from 'wait-on'
 
-const adminurl = process.env.DOSGATO_ADMIN_BASE
-const authurl = process.env.AUTH_REDIRECT
-const apiurl = process.env.API_BASE
-const renderurl = `${process.env.RENDER_BASE}/.token`
+const baseURL = 'http://dosgato-proxy-test'
+const adminurl = process.env.DOSGATO_ADMIN_BASE ?? `${baseURL}/.admin`
+const authurl = process.env.AUTH_REDIRECT ?? 'http://fakeauth-test/login?clientId=dosgato-admin-test&returnUrl=http%3A%2F%2Fdosgato-proxy-test%2F%2Eadmin'
+const apiurl = process.env.API_BASE ?? `${baseURL}/.api`
+const renderurl = `${process.env.RENDER_BASE ?? baseURL}/.token`
 
 const opts = {
   resources: [
