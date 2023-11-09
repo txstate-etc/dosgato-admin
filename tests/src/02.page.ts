@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { expandSite, loadPage } from '../common'
+import { expandSite, loadAdminPages } from '../common'
 import { test, expect } from '../fixtures'
 
 const TEST_SITE = {
@@ -13,7 +13,7 @@ const NEW_PAGE = {
 }
 
 test.beforeEach(async ({ adminPage }) => {
-  await loadPage(adminPage.page)
+  await loadAdminPages(adminPage.page)
   await expandSite(adminPage.page, TEST_SITE.name)
 })
 

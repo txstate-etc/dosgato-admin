@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test"
 
-export async function loadPage(page: Page){
+export async function loadAdminPages(page: Page){
   await page.goto('/.admin/pages')
 }
 
