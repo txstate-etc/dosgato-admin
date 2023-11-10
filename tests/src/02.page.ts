@@ -62,11 +62,11 @@ test.describe('page actions', () => {
   })
   test('should be able to hard delete a page', async ({ adminPage }) => {
     const page = adminPage.page
-    await page.getByRole('group').getByText(NEW_PAGE.name).click();
+    await page.getByRole('group').getByText(NEW_PAGE.name).click()
     await expect(page.locator('header')).toHaveText(NEW_PAGE.name)
-    await page.getByRole('button', { name: 'Finalize Deletion' }).click();
-    await expect(page.getByText('Publish Deletion')).toBeVisible();
-    await page.getByRole('button', { name: 'Delete' }).click();
+    await page.getByRole('button', { name: 'Finalize Deletion' }).click()
+    await expect(page.getByText('Publish Deletion')).toBeVisible()
+    await page.getByRole('button', { name: 'Delete' }).click()
     await expect (page.getByRole('group').getByText(NEW_PAGE.name)).toHaveCount(0)
   })
   test('should be able to add a page with same URL Slug on diff location ', async ({adminPage, isMobile}) => {
@@ -103,6 +103,6 @@ async function removePage(page: Page, name: string){
   await page.getByRole('group').getByText(name).click()
   await page.getByRole('button', { name: 'Delete Page' }).click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
-  await page.getByRole('button', { name: 'Finalize Deletion' }).click();
-  await page.getByRole('button', { name: 'Delete' }).click();
+  await page.getByRole('button', { name: 'Finalize Deletion' }).click()
+  await page.getByRole('button', { name: 'Delete' }).click()
 }
