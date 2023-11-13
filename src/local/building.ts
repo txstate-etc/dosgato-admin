@@ -16,5 +16,11 @@ export const buildingDataTemplate: UITemplateData = {
   },
   columns: [
     { title: 'Floors', get: 'floors', fixed: '4em' }
-  ]
+  ],
+  responsiveDataColumns(width) {
+    if (width > 450) {
+      return ['Floors']
+    }
+    return []
+  }
 }

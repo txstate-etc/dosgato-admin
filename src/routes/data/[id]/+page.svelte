@@ -17,7 +17,7 @@
   import squareIcon from '@iconify-icons/mdi/square'
   import triangleIcon from '@iconify-icons/mdi/triangle'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
-  import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
+  import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TreeHeader, type TypedTreeItem } from '@dosgato/dialog'
   import type { DataData } from '@dosgato/templating'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
@@ -450,6 +450,19 @@
     }
   }
 
+  function handleResponsiveHeaders(treeWidth: number, headers: TreeHeader<AnyDataTreeItem>[]) {
+    // if there are custom columns and they have provided a responsive headers function
+    let extra = tmpl?.columns?.map(c => `custom-${c.title}`) ?? []
+    if (tmpl?.columns?.length && tmpl?.responsiveDataColumns) {
+      extra = tmpl.responsiveDataColumns(treeWidth).map(c => `custom-${c}`)
+    }
+    if (treeWidth > 900) {
+      return ['name', 'status', ...extra, 'modified', 'modifiedBy']
+    } else {
+      return ['name', 'status', ...extra]
+    }
+  }
+
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
 </script>
 
@@ -467,7 +480,7 @@
     { label: 'Status', id: 'status', fixed: '5em', icon: item => ({ icon: item.type === 'data' ? (item.deleteState === DeleteState.MARKEDFORDELETE ? deleteOutline : statusIcon[item.status]) : undefined, label: item.type === 'data' ? item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' : undefined }), class: item => item.type === 'data' ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' },
     { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === 'data' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
     { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
-  ]} searchable='name' on:choose={onClickEdit} enableResize />
+  ]} searchable='name' on:choose={onClickEdit} enableResize responsiveHeaders={handleResponsiveHeaders}/>
 </ActionPanel>
 {#if $modalContext.modal === 'addfolder'}
   <FormDialog
