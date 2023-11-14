@@ -9,8 +9,8 @@
   import exportIcon from '@iconify-icons/mdi/export'
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
-  import { csv, keyby, titleCase } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, ModalContextStore, DetailList } from '$lib'
+  import { csv, isBlank, keyby, titleCase } from 'txstate-utils'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, ModalContextStore, DetailList, LaunchState } from '$lib'
   import { base } from '$app/paths'
   import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
@@ -89,7 +89,7 @@
   }
 
   async function onSetLaunchURL (state) {
-    const resp = await api.setLaunchURL($store.site.id, state.host, state.path, state.enabled ?? false)
+    const resp = await api.setLaunchURL($store.site.id, state.host, state.path, state.enabled)
     modalContext.logModalResponse(resp, $store.site.id, { host: state.host, path: state.path, enabled: state.enabled })
     if (resp.success) {
       void store.refresh($store.site.id)
@@ -463,11 +463,11 @@
     submit={onSetLaunchURL}
     name='editlaunch'
     title='Set Public URL'
-    preload={{ host: $store.site.url?.host ?? '', path: $store.site.url?.path ?? '', enabled: $store.site.url?.enabled }}
-    on:escape={modalContext.onModalEscape}>
+    preload={{ host: $store.site.url?.host ?? '', path: $store.site.url?.path ?? '', enabled: $store.site.launchState }}
+    on:escape={modalContext.onModalEscape} let:data>
     <FieldText path='host' label='Host'/>
     <FieldText path='path' label='Path'/>
-    <FieldCheckbox path='enabled' label='Site Launched' boxLabel='This site is live.'/>
+    <FieldSelect path="enabled" label="Launch Status" notNull number choices={[{ label: 'Pre-launch', value: LaunchState.PRELAUNCH }, { label: 'Launched', value: LaunchState.LAUNCHED, disabled: isBlank(data.host) }, { label: 'Decommissioned', value: LaunchState.DECOMMISSIONED }]}/>
   </FormDialog>
 {:else if $modalContext.modal === 'addpagetree'}
   <CreateWithPageDialog

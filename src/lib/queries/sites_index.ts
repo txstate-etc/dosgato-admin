@@ -90,6 +90,7 @@ export const siteDetails = `
     prefix
     enabled
   }
+  launchState
   organization {
     name
     id
@@ -112,8 +113,9 @@ export interface SiteListSite {
     host: string
     path: string
     prefix: string
-    enabled: boolean
+    enabled: number
   }
+  launchState: number
   organization: {
     name: string
   }
@@ -137,6 +139,7 @@ export const fullSiteDetails = `
     prefix
     enabled
   }
+  launchState
   organization {
     id
     name
@@ -206,8 +209,9 @@ export interface FullSite {
     host: string
     path: string
     prefix: string
-    enabled: boolean
+    enabled: number
   }
+  launchState: number
   organization: {
     name: string
     id: string
@@ -341,7 +345,7 @@ export const UPDATE_SITE_MANAGEMENT = `
 `
 
 export const SET_LAUNCH_URL = `
-  mutation setLaunchURL ($siteId: ID!, $host: String, $path: String, $enabled: Boolean, $validateOnly: Boolean) {
+  mutation setLaunchURL ($siteId: ID!, $host: String, $path: String, $enabled: LaunchState, $validateOnly: Boolean) {
     setLaunchURL (siteId: $siteId, host: $host, path: $path, enabled: $enabled, validateOnly: $validateOnly) {
       ${mutationResponse}
       site {
@@ -463,6 +467,7 @@ export interface SiteAuditSite {
   url?: {
     prefix: string
   }
+  launchState: number
   organization?: {
     name: string
   }
@@ -526,6 +531,7 @@ export const GET_SITE_AUDIT = `
       url {
         prefix
       }
+      launchState
       organization {
         name
       }

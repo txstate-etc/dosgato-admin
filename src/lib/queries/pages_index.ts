@@ -30,6 +30,9 @@ permissions {
   undelete
   unpublish
 }
+site {
+  launchState
+}
 `
 
 export interface TreePage {
@@ -62,6 +65,9 @@ export interface TreePage {
     undelete: boolean
     unpublish: boolean
   }
+  site: {
+    launchState: number
+  }
 }
 
 export type PagetreeTypes = 'PRIMARY' | 'SANDBOX' | 'ARCHIVE'
@@ -76,6 +82,7 @@ export interface RootTreePage extends TreePage {
   site: {
     id: string
     name: string
+    launchState: number
   }
 }
 

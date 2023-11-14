@@ -8,7 +8,7 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog, ModalContextStore } from '$lib'
+  import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog, ModalContextStore, LaunchState } from '$lib'
   import { buildAuditCSV } from './audit'
   import { setContext } from 'svelte'
 
@@ -118,7 +118,7 @@
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Sites'} actions={getActions($store.selectedItems)} filterinput on:filter={e => { filter = e.detail }}>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/sites/' + detail.id)} headers={[
     { id: 'name', label: 'Site Name', get: 'name', grow: 10, icon: { icon: globeLight } },
-    { id: 'url', label: 'URL', get: 'url.prefix', grow: 10 },
+    { id: 'url', label: 'URL', grow: 10, render: (site) => `<span class="${site.launchState === LaunchState.LAUNCHED ? '' : 'not-live'}">${site.url?.prefix ?? ''}</span>` },
     { id: 'organization', label: 'Organization', get: 'organization.name', grow: 8 },
     { id: 'owner', label: 'Owner', render: renderOwner, grow: 7 }
   ]} {searchable} {filter} enableResize responsiveHeaders={handleResponsiveHeaders}>
@@ -154,3 +154,9 @@
     {`Restore ${$store.selectedItems[0].name}?`}
   </Dialog>
 {/if}
+
+<style>
+  :global(span.not-live) {
+    color: #595959;
+  }
+</style>

@@ -24,7 +24,7 @@
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog, ModalContextStore } from '$lib'
+  import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog, ModalContextStore, LaunchState } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { _store as store, type TypedPageItem } from './+page'
   import { sandboxIcon } from './sandboxicon'
@@ -45,6 +45,20 @@
     PRIMARY: browserIcon,
     SANDBOX: sandboxIcon,
     ARCHIVE: archive
+  }
+
+  function getSiteIcon (launchState, type) {
+    if (type === 'PRIMARY') {
+      if (launchState === LaunchState.LAUNCHED) {
+        return browserIcon
+      } else if (launchState === LaunchState.PRELAUNCH) {
+        return sandboxIcon
+      } else return archive
+    } else if (type === 'SANDBOX') {
+      return sandboxIcon
+    } else {
+      return archive
+    }
   }
 
   function singlepageactions (page: TypedPageItem, ..._: any) {
@@ -298,7 +312,7 @@
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}
     headers={[
-      { label: 'Path', id: 'name', grow: 4, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : item.parent ? browserIcon : siteIcon[item.type] }), render: item => `<div class="page-name">${item.name}</div>` },
+      { label: 'Path', id: 'name', grow: 4, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) }), render: item => `<div class="page-name">${item.name}</div>` },
       { label: 'Title', id: 'title', grow: 3, get: 'title' },
       { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
       { label: 'Status', id: 'status', fixed: '4em', icon: item => ({ icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' }), class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },

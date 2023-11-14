@@ -59,3 +59,9 @@ export enum DeleteState {
   MARKEDFORDELETE = 1,
   DELETED = 2
 }
+
+export enum LaunchState {
+  PRELAUNCH = 0,
+  LAUNCHED = 1,
+  DECOMMISSIONED = 2
+}

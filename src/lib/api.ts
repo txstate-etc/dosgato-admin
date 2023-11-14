@@ -43,7 +43,7 @@ import {
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
 import { environmentConfig, toast } from './stores'
-import { messageForDialog } from './helpers'
+import { LaunchState, messageForDialog } from './helpers'
 import { schemaVersion } from './schemaversion'
 import { DateTime } from 'luxon'
 import type { HistoryVersion } from './components/VersionHistory.svelte'
@@ -727,8 +727,16 @@ class API {
     return archivePagetree
   }
 
-  async setLaunchURL (siteId: string, host?: string, path?: string, enabled?: boolean, validateOnly?: boolean) {
-    const { setLaunchURL } = await this.query<{ setLaunchURL: MutationResponse & { site: FullSite } }>(SET_LAUNCH_URL, { siteId, host, path, enabled, validateOnly })
+  async setLaunchURL (siteId: string, host?: string, path?: string, enabled?: LaunchState, validateOnly?: boolean) {
+    let enabledParam: string
+    if (enabled === LaunchState.LAUNCHED) {
+      enabledParam = 'LAUNCHED'
+    } else if (enabled === LaunchState.DECOMMISSIONED) {
+      enabledParam = 'DECOMMISSIONED'
+    } else {
+      enabledParam = 'PRELAUNCH'
+    }
+    const { setLaunchURL } = await this.query<{ setLaunchURL: MutationResponse & { site: FullSite } }>(SET_LAUNCH_URL, { siteId, host, path, enabled: enabledParam, validateOnly })
     return setLaunchURL
   }
 

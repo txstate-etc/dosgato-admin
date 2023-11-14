@@ -1,5 +1,5 @@
 import { csv, isNotNull, isNull } from 'txstate-utils'
-import { api } from '$lib'
+import { LaunchState, api } from '$lib'
 
 export async function buildAuditCSV () {
   const sites = await api.getSiteAudit()
@@ -15,7 +15,7 @@ export async function buildAuditCSV () {
     const index = i + 1
     managerColumns.push(`Manager ${index}`, `Manager ${index} Email`)
   }
-  const rows = [['Name', 'Title', 'URL', 'Organization', 'Owner', 'Owner Email', ...managerColumns, 'Template', 'State', 'Users with Access']]
+  const rows = [['Name', 'Title', 'URL', 'Launch State', 'Organization', 'Owner', 'Owner Email', ...managerColumns, 'Template', 'State', 'Users with Access']]
   for (const site of sites) {
     for (const pagetree of site.pagetrees) {
       const row: string[] = []
@@ -23,6 +23,8 @@ export async function buildAuditCSV () {
       row.push(pagetree.rootPage.title ?? '')
       if (isNotNull(site.url)) row.push(site.url.prefix)
       else row.push('')
+      const launchState = site.launchState === LaunchState.LAUNCHED ? 'Launched' : (site.launchState === LaunchState.PRELAUNCH ? 'Pre-launch' : 'Decommissioned')
+      row.push(launchState)
       if (isNotNull(site.organization)) row.push(site.organization.name)
       else row.push('')
       if (isNotNull(site.owner)) row.push(site.owner.name, site.owner.email)
