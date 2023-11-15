@@ -110,7 +110,17 @@
       {#each grouped as group (group.id)}
         <ul>
           {#each group.actions as action (action.id || action.label)}
-            <li class:enabled={!action.disabled} class={action.class}><button type="button" class="reset" disabled={action.disabled} on:click={onAction(action)} on:keydown={onKeydown}><Icon width="{`${action.iconWidth ?? 1.2}em`}" icon={action.icon} />{action.label}{#if isNotNull(action.hiddenLabel)}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly>{/if}</button></li>
+            <li class:enabled={!action.disabled} class={action.class}>
+              <button type="button" class="reset" disabled={action.disabled} on:click={onAction(action)} on:keydown={onKeydown}>
+                <Icon width="{`${action.iconWidth ?? 1.2}em`}" icon={action.icon} />
+                {#if $hidden}
+                  <ScreenReaderOnly>{action.label}</ScreenReaderOnly>
+                {:else}
+                  {action.label}
+                {/if}
+                {#if isNotNull(action.hiddenLabel)}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly>{/if}
+              </button>
+            </li>
           {/each}
         </ul>
       {/each}
