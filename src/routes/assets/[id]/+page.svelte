@@ -4,6 +4,7 @@
   import downloadIcon from '@iconify-icons/ph/download'
   import fileMagnifyingGlass from '@iconify-icons/ph/file-magnifying-glass'
   import magnifyingGlassPlus from '@iconify-icons/ph/magnifying-glass-plus'
+  import warningIcon from '@iconify-icons/ph/warning'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import swapIcon from '@iconify-icons/ph/swap'
   import xLight from '@iconify-icons/ph/x-light'
@@ -88,9 +89,30 @@
         <div class="image-container">
           <img src="{environmentConfig.renderBase}/.asset/{asset.id}/w/500/{asset.checksum.substring(0, 12)}/{encodeURIComponent(asset.filename)}" width={image.width} height={image.height} alt="">
           <button type="button" on:click={() => { modalContext.setModal('preview', asset.filename) }}><Icon icon={magnifyingGlassPlus} width="1.3em" hiddenLabel="Show image full screen"/></button>
+          {#if asset.corrupt}
+            <div class="asset-corrupt-icon">
+              <span class="circle">
+                <Icon icon={warningIcon} width="1.5em" />
+              </span>
+            </div>
+          {/if}
         </div>
       {:else}
-        <div class="file-icon"><FileIcon width="50%" mime={asset.mime} /></div>
+        <div class="file-icon">
+          <FileIcon width="50%" mime={asset.mime} />
+          {#if asset.corrupt}
+            <div class="asset-corrupt-icon">
+              <span class="circle">
+                <Icon icon={warningIcon} width="1.5em" />
+              </span>
+            </div>
+          {/if}
+        </div>
+      {/if}
+      {#if asset.corrupt}
+        <div class="asset-corrupt-message">
+          Replace this asset to keep using it.
+        </div>
       {/if}
     </DetailPanelSection>
   </DetailPanel>
@@ -99,6 +121,12 @@
       ...(uiConfig.assetMeta ? [{ icon: pencilIcon, hiddenLabel: 'edit asset details', onClick: onEditClick }] : [])
     ]}>
       <DetailPanelSection>
+        {#if asset?.corrupt}
+          <div class="corrupt-warning">
+            <Icon icon={warningIcon} width="1.5em"/>
+            Asset Corrupted! Replace this asset to keep using it.
+          </div>
+        {/if}
         <DetailList records={{
           Name: asset.filename,
           Size: bytesToHuman(asset.size),
@@ -202,6 +230,7 @@
   }
   .file-icon {
     text-align: center;
+    position: relative;
   }
   .preview {
     position: relative;
@@ -246,5 +275,33 @@
   }
   dl button {
     padding: 0 0.5em;
+  }
+  .corrupt-warning {
+    color: #A80000;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.5em;
+  }
+  .asset-corrupt-icon {
+    color: #A80000;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .asset-corrupt-icon .circle {
+    background-color: white;
+    height: 2em;
+    width: 2em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+  }
+  .asset-corrupt-message {
+    color: #A80000;
+    text-align: center;
+    padding: 1em;
   }
 </style>

@@ -32,6 +32,7 @@ export interface AssetDetail {
   pagetree: {
     type: PagetreeTypes
   }
+  corrupt: boolean
 }
 
 export async function getAssetDetail (id: string) {
@@ -54,6 +55,7 @@ export async function getAssetDetail (id: string) {
         box { width height }
         resizes { id width height mime extension size }
         pagetree { type }
+        corrupt
       }
     }
   `, { id })
