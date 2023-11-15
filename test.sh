@@ -14,4 +14,4 @@ if [ -e docker-compose.test.override.yml ]; then
   override='-f docker-compose.test.override.yml'
 fi
 
-COMPOSE_HTTP_TIMEOUT=300 docker-compose -f docker-compose.test.yml $override up --build --abort-on-container-exit --exit-code-from dosgato-e2e-test
+docker-compose -f docker-compose.test.yml $override up --build --abort-on-container-exit --exit-code-from dosgato-e2e-test
