@@ -10,7 +10,7 @@
   import xLight from '@iconify-icons/ph/x-light'
   import { Modal } from '@txstate-mws/svelte-components'
   import { roundTo } from 'txstate-utils'
-  import { DetailList, DetailPanel, DetailPanelSection, environmentConfig, UploadUI, StyledList, dateStamp, ChooserClient, api, ModalContextStore, toast } from '$lib'
+  import { DetailList, DetailPanel, DetailPanelSection, environmentConfig, UploadUI, StyledList, dateStamp, ChooserClient, api, ModalContextStore, toast, type DetailPanelButton } from '$lib'
   import { getAssetDetail, type AssetDetail } from './helpers'
   import { uiConfig } from '../../../local'
 
@@ -77,13 +77,18 @@
       }
     }, 5000)
   }
+
+  function assetPanelButtons (asset: AssetDetail): DetailPanelButton[] {
+    const buttons: DetailPanelButton[] = [{ icon: swapIcon, hiddenLabel: 'upload new file for asset', onClick: onUploadClick }]
+    if (!asset.corrupt) {
+      buttons.push({ icon: downloadIcon, hiddenLabel: 'download asset', disabled: asset.corrupt, onClick: () => { void api.download(`${environmentConfig.renderBase}/.asset/${asset.id}/${encodeURIComponent(asset.filename)}`) } })
+    }
+    return buttons
+  }
 </script>
 
 <div class="container">
-  <DetailPanel header="Asset" class="image" headerColor="#E5D1BD" button={[
-    { icon: swapIcon, hiddenLabel: 'upload new file for asset', onClick: onUploadClick },
-    { icon: downloadIcon, hiddenLabel: 'download asset', disabled: asset.corrupt, onClick: () => { void api.download(`${environmentConfig.renderBase}/.asset/${asset.id}/${encodeURIComponent(asset.filename)}`) } }
-  ]}>
+  <DetailPanel header="Asset" class="image" headerColor="#E5D1BD" button={assetPanelButtons(asset)}>
     <DetailPanelSection>
       {#if image}
         <div class="image-container">
