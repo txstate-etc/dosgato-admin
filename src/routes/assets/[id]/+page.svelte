@@ -111,7 +111,7 @@
       {/if}
       {#if asset.corrupt}
         <div class="asset-corrupt-message">
-          Replace this asset to keep using it.
+          Replace this asset <Icon inline icon={swapIcon} /> to keep using it.
         </div>
       {/if}
     </DetailPanelSection>
