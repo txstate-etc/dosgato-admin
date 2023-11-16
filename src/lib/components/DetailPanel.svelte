@@ -17,7 +17,7 @@
   <div class="header" class:useborder={!shouldUseWhiteText(headerColor)} style="background-color: {headerColor}; color: {color}">
     <h2>{header}</h2>
     {#each buttons as button, i}
-      <button type="button" class="reset" class:leftmost={i === 0} on:click={button.onClick}><Icon icon={button.icon} hiddenLabel={button.hiddenLabel} width="1.5em" /></button>
+      <button type="button" class="reset" disabled={button.disabled} class:leftmost={i === 0} on:click={button.onClick}><Icon icon={button.icon} hiddenLabel={button.hiddenLabel} width="1.5em" /></button>
     {/each}
   </div>
   <div class="body">
@@ -52,6 +52,9 @@
   }
   .header button.leftmost {
     margin-left: auto;
+  }
+  .header button:disabled {
+    color: #404040;
   }
   .body {
     background-color: #f4f4f4;

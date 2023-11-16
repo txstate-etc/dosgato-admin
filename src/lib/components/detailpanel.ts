@@ -3,4 +3,5 @@ export interface DetailPanelButton {
   icon: IconifyIcon
   hiddenLabel?: string
   onClick: () => void | Promise<void>
+  disabled?: boolean
 }
