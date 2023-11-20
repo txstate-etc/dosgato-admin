@@ -94,7 +94,7 @@
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <header on:click={allowCollapse ? onClick : undefined}>
-        {#if $hidden}<ScreenReaderOnly>{actionsTitle}</ScreenReaderOnly>{:else}{actionsTitle}{/if}
+        {#if $hidden}<ScreenReaderOnly>{actionsTitle}</ScreenReaderOnly>{:else}<div class="actions-title">{actionsTitle}</div>{/if}
         {#if allowCollapse}<button type="button" class="reset" on:click|stopPropagation={onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
       </header>
       {#if filterinput}
@@ -151,6 +151,9 @@
     top: 50%;
     right: 0.6em;
     transform: translateY(-50%);
+  }
+  header div.actions-title {
+    padding-right: 1.2em;
   }
   .action-panel {
     overflow: hidden;
