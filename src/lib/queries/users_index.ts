@@ -92,6 +92,66 @@ export interface UserListUser {
   }
 }
 
+export interface UserAuditUser {
+  id: string
+  firstname?: string
+  lastname: string
+  email: string
+  disabled: boolean
+  roles: {
+    id: string
+    name: string
+    assetRules: {
+      site?: {
+        id: string
+        name: string
+      }
+      grants?: {
+        viewForEdit: boolean
+      }
+    }[]
+    pageRules: {
+      site?: {
+        id: string
+        name: string
+      }
+      grants?: {
+        viewForEdit: boolean
+      }
+    }[]
+  }[]
+}
+
+const auditUserDetails = `
+  id
+  firstname
+  lastname
+  email
+  disabled
+  roles {
+    id
+    name
+    assetRules {
+      site {
+        id
+        name
+      }
+      grants {
+        viewForEdit
+      }
+    }
+    pageRules {
+      site {
+        id
+        name
+      }
+      grants {
+        viewForEdit
+      }
+    }
+  }
+`
+
 export interface GroupWithParents {
   id: string
   name: string
@@ -167,6 +227,14 @@ export const GET_USER_LIST = `
   query getUserList ($filter: UserFilter!) {
     users (filter: $filter) {
       ${userDetails}
+    }
+  }
+`
+
+export const GET_USER_AUDIT_LIST = `
+  query getUserAuditList {
+    users (filter: { system: false }) {
+      ${auditUserDetails}
     }
   }
 `

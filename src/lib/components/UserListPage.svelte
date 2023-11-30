@@ -7,7 +7,7 @@
   import accountPlus from '@iconify-icons/mdi/account-plus'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import downloadIcon from '@iconify-icons/ph/download-simple'
-  import { csv, sortby } from 'txstate-utils'
+  import { csv, intersect, isNull, sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContextStore, uiLog } from '$lib'
@@ -101,10 +101,42 @@
   }
 
   export async function buildEmailCSV () {
-    const users = sortby(await api.getUserList({ enabled: true, system: false }), 'lastname')
-    const rows = [['Last Name', 'First Name', 'ID', 'Email']]
+    const users = await api.getUserListForAudit()
+    const rows = [['Last Name', 'First Name', 'ID', 'Email', 'Status', 'Access']]
     for (const user of users) {
-      rows.push([user.lastname, user.firstname ?? '', user.id, user.email])
+      // Look at the user's roles to get the sites they can edit.
+      // They should have viewForEdit on both pages and assets for a site
+      let canEditAllPages = false
+      let canEditAllAssets = false
+      const pageEditorSites: string[] = []
+      const assetEditorSites: string[] = []
+      for (const role of user.roles) {
+        for (const rule of role.pageRules) {
+          if (rule.grants?.viewForEdit) {
+            if (isNull(rule.site)) {
+              canEditAllPages = true
+            } else {
+              pageEditorSites.push(rule.site.name)
+            }
+          }
+        }
+        for (const rule of role.assetRules) {
+          if (rule.grants?.viewForEdit) {
+            if (isNull(rule.site)) {
+              canEditAllAssets = true
+            } else {
+              assetEditorSites.push(rule.site.name)
+            }
+          }
+        }
+      }
+      let access = ''
+      if (canEditAllAssets && canEditAllPages) {
+        access = 'All Sites'
+      } else {
+        access = intersect(pageEditorSites, assetEditorSites).sort().join(', ')
+      }
+      rows.push([user.lastname, user.firstname ?? '', user.id, user.email, (user.disabled ? 'Inactive' : 'Active'), access])
     }
     return csv(rows)
   }

@@ -2,7 +2,7 @@ import { base } from '$app/paths'
 import type { AssetFolderLink, AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
 import { MessageType } from '@txstate-mws/svelte-forms'
-import { get, isBlank, isNotBlank, keyby, pick, toArray } from 'txstate-utils'
+import { get, isBlank, isNotBlank, keyby, pick, sortby, toArray } from 'txstate-utils'
 import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
@@ -38,7 +38,7 @@ import {
   CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
-  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGE_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET
+  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGE_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -363,6 +363,11 @@ class API {
   async getUserList (filter: UserFilter) {
     const { users } = await this.query<{ users: UserListUser[] }>(GET_USER_LIST, { filter })
     return users
+  }
+
+  async getUserListForAudit () {
+    const { users } = await this.query<{ users: UserAuditUser[]}>(GET_USER_AUDIT_LIST)
+    return sortby(users, 'lastname')
   }
 
   async getUserById (userId: string) {
