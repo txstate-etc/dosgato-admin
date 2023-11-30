@@ -6,6 +6,7 @@
   import deleteIcon from '@iconify-icons/ph/trash'
   import type { DataRule } from '$lib'
   import { createEventDispatcher } from 'svelte'
+  import { base } from '$app/paths'
 
   const dispatch = createEventDispatcher()
 
@@ -16,7 +17,7 @@
 {#if rules.length}
   <SortableTable cardedOnMobile mobileHeader={(item) => { return item.site ? item.site.name : 'All Sites' }} items={rules}
     headers={[
-      { id: 'site', label: 'Site', render: (item) => { return item.global ? 'Global' : (item.site ? item.site.name : 'All Sites') } },
+      { id: 'site', label: 'Site', render: (item) => { return item.global ? 'Global' : (item.site ? `<a href="${base}/sites/${item.site.id}">${item.site.name}</a>` : 'All Sites') } },
       { id: 'path', label: 'Path', get: 'path' },
       { id: 'template', label: 'Template', render: (item) => { return item.template ? item.template.name : 'All Templates' } },
       { id: 'create', label: 'Create', icon: (item) => { return item.grants.create ? { icon: checkIcon, hiddenLabel: 'Create Permitted' } : { icon: minusIcon, hiddenLabel: 'Create not permitted' } } },

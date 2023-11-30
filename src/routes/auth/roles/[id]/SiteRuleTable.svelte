@@ -6,6 +6,7 @@
   import deleteIcon from '@iconify-icons/ph/trash'
   import type { SiteRule } from '$lib'
   import { createEventDispatcher } from 'svelte'
+  import { base } from '$app/paths'
 
   const dispatch = createEventDispatcher()
 
@@ -16,7 +17,7 @@
 {#if rules.length}
   <SortableTable cardedOnMobile mobileHeader={(item) => { return item.site ? item.site.name : 'All Sites' }} items={rules}
     headers={[
-      { id: 'site', label: 'Site', render: (item) => { return item.site ? item.site.name : 'All Sites' } },
+      { id: 'site', label: 'Site', render: (item) => { return item.site ? `<a href="${base}/sites/${item.site.id}">${item.site.name}</a>` : 'All Sites' } },
       { id: 'launch', label: 'Launch', icon: (item) => { return item.grants.launch ? { icon: checkIcon, hiddenLabel: 'May launch site' } : { icon: minusIcon, hiddenLabel: 'May not launch site' } } },
       { id: 'rename', label: 'Rename', icon: (item) => { return item.grants.rename ? { icon: checkIcon, hiddenLabel: 'May rename site' } : { icon: minusIcon, hiddenLabel: 'May not rename site' } } },
       { id: 'governance', label: 'Governance', icon: (item) => { return item.grants.governance ? { icon: checkIcon, hiddenLabel: 'May update site management' } : { icon: minusIcon, hiddenLabel: 'May not update site management' } } },
