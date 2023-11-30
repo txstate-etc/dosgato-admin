@@ -86,7 +86,8 @@
   }
 
   async function searchRoles (term: string) {
-    const filtered = data.allRoles.filter(r => r.permissions.assign && r.name.includes(term))
+    const alreadyAssignedRoles = $store.user.directRoles.map(r => r.id)
+    const filtered = data.allRoles.filter(r => !alreadyAssignedRoles.includes(r.id) && r.permissions.assign && r.name.includes(term))
     return filtered.map(role => ({ label: role.name, value: role.id }))
   }
 
@@ -284,13 +285,13 @@
     submit={onAddRoles}
     name='editroles'
     title={`Edit roles for ${$store.user.id}`}
-    preload={{ roleIds: $store.user.directRoles.map(r => r.id) }}
     on:escape={modalContext.onModalEscape}>
     <FieldMultiselect
       path='roleIds'
-      label='Add Roles'
+      label='Add More Roles'
       getOptions={searchRoles}
-      lookupByValue={lookupRoleByValue}/>
+      lookupByValue={lookupRoleByValue}
+      helptext={`${$store.user.name} currently has ${$store.user.directRoles.length} role${$store.user.directRoles.length === 1 ? '' : 's'}.`}/>
   </FormDialog>
 {/if}
 
