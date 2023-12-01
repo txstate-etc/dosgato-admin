@@ -97,6 +97,13 @@
   }
 
   async function onAddRoles (state: { roleIds: string[] }) {
+    if (!state.roleIds.length) {
+      return {
+        success: false,
+        data: { roleIds: []},
+        messages: [{ type: 'error' as const, path: 'roleIds', message: 'No roles have been added '}]
+      }
+    }
     const resp = await api.addRolesToUser(state.roleIds, $store.user.id)
     modalContext.logModalResponse(resp, $store.user.id, { roles: state.roleIds.join(',') })
     if (resp.success) {
@@ -289,6 +296,7 @@
     <FieldMultiselect
       path='roleIds'
       label='Add More Roles'
+      required
       getOptions={searchRoles}
       lookupByValue={lookupRoleByValue}
       helptext={`${$store.user.name} currently has ${$store.user.directRoles.length} role${$store.user.directRoles.length === 1 ? '' : 's'}.`}/>
