@@ -222,7 +222,7 @@ export interface CreateUserInput {
   firstname: string
   lastname: string
   email: string
-  trained: boolean
+  trainings: string[]
   system: boolean
   validateOnly?: boolean
 }
@@ -273,8 +273,8 @@ export const ENABLE_USERS = `
 `
 
 export const CREATE_USER = `
-  mutation createUser ($userId: ID!, $firstname: String, $lastname: String!, $email: String!, $trained: Boolean!, $system: Boolean!, $validateOnly: Boolean) {
-    createUser (userId: $userId, firstname: $firstname, lastname: $lastname, email: $email, trained: $trained, system: $system, validateOnly: $validateOnly) {
+  mutation createUser ($userId: ID!, $firstname: String, $lastname: String!, $email: String!, $trainings: [ID!]!, $system: Boolean!, $validateOnly: Boolean) {
+    createUser (userId: $userId, firstname: $firstname, lastname: $lastname, email: $email, trainings: $trainings, system: $system, validateOnly: $validateOnly) {
       ${mutationResponse}
       user {
         ${userDetails}

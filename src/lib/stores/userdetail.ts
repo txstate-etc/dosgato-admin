@@ -19,7 +19,7 @@ interface IUserDetailStore {
 
 
 
-const initialValue: FullUser = { id: '', firstname: '', lastname: '', name: '', email: '', disabled: false, trained: false, directGroups: [], indirectGroups: [], directRoles: [], indirectRoles: [], sitesOwned: [], sitesManaged: [], permissions: { update: false }, system: false }
+const initialValue: FullUser = { id: '', firstname: '', lastname: '', name: '', email: '', disabled: false, trainings: [], directGroups: [], indirectGroups: [], directRoles: [], indirectRoles: [], sitesOwned: [], sitesManaged: [], permissions: { update: false }, system: false }
 
 export class UserDetailStore extends Store<IUserDetailStore> {
   constructor (public fetchUser: (id: string) => Promise<FullUser>) {
