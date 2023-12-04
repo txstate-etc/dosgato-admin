@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FieldCheckbox, FieldText, FormDialog, Dialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
+  import { FieldText, FormDialog, Dialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
   import accountIcon from '@iconify-icons/mdi/account'
   import accountCheck from '@iconify-icons/mdi/account-check'
   import accountCancel from '@iconify-icons/mdi/account-cancel'
@@ -10,10 +10,11 @@
   import { csv, intersect, isNull, sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContextStore, uiLog } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContextStore, uiLog, UserTrainingsChooser } from '$lib'
   import { setContext } from 'svelte'
 
   export let system: boolean
+  export let trainings: { id: string, name: string, lcName: string }[]
 
   type TypedUserItem = TypedTreeItem<UserListUser>
 
@@ -83,8 +84,7 @@
             userId: resp.user!.id,
             firstname: resp.user!.firstname,
             lastname: resp.user!.lastname,
-            email: resp.user!.email,
-            trained: resp.user!.trained
+            email: resp.user!.email
           }
         : undefined
     }
@@ -197,6 +197,6 @@
     {/if}
     <FieldText path="lastname" label="{system ? 'Name' : 'Last Name'}"></FieldText>
     <FieldText path="email" label="E-mail"></FieldText>
-    <FieldCheckbox path="trained" label="Training" boxLabel="This user successfully completed editor training." defaultValue={false}></FieldCheckbox>
+    <UserTrainingsChooser {trainings} />
   </FormDialog>
 {/if}

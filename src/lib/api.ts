@@ -2,7 +2,7 @@ import { base } from '$app/paths'
 import type { AssetFolderLink, AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
 import { MessageType } from '@txstate-mws/svelte-forms'
-import { get, isBlank, isNotBlank, keyby, pick, sortby, toArray } from 'txstate-utils'
+import { Cache, get, isBlank, isNotBlank, keyby, pick, sortby, toArray } from 'txstate-utils'
 import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
@@ -593,6 +593,15 @@ class API {
   async getRoleList () {
     const { roles } = await this.query<{ roles: RoleListRole[] }>(GET_ROLE_LIST)
     return roles
+  }
+
+  trainingsCache = new Cache(async () => {
+    const { trainings } = await this.query<{ trainings: { id: string, name: string, lcName: string }[] }>('query getAllTrainings { trainings { id name } }')
+    return trainings.map(t => ({ ...t, lcName: t.name.toLocaleLowerCase() }))
+  })
+
+  async getTrainings () {
+    return await this.trainingsCache.get()
   }
 
   async addRole (name: string, validateOnly?: boolean) {

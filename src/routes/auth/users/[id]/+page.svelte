@@ -1,18 +1,18 @@
 <script lang="ts">
 
-  import { Dialog, FieldText, FieldMultiselect, FieldCheckbox, FormDialog } from '@dosgato/dialog'
+  import { Dialog, FieldText, FieldMultiselect, FormDialog } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/ph/plus'
   import deleteIcon from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
+  import { sortby } from 'txstate-utils'
   import { base } from '$app/paths'
-  import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type GroupListGroup, type RoleListRole, BackButton, ModalContextStore } from '$lib'
+  import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type GroupListGroup, type RoleListRole, BackButton, ModalContextStore, UserTrainingsChooser } from '$lib'
   import { _store as store } from './+page'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
-  import { sortby } from 'txstate-utils'
+  import { uiConfig } from '../../../../local'
 
-
-  export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[] }
+  export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[], allTrainings: { id: string, name: string, lcName: string }[] }
 
   type Modals = 'editbasic' | 'editgroups' | 'editroles' | 'removefromgroup' | 'removerole'
   const modalContext = new ModalContextStore<Modals>()
@@ -144,7 +144,6 @@
     store.setRoleRemoving(roleId, roleName)
     modalContext.setModal('removerole', roleName)
   }
-
 </script>
 
 <DetailPageContent>
@@ -160,7 +159,7 @@
             'Last Name': $store.user.lastname,
             Login: $store.user.id,
             Email: $store.user.email,
-            Trained: $store.user.trained ? 'Yes' : 'No',
+            ...( !uiConfig.trainings?.hide ? { Training: $store.user.trainings?.length === 0 ? 'none' : $store.user.trainings.map(t => t.name).join(', ') } : {}),
             'Last Login': $store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never',
             'Inactive Since': $store.user.disabledAt ? DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : ''
           }} />
@@ -246,14 +245,14 @@
     validate={validateBasicInfo}
     name='editbasicinfo'
     title= {`Edit ${$store.user.id}`}
-    preload={{ firstname: $store.user.firstname, lastname: $store.user.lastname, email: $store.user.email, trained: $store.user.trained }}
+    preload={{ firstname: $store.user.firstname, lastname: $store.user.lastname, email: $store.user.email, trainings: $store.user.trainings.map(t => t.id) }}
     on:escape={modalContext.onModalEscape}>
     {#if !$store.user.system}
       <FieldText path='firstname' label='First Name' required={true}/>
     {/if}
     <FieldText path='lastname' label={`${$store.user.system ? 'Name' : 'Last Name'}`} required={true}/>
     <FieldText path='email' label='Email' required={true}/>
-    <FieldCheckbox path='trained' label='Trained' defaultValue={false} boxLabel='User has received training'/>
+    <UserTrainingsChooser trainings={data.allTrainings} />
   </FormDialog>
 {:else if $modalContext.modal === 'editgroups'}
   <FormDialog

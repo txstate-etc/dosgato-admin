@@ -8,7 +8,6 @@ lastname
 name
 email
 disabled
-trained
 roles {
   id
   name
@@ -27,7 +26,10 @@ const fullUserDetails = `
   email
   disabled
   disabledAt
-  trained
+  trainings {
+    id
+    name
+  }
   system
   lastlogin
   directRoles: roles(direct: true) {
@@ -81,7 +83,6 @@ export interface UserListUser {
   name: string
   email: string
   disabled: boolean
-  trained: boolean
   roles: {
     id: string
     name: string
@@ -169,7 +170,10 @@ export interface FullUser {
   email: string
   disabled: boolean
   disabledAt?: string
-  trained: boolean
+  trainings: {
+    id: string
+    name: string
+  }[]
   system: boolean
   lastlogin?: string
   directRoles: {
