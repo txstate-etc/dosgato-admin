@@ -8,6 +8,8 @@ import { panelTemplate } from './panel.js'
 import { quoteTemplate } from './quote.js'
 import { pageTemplate1 } from './pagetemplate1.js'
 import { pageTemplate2 } from './pagetemplate2.js'
+import { pageTemplate3 } from './pagetemplate3.js'
+import { pageTemplate4 } from './pagetemplate4.js'
 import { richText } from './richtext.js'
 import { HorizontalRule } from './horizontalrule.js'
 import { textImage } from './textimage.js'
@@ -25,6 +27,8 @@ export const uiConfig: UIConfig = {
     panelTemplate,
     pageTemplate1,
     pageTemplate2,
+    pageTemplate3,
+    pageTemplate4,
     richText,
     textImage,
     columnLayoutComponentTemplate
