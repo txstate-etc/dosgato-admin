@@ -6,8 +6,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - 127.0.0.1:3000:80
-    logging:
-      driver: none
+    attach: false
     environment:
       API_BASE: /.api
       RENDER_BASE: ""
@@ -23,8 +22,7 @@ services:
     build:
       context: ../dosgato
       dockerfile: Dockerfile.dev
-    logging:
-      driver: none
+    attach: false
     ports:
       - 127.0.0.1:8080:80
       - 127.0.0.1:9229:9229
@@ -50,8 +48,8 @@ services:
     ports:
       - 127.0.0.1:3002:80
       - 127.0.0.1:9230:9229
-    logging:
-      driver: none
+
+    attach: false
     environment:
       NODE_ENV: development
       DOSGATO_RENDER_JWT_SECRET: rendertoken
@@ -66,8 +64,7 @@ services:
     build:
       dockerfile: proxy/Dockerfile
       context: .
-    logging:
-      driver: none
+    attach: false
     ports:
       - 80:80
   fakeauth-test:
