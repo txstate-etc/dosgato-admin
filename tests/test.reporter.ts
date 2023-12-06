@@ -9,7 +9,8 @@ class DosgatoReporter implements Reporter {
 
   onEnd(result) {
     console.log("==============================")
-    console.log(`Finished the run: ${result.status}`);
+    console.log(`Test started at ${result.startTime} \n`)
+    console.log(`Finished the run: ${result.status} \n`);
     console.log("==============================")
   }
 }
