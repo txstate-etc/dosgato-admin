@@ -12,14 +12,16 @@ const NEW_PAGE = {
   title: 'Test pagetemplate1'
 }
 
+let page
+
 test.beforeEach(async ({ adminPage }) => {
-  await loadAdminPages(adminPage.page)
-  await expandSite(adminPage.page, TEST_SITE.name)
+  page = adminPage.page
+  await loadAdminPages(page)
+  await expandSite(page, TEST_SITE.name)
 })
 
-test.describe('page actions', () => {
-  test('should be able to add a page', async ({ adminPage, isMobile }) => {
-    const page = adminPage.page
+test.describe('page actions', async() => {
+  test('should be able to add a page', async ({ isMobile }) => {
     await addPage(page, NEW_PAGE.name, NEW_PAGE.title, 'keyp1')
     await expect(page.getByRole('group').getByText(NEW_PAGE.name)).toBeVisible()
     if(isMobile)
@@ -27,8 +29,7 @@ test.describe('page actions', () => {
     else
       await expect(page.locator('div.title.tree-cell').getByText(NEW_PAGE.title)).toBeVisible()
   })
-  test('should not be able to add a page with same URL Slug on same location ', async ({adminPage}) => {
-    const page = adminPage.page
+  test('should not be able to add a page with same URL Slug on same location ', async () => {
     await page.getByRole('button', { name: 'Add Page' }).click()
     await page.getByLabel('URL Slug *').click()
     await page.getByLabel('URL Slug *').fill(NEW_PAGE.name)
@@ -39,8 +40,7 @@ test.describe('page actions', () => {
     await expect(page.locator('div.error').filter({ hasText: `Page name: ${NEW_PAGE.name} already exists in this location.` })).toHaveCount(1)
     await page.getByRole('button', { name: 'Cancel' }).click()
   })
-  test('should be able to soft delete a page', async ({ adminPage, isMobile }) => {
-    const page = adminPage.page
+  test('should be able to soft delete a page', async ({ isMobile }) => {
     await page.getByRole('group').getByText(NEW_PAGE.name).click()
     await page.getByRole('button', { name: 'Delete Page' }).click()
     await page.getByRole('button', { name: 'Delete', exact: true }).click()
@@ -60,8 +60,7 @@ test.describe('page actions', () => {
                  .toHaveCount(1)
     await expect(page.getByRole('treeitem', { name: NEW_PAGE.name }).locator('div.deleted.status.tree-cell')).toBeVisible()
   })
-  test('should be able to hard delete a page', async ({ adminPage }) => {
-    const page = adminPage.page
+  test('should be able to hard delete a page', async () => {
     await page.getByRole('group').getByText(NEW_PAGE.name).click()
     await expect(page.locator('header')).toHaveText(NEW_PAGE.name)
     await page.getByRole('button', { name: 'Finalize Deletion' }).click()
@@ -69,8 +68,7 @@ test.describe('page actions', () => {
     await page.getByRole('button', { name: 'Delete' }).click()
     await expect (page.getByRole('group').getByText(NEW_PAGE.name)).toHaveCount(0)
   })
-  test('should be able to add a page with same URL Slug on diff location ', async ({adminPage, isMobile}) => {
-    const page = adminPage.page
+  test('should be able to add a page with same URL Slug on diff location ', async ({isMobile}) => {
     await expect(page.getByRole('treeitem', {name: TEST_SITE.name})).toHaveCount(1)
     await expect(page.getByRole('group').getByText(TEST_SITE.name)).toHaveCount(0)
     if(!isMobile)

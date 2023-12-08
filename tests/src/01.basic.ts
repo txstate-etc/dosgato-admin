@@ -1,8 +1,11 @@
 import { loadAdminPages, locateEditFrame } from '../common'
 import { test, expect } from '../fixtures'
 
+let page
+
 test.beforeEach(async ({ adminPage }) => {
-  await loadAdminPages(adminPage.page)
+  page = adminPage.page
+  await loadAdminPages(page)
 })
 
 test.describe('basic', () => {
@@ -13,8 +16,7 @@ test.describe('basic', () => {
     await expect(editorPage.page).toHaveTitle('DEV DG Editing')
     await expect(editorPage.greeting).toContainText('Michael Scott')
   })
-  test('should be able to browse admin pages', async ({ adminPage, isMobile }) => {
-    const page = adminPage.page
+  test('should be able to browse admin pages', async ({isMobile }) => {
     if (isMobile) {
       expect(await page.getByText('Basketry Home').isHidden()).toBeTruthy()
       await page.getByText('site1', { exact: true }).click()
@@ -22,13 +24,11 @@ test.describe('basic', () => {
     await page.getByText('about', { exact: true }).click()
     await expect(page.getByRole('treeitem').getByText('people', { exact: true })).toBeVisible()
   })
-  test('should be able to render a page', async ({ adminPage }) => {
-    const page = adminPage.page
+  test('should be able to render a page', async () => {
     await page.goto('/.edit/bs-site')
     await expect(page.getByRole('button', { name: 'Add Main Content' })).toBeVisible()
   })
-  test('should be able to edit a page', async ({ adminPage }) => {
-    const page = adminPage.page
+  test('should be able to edit a page', async () => {
     await page.waitForURL(/pages/)
     await page.getByRole('treeitem').nth(0).locator('svg').nth(1).click()
     // await page.locator('#h1b3 > .checkbox').click()
