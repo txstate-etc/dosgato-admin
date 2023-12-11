@@ -33,7 +33,7 @@ import {
   PUBLISH_PAGES, UNPUBLISH_PAGES, DELETE_PAGES, type RootTreePage, DELETE_DATA, PUBLISH_DATA_DELETION, UNDELETE_DATA, MOVE_PAGES,
   type MoveDataTarget, MOVE_DATA, MOVE_DATA_FOLDERS, apiPageToChooserPage, type ChooserPageByLink, type ChooserAssetByLink,
   CHOOSER_PAGE_BY_PATH, type ChooserPageByPath, CHOOSER_ASSET_BY_ID, type ChooserAssetById, type ChooserAssetFolderByLink,
-  CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL, DELETE_ASSET, FINALIZE_DELETE_ASSET, UNDELETE_ASSET, DELETE_ASSET_FOLDER,
+  CHOOSER_ASSET_FOLDER_BY_LINK, CHOOSER_PAGE_BY_URL, DELETE_ASSETS, FINALIZE_DELETE_ASSETS, UNDELETE_ASSETS, DELETE_ASSET_FOLDER,
   FINALIZE_DELETE_ASSET_FOLDER, UNDELETE_ASSET_FOLDER, type MoveComponentResponse, MOVE_COMPONENT, type CreateComponentResponse,
   CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
@@ -265,7 +265,7 @@ class API {
     if (path === '/') {
       const folders = await this.getRootAssetFolders()
       const siteId = (pagetreeId ? folders.find(f => f.pagetree.id === pagetreeId) : undefined)?.site.id
-      return folders.filter(f => f.pagetree.id === pagetreeId || (f.site.id !== siteId && f.pagetree.type === 'PRIMARY')).map(apiAssetFolderToChooserFolder)
+      return folders.filter(f => f.site.launchEnabled !== LaunchState.DECOMMISSIONED && (f.pagetree.id === pagetreeId || (f.site.id !== siteId && f.pagetree.type === 'PRIMARY'))).map(apiAssetFolderToChooserFolder)
     }
     const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(CHOOSER_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
     return [...assets.map(a => apiAssetToChooserAsset(a)!), ...assetfolders.map(f => apiAssetFolderToChooserFolder(f))]
@@ -325,19 +325,19 @@ class API {
     return renameAsset
   }
 
-  async deleteAsset (assetId: string) {
-    const { deleteAsset } = await this.query<{ deleteAsset: MutationResponse & { asset: TreeAsset } }>(DELETE_ASSET, { assetId })
-    return deleteAsset
+  async deleteAssets (assetIds: string[]) {
+    const { deleteAssets } = await this.query<{ deleteAssets: MutationResponse & { assets: TreeAsset[] } }>(DELETE_ASSETS, { assetIds })
+    return deleteAssets
   }
 
-  async finalizeDeleteAsset (assetId: string) {
-    const { finalizeAssetDeletion } = await this.query<{ finalizeAssetDeletion: MutationResponse & { asset: TreeAsset } }>(FINALIZE_DELETE_ASSET, { assetId })
-    return finalizeAssetDeletion
+  async finalizeDeleteAssets (assetIds: string[]) {
+    const { finalizeDeleteAssets } = await this.query<{ finalizeDeleteAssets: MutationResponse & { assets: TreeAsset[] } }>(FINALIZE_DELETE_ASSETS, { assetIds })
+    return finalizeDeleteAssets
   }
 
-  async undeleteAsset (assetId: string) {
-    const { undeleteAsset } = await this.query<{ undeleteAsset: MutationResponse & { asset: TreeAsset } }>(UNDELETE_ASSET, { assetId })
-    return undeleteAsset
+  async undeleteAssets (assetIds: string[]) {
+    const { undeleteAssets } = await this.query<{ undeleteAssets: MutationResponse & { assets: TreeAsset[] } }>(UNDELETE_ASSETS, { assetIds })
+    return undeleteAssets
   }
 
   async deleteAssetFolder (folderId: string) {

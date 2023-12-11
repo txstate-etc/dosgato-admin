@@ -66,8 +66,8 @@
     return actions
   }
 
-  function multipageactions (pages: TypedAnyAssetItem[]) {
-    if (!pages?.length) return []
+  function multipageactions (items: TypedAnyAssetItem[]) {
+    if (!items?.length) return []
     const actions: ActionPanelAction[] = []
     if ($store.copied.size) {
       actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
@@ -77,6 +77,9 @@
         { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() }
       )
     }
+    actions.push({ label: 'Delete', icon: deleteOutline, onClick: () => modalContext.setModal('delete'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.NOTDELETED) })
+    actions.push({ label: 'Restore', icon: deleteRestore, onClick: () => modalContext.setModal('restore'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.MARKEDFORDELETE) })
+    actions.push({label: 'Finalize Deletion', icon: deleteOutline, onClick: () => modalContext.setModal('finalizeDelete'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.MARKEDFORDELETE) })
     return actions
   }
 
@@ -144,8 +147,8 @@
   async function onDelete () {
     let resp
     if ($store.selectedItems[0].kind === 'asset') {
-      resp = await api.deleteAsset($store.selectedItems[0].id)
-      modalContext.logModalResponse(resp, $store.selectedItems[0].path)
+      resp = await api.deleteAssets($store.selectedItems.map(a => a.id))
+      modalContext.logModalResponse(resp, $store.selectedItems.map(a => a.path).join(', '))
     } else {
       resp = await api.deleteAssetFolder($store.selectedItems[0].gqlId)
       modalContext.logModalResponse(resp, $store.selectedItems[0].path)
@@ -159,8 +162,8 @@
   async function onFinalizeDelete () {
     let resp
     if ($store.selectedItems[0].kind === 'asset') {
-      resp = await api.finalizeDeleteAsset($store.selectedItems[0].id)
-      modalContext.logModalResponse(resp, $store.selectedItems[0].id)
+      resp = await api.finalizeDeleteAssets($store.selectedItems.map(a => a.id))
+      modalContext.logModalResponse(resp, $store.selectedItems.map(a => a.id).join(', '))
     } else {
       resp = await api.finalizeDeleteAssetFolder($store.selectedItems[0].gqlId)
       modalContext.logModalResponse(resp, $store.selectedItems[0].gqlId)
@@ -174,8 +177,8 @@
   async function onRestore () {
     let resp
     if ($store.selectedItems[0].kind === 'asset') {
-      resp = await api.undeleteAsset($store.selectedItems[0].id)
-      modalContext.logModalResponse(resp, $store.selectedItems[0].id)
+      resp = await api.undeleteAssets($store.selectedItems.map(a => a.id))
+      modalContext.logModalResponse(resp, $store.selectedItems.map(a => a.id).join(', '))
     } else {
       resp = await api.undeleteAssetFolder($store.selectedItems[0].gqlId)
       modalContext.logModalResponse(resp, $store.selectedItems[0].gqlId)
@@ -230,25 +233,25 @@
     <FieldText path="name" label="Name" required />
   </FormDialog>
 {:else if $modalContext.modal === 'delete' }
-  <Dialog title={`Delete ${$store.selectedItems[0].kind === 'asset' ? 'Asset' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onDelete} on:escape={onModalEscape}>
+  <Dialog title={`Delete ${$store.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onDelete} on:escape={onModalEscape}>
     {#if $store.selectedItems[0].kind === 'asset'}
-      Delete this asset?
+      {`Delete ${$store.selectedItems.length} asset${$store.selectedItems.length === 1 ? '' : 's'}?`}
     {:else}
       Delete this asset folder? All contents will be marked for deletion.
     {/if}
   </Dialog>
 {:else if $modalContext.modal === 'finalizeDelete'}
-  <Dialog title={`Delete ${$store.selectedItems[0].kind === 'asset' ? 'Asset' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onFinalizeDelete} on:escape={onModalEscape}>
+  <Dialog title={`Delete ${$store.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onFinalizeDelete} on:escape={onModalEscape}>
     {#if $store.selectedItems[0].kind === 'asset'}
-      Delete this asset?
+    {`Delete ${$store.selectedItems.length} asset${$store.selectedItems.length === 1 ? '' : 's'}?`}
     {:else}
       Delete this asset folder and its contents?
     {/if}
   </Dialog>
 {:else if $modalContext.modal === 'restore'}
-  <Dialog title={`Restore ${$store.selectedItems[0].kind === 'asset' ? 'Asset' : 'Folder'}`} continueText='Restore' cancelText='Cancel' on:continue={onRestore} on:escape={onModalEscape}>
+  <Dialog title={`Restore ${$store.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Restore' cancelText='Cancel' on:continue={onRestore} on:escape={onModalEscape}>
     {#if $store.selectedItems[0].kind === 'asset'}
-      Restore this asset?
+    {`Restore ${$store.selectedItems.length} asset${$store.selectedItems.length === 1 ? '' : 's'}?`}
     {:else}
       Restore this asset folder?
     {/if}

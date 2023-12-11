@@ -50,6 +50,7 @@ export interface RootAssetFolder extends TreeAssetFolder {
   site: {
     id: string
     name: string
+    launchEnabled: number
   }
 }
 
@@ -164,29 +165,29 @@ export const RENAME_ASSET = `
   }
 `
 
-export const DELETE_ASSET = `
-  mutation deleteAsset ($assetId: ID!) {
-    deleteAsset (assetId: $assetId) {
+export const DELETE_ASSETS = `
+  mutation deleteAssets ($assetIds: [ID!]!) {
+    deleteAssets (assetIds: $assetIds) {
       ${mutationResponse}
-      asset { ${assetDetails}}
+      assets { ${assetDetails}}
     }
   }
  `
 
-export const FINALIZE_DELETE_ASSET = `
-  mutation finalizeAssetDeletion ($assetId: ID!) {
-    finalizeAssetDeletion (assetId: $assetId) {
+export const FINALIZE_DELETE_ASSETS = `
+  mutation finalizeDeleteAssets ($assetIds: [ID!]!) {
+    finalizeDeleteAssets (assetIds: $assetIds) {
       ${mutationResponse}
-      asset { ${assetDetails}}
+      assets { ${assetDetails}}
     }
   }
 `
 
-export const UNDELETE_ASSET = `
-  mutation undeleteAsset ($assetId: ID!) {
-    undeleteAsset (assetId: $assetId) {
+export const UNDELETE_ASSETS = `
+  mutation undeleteAsset ($assetIds: [ID!]!) {
+    undeleteAssets (assetIds: $assetIds) {
       ${mutationResponse}
-      asset { ${assetDetails}}
+      assets { ${assetDetails}}
     }
   }
 `
