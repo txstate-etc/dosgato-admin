@@ -67,12 +67,12 @@
       actions: []
     }
     createDestroy.actions.push({ label: 'Add Page', icon: plusIcon, disabled: !page.permissions.create, onClick: onClickAddPage })
-    if (page.deleteState === DeleteState.NOTDELETED) createDestroy.actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { void onClickDelete() } })
+    if (page.deleteState === DeleteState.NOTDELETED) createDestroy.actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { void countPages('deletepage') } })
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) {
       createDestroy.actions.push(
         { label: 'Restore Page', icon: deleteRestore, disabled: !page.permissions.undelete, onClick: () => modalContext.setModal('undeletepage') },
         { label: 'Restore incl. Subpages', icon: deleteRestore, disabled: !page.permissions.undelete || !page.hasChildren, onClick: () => modalContext.setModal('undeletewithsubpages') },
-        { label: 'Finalize Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { void onClickPublishDeletion() } }
+        { label: 'Finalize Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { void countPages('publishdelete') } }
       )
     }
 
@@ -133,10 +133,19 @@
   }
   function multipageactions (pages: TypedPageItem[]) {
     if (!pages?.length) return []
-    const actions: ActionPanelAction[] = [
+    const actions: ActionPanelAction[] = []
+    if (pages.every(p => p.deleteState === DeleteState.NOTDELETED)) {
+      actions.push({ label: 'Delete Pages', icon: deleteOutline, disabled: pages.some(p => !p.permissions.delete), onClick: () => { void countPages('deletepage') } })
+    }
+    if (pages.every(p => p.deleteState === DeleteState.MARKEDFORDELETE)) {
+      actions.push({ label: 'Restore Pages', icon: deleteRestore, disabled: pages.some(p => !p.permissions.undelete), onClick: () => { void countPages('undeletewithsubpages') } })
+      actions.push({ label: 'Finalize Deletion', icon: deleteOutline, disabled: pages.some(p => !p.permissions.delete), onClick: () => { void countPages('publishdelete') } })
+    }
+    const publishActions: ActionPanelAction[] = [
       { label: 'Publish', icon: publishIcon, disabled: pages.some(p => !p.permissions.publish), onClick: () => modalContext.setModal('publishpages') },
       { label: 'Unpublish', icon: publishOffIcon, disabled: pages.some(p => !p.permissions.unpublish), onClick: () => modalContext.setModal('unpublishpages') }
     ]
+    actions.push(...publishActions)
     if ($store.copied.size) {
       actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
     } else {
@@ -227,29 +236,22 @@
   }
 
   let pagesToDeleteCount: number | undefined = undefined
-  async function onClickDelete () {
-    // get the number of pages to be deleted
-    const page = await api.getDeletePageCount($store.selectedItems[0].id)
-    pagesToDeleteCount = 1 + page.children.length
-    modalContext.setModal('deletepage')
+  async function countPages (modal: Modals) {
+    pagesToDeleteCount = await api.getDeletePageCount($store.selectedItems.map(page => page.id))
+    console.log('setting modal to ' + modal)
+    modalContext.setModal(modal)
   }
 
   async function onDeletePage () {
-    const resp = await api.deletePages([$store.selectedItems[0].id])
+    const resp = await api.deletePages($store.selectedItems.map(page => page.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target)
     modalContext.reset()
     pagesToDeleteCount = undefined
     if (resp.success) await store.refresh()
   }
 
-  async function onClickPublishDeletion () {
-    const page = await api.getDeletePageCount($store.selectedItems[0].id)
-    pagesToDeleteCount = 1 + page.children.length
-    modalContext.setModal('publishdelete')
-  }
-
   async function onPublishDeletion () {
-    const resp = await api.publishDeletion([$store.selectedItems[0].id])
+    const resp = await api.publishDeletion($store.selectedItems.map(page => page.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target)
     modalContext.reset()
     pagesToDeleteCount = undefined
@@ -264,9 +266,10 @@
   }
 
   async function onUndeletePageWithChildren () {
-    const resp = await api.undeletePages([$store.selectedItems[0].id], true)
+    const resp = await api.undeletePages($store.selectedItems.map(page => page.id), true)
     modalContext.logModalResponse(resp, actionPanelTarget.target)
     modalContext.reset()
+    pagesToDeleteCount = undefined
     if (resp.success) await store.refresh()
   }
 
@@ -427,7 +430,7 @@
     cancelText='Cancel'
     on:continue={onUndeletePageWithChildren}
     on:escape={modalContext.onModalEscape}>
-    Restore this deleted page and its child pages?
+    Restore {pagesToDeleteCount} pages?
   </Dialog>
 {:else if $modalContext.modal === 'import' && $store.selectedItems[0]}
   <UploadUI

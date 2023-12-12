@@ -2,7 +2,7 @@ import { base } from '$app/paths'
 import type { AssetFolderLink, AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
 import { MessageType } from '@txstate-mws/svelte-forms'
-import { Cache, get, isBlank, isNotBlank, keyby, pick, sortby, toArray } from 'txstate-utils'
+import { Cache, get, isBlank, isNotBlank, keyby, pick, sortby, toArray, unique } from 'txstate-utils'
 import {
   DISABLE_USERS, ENABLE_USERS, UPDATE_USER, REMOVE_USER_FROM_GROUP, ADD_USER_TO_GROUPS, CREATE_DATA_FOLDER,
   DELETE_DATA_FOLDERS, RENAME_DATA_FOLDER, CREATE_DATA_ITEM, PUBLISH_DATA_ENTRIES, UNPUBLISH_DATA_ENTRIES,
@@ -38,7 +38,7 @@ import {
   CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
-  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGE_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST
+  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -869,9 +869,14 @@ class API {
     return unpublishPages
   }
 
-  async getDeletePageCount (pageId: string) {
-    const { pages } = await this.query<{ pages: PageWithDescendants[] }>(GET_PAGE_AND_DESCENDANTS, { pageId })
-    return pages[0]
+  async getDeletePageCount (pageIds: string[]) {
+    const { pages } = await this.query<{ pages: PageWithDescendants[] }>(GET_PAGES_AND_DESCENDANTS, { pageIds })
+    const ids: string[] = []
+    for (const p of pages) {
+      ids.push(p.id)
+      ids.push(...p.children.map(c => c.id))
+    }
+    return unique(ids).length
   }
 
   async deletePages (pageIds: string[]) {

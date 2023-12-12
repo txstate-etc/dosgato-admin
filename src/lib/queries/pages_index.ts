@@ -228,9 +228,9 @@ export interface PageWithDescendants {
   }[]
 }
 
-export const GET_PAGE_AND_DESCENDANTS = `
-  query getPageAndDescendants ($pageId: ID!) {
-    pages (filter: { ids: [$pageId]}) {
+export const GET_PAGES_AND_DESCENDANTS = `
+  query getPageAndDescendants ($pageIds: [ID!]!) {
+    pages (filter: { ids: $pageIds}) {
       id
       children (recursive: true) {
         id
