@@ -24,10 +24,10 @@
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog, ModalContextStore, LaunchState } from '$lib'
+  import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog, ModalContextStore, getSiteIcon } from '$lib'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import { _store as store, type TypedPageItem } from './+page'
-  import { sandboxIcon } from './sandboxicon'
+  import { sandboxIcon } from '../../lib/sandboxicon'
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
   import { copyWithSubpagesIcon } from './copywithsubpagesicon'
   import { moveIntoIcon } from './moveintoicon'
@@ -45,20 +45,6 @@
     PRIMARY: browserIcon,
     SANDBOX: sandboxIcon,
     ARCHIVE: archive
-  }
-
-  function getSiteIcon (launchState, type) {
-    if (type === 'PRIMARY') {
-      if (launchState === LaunchState.LAUNCHED) {
-        return browserIcon
-      } else if (launchState === LaunchState.PRELAUNCH) {
-        return sandboxIcon
-      } else return archive
-    } else if (type === 'SANDBOX') {
-      return sandboxIcon
-    } else {
-      return archive
-    }
   }
 
   function singlepageactions (page: TypedPageItem, ..._: any) {
@@ -438,6 +424,7 @@
     uploadPath="{environmentConfig.apiBase}/pages/{$store.selectedItems[0].id}"
     mimeWhitelist={['application/json', 'application/x-gzip']}
     maxFiles={1}
+    helptext="Uploaded file must be a Gato .json or .json.gz export file"
     on:escape={modalContext.onModalEscape}
     on:saved={onImportSaved} />
 {/if}

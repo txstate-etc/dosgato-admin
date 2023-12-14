@@ -2,6 +2,9 @@ import type { MessageFromAPI, MutationResponse } from '$lib'
 import { MessageType, type Feedback, type SubmitResponse } from '@txstate-mws/svelte-forms'
 import { DateTime } from 'luxon'
 import { isNull, isNotBlank, omit } from 'txstate-utils'
+import browserIcon from '@iconify-icons/ph/browser'
+import archive from '@iconify-icons/ph/archive'
+import { sandboxIcon } from './sandboxicon'
 
 export function messageForDialog (messages: MessageFromAPI[], prefix?: string) {
   return messages.map(m => {
@@ -64,4 +67,18 @@ export enum LaunchState {
   PRELAUNCH = 0,
   LAUNCHED = 1,
   DECOMMISSIONED = 2
+}
+
+export function getSiteIcon (launchState, type) {
+  if (type === 'PRIMARY') {
+    if (launchState === LaunchState.LAUNCHED) {
+      return browserIcon
+    } else if (launchState === LaunchState.PRELAUNCH) {
+      return sandboxIcon
+    } else return archive
+  } else if (type === 'SANDBOX') {
+    return sandboxIcon
+  } else {
+    return archive
+  }
 }

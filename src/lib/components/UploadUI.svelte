@@ -98,7 +98,7 @@
       on:dragover|preventDefault={() => {}} on:drop={onUploadDrop}
     >
       <input type="file" id="uploader_input" multiple on:change={onUploadChange}>
-      <label for="uploader_input">Choose or drag files</label>
+      <label for="uploader_input">Choose or drag {$$props.maxFiles ? `${maxFiles > 1 ? `up to ${maxFiles}` : 'a'}` : ''} file{maxFiles === 1 ? '' : 's'}</label>
       <ul>
         {#each uploadList as file}
           <li>
