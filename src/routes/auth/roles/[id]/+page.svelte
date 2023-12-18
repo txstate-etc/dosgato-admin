@@ -56,8 +56,9 @@
 
   async function searchUsers (term: string) {
     term = term.toLowerCase()
+    const directUserIds = $store.role.directUsers.map(u => u.id)
     return users.filter(u => {
-      return u.name.toLowerCase().includes(term) || u.id.includes(term)
+      return !directUserIds.includes(u.id) && (u.name.toLowerCase().includes(term) || u.id.includes(term))
     }).map(u => ({ label: u.name, value: u.id }))
   }
 
@@ -68,8 +69,9 @@
 
   async function searchGroups (term: string) {
     term = term.toLowerCase()
+    const directGroupIds = $store.role.directGroups.map(g => g.id)
     return groups.filter(g => {
-      return g.name.toLowerCase().includes(term)
+      return !directGroupIds.includes(g.id) && g.name.toLowerCase().includes(term)
     }).map(g => ({ label: g.name, value: g.id }))
   }
 
@@ -98,15 +100,29 @@
   }
 
   async function onAssignRoleToUser (state) {
-    const resp = await api.assignRoleToUsers($store.role.id, state.userId)
-    modalContext.logModalResponse(resp, $store.role.id, { userId: state.userId })
+    if (!state.userIds?.length) {
+      return {
+        success: false,
+        data: { userIds: []},
+        messages: [{ type: 'error' as const, path: 'userIds', message: 'Please select at least one user'}]
+      }
+    }
+    const resp = await api.assignRoleToUsers($store.role.id, state.userIds)
+    modalContext.logModalResponse(resp, $store.role.id, { userIds: state.userIds })
     return { ...resp, data: state }
   }
 
   async function onAssignRoleToGroup (state) {
-    const resp = await api.addRoleToGroups($store.role.id, state.groupId)
-    modalContext.logModalResponse(resp, $store.role.id, { groupId: state.groupId })
-    return { ...resp, data: state }
+    if (!state.groupIds.length) {
+      return {
+        success: false,
+        data: { groupIds: []},
+        messages: [{ type: 'error' as const, path: 'groupIds', message: 'Please select at least one group'}]
+      }
+    }
+    const resp = await api.addRoleToGroups($store.role.id, state.groupIds)
+    modalContext.logModalResponse(resp, $store.role.id, { groupIds: state.groupIds })
+    return { ...resp, data: state, messages: resp.messages.map(m => ({ ...m, path: m.arg })) }
   }
 
   function onClickUnassign (id: string, name: string) {
@@ -340,18 +356,16 @@
     name='assigntouser'
     title='Assign Role to Users'
     on:escape={modalContext.onModalEscape}
-    on:saved={onSaved}
-    preload={{ userId: $store.role.directUsers.map(u => u.id) }}>
-    <FieldMultiselect path="userId" label=Users getOptions={searchUsers} lookupByValue={lookupUserByValue}/>
+    on:saved={onSaved}>
+    <FieldMultiselect path="userIds" label=Users getOptions={searchUsers} lookupByValue={lookupUserByValue} helptext={`This role is already assigned to ${$store.role.directUsers.length} users.`}/>
   </FormDialog>
 {:else if $modalContext.modal === 'assigntogroup'}
   <FormDialog
     title="Assign Role to Group"
     on:escape={modalContext.onModalEscape}
     on:saved={onSaved}
-    submit={onAssignRoleToGroup}
-    preload={{ groupId: $store.role.directGroups.map(g => g.id) }}>
-    <FieldMultiselect path='groupId' label='Groups' getOptions={searchGroups} lookupByValue={lookupGroupByValue}/>
+    submit={onAssignRoleToGroup}>
+    <FieldMultiselect required path='groupIds' label='Groups' getOptions={searchGroups} lookupByValue={lookupGroupByValue} helptext={`This role is already assigned to ${$store.role.directGroups.length} groups.`}/>
   </FormDialog>
 {:else if $modalContext.modal === 'unassignfromuser'}
   <Dialog
