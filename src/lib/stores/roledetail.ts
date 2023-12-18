@@ -13,6 +13,10 @@ interface IRoleDetailStore {
     id: string
     name: string
   }
+  groupRemoving?: {
+    id: string
+    name: string
+  }
 }
 
 const initialValue: FullRole = {
@@ -66,6 +70,17 @@ export class RoleDetailStore extends Store<IRoleDetailStore> {
   resetUserRemoving () {
     this.update(v => {
       return set(v, 'userRemoving', undefined)
+    })
+  }
+  setGroupRemoving (id: string, name: string) {
+    this.update(v => {
+      return set(v, 'groupRemoving', { id, name })
+    })
+  }
+
+  resetGroupRemoving () {
+    this.update(v => {
+      return set(v, 'groupRemoving', undefined)
     })
   }
 }

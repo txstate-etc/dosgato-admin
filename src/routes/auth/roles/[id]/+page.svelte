@@ -29,7 +29,7 @@
   $: dataTemplateOptions = templates.filter(t => t.type === 'DATA').map(t => ({ label: t.name, value: t.key }))
 
   type Modals = 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' | 'assignrole' |
-  'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | 'assigntogroup' |
+  'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | 'assigntogroup' | 'unassignfromgroup' |
   'addsiterule' | 'editsiterule' | 'addtemplaterule' | 'assigntouser' | 'unassignfromuser' | 'addeditorrule' | 'addadminrule'
   const modalContext = new ModalContextStore<Modals>()
 
@@ -114,12 +114,28 @@
     modalContext.setModal('unassignfromuser', name)
   }
 
+  function onClickUnassignGroup (id: string, name: string) {
+    store.setGroupRemoving(id, name)
+    modalContext.setModal('unassignfromgroup', name)
+  }
+
   async function onUnassign (state) {
     if (!$store.userRemoving) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Please select a user to remove.' }], data: state }
     const resp = await api.removeRoleFromUser($store.role.id, $store.userRemoving.id)
     modalContext.logModalResponse(resp, $store.role.id, { userId: $store.userRemoving.id })
     if (resp.success) {
       store.resetUserRemoving()
+      onSaved()
+    }
+    return { ...resp, data: state }
+  }
+
+  async function onUnassignGroup (state) {
+    if (!$store.groupRemoving) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Please select a group to remove.' }], data: state }
+    const resp = await api.removeRoleFromGroup($store.role.id, $store.groupRemoving.id)
+    modalContext.logModalResponse(resp, $store.role.id, { groupId: $store.groupRemoving.id })
+    if (resp.success) {
+      store.resetGroupRemoving()
       onSaved()
     }
     return { ...resp, data: state }
@@ -202,7 +218,7 @@
             <SortableTable items={$store.role.directGroups}
               headers={[
                 { id: 'name', label: 'Assigned Group', render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>`, sortable: true, sortFunction: (item) => item.name, widthPercent: 50 },
-                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Remove', onClick: (item) => {} }], widthPercent: 50 }
+                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Remove', onClick: (item) => onClickUnassignGroup(item.id, item.name) }], widthPercent: 50 }
               ]}/>
           {:else}
             <span>This role is not directly assigned to any groups.</span>
@@ -345,6 +361,15 @@
   on:continue={onUnassign}
   on:escape={modalContext.onModalEscape}>
   {`Are you sure you want to remove the ${$store.role.name} role from user ${$store.userRemoving?.id}?`}
+  </Dialog>
+{:else if $modalContext.modal === 'unassignfromgroup'}
+  <Dialog
+  title={'Remove Role from Group'}
+  continueText='Unassign'
+  cancelText='Cancel'
+  on:continue={onUnassignGroup}
+  on:escape={modalContext.onModalEscape}>
+  {`Are you sure you want to remove the ${$store.role.name} role from group ${$store.groupRemoving?.name}?`}
   </Dialog>
 {:else if $modalContext.modal === 'addeditorrule'}
   <Dialog title="Add Editor Permissions" on:escape={modalContext.onModalEscape} continueText="Cancel" on:continue={modalContext.onModalEscape}>
