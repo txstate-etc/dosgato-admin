@@ -1,5 +1,6 @@
 import { environmentConfig } from '$lib/stores'
-import type { Asset, Folder, Page } from '@dosgato/dialog'
+import { getSiteIcon } from '$lib'
+import type { Asset, Folder, Page } from '$lib/ChooserAPI'
 import type { AssetFolderLink } from '@dosgato/templating'
 import { isNotBlank, omit, pick, stringify } from 'txstate-utils'
 import type { RootAssetFolder } from './assets_index'
@@ -12,7 +13,8 @@ name
 path
 title
 children { id }
-site { id name }
+site { id name launchState }
+pagetree { type }
 `
 export interface ChooserPageDetails {
   id: string
@@ -21,7 +23,8 @@ export interface ChooserPageDetails {
   path: string
   title?: string
   children: { id: string }[]
-  site: { id: string, name: string }
+  site: { id: string, name: string, launchState: number }
+  pagetree: { type: PagetreeTypes}
 }
 
 const chooserAssetDetails = `
@@ -227,7 +230,8 @@ export function apiPageToChooserPage (page: ChooserPageDetails | RootTreePage | 
     ...pick(page, 'name', 'path', 'title'),
     id: stringify({ type: 'page', source: 'pages', linkId: page.linkId, siteId: page.site.id, path: page.path.replace(/^\/[^/]+/, `/${page.site.name}`), hash }),
     hasChildren: page.children.length > 0,
-    url: page.path + (isNotBlank(hash) ? '#' + hash : '')
+    url: page.path + (isNotBlank(hash) ? '#' + hash : ''),
+    icon: { icon: getSiteIcon(page.site.launchState, page.pagetree.type) }
   }
 }
 
