@@ -57,7 +57,7 @@
     } else if (/\.\d+$/.test(selectedPath)) {
       // editing mode, edit bar selected
       return [previewGroup,
-        { label: 'Edit', icon: pencilIcon, onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
+        { label: 'Edit', icon: pencilIcon, disabled: !$editorStore.selectedMayEdit, onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
         { label: 'Delete', icon: trash, disabled: !$editorStore.selectedMayDelete, onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) },
         ...($actionsStore.clipboardActive
           ? [
@@ -78,7 +78,7 @@
     }
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean, editbarpaths?: string[], buttonIndex?: number }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean, mayEdit?: boolean, editbarpaths?: string[], buttonIndex?: number }) {
     if (message.action === 'scroll') {
       $editorStore.scrollY = message.scrollTop!
       return
@@ -98,7 +98,7 @@
       }
       iframe.contentWindow?.postMessage({ movablePaths }, '*')
     } else if (message.action === 'select') {
-      pageEditorStore.select(message.path, message.label, message.maxreached, message.mayDelete)
+      pageEditorStore.select(message.path, message.label, message.maxreached, message.mayDelete, message.mayEdit)
     } else if (message.action === 'edit') {
       pageEditorStore.editComponentShowModal(message.path)
     } else if (message.action === 'cut') {

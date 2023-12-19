@@ -28,6 +28,7 @@ export interface EditorState {
   selectedLabel?: string
   selectedMaxReached?: boolean
   selectedMayDelete?: boolean
+  selectedMayEdit?: boolean
   state?: any
   cutAllowed?: boolean
   copyAllowed?: boolean
@@ -290,9 +291,9 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.updateEditorState(editorState => ({ ...editorState, modal: undefined, editing: undefined, creating: undefined }))
   }
 
-  select (path?: string, label?: string, maxreached?: boolean, mayDelete?: boolean) {
+  select (path?: string, label?: string, maxreached?: boolean, mayDelete?: boolean, mayEdit?: boolean) {
     // TODO: Determine if we want to log every component select.
-    this.updateEditorState(editorState => ({ ...editorState, selectedPath: path, selectedLabel: label, selectedMaxReached: !!maxreached, selectedMayDelete: !!mayDelete }))
+    this.updateEditorState(editorState => ({ ...editorState, selectedPath: path, selectedLabel: label, selectedMaxReached: !!maxreached, selectedMayDelete: !!mayDelete, selectedMayEdit: !!mayEdit }))
   }
 
   cutComponent (path?: string) {
