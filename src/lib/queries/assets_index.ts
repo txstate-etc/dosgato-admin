@@ -1,3 +1,4 @@
+import type { LaunchState } from '$lib'
 import { mutationResponse } from './global'
 
 const assetFolderDetails = `
@@ -50,7 +51,7 @@ export interface RootAssetFolder extends TreeAssetFolder {
   site: {
     id: string
     name: string
-    launchEnabled: number
+    launchEnabled: LaunchState
   }
 }
 

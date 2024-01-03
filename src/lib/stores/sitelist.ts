@@ -34,4 +34,3 @@ class SiteListStore extends Store<ISiteListStore> {
 }
 
 export const siteListStore = new SiteListStore()
-export const siteStore = derivedStore(siteListStore, v => v.sites[v.active])

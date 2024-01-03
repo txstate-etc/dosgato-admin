@@ -1,3 +1,4 @@
+import type { LaunchState } from '$lib'
 import { mutationResponse } from './global'
 
 const pageDetails = `
@@ -66,7 +67,7 @@ export interface TreePage {
     unpublish: boolean
   }
   site: {
-    launchState: number
+    launchState: LaunchState
   }
 }
 
@@ -82,7 +83,7 @@ export interface RootTreePage extends TreePage {
   site: {
     id: string
     name: string
-    launchState: number
+    launchState: LaunchState
   }
 }
 

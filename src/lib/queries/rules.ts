@@ -314,6 +314,7 @@ export const accessDetailRules = `
       id
       name
     }
+    type
     template {
       key
       name
@@ -392,6 +393,7 @@ export interface AccessDetailSiteRule {
 }
 
 export interface AccessDetailDataRule {
+  type: string
   site?: {
     id: string
     name: string

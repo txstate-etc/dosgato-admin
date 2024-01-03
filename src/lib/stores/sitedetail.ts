@@ -1,14 +1,23 @@
 /* eslint-disable no-trailing-spaces */
-import { Store } from '@txstate-mws/svelte-store'
+import { Store, derivedStore } from '@txstate-mws/svelte-store'
 import type { FullSite, SitePagetree } from '$lib/queries'
 import { isNull, sortby, set, keyby, unique } from 'txstate-utils'
 import { getSiteAccess } from '$lib'
 
 interface ISiteDetailStore {
   site: FullSite
-  siteRoles: SiteRole[]
-  groups: SiteGroup[]
-  users: SiteUser[]
+  siteRoles: {
+    specific: SiteRole[]
+    universal: SiteRole[]
+  }
+  groups: {
+    specific: SiteGroup[]
+    universal: SiteGroup[]
+  }
+  users: {
+    specific: SiteUser[]
+    universal: SiteUser[]
+  }
   editingPagetree?: {
     id: string
     name: string
@@ -33,6 +42,7 @@ interface SiteGroup {
   id: string
   name: string
   roles: string
+  universal: boolean
 }
 
 interface SiteUser {
@@ -41,6 +51,7 @@ interface SiteUser {
   firstname: string
   lastname: string
   roles: string
+  universal: boolean
 }
 
 export interface SiteTemplate {
@@ -54,10 +65,17 @@ export interface SiteTemplate {
   }
 }
 
+export enum LaunchState {
+  PRELAUNCH,
+  LAUNCHED,
+  DECOMMISSIONED
+}
+
 const initialValue: FullSite = {
   id: '',
   name: '',
-  url: { host: '', path: '', prefix: '', enabled: false },
+  url: { host: '', path: '', prefix: '', enabled: LaunchState.PRELAUNCH },
+  launchState: LaunchState.PRELAUNCH,
   organization: { name: '', id: '' },
   owner: { id: '', name: '' },
   managers: [],
@@ -71,22 +89,21 @@ const initialValue: FullSite = {
 
 export class SiteDetailStore extends Store<ISiteDetailStore> {
   constructor (public fetchSite: (id: string) => Promise<FullSite>) {
-    super({ site: initialValue, siteRoles: [], groups: [], users: [], pageTemplates: [], componentTemplates: [] })
+    super({ site: initialValue, siteRoles: { specific: [], universal: [] }, groups: { specific: [], universal: [] }, users: { specific: [], universal: [] }, pageTemplates: [], componentTemplates: [] })
   }
 
   async refresh (id: string) {
     const site = await this.fetchSite(id)
-    const siteRoles: SiteRole[] = []
+    const siteRoles = { specific: [] as SiteRole[], universal: [] as SiteRole[] }
     const groupRoles: Record<string, { name: string, roles: string[] }> = {}
     const userRoles = {}
 
     for (const role of site.roles) {
-      const rules = [...role.assetRules, ...role.pageRules, ...role.siteRules]
-
+      const rules = [...role.assetRules, ...role.pageRules, ...role.dataRules, ...role.siteRules]
       const access = getSiteAccess(rules)
-      const hasGlobalRule = role.assetRules.some(r => isNull(r.site)) && role.pageRules.some(r => isNull(r.site))
       if (access.length) {
-        siteRoles.push({ id: role.id, name: role.name, access: access.join(', '), universal: hasGlobalRule })
+        if (rules.some(r => r.site?.id === site.id)) siteRoles.specific.push({ id: role.id, name: role.name, access: access.join(', '), universal: false })
+        else siteRoles.universal.push({ id: role.id, name: role.name, access: access.join(', '), universal: true })
         // groups might have roles that give them access to this site. keep track of which roles relevant groups have
         for (const group of role.groups) {
           groupRoles[group.id] ||= { name: group.name, roles: [] }
@@ -99,25 +116,36 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
         }
       }
     }
-    const rolesByName = keyby(siteRoles, 'name')
-    const groups = Object.keys(groupRoles).map(k => {
+    const rolesByName = keyby([...siteRoles.specific, ...siteRoles.universal], 'name')
+    const specificRoles = new Set(siteRoles.specific.map(r => r.name))
+    const allGroups = Object.keys(groupRoles).map(k => {
       let access: string[] = []
       for (const role of groupRoles[k].roles) {
         access.push(...rolesByName[role].access.split(', '))
       }
       access = unique(access)
+      const universal = !groupRoles[k].roles.some(r => specificRoles.has(r))
       const accessList = (access.includes('Editor') ? access.filter(a => a !== 'Limited') : access).join(', ')
-      return { id: k, name: groupRoles[k].name, roles: groupRoles[k].roles.join(', '), access: accessList }
+      return { id: k, name: groupRoles[k].name, roles: groupRoles[k].roles.join(', '), access: accessList, universal }
     })
-    const users = sortby(Object.keys(userRoles).map(k => {
+    const groups = {
+      specific: allGroups.filter(u => !u.universal),
+      universal: allGroups.filter(u => u.universal)
+    }
+    const allUsers = sortby(Object.keys(userRoles).map(k => {
       let access: string[] = []
       for (const role of userRoles[k].roles) {
         access.push(...rolesByName[role].access.split(', '))
       }
       access = unique(access)
+      const universal = !userRoles[k].roles.some(r => specificRoles.has(r))
       const accessList = (access.includes('Editor') ? access.filter(a => a !== 'Limited') : access).join(', ')
-      return { id: k, firstname: userRoles[k].firstname, lastname: userRoles[k].lastname, name: userRoles[k].name, disabled: userRoles[k].disabled, roles: userRoles[k].roles.join(', '), access: accessList }
+      return { id: k, firstname: userRoles[k].firstname, lastname: userRoles[k].lastname, name: userRoles[k].name, disabled: userRoles[k].disabled, roles: userRoles[k].roles.join(', '), access: accessList, universal }
     }), 'lastname', 'firstname')
+    const users = {
+      specific: allUsers.filter(u => !u.universal),
+      universal: allUsers.filter(u => u.universal)
+    }
 
     const sitePageTemplateKeys = site.pageTemplates.map(t => t.key)
     const pageTemplates: SiteTemplate[] = site.pageTemplates.map(t => ({ ...t, id: t.key, pagetrees: [] }))
@@ -144,7 +172,7 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
     for (const key in pagetreeComponentTemplates) {
       componentTemplates.push(pagetreeComponentTemplates[key])
     }
-    this.set({ site, siteRoles: sortby(siteRoles, 'name'), groups, users, pageTemplates: sortby(pageTemplates, 'universal', 'name'), componentTemplates: sortby(componentTemplates, 'universal', 'name') })
+    this.set({ site, siteRoles: { specific: sortby(siteRoles.specific, 'name'), universal: sortby(siteRoles.universal, 'name') }, groups, users, pageTemplates: sortby(pageTemplates, 'universal', 'name'), componentTemplates: sortby(componentTemplates, 'universal', 'name') })
 
     return site // TODO: Is there a better way to get the site name in the site detail page load function?
   }

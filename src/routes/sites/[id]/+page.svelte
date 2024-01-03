@@ -7,10 +7,10 @@
   import minusIcon from '@iconify-icons/ph/minus-bold'
   import launchIcon from '@iconify-icons/ph/rocket-launch'
   import exportIcon from '@iconify-icons/mdi/export'
-  import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldCheckbox, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
+  import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { csv, isBlank, keyby, titleCase } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, ModalContextStore, DetailList, LaunchState } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, ModalContextStore, DetailList, LaunchState, Accordion } from '$lib'
   import { base } from '$app/paths'
   import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
@@ -386,22 +386,52 @@
       </div>
     </div>
     <div class="vertical-group">
-      <UserAccessPanel {panelHeaderColor} hasGroups={!!$store.groups.length}>
-        <SortableTable slot="roles" items={$store.siteRoles} headers={[
-          { id: 'name', label: 'Role', render: (role) => `<a href="${base}/auth/roles/${role.id}">${role.name}</a>`, widthPercent: 50 },
-          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
-          { id: 'universal', label: 'Universal', icon: (role) => { return role.universal ? { icon: checkIcon, hiddenLabel: `${role.name} has access to all sites` } : { icon: minusIcon, hiddenLabel: `${role.name} has specific access to this site` } }, widthPercent: 25 }
-        ]}/>
-        <SortableTable slot="groups" items={$store.groups} headers={[
-          { id: 'name', label: 'Group', render: (group) => `<a href="${base}/auth/groups/${group.id}">${group.name}</a>`, widthPercent: 50 },
-          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
-          { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
-        ]}/>
-        <SortableTable slot="users" items={$store.users} headers={[
-          { id: 'name', label: 'Name', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.disabled ? '<span class="inactive">' : ''}${user.firstname} ${user.lastname}${user.disabled ? '</span>' : ''}${user.disabled ? ' (Inactive)' : ''}</a>`, widthPercent: 50 },
-          { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
-          { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
-        ]} />
+      <UserAccessPanel {panelHeaderColor} hasGroups={!!$store.groups.specific.length || !!$store.groups.universal.length}>
+        <svelte:fragment slot="roles">
+          <SortableTable items={$store.siteRoles.specific} headers={[
+            { id: 'name', label: 'Roles', render: (role) => `<a href="${base}/auth/roles/${role.id}">${role.name}</a>`, widthPercent: 75 },
+            { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 }
+          ]}/>
+          <div class="indent">
+            <Accordion title="More roles (with broad access)">
+              <SortableTable items={$store.siteRoles.universal} headers={[
+                { id: 'name', label: 'Role', render: (role) => `<a href="${base}/auth/roles/${role.id}">${role.name}</a>`, widthPercent: 75 },
+                { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 }
+              ]}/>
+            </Accordion>
+          </div>
+        </svelte:fragment>
+        <svelte:fragment slot="groups">
+          <SortableTable items={$store.groups.specific} headers={[
+            { id: 'name', label: 'Groups', render: (group) => `<a href="${base}/auth/groups/${group.id}">${group.name}</a>`, widthPercent: 50 },
+            { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
+            { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
+          ]}/>
+          <Accordion title="More groups (with broad access)">
+            <SortableTable slot="groups" items={$store.groups.universal} headers={[
+              { id: 'name', label: 'Groups', render: (group) => `<a href="${base}/auth/groups/${group.id}">${group.name}</a>`, widthPercent: 50 },
+              { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
+              { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
+            ]}/>
+          </Accordion>
+        </svelte:fragment>
+        <svelte:fragment slot="users">
+          <SortableTable items={$store.users.specific} headers={[
+            { id: 'name', label: 'Users', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.disabled ? '<span class="inactive">' : ''}${user.firstname} ${user.lastname}${user.disabled ? '</span>' : ''}${user.disabled ? ' (Inactive)' : ''}</a>`, widthPercent: 50 },
+            { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
+            { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
+          ]} />
+          <div class="indent">
+            <Accordion title="More users (with broad access)">
+              <SortableTable items={$store.users.universal} headers={[
+                { id: 'name', label: 'Name', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.disabled ? '<span class="inactive">' : ''}${user.firstname} ${user.lastname}${user.disabled ? '</span>' : ''}${user.disabled ? ' (Inactive)' : ''}</a>`, widthPercent: 50 },
+                { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
+                { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
+              ]} />
+            </Accordion>
+          </div>
+
+        </svelte:fragment>
       </UserAccessPanel>
       <DetailPanel header="Authorized Templates" headerColor={panelHeaderColor}>
         <DetailPanelSection>
@@ -467,7 +497,7 @@
     on:escape={modalContext.onModalEscape} let:data>
     <FieldText path='host' label='Host'/>
     <FieldText path='path' label='Path'/>
-    <FieldSelect path="enabled" label="Launch Status" notNull number choices={[{ label: 'Pre-launch', value: LaunchState.PRELAUNCH }, { label: 'Launched', value: LaunchState.LAUNCHED, disabled: isBlank(data.host) }, { label: 'Decommissioned', value: LaunchState.DECOMMISSIONED }]}/>
+    <FieldSelect path="enabled" label="Launch Status" notNull choices={[{ label: 'Pre-launch', value: LaunchState.PRELAUNCH }, { label: 'Launched', value: LaunchState.LAUNCHED, disabled: isBlank(data.host) }, { label: 'Decommissioned', value: LaunchState.DECOMMISSIONED }]}/>
   </FormDialog>
 {:else if $modalContext.modal === 'addpagetree'}
   <CreateWithPageDialog
@@ -632,6 +662,9 @@
     display: grid;
     gap: 1em;
     grid-template-columns: 1.5fr 2fr;
+  }
+  .indent {
+    padding-left: 1.5em;
   }
   .vertical-group {
     display: flex;

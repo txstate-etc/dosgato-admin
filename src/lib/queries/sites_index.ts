@@ -1,4 +1,4 @@
-import { accessDetailRules, type AccessDetailAssetRule, type AccessDetailDataRule, type AccessDetailPageRule, type AccessDetailSiteRule } from '$lib'
+import { accessDetailRules, type AccessDetailAssetRule, type AccessDetailDataRule, type AccessDetailPageRule, type AccessDetailSiteRule, LaunchState } from '$lib'
 import { mutationResponse } from './global'
 
 export const commentDetails = `
@@ -113,9 +113,9 @@ export interface SiteListSite {
     host: string
     path: string
     prefix: string
-    enabled: number
+    enabled: LaunchState
   }
-  launchState: number
+  launchState: LaunchState
   organization: {
     name: string
   }
@@ -209,9 +209,9 @@ export interface FullSite {
     host: string
     path: string
     prefix: string
-    enabled: number
+    enabled: LaunchState
   }
-  launchState: number
+  launchState: LaunchState
   organization: {
     name: string
     id: string
@@ -467,7 +467,7 @@ export interface SiteAuditSite {
   url?: {
     prefix: string
   }
-  launchState: number
+  launchState: LaunchState
   organization?: {
     name: string
   }

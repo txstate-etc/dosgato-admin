@@ -10,7 +10,7 @@ export interface SiteAccessRole {
   pageRules: AccessDetailPageRule[]
 }
 
-type AccessDetailRule = AccessDetailAssetRule | AccessDetailPageRule | AccessDetailSiteRule
+type AccessDetailRule = AccessDetailAssetRule | AccessDetailPageRule | AccessDetailSiteRule | AccessDetailDataRule
 
 const pageperms = ['create', 'move', 'update', 'delete']
 const assetperms = ['create', 'move', 'update', 'delete']

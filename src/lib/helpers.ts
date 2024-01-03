@@ -1,4 +1,4 @@
-import type { MessageFromAPI, MutationResponse } from '$lib'
+import { LaunchState, type MessageFromAPI, type MutationResponse } from '$lib'
 import { MessageType, type Feedback, type SubmitResponse } from '@txstate-mws/svelte-forms'
 import { DateTime } from 'luxon'
 import { isNull, isNotBlank, omit } from 'txstate-utils'
@@ -61,12 +61,6 @@ export enum DeleteState {
   NOTDELETED = 0,
   MARKEDFORDELETE = 1,
   DELETED = 2
-}
-
-export enum LaunchState {
-  PRELAUNCH = 0,
-  LAUNCHED = 1,
-  DECOMMISSIONED = 2
 }
 
 export function getSiteIcon (launchState, type) {
