@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Dialog, FileIcon, Icon } from '@dosgato/dialog'
   import trashLight from '@iconify-icons/ph/trash-light'
-  import { roundTo, unique } from 'txstate-utils'
+  import { isNotNull, roundTo, unique } from 'txstate-utils'
   import { api, uploadWithProgress } from '$lib'
   import { createEventDispatcher } from 'svelte'
 
@@ -23,6 +23,8 @@
   let uploadProgress = 0
   let uploadError: string | undefined
 
+  let tooManyFiles = false
+
   function onUploadEnter (e: DragEvent) {
     if (e.dataTransfer?.items.length) dragover++
   }
@@ -35,13 +37,17 @@
     e.preventDefault()
     dragover = 0
     if (!uploadLocked && e.dataTransfer?.items?.length) {
+      tooManyFiles = e.dataTransfer?.items?.length > maxFiles
       uploadList = unique(uploadList.concat(Array.from(e.dataTransfer.files)), 'name').slice(-1 * maxFiles)
     }
   }
 
   function onUploadChange (e: InputEvent & { currentTarget: HTMLInputElement }) {
     const files = e.currentTarget.files
-    if (files?.length) uploadList = unique(uploadList.concat(Array.from(files)), 'name').slice(-1 * maxFiles)
+    if (files?.length) {
+      tooManyFiles = files.length > maxFiles
+      uploadList = unique(uploadList.concat(Array.from(files)), 'name').slice(-1 * maxFiles)
+    }
     e.currentTarget.value = ''
   }
 
@@ -83,9 +89,11 @@
       uploadList = uploadList.filter(f => f !== file)
     }
   }
+
+  let typeNotAllowedErrors: HTMLDivElement[] = []
 </script>
 
-<Dialog {title} disabled={!uploadList.length} cancelText="Cancel" continueText="Upload" on:escape={onUploadEscape} on:continue={onUploadSubmit}>
+<Dialog {title} disabled={!uploadList.length || !!typeNotAllowedErrors.filter(isNotNull).length} cancelText="Cancel" continueText="Upload" on:escape={onUploadEscape} on:continue={onUploadSubmit}>
   {#if uploadLocked}
     <progress value={uploadProgress} aria-label="Assets Uploading">{roundTo(100 * uploadProgress)}%</progress>
   {:else}
@@ -100,15 +108,18 @@
       <input type="file" id="uploader_input" multiple on:change={onUploadChange}>
       <label for="uploader_input">Choose or drag {$$props.maxFiles ? `${maxFiles > 1 ? `up to ${maxFiles}` : 'a'}` : ''} file{maxFiles === 1 ? '' : 's'}</label>
       <ul>
-        {#each uploadList as file}
+        {#each uploadList as file, i}
           <li>
-            <FileIcon width="1.5em" mime={file.type} inline />{file.name}<button type="button" on:click={onDeleteFile(file)}><Icon icon={trashLight} width="1.5em" hiddenLabel="Remove File" inline /></button>
+            <FileIcon width="1.5em" mime={file.type} inline />{file.name}{#if maxFiles > 1}<button type="button" on:click={onDeleteFile(file)}><Icon icon={trashLight} width="1.5em" hiddenLabel="Remove File" inline /></button>{/if}
             {#if (whitelist.size && !whitelist.has(file.type)) || (blacklist.size && blacklist.has(file.type))}
-              <div class="error">File type not allowed</div>
+              <div bind:this={typeNotAllowedErrors[i]} class="error">File type not allowed</div>
             {/if}
           </li>
         {/each}
       </ul>
+      {#if tooManyFiles}
+        <div class="error">Only {maxFiles} file{#if maxFiles !== 1}s{/if} allowed.</div>
+      {/if}
     </form>
     {helptext ?? ''}
   {/if}
