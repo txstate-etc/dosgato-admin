@@ -36,6 +36,12 @@ site {
 }
 `
 
+export enum DeleteState {
+  NOTDELETED = 'NOTDELETED',
+  MARKEDFORDELETE = 'MARKEDFORDELETE',
+  DELETED = 'DELETED'
+}
+
 export interface TreePage {
   id: string
   path: string
@@ -52,7 +58,7 @@ export interface TreePage {
   published: boolean
   publishedAt?: string
   hasUnpublishedChanges: boolean
-  deleteState: number
+  deleteState: DeleteState
   children: {
     id: string
   }[]

@@ -1,3 +1,4 @@
+import type { DeleteState } from '$lib'
 import { mutationResponse } from './global'
 import type { DataData } from '@dosgato/templating'
 
@@ -65,7 +66,7 @@ export interface DataItem {
     id: string
   }
   deleted: boolean
-  deleteState: number
+  deleteState: DeleteState
   published: boolean
   publishedAt: string
   permissions: {

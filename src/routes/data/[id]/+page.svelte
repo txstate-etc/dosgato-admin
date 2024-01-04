@@ -52,7 +52,7 @@
     modifiedAt: DateTime
     publishedAt: DateTime
     status: string
-    deleteState: number
+    deleteState: DeleteState
   }
 
   interface TreeDataFolder extends Omit<DataFolder, 'data'> {
@@ -450,7 +450,7 @@
     }
   }
 
-  function handleResponsiveHeaders(treeWidth: number, headers: TreeHeader<AnyDataTreeItem>[]) {
+  function handleResponsiveHeaders(treeWidth: number) {
     // if there are custom columns and they have provided a responsive headers function
     let extra = tmpl?.columns?.map(c => `custom-${c.title}`) ?? []
     if (tmpl?.columns?.length && tmpl?.responsiveDataColumns) {

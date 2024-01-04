@@ -265,7 +265,7 @@ class API {
     if (path === '/') {
       const folders = await this.getRootAssetFolders()
       const siteId = (pagetreeId ? folders.find(f => f.pagetree.id === pagetreeId) : undefined)?.site.id
-      return folders.filter(f => f.site.launchEnabled !== LaunchState.DECOMMISSIONED && (f.pagetree.id === pagetreeId || (f.site.id !== siteId && f.pagetree.type === 'PRIMARY'))).map(apiAssetFolderToChooserFolder)
+      return folders.filter(f => f.site.launchState !== LaunchState.DECOMMISSIONED && (f.pagetree.id === pagetreeId || (f.site.id !== siteId && f.pagetree.type === 'PRIMARY'))).map(apiAssetFolderToChooserFolder)
     }
     const { assets, assetfolders } = await this.query<GetSubFoldersAndAssetsByPath>(CHOOSER_SUBFOLDERS_AND_ASSETS_BY_PATH, { path })
     return [...assets.map(a => apiAssetToChooserAsset(a)!), ...assetfolders.map(f => apiAssetFolderToChooserFolder(f))]

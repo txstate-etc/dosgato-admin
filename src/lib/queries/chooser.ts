@@ -1,6 +1,6 @@
 import { environmentConfig } from '$lib/stores'
 import { getSiteIcon } from '$lib'
-import type { Asset, Folder, Page } from '$lib/ChooserAPI'
+import type { Asset, Folder, Page } from '@dosgato/dialog'
 import type { AssetFolderLink } from '@dosgato/templating'
 import { isNotBlank, omit, pick, stringify } from 'txstate-utils'
 import type { RootAssetFolder } from './assets_index'

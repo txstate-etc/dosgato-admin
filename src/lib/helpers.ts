@@ -57,12 +57,6 @@ export function dateStampShort (dt: string | Date | DateTime) {
   return luxdt.toFormat('L/d/yy ha').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())
 }
 
-export enum DeleteState {
-  NOTDELETED = 0,
-  MARKEDFORDELETE = 1,
-  DELETED = 2
-}
-
 export function getSiteIcon (launchState, type) {
   if (type === 'PRIMARY') {
     if (launchState === LaunchState.LAUNCHED) {

@@ -1,4 +1,4 @@
-import type { LaunchState } from '$lib'
+import type { DeleteState, LaunchState } from '$lib'
 import { mutationResponse } from './global'
 
 const assetFolderDetails = `
@@ -26,7 +26,7 @@ export interface TreeAssetFolder {
   path: string
   name: string
   deleted: boolean
-  deleteState: number
+  deleteState: DeleteState
   folders: {
     id: string
   }[]
@@ -51,7 +51,7 @@ export interface RootAssetFolder extends TreeAssetFolder {
   site: {
     id: string
     name: string
-    launchEnabled: LaunchState
+    launchState: LaunchState
   }
 }
 
@@ -89,7 +89,7 @@ export interface TreeAsset {
   filename: string
   extension: string
   deleted: boolean
-  deleteState: number
+  deleteState: DeleteState
   modifiedAt: string
   modifiedBy: {
     id: string
