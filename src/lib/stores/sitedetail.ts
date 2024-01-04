@@ -66,9 +66,9 @@ export interface SiteTemplate {
 }
 
 export enum LaunchState {
-  PRELAUNCH,
-  LAUNCHED,
-  DECOMMISSIONED
+  PRELAUNCH = 'PRELAUNCH',
+  LAUNCHED = 'LAUNCHED',
+  DECOMMISSIONED = 'DECOMMISSIONED'
 }
 
 const initialValue: FullSite = {
