@@ -112,7 +112,7 @@
           <li>
             <FileIcon width="1.5em" mime={file.type} inline />{file.name}{#if maxFiles > 1}<button type="button" on:click={onDeleteFile(file)}><Icon icon={trashLight} width="1.5em" hiddenLabel="Remove File" inline /></button>{/if}
             {#if (whitelist.size && !whitelist.has(file.type)) || (blacklist.size && blacklist.has(file.type))}
-              <div bind:this={typeNotAllowedErrors[i]} class="error">File type not allowed</div>
+              <div bind:this={typeNotAllowedErrors[i]} class="error">File type not allowed.</div>
             {/if}
           </li>
         {/each}

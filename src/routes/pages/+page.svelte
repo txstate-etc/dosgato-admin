@@ -424,7 +424,7 @@
     uploadPath="{environmentConfig.apiBase}/pages/{$store.selectedItems[0].id}"
     mimeWhitelist={['application/json', 'application/x-gzip']}
     maxFiles={1}
-    helptext="Uploaded file must be a Gato .json or .json.gz export file"
+    helptext="Uploaded file must be a Gato .json or .json.gz export file."
     on:escape={modalContext.onModalEscape}
     on:saved={onImportSaved} />
 {/if}
