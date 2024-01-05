@@ -118,7 +118,7 @@
         {/each}
       </ul>
       {#if tooManyFiles}
-        <div class="error">Only {maxFiles} file{#if maxFiles !== 1}s{/if} allowed.</div>
+        <div class="error left">Only {maxFiles} file{#if maxFiles !== 1}s{/if} allowed.</div>
       {/if}
     </form>
     {helptext ?? ''}
@@ -166,6 +166,9 @@
   }
   .error {
     color: red;
+  }
+  .error.left {
+    text-align: left;
   }
   button {
     border: 0;
