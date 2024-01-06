@@ -3,8 +3,6 @@
   import plusIcon from '@iconify-icons/ph/plus-light'
   import deleteOutline from '@iconify-icons/ph/trash'
   import archiveOutline from '@iconify-icons/ph/archive'
-  import checkIcon from '@iconify-icons/ph/check-bold'
-  import minusIcon from '@iconify-icons/ph/minus-bold'
   import launchIcon from '@iconify-icons/ph/rocket-launch'
   import exportIcon from '@iconify-icons/mdi/export'
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
@@ -434,24 +432,24 @@
         </svelte:fragment>
       </UserAccessPanel>
       <DetailPanel header="Authorized Templates" headerColor={panelHeaderColor}>
-        <DetailPanelSection>
-          <div class="templates-mobile">
-            <Tabs tabs={[{ name: 'Page templates' }, { name: 'Component templates' }]} accordionOnMobile={false}>
-              <Tab name="Page templates">
-                <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
-              </Tab>
-              <Tab name="Component templates">
-                <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
-              </Tab>
-            </Tabs>
-          </div>
-          <div class="templates-desktop">
+        <div class="templates-mobile">
+          <Tabs tabs={[{ name: 'Page templates' }, { name: 'Component templates' }]} accordionOnMobile={false}>
+            <Tab name="Page templates">
+              <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+            </Tab>
+            <Tab name="Component templates">
+              <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+            </Tab>
+          </Tabs>
+        </div>
+        <div class="templates-desktop">
+          <DetailPanelSection>
             <h3 class="template-header">Page templates</h3>
             <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
             <h3 class="template-header">Specially authorized component templates</h3>
             <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
-          </div>
-        </DetailPanelSection>
+          </DetailPanelSection>
+        </div>
       </DetailPanel>
       <div class="audit-panel mobile">
         <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} mayAddComments={$store.site.permissions.manageGovernance} on:addauditcomment={() => { modalContext.setModal('addcomment') } }/>
@@ -666,10 +664,16 @@
   .indent {
     padding-left: 1.5em;
   }
+  :global([data-eq~="500px"]) .indent {
+    padding-left: 0em;
+  }
   .vertical-group {
     display: flex;
     flex-direction: column;
     gap: 1em;
+  }
+  .vertical-group :global(.tabs-panel) {
+    min-height: 0 !important;
   }
   :global([data-eq~="800px"]) .panel-grid {
     grid-template-columns: 1fr;
