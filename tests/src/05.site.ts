@@ -1,4 +1,3 @@
-import type { Page } from '@playwright/test'
 import { addSite, loadAdminSites } from '../common'
 import { test, expect } from '../fixtures'
 
