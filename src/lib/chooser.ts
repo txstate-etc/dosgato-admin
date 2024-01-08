@@ -1,6 +1,6 @@
 import type { AnyItem, ChooserType, Client, Folder, Page, Source } from '@dosgato/dialog'
 import type { AssetFolderLink, LinkDefinition } from '@dosgato/templating'
-import { Cache, isNotBlank, sortby, stringify } from 'txstate-utils'
+import { Cache, isNotBlank, isNotNull, sortby, stringify } from 'txstate-utils'
 import { api, environmentConfig, uploadWithProgress } from '$lib'
 
 const pagetreeInfoCache = new Cache(async (id: string) => {
@@ -19,7 +19,7 @@ export class ChooserClient implements Client {
     if (source === 'pages') {
       return await api.chooserSubPagesByPath(path, this.pagetreeId)
     } else {
-      const assetsFolders = await api.chooserSubFoldersAndAssetsByPath(path, this.pagetreeId)
+      const assetsFolders = (await api.chooserSubFoldersAndAssetsByPath(path, this.pagetreeId)).filter(isNotNull)
       return sortby(assetsFolders, 'name')
     }
   }
