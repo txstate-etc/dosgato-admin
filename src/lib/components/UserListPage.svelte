@@ -7,11 +7,14 @@
   import accountPlus from '@iconify-icons/mdi/account-plus'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import downloadIcon from '@iconify-icons/ph/download-simple'
-  import { csv, intersect, isNull, sortby } from 'txstate-utils'
+  import { PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
+  import type { FormStore } from '@txstate-mws/svelte-forms'
+  import { derivedStore } from '@txstate-mws/svelte-store'
+  import { setContext, tick } from 'svelte'
+  import { csv, intersect, isBlank, isNull, pick, rescue, sleep, sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContextStore, uiLog, UserTrainingsChooser } from '$lib'
-  import { setContext } from 'svelte'
 
   export let system: boolean
   export let trainings: { id: string, name: string, lcName: string }[]
@@ -23,6 +26,7 @@
 
   type Modals = 'create' | 'disable' | 'enable'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
+  const creatingStore = derivedStore(modalContext, mc => mc.modal === 'create')
 
   async function fetchChildren (user?: TypedUserItem) {
     if (user) return []
@@ -98,6 +102,55 @@
   function onCreateComplete () {
     modalContext.reset()
     void store.refresh()
+  }
+
+  let createStore: FormStore | undefined
+  let loginElement: HTMLInputElement
+  let firstnameElement: HTMLInputElement
+  let lastnameElement: HTMLInputElement
+  let emailElement: HTMLInputElement
+  let createItems: PopupMenuItem[] = []
+  let hideEmptyText = true
+  let createMenuLoading = false
+  let counter = 0
+  interface ExternalUser {
+    login: string
+    firstname: string
+    lastname: string
+    email: string
+  }
+  async function findExternalUsers (q: string) {
+    const myCounter = ++counter
+    await sleep(200)
+    if (myCounter !== counter) return
+    if (isBlank(q)) {
+      createItems = []
+      return
+    }
+    const ret = await rescue(api.restful<ExternalUser[]>('/users/external?q=' + encodeURIComponent(q)), [] as ExternalUser[])
+    hideEmptyText = false
+    createItems = ret.map(u => ({ label: `${u.firstname} ${u.lastname} (${u.login})`, value: u.login, full: u }))
+  }
+  async function reactToCreationModal (..._: any) {
+    if ($creatingStore) {
+      if (system) return
+      hideEmptyText = true
+      await tick()
+      loginElement.addEventListener('input', async () => findExternalUsers(loginElement.value))
+      firstnameElement.addEventListener('input', async () => findExternalUsers(firstnameElement.value))
+      lastnameElement.addEventListener('input', async () => findExternalUsers(lastnameElement.value))
+      emailElement.addEventListener('input', async () => findExternalUsers(emailElement.value))
+      loginElement.addEventListener('focus', async () => findExternalUsers(loginElement.value))
+      firstnameElement.addEventListener('focus', async () => findExternalUsers(firstnameElement.value))
+      lastnameElement.addEventListener('focus', async () => findExternalUsers(lastnameElement.value))
+      emailElement.addEventListener('focus', async () => findExternalUsers(emailElement.value))
+    } else {
+      createStore = undefined
+    }
+  }
+  $: reactToCreationModal($creatingStore)
+  function onCreateMenuSelection (e: CustomEvent) {
+    createStore!.setData({ ...$createStore!.data, userId: e.detail.full.login, ...pick(e.detail.full, 'firstname', 'lastname', 'email') })
   }
 
   export async function buildEmailCSV () {
@@ -190,13 +243,17 @@
     Are you sure you want to enable {#if $store.selectedItems.length > 1}{$store.selectedItems.length} users{:else}this user{/if}? They will be able to log in again and will have all the same roles as when they were disabled.
   </Dialog>
 {:else if $modalContext.modal === 'create'}
-  <FormDialog title="Create User" submit={onCreate} validate={onCreateValidate} on:escape={modalContext.onModalEscape} on:saved={onCreateComplete}>
-    <FieldText path="userId" label="Login"></FieldText>
+  <FormDialog bind:store={createStore} title="Create User" submit={onCreate} validate={onCreateValidate} on:escape={modalContext.onModalEscape} on:saved={onCreateComplete}>
+    <FieldText bind:inputelement={loginElement} path="userId" label="Login"></FieldText>
     {#if !system}
-      <FieldText path="firstname" label="First Name"></FieldText>
+      <FieldText bind:inputelement={firstnameElement} path="firstname" label="First Name"></FieldText>
     {/if}
-    <FieldText path="lastname" label="{system ? 'Name' : 'Last Name'}"></FieldText>
-    <FieldText path="email" label="E-mail"></FieldText>
+    <FieldText bind:inputelement={lastnameElement} path="lastname" label="{system ? 'Name' : 'Last Name'}"></FieldText>
+    <FieldText bind:inputelement={emailElement} path="email" label="E-mail"></FieldText>
     <UserTrainingsChooser {trainings} />
+    <PopupMenu align="bottomleft" hideSelectedIndicator loading={createMenuLoading} {hideEmptyText} buttonelement={loginElement} items={createItems} on:change={onCreateMenuSelection}></PopupMenu>
+    <PopupMenu align="bottomleft" hideSelectedIndicator loading={createMenuLoading} {hideEmptyText} buttonelement={firstnameElement} items={createItems} on:change={onCreateMenuSelection}></PopupMenu>
+    <PopupMenu align="bottomleft" hideSelectedIndicator loading={createMenuLoading} {hideEmptyText} buttonelement={lastnameElement} items={createItems} on:change={onCreateMenuSelection}></PopupMenu>
+    <PopupMenu align="bottomleft" hideSelectedIndicator loading={createMenuLoading} {hideEmptyText} buttonelement={emailElement} items={createItems} on:change={onCreateMenuSelection}></PopupMenu>
   </FormDialog>
 {/if}
