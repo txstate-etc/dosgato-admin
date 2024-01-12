@@ -20,7 +20,7 @@ export function locateEditFrame(page: Page) {
   return page.frameLocator('iframe[title="page preview for editing"]')
 }
 
-export async function addSite(page: Page, name: string, title: string, templateKey: string){
+export async function addSite (page: Page, name: string, title: string, templateKey: string){
   await page.getByRole('button', { name: 'Add Site' }).click()
   await page.getByLabel('Name').click()
   await page.getByLabel('Name').fill(name)
@@ -31,7 +31,7 @@ export async function addSite(page: Page, name: string, title: string, templateK
   await page.getByRole('button', { name: 'Save' }).click()
 }
 
-export async function addUser(page: Page, system: boolean, login: string, lastname: string, email: string, firstname?: string) {
+export async function addUser (page: Page, system: boolean, login: string, lastname: string, email: string, firstname?: string) {
   await page.getByRole('button', { name: 'Create' }).click()
   await page.getByLabel('Login').click()
   await page.getByLabel('Login').fill(login)
@@ -48,5 +48,12 @@ export async function addUser(page: Page, system: boolean, login: string, lastna
   }
   await page.getByLabel('E-mail').click()
   await page.getByLabel('E-mail').fill(email)
+  await page.getByRole('button', { name: 'Save' }).click()
+}
+
+export async function addGroup (page: Page, name: string) {
+  await page.getByRole('button', { name: 'Add Group' }).click()
+  await page.getByLabel('Group Name').click()
+  await page.getByLabel('Group Name').fill(name)
   await page.getByRole('button', { name: 'Save' }).click()
 }
