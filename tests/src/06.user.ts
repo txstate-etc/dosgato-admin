@@ -95,4 +95,28 @@ test.describe('user detail', async () => {
     await page.getByRole('button', { name: 'Remove', exact: true }).click()
     await expect(page.getByRole('link', { name: 'group3' })).toHaveCount(0)
   })
+
+  test('should be able to assign a role to a user', async () => {
+    await page.getByRole('treeitem').getByText(NEW_USER.login).dblclick()
+    await expect(page.getByText(`User ${NEW_USER.login} has no roles assigned`)).toHaveCount(1)
+    await page.getByRole('button', { name: 'Assign roles to' }).click()
+    await expect(page.getByRole('alertdialog')).toBeVisible()
+    await expect(page.getByRole('alertdialog').getByText('Edit roles')).toHaveCount(1)
+    await expect(page.getByRole('alertdialog').getByText('currently has 0 roles.')).toHaveCount(1)
+    await page.getByLabel('Add More Roles').click()
+    await page.getByRole('alertdialog').getByRole('option', { name: 'editor', exact: true }).click()
+    await page.getByRole('button', { name: 'Save' }).click()
+    await expect(page.getByRole('alertdialog').getByText('currently has 0 roles.')).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'editor' })).toHaveCount(1)
+  })
+
+  test('should be able to remove a role from a user', async () => {
+    await page.getByRole('treeitem').getByText(NEW_USER.login).dblclick()
+    await expect(page.getByRole('link', { name: 'editor' })).toHaveCount(1)
+    await page.getByRole('button', { name: 'Remove role from user' }).click()
+    await expect(page.getByRole('alertdialog')).toBeVisible()
+    await expect(page.getByRole('alertdialog').getByText('Remove Role', { exact: true })).toHaveCount(1)
+    await page.getByRole('button', { name: 'Remove', exact: true }).click()
+    await expect(page.getByRole('link', { name: 'editor' })).toHaveCount(0)
+  })
 })
