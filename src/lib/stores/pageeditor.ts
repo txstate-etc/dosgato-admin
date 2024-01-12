@@ -165,7 +165,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     })
   }
 
-  async addComponentShowModal (path: string, refreshIframe: () => Promise<void>) {
+  async addComponentShowModal (path: string, refreshIframe: () => Promise<void>, addToTop?: boolean) {
     const active = this.getActiveState()
     if (!active) return
     const m = path.match(/(.*)\.?areas\.(\w+)$/)
@@ -177,25 +177,25 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const availableComponentsByCategory = Object.entries(groupby(availableComponents, 'displayCategory')).map(([category, templates]) => ({ category, templates }))
     this.update(v => set(v, `editors["${active.pageId}"]`, { ...active.editor, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + (String(parentData.areas?.[area]?.length) ?? '0'), data: undefined, availableComponents, availableComponentsByCategory } }))
     this.logActionShown('Add Component', path)
-    if (availableComponents.length === 1) await this.addComponentChooseTemplate(availableComponents[0].templateKey, refreshIframe)
+    if (availableComponents.length === 1) await this.addComponentChooseTemplate(availableComponents[0].templateKey, refreshIframe, !!addToTop)
   }
 
-  async addComponentChooseTemplate (templateKey: string, refreshIframe: () => Promise<void>) {
+  async addComponentChooseTemplate (templateKey: string, refreshIframe: () => Promise<void>, addToTop: boolean) {
     const def = templateRegistry.getTemplate(templateKey)
     this.updateEditorState(editorState => ({ ...editorState, creating: { ...editorState.creating!, templateKey, data: undefined } }))
     if (def && def.dialog == null) {
       const data = def.randomId ? { [def.randomId]: randomid() } : {}
-      const resp = await this.addComponentSubmit({ ...data, areas: def.genDefaultContent({ ...data, templateKey }) })
+      const resp = await this.addComponentSubmit({ ...data, areas: def.genDefaultContent({ ...data, templateKey }) }, undefined, addToTop)
       if (resp?.success) await refreshIframe()
     }
   }
 
-  async addComponentSubmit (data: any, validateOnly?: boolean) {
+  async addComponentSubmit (data: any, validateOnly?: boolean, addToTop?: boolean) {
     const active = this.getActiveState()
     if (!active?.editor.creating?.templateKey) return { success: false, messages: [] as Feedback[], data }
     const [page, creating] = [active.editor.page, active.editor.creating]
     const def = templateRegistry.getTemplate(creating.templateKey!)
-    const resp = await api.createComponent(active.pageId, page.version.version, page.data, creating.path, { ...data, templateKey: creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: creating.templateKey }) }, { validateOnly })
+    const resp = await api.createComponent(active.pageId, page.version.version, page.data, creating.path, { ...data, templateKey: creating.templateKey, areas: def?.genDefaultContent({ ...data, templateKey: creating.templateKey }) }, { validateOnly, addToTop })
     if (!validateOnly) {
       this.logActionResponse(resp, 'addComponent', creating.componentEventualPath, { componentKey: def?.templateKey, component: def?.name })
       if (resp.success) {

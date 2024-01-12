@@ -171,8 +171,8 @@ export interface MoveComponentResponse {
 }
 
 export const CREATE_COMPONENT = `
-  mutation createPageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: SchemaVersion!, $path: String!, $data: JsonData!, $isCopy: Boolean, $comment: String, $validateOnly: Boolean) {
-    createPageComponent (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, path: $path, data: $data, isCopy: $isCopy, comment: $comment, validateOnly: $validateOnly) {
+  mutation createPageComponent ($pageId: ID!, $dataVersion: Int!, $schemaversion: SchemaVersion!, $path: String!, $data: JsonData!, $isCopy: Boolean, $addToTop: Boolean, $comment: String, $validateOnly: Boolean) {
+    createPageComponent (pageId: $pageId, dataVersion: $dataVersion, schemaversion: $schemaversion, path: $path, data: $data, isCopy: $isCopy, addToTop: $addToTop, comment: $comment, validateOnly: $validateOnly) {
       success
       page {
         ${EDITOR_PAGE_DETAILS}

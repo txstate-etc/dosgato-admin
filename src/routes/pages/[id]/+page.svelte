@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { Dialog, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
+  import { Checkbox, Dialog, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
   import type { UITemplate } from '@dosgato/templating'
   import clipboardText from '@iconify-icons/ph/clipboard-text'
   import copyIcon from '@iconify-icons/ph/copy'
@@ -113,7 +113,7 @@
     } else if (message.action === 'cancelCopy') {
       pageEditorStore.clearClipboard()
     } else if (message.action === 'create') {
-      void pageEditorStore.addComponentShowModal(message.path, refreshIframe)
+      void pageEditorStore.addComponentShowModal(message.path, refreshIframe, addToTop)
     } else if (message.action === 'del') {
       pageEditorStore.removeComponentShowModal(message.path)
     } else if (message.action === 'drop') {
@@ -143,20 +143,23 @@
   async function refreshIframe () {
     iframe.src = iframe.src // force refresh the iframe
     page = (await api.getEditorPage(page.id)) ?? page
+    addToTop = false
   }
 
   function onAddComponentChooseTemplate (templateKey: string) {
-    return async () => await pageEditorStore.addComponentChooseTemplate(templateKey, refreshIframe)
+    return async () => await pageEditorStore.addComponentChooseTemplate(templateKey, refreshIframe, addToTop)
   }
 
   async function onAddComponentValidate (data: any) {
-    const resp = await pageEditorStore.addComponentSubmit(data, true)
+    const resp = await pageEditorStore.addComponentSubmit(data, true, addToTop)
     return resp?.messages ?? []
   }
 
   async function onAddComponentSubmit (data: any) {
-    const resp = await pageEditorStore.addComponentSubmit(data)
-    if (resp.success) await refreshIframe()
+    const resp = await pageEditorStore.addComponentSubmit(data, false, addToTop)
+    if (resp.success) {
+      await refreshIframe()
+    }
     return resp
   }
 
@@ -229,6 +232,8 @@
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
   $: actionPanelTarget.target = $editorStore.page.path
+
+  let addToTop: boolean = false
 </script>
 
 {#if $editorStore.previewing && ($editorStore.previewing.version.version !== $editorStore.page.version.version || $editorStore.previewing?.fromVersion)}
@@ -289,6 +294,14 @@
         <Tabs tabs={$editorStore.creating.availableComponentsByCategory.map(cat => ({ name: cat.category }))} accordionOnMobile={false}>
           {#each $editorStore.creating.availableComponentsByCategory as { category, templates } (category)}
             <Tab name={category}>
+              <form class="position-form">
+                <div class="position-label">Positioning</div>
+                <div id={`position-help-${category}`} class="position-help">By default your new element will be at the bottom of the area.</div>
+                <label for={`position-${category}`}>
+                  <Checkbox id={`position-${category}`} name="addtotop" value={addToTop} onChange={() => addToTop = !addToTop} descid={`position-help-${category}`}/>
+                  Add this to the top of the area.
+                </label>
+              </form>
               <div class="chooser-container">
                 <div class="component-chooser">
                   {#each templates as availableComponent}
@@ -347,6 +360,23 @@
     border: 1px solid #757575;
     width: 400px;
     margin: 0 auto;
+  }
+
+  .position-form {
+    margin-bottom: 1.5em;
+  }
+
+  .position-label {
+    display: block;
+    margin-bottom: 0.3em;
+    font-weight: 500;
+  }
+
+  .position-help {
+    font-size: 0.9em;
+    color: #595959;
+    line-height: 1.25em;
+    margin-bottom: 0.4em;
   }
 
   .chooser-container {

@@ -894,9 +894,9 @@ class API {
     return undeletePages
   }
 
-  async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { isCopy?: boolean, validateOnly?: boolean, comment?: string }) {
-    const { isCopy, validateOnly, comment } = opts ?? {}
-    const { createPageComponent } = await this.query<CreateComponentResponse>(CREATE_COMPONENT, { pageId, data, dataVersion, schemaversion: page.savedAtVersion, path, isCopy, validateOnly, comment })
+  async createComponent (pageId: string, dataVersion: number, page: PageData, path: string, data: ComponentData, opts?: { isCopy?: boolean, validateOnly?: boolean, comment?: string, addToTop?: boolean }) {
+    const { isCopy, validateOnly, comment, addToTop } = opts ?? {}
+    const { createPageComponent } = await this.query<CreateComponentResponse>(CREATE_COMPONENT, { pageId, data, dataVersion, schemaversion: page.savedAtVersion, path, isCopy, validateOnly, comment, addToTop })
     const area = get<any[]>(page, path) ?? []
     const pathIsTargeted = !isNaN(Number(path.split('.').slice(-1)[0]))
     const finalPath = path + (pathIsTargeted ? '' : `.${area.length}`)
