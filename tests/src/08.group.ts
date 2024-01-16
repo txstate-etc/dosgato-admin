@@ -7,9 +7,9 @@ const NEW_GROUP = {
   name: 'autotestgroup1',
 }
 
-test.beforeEach(async ({ adminPage, browserName }) => {
+test.beforeEach(async ({ adminPage, browserName, isMobile }) => {
   page = adminPage.page
-  NEW_GROUP.name = `autotestgroup1-${browserName}`
+  NEW_GROUP.name = `autotestgroup1-${browserName}${isMobile ? '-mobile' : ''}`
   await loadAdminAccessPage(page, 'groups')
 })
 
@@ -38,18 +38,18 @@ test.describe('group list', async () => {
     await expect(page.getByRole('treeitem').getByText(`${NEW_GROUP.name}-deleteme`)).toHaveCount(0)
   })
   test('should be able to add a subgroup', async () => {
-    await page.getByRole('treeitem').getByText(NEW_GROUP.name).click()
+    await page.getByRole('treeitem').getByText(NEW_GROUP.name, { exact: true }).click()
     await addGroup(page, `${NEW_GROUP.name}-subgroup`)
-    await page.getByRole('treeitem').getByText(NEW_GROUP.name).click()
-    await expect(page.getByRole('treeitem').getByText(`${NEW_GROUP.name}-subgroup`)).toBeVisible()
+    await page.getByRole('treeitem').getByText(NEW_GROUP.name, { exact: true }).click()
+    await expect(page.getByRole('treeitem').getByText(`${NEW_GROUP.name}-subgroup`, { exact: true })).toBeVisible()
   })
   test('should be able to open a group detail page', async () => {
-    await page.getByRole('treeitem').getByText(NEW_GROUP.name).dblclick()
+    await page.getByRole('treeitem').getByText(NEW_GROUP.name, { exact: true }).dblclick()
     await expect(page.getByRole('heading', { name: 'Basic Information' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Roles' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Members' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Sites' })).toBeHidden()
-    await expect(page.getByRole('link', { name: `${NEW_GROUP.name}-subgroup` })).toHaveCount(1)
+    await expect(page.getByRole('link', { name: `${NEW_GROUP.name}-subgroup`, exact: true })).toHaveCount(1)
   })
 })
 
