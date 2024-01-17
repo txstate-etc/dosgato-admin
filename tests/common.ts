@@ -57,3 +57,10 @@ export async function addGroup (page: Page, name: string) {
   await page.getByLabel('Group Name').fill(name)
   await page.getByRole('button', { name: 'Save' }).click()
 }
+
+export async function addRole (page: Page, name: string) {
+  await page.getByRole('button', { name: 'Add Role' }).click()
+  await page.getByLabel('Name').click()
+  await page.getByLabel('Name').fill(name)
+  await page.getByRole('button', { name: 'Save' }).click()
+}
