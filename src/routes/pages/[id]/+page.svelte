@@ -143,7 +143,6 @@
   async function refreshIframe () {
     iframe.src = iframe.src // force refresh the iframe
     page = (await api.getEditorPage(page.id)) ?? page
-    addToTop = false
   }
 
   function onAddComponentChooseTemplate (templateKey: string) {
@@ -218,7 +217,8 @@
 
   async function iframeload () {
     // notify the page about the last known scroll and bar selection state so it can load it up nicely
-    iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath: $editorStore.selectedPath, state: $editorStore.state }, '*')
+    iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath: `${$editorStore.selectedPath}${addToTop ? '.0' : ''}`, state: $editorStore.state }, '*')
+    addToTop = false
   }
   $: status = $editorStore.page.published ? ($editorStore.page.hasUnpublishedChanges ? 'modified' as const : 'published' as const) : 'unpublished' as const
   $: iframesrc = editable && !$editorStore.previewing
