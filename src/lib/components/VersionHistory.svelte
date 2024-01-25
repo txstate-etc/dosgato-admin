@@ -65,5 +65,5 @@
   <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={latest ? [latest] : []} title="Latest Version" {dataId} on:marked={onMarked} />
   <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={published ? [published] : []} title="Published Version" {dataId} on:marked={onMarked} />
   <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={(oldversions ?? []).filter(v => v.marked)} title="Marked Versions" {dataId} on:marked={onMarked} />
-  <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={oldversions ?? []} title="All Versions" {dataId} on:marked={onMarked} />
+  <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={oldversions ?? []} title="All Versions" {dataId} on:marked={onMarked} compressDays />
 </Dialog>

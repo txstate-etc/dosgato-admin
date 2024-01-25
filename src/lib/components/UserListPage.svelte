@@ -111,6 +111,7 @@
   let emailElement: HTMLInputElement
   let createItems: PopupMenuItem[] = []
   let hideEmptyText = true
+  // eslint-disable-next-line prefer-const
   let createMenuLoading = false
   let counter = 0
   interface ExternalUser {
@@ -136,21 +137,21 @@
       if (system) return
       hideEmptyText = true
       await tick()
-      loginElement.addEventListener('input', async () => findExternalUsers(loginElement.value))
-      firstnameElement.addEventListener('input', async () => findExternalUsers(firstnameElement.value))
-      lastnameElement.addEventListener('input', async () => findExternalUsers(lastnameElement.value))
-      emailElement.addEventListener('input', async () => findExternalUsers(emailElement.value))
-      loginElement.addEventListener('focus', async () => findExternalUsers(loginElement.value))
-      firstnameElement.addEventListener('focus', async () => findExternalUsers(firstnameElement.value))
-      lastnameElement.addEventListener('focus', async () => findExternalUsers(lastnameElement.value))
-      emailElement.addEventListener('focus', async () => findExternalUsers(emailElement.value))
+      loginElement.addEventListener('input', () => { findExternalUsers(loginElement.value).catch(console.error) })
+      firstnameElement.addEventListener('input', () => { findExternalUsers(firstnameElement.value).catch(console.error) })
+      lastnameElement.addEventListener('input', () => { findExternalUsers(lastnameElement.value).catch(console.error) })
+      emailElement.addEventListener('input', () => { findExternalUsers(emailElement.value).catch(console.error) })
+      loginElement.addEventListener('focus', () => { findExternalUsers(loginElement.value).catch(console.error) })
+      firstnameElement.addEventListener('focus', () => { findExternalUsers(firstnameElement.value).catch(console.error) })
+      lastnameElement.addEventListener('focus', () => { findExternalUsers(lastnameElement.value).catch(console.error) })
+      emailElement.addEventListener('focus', () => { findExternalUsers(emailElement.value).catch(console.error) })
     } else {
       createStore = undefined
     }
   }
-  $: reactToCreationModal($creatingStore)
+  $: reactToCreationModal($creatingStore).catch(console.error)
   function onCreateMenuSelection (e: CustomEvent) {
-    createStore!.setData({ ...$createStore!.data, userId: e.detail.full.login, ...pick(e.detail.full, 'firstname', 'lastname', 'email') })
+    createStore!.setData({ ...$createStore!.data, userId: e.detail.full.login, ...pick(e.detail.full, 'firstname', 'lastname', 'email') }).catch(console.error)
   }
 
   export async function buildEmailCSV () {

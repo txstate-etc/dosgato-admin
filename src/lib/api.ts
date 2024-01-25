@@ -366,7 +366,7 @@ class API {
   }
 
   async getUserListForAudit () {
-    const { users } = await this.query<{ users: UserAuditUser[]}>(GET_USER_AUDIT_LIST)
+    const { users } = await this.query<{ users: UserAuditUser[] }>(GET_USER_AUDIT_LIST)
     return sortby(users, 'lastname')
   }
 
