@@ -79,7 +79,7 @@
     }
     actions.push({ label: 'Delete', icon: deleteOutline, onClick: () => modalContext.setModal('delete'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.NOTDELETED) })
     actions.push({ label: 'Restore', icon: deleteRestore, onClick: () => modalContext.setModal('restore'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.MARKEDFORDELETE) })
-    actions.push({label: 'Finalize Deletion', icon: deleteOutline, onClick: () => modalContext.setModal('finalizeDelete'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.MARKEDFORDELETE) })
+    actions.push({ label: 'Finalize Deletion', icon: deleteOutline, onClick: () => modalContext.setModal('finalizeDelete'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.MARKEDFORDELETE) })
     return actions
   }
 
