@@ -297,7 +297,7 @@
                 <div class="position-label">Positioning</div>
                 <div id={`position-help-${category}`} class="position-help">By default your new element will be at the bottom of the area.</div>
                 <label for={`position-${category}`}>
-                  <Checkbox id={`position-${category}`} name="addtotop" value={addToTop} onChange={() => addToTop = !addToTop} descid={`position-help-${category}`}/>
+                  <Checkbox id={`position-${category}`} name="addtotop" value={addToTop} onChange={() => { addToTop = !addToTop }} descid={`position-help-${category}`}/>
                   Add this to the top of the area.
                 </label>
               </form>

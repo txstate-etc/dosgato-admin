@@ -17,7 +17,7 @@
   import caretDown from '@iconify-icons/ph/caret-down'
   import caretRight from '@iconify-icons/ph/caret-right'
   import { ScreenReaderOnly, glue } from '@txstate-mws/svelte-components'
-  import { createEventDispatcher } from 'svelte'
+  import { createEventDispatcher, tick } from 'svelte'
   import { isNotBlank, randomid, titleCase } from 'txstate-utils'
   import type { HistoryVersion } from './VersionHistory.svelte'
   import { api } from '$lib/api'
@@ -33,6 +33,7 @@
   export let compressDays = false
 
   const showing: Record<string, boolean> = {}
+  const expandables: Record<string, HTMLElement> = {}
 
   $: isMarkedTable = title === 'Marked Versions'
   let keepers: Record<string, HistoryVersion> = {}
@@ -81,6 +82,12 @@
     }
   }
 
+  async function toggleExpanded (day: string) {
+    showing[day] = !showing[day]
+    await tick()
+    expandables[day].focus()
+  }
+
   const checkboxid = randomid()
 </script>
 
@@ -103,18 +110,20 @@
     {#each versions as version, i (version.version)}
     {@const restored = /restored/i.test(version.comment)}
     {@const day = version.date.toLocal().toFormat('yyyyLLdd')}
-    {@const isKeeper = keepers[day]?.version === version.version}
-    {@const hidden = compressDays && !isKeeper && !showing[day]}
+    {@const lastday = i === 0 ? undefined : versions[i - 1].date.toLocal().toFormat('yyyyLLdd')}
+    {@const showsDate = (keepers[day]?.version === version.version && !showing[day]) || (showing[day] && lastday !== day)}
+    {@const hidden = compressDays && !showsDate && !showing[day]}
+    {@const expandable = dayCount[day] > 1 && showsDate}
     <tr on:mouseenter={function () { hoverRow = this }} on:mouseleave={() => { hoverRow = undefined }} data-idx={i} class:hidden>
       <td class="checkbox"><Checkbox name="version-compare-{version.version}" value={selected.has(version.version)} disabled={selected.has(version.version) && selectedInTitle.get(version.version) !== title} onChange={onSelect(version.version)} id={checkboxid} /><label for={checkboxid}><ScreenReaderOnly>Select for Preview/Compare</ScreenReaderOnly></label></td>
-      <td class="date">
-        {#if isKeeper || (dayCount[day] ?? 0) <= 1}
+      <td class="date" class:expandable on:click={async () => { if (expandable) await toggleExpanded(day) }}>
+        {#if showsDate || (dayCount[day] ?? 0) <= 1}
           {formatDate(version.date)}
         {:else}
           <ScreenReaderOnly>{formatDate(version.date)}</ScreenReaderOnly>
         {/if}
-        {#if dayCount[day] > 1 && isKeeper}
-          <button type="button" class="reset" on:click={() => { showing[day] = !showing[day] }}>
+        {#if expandable}
+          <button type="button" bind:this={expandables[day]} class="reset" on:click|stopPropagation={async () => await toggleExpanded(day) }>
             <Icon icon={showing[day] ? caretDown : caretRight} inline hiddenLabel="{showing[day] ? 'Hide other' : 'See more'} versions from this day"/>
           </button>
         {/if}
@@ -167,6 +176,9 @@
   }
   td {
     line-height: 1.5;
+  }
+  td.expandable {
+    cursor: pointer;
   }
   .tags, .mark {
     text-align: center;
