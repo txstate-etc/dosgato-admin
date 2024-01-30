@@ -246,12 +246,7 @@
 {:else}
   <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath, $editorStore.previewing, page)} on:returnfocus={onReturnFocus}>
     <div class="page-bar"><span>{$editorStore.page.path}</span>
-      {#if $editorStore.previewing}
-        <select value={$editorStore.previewing.mode ?? 'desktop'} on:change={function () { pageEditorStore.setPreviewMode(this.value) }}>
-          <option value="desktop">Desktop</option>
-          <option value="mobile">Mobile</option>
-        </select>
-      {:else}
+      {#if !$editorStore.previewing}
         {#each pagetemplate.pageBarButtons ?? [] as button, idx}
           {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
             <button id={`pagebar-button-${idx}`} type="button" class="user-button" on:click={onUserButtonClick(button, idx)}>
@@ -261,8 +256,12 @@
           {/if}
         {/each}
       {/if}
+      <select value={$editorStore.device ?? 'desktop'} on:change={function () { pageEditorStore.setPreviewMode(this.value) }}>
+        <option value="desktop">Desktop</option>
+        <option value="mobile">Mobile</option>
+      </select>
     </div>
-    <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.previewing?.mode === 'mobile'}></iframe>
+    <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.device === 'mobile'}></iframe>
     <div slot="bottom" class="status {status}"><Icon width="1.1em" inline icon={statusIcon[status]}/><span>{titleCase(status)}</span></div>
   </ActionPanel>
 {/if}

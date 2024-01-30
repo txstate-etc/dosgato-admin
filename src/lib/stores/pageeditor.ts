@@ -33,8 +33,8 @@ export interface EditorState {
   cutAllowed?: boolean
   copyAllowed?: boolean
   pasteAllowed?: boolean
+  device?: 'desktop' | 'mobile'
   previewing?: {
-    mode?: 'desktop' | 'mobile'
     version: PageEditorVersionPreview
     fromVersion?: PageEditorVersionPreview
   }
@@ -348,7 +348,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
   }
 
   setPreviewMode (mode: 'desktop' | 'mobile') {
-    this.updateEditorState(es => ({ ...es, previewing: es.previewing ? { ...es.previewing, mode } : undefined }))
+    this.updateEditorState(es => ({ ...es, device: mode }))
     this.logActionShown(`Preview Mode - ${mode}`)
   }
 
