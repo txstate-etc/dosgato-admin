@@ -258,10 +258,11 @@
       {/if}
       <select value={$editorStore.device ?? 'desktop'} on:change={function () { pageEditorStore.setPreviewMode(this.value) }}>
         <option value="desktop">Desktop</option>
+        <option value="tablet">Tablet</option>
         <option value="mobile">Mobile</option>
       </select>
     </div>
-    <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.device === 'mobile'}></iframe>
+    <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.device === 'mobile'} class:tablet={$editorStore.device === 'tablet'}></iframe>
     <div slot="bottom" class="status {status}"><Icon width="1.1em" inline icon={statusIcon[status]}/><span>{titleCase(status)}</span></div>
   </ActionPanel>
 {/if}
@@ -358,6 +359,12 @@
   iframe.mobile {
     border: 1px solid #757575;
     width: 400px;
+    margin: 0 auto;
+  }
+
+  iframe.tablet {
+    border: 1px solid #757575;
+    width: 800px;
     margin: 0 auto;
   }
 

@@ -5,6 +5,8 @@ import { api, type PageEditorPage, templateRegistry, toast, uiLog } from '$lib'
 import type { Feedback } from '@txstate-mws/svelte-forms'
 import type { DateTime } from 'luxon'
 
+type Device = 'desktop' | 'tablet' | 'mobile'
+
 interface ISuccess { success: boolean }
 export interface IPageEditorStore {
   editors: Record<string, EditorState | undefined>
@@ -33,7 +35,7 @@ export interface EditorState {
   cutAllowed?: boolean
   copyAllowed?: boolean
   pasteAllowed?: boolean
-  device?: 'desktop' | 'mobile'
+  device?: Device
   previewing?: {
     version: PageEditorVersionPreview
     fromVersion?: PageEditorVersionPreview
@@ -347,7 +349,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.logActionShown('Preview Version - Started')
   }
 
-  setPreviewMode (mode: 'desktop' | 'mobile') {
+  setPreviewMode (mode: Device) {
     this.updateEditorState(es => ({ ...es, device: mode }))
     this.logActionShown(`Preview Mode - ${mode}`)
   }
