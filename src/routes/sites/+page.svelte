@@ -6,11 +6,12 @@
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import downloadIcon from '@iconify-icons/ph/download-simple'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
+  import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog, ModalContextStore, LaunchState } from '$lib'
+  import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog, ModalContextStore, LaunchState, SearchInput } from '$lib'
   import { buildAuditCSV } from './audit'
-  import { setContext } from 'svelte'
+  import { hidden } from '$lib/components/ActionPanel.svelte'
 
   type TypedSiteItem = TypedTreeItem<SiteListSite>
 
@@ -18,6 +19,13 @@
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+
+  let searchInput: HTMLInputElement
+  async function onClickMinifiedSearch () {
+    $hidden = false
+    await tick()
+    searchInput?.focus()
+  }
 
   type Modals = 'addsite' | 'deletesite' | 'restoresite'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
@@ -115,7 +123,10 @@
   }
 </script>
 
-<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Sites'} actions={getActions($store.selectedItems)} filterinput on:filter={e => { filter = e.detail }}>
+<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Sites'} actions={getActions($store.selectedItems)}>
+  <svelte:fragment slot="abovePanel" let:panelHidden>
+    <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
+  </svelte:fragment>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/sites/' + detail.id)} headers={[
     { id: 'name', label: 'Site Name', get: 'name', grow: 10, icon: { icon: globeLight } },
     { id: 'url', label: 'URL', grow: 10, render: (site) => `<span class="${site.launchState === LaunchState.LAUNCHED ? '' : 'not-live'}">${site.url?.prefix ?? ''}</span>` },

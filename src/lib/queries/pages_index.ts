@@ -93,17 +93,13 @@ export interface RootTreePage extends TreePage {
   }
 }
 
-export const GET_ROOT_PAGES = `
-  query getRootPages {
-    pages (filter: { maxDepth: 0, viewForEdit: true }) {
-      ${pageDetails}
-      pagetree {
-        type
-        name
-      }
-    }
+export interface SearchTreePage extends TreePage {
+  pagetree: {
+    id: string
+    type: PagetreeTypes
+    name: string
   }
-`
+}
 
 export const GET_TREE_PAGES = `
   query getTreePages ($ids: [ID!]) {
@@ -111,6 +107,18 @@ export const GET_TREE_PAGES = `
       id
       children {
         ${pageDetails}
+      }
+    }
+  }
+`
+
+export const GET_SEARCH_PAGES = `
+  query getSearchPages ($search: String!) {
+    pages (filter:{ search: $search }) {
+      ${pageDetails}
+      pagetree {
+        type
+        name
       }
     }
   }

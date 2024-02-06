@@ -1,6 +1,8 @@
-import { DateTime } from 'luxon'
 import { TreeStore, type TypedTreeItem } from '@dosgato/dialog'
+import { Store } from '@txstate-mws/svelte-store'
+import { DateTime } from 'luxon'
 import { api, type RootTreePage, type TreePage } from '$lib'
+import { isBlank } from 'txstate-utils'
 
 export interface PageItem extends Omit<Omit<Omit<TreePage, 'modifiedAt'>, 'publishedAt'>, 'children'> {
   modifiedAt: DateTime
@@ -58,3 +60,8 @@ function dropEffect (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, 
 }
 
 export const _store = new TreeStore<PageItem>(fetchChildren, { copyHandler, dragEligible, dropEffect, moveHandler })
+export const _pagesStore = new Store({ showsearch: false, search: '' })
+export const _searchStore = new TreeStore(async () => {
+  const search = (_pagesStore as any).value.search
+  return isBlank(search) ? [] : await api.getSearchPages(search)
+})

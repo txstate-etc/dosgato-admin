@@ -1,28 +1,27 @@
 <script lang="ts" context="module">
   import { writable } from 'svelte/store'
-  const hidden = writable<boolean | undefined>(undefined)
+  export const hidden = writable<boolean | undefined>(undefined)
+  export function showActionPanel () {
+    hidden.set(true)
+  }
 </script>
 <script lang="ts">
   import { Icon } from '@dosgato/dialog'
   import arrowCircleLeftLight from '@iconify-icons/ph/arrow-circle-left-light'
   import arrowCircleRightLight from '@iconify-icons/ph/arrow-circle-right-light'
-  import magnifyingGlass from '@iconify-icons/ph/magnifying-glass'
-  import { elementqueries, eq, modifierKey, offset, OffsetStore, ScreenReaderOnly } from '@txstate-mws/svelte-components'
+  import { eq, modifierKey, offset, OffsetStore, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { Store } from '@txstate-mws/svelte-store'
-  import { createEventDispatcher, getContext, onMount, tick } from 'svelte'
+  import { createEventDispatcher, getContext, onMount } from 'svelte'
+  import { isNotNull } from 'txstate-utils'
   import type { ActionPanelAction, ActionPanelGroup } from './actionpanel'
   import { uiLog } from '$lib/logging'
-  import { isNotNull } from 'txstate-utils'
 
   export let actionsTitle: string | undefined = ''
   export let actions: (ActionPanelAction | ActionPanelGroup)[]
   export let panelelement: HTMLElement | undefined = undefined
-  export let filterinput = false
-  let searchInput: HTMLInputElement
 
   interface $$Events {
     returnfocus: CustomEvent
-    filter: CustomEvent<string>
   }
   const dispatch = createEventDispatcher()
   const { getTarget } = getContext<any>('ActionPanelTarget')
@@ -49,11 +48,6 @@
   function onClick () {
     $hidden = !$hidden
   }
-  async function onClickSearchButton () {
-    onClick()
-    await tick()
-    searchInput.focus()
-  }
 
   function onKeydown (e: KeyboardEvent) {
     if (modifierKey(e)) return
@@ -62,10 +56,6 @@
       e.stopPropagation()
       dispatch('returnfocus')
     }
-  }
-
-  function onFilterChange (e: (KeyboardEvent | InputEvent) & { currentTarget: HTMLInputElement }) {
-    dispatch('filter', e.currentTarget?.value ?? '')
   }
 
   function reactToScreenWidth (..._: any) {
@@ -90,49 +80,48 @@
     <slot />
   </section>
   <div class="right-panel">
-    <section class="actions">
-      <!-- svelte-ignore a11y-click-events-have-key-events -->
-      <!-- svelte-ignore a11y-no-static-element-interactions -->
-      <header on:click={allowCollapse ? onClick : undefined}>
-        {#if $hidden}<ScreenReaderOnly>{actionsTitle}</ScreenReaderOnly>{:else}<div class="actions-title">{actionsTitle}</div>{/if}
-        {#if allowCollapse}<button type="button" class="reset" on:click|stopPropagation={onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
-      </header>
-      {#if filterinput}
-          <div class="search-area">
-            {#if $hidden}
-              <button type="button" class="reset" on:click|stopPropagation={onClickSearchButton}><Icon icon={magnifyingGlass} hiddenLabel="Search"/></button>
-            {:else}
-              <input bind:this={searchInput} type="text" placeholder="Search..." on:keyup={onFilterChange} on:change={onFilterChange} />
-            {/if}
-          </div>
-      {/if}
-      <ScreenReaderOnly {arialive}>{actions.length ? `${enabled.length} actions available for ${actionsTitle}, ${disabledCount} disabled. Press Control-M to read available actions.` : 'no actions available'}</ScreenReaderOnly>
-      {#each grouped as group (group.id)}
-        <ul>
-          {#each group.actions as action (action.id || action.label)}
-            <li class:enabled={!action.disabled} class={action.class}>
-              <button type="button" class="reset" disabled={action.disabled} on:click={onAction(action)} on:keydown={onKeydown}>
-                <Icon width="{`${action.iconWidth ?? 1.2}em`}" icon={action.icon} />
-                {#if $hidden}
-                  <ScreenReaderOnly>{action.label}</ScreenReaderOnly>
-                {:else}
-                  {action.label}
-                {/if}
-                {#if isNotNull(action.hiddenLabel)}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly>{/if}
-              </button>
-            </li>
-          {/each}
-        </ul>
-      {/each}
-    </section>
-    {#if $$slots.preview}
-      <section class="action-panel-preview">
-        <slot name="preview" />
-      </section>
+    {#if $$slots.abovePanel}
+      <section class="above-panel"><slot name="abovePanel" panelHidden={$hidden} /></section>
     {/if}
+    <div class="right-content">
+      {#if $$slots.panelTop}
+        <section class="panel-top"><slot name="panelTop" panelHidden={$hidden} /></section>
+      {/if}
+      <section class="actions">
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <header on:click={allowCollapse ? onClick : undefined}>
+          {#if $hidden}<ScreenReaderOnly>{actionsTitle}</ScreenReaderOnly>{:else}<div class="actions-title">{actionsTitle}</div>{/if}
+          {#if allowCollapse}<button type="button" class="reset" on:click|stopPropagation={onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
+        </header>
+        <ScreenReaderOnly {arialive}>{actions.length ? `${enabled.length} actions available for ${actionsTitle}, ${disabledCount} disabled. Press Control-M to read available actions.` : 'no actions available'}</ScreenReaderOnly>
+        {#each grouped as group (group.id)}
+          <ul>
+            {#each group.actions as action (action.id || action.label)}
+              <li class:enabled={!action.disabled} class={action.class}>
+                <button type="button" class="reset" disabled={action.disabled} on:click={onAction(action)} on:keydown={onKeydown}>
+                  <Icon width="{`${action.iconWidth ?? 1.2}em`}" icon={action.icon} />
+                  {#if $hidden}
+                    <ScreenReaderOnly>{action.label}</ScreenReaderOnly>
+                  {:else}
+                    {action.label}
+                  {/if}
+                  {#if isNotNull(action.hiddenLabel)}<ScreenReaderOnly>{action.hiddenLabel}</ScreenReaderOnly>{/if}
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {/each}
+      </section>
+      {#if $$slots.preview}
+        <section class="action-panel-preview">
+          <slot name="preview" panelHidden={$hidden} />
+        </section>
+      {/if}
+    </div>
     {#if $$slots.bottom}
       <section class="action-panel-bottom">
-        <slot name="bottom" />
+        <slot name="bottom" panelHidden={$hidden} />
       </section>
     {/if}
   </div>
@@ -157,32 +146,42 @@
   }
   .action-panel {
     overflow: hidden;
-    white-space: nowrap;
+    display: flex;
     border-radius: 4px;
   }
   .work, .right-panel {
     white-space: normal;
     vertical-align: top;
-    display: inline-block;
     position: relative;
     height: 100%;
+  }
+  .work, .right-content {
     border: 1.5px solid #757575;
     border-radius: 4px;
+    flex-grow: 1;
   }
   .work {
     width: calc(100% - min(max(20%, 14em), 18em) - 0.5em - 3px);
     overflow: hidden auto;
   }
   .right-panel {
-    background-color: var(--action-panel-bg, #757575);
-    color: var(--action-panel-text, white);
     margin-left: 0.5em;
     width: 20%;
     max-width: 18em;
     min-width: 14em;
     z-index: 1;
-    display: inline-flex;
+    display: flex;
     flex-direction: column;
+  }
+  .hidden .right-panel {
+    width: 0;
+    min-width: 2.1em;
+  }
+  .right-content {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--action-panel-bg, #757575);
+    color: var(--action-panel-text, white);
     overflow-y: auto;
   }
 
@@ -217,16 +216,13 @@
     margin-left: -11em;
   }
 
-  .search-area {
+  .above-panel {
+    margin-bottom: 0.1em;
+  }
+  .panel-top {
+    position: relative;
     padding: 0.3em;
     border-bottom: 2px solid var(--action-panel-divider, #999999);
-  }
-  .search-area button {
-    padding-left: 0.2em;
-  }
-  .search-area input {
-    width: 100%;
-    line-height: 1.6;
   }
   .actions ul {
     padding: 0.3em 0;

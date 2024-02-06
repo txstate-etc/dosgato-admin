@@ -38,7 +38,7 @@ import {
   CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
-  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST
+  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST, GET_SEARCH_PAGES, type SearchTreePage
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -230,6 +230,19 @@ class API {
   protected async getSubPagesBatch (pageId: string | string[]) {
     const { pages } = await this.query<{ pages: { id: string, children: TreePage[] }[] }>(GET_TREE_PAGES, { ids: toArray(pageId) })
     return pages
+  }
+
+  async getSearchPages (search: string) {
+    const { pages } = await this.query<{ pages: SearchTreePage[] }>(GET_SEARCH_PAGES, { search })
+    return pages.map(p => ({
+      ...p,
+      type: p.pagetree.type,
+      children: undefined,
+      hasChildren: false,
+      modifiedAt: DateTime.fromISO(p.modifiedAt),
+      publishedAt: p.publishedAt ? DateTime.fromISO(p.publishedAt) : undefined,
+      status: p.published ? (p.hasUnpublishedChanges ? 'modified' : 'published') : 'unpublished'
+    }))
   }
 
   async chooserSubPagesByPath (path: string, pagetreeId: string | undefined) {

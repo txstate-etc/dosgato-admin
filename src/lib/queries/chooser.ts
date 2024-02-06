@@ -24,7 +24,7 @@ export interface ChooserPageDetails {
   title?: string
   children: { id: string }[]
   site: { id: string, name: string, launchState: number }
-  pagetree: { type: PagetreeTypes}
+  pagetree: { type: PagetreeTypes }
 }
 
 const chooserAssetDetails = `

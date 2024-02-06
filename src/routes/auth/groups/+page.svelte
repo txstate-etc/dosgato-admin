@@ -1,16 +1,24 @@
 <script lang="ts">
+  import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
   import accountMultiplePlusOutline from '@iconify-icons/mdi/account-multiple-plus-outline'
   import accountMultipleRemoveOutline from '@iconify-icons/mdi/account-multiple-remove-outline'
   import usersThree from '@iconify-icons/ph/users-three'
+  import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
-  import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog, ModalContextStore, uiLog } from '$lib'
-  import { setContext } from 'svelte'
+  import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog, ModalContextStore, uiLog, SearchInput } from '$lib'
+  import { hidden } from '$lib/components/ActionPanel.svelte'
 
   // TODO: Need to get with Rachel on what we want defined for target in this screen's context.
   const actionPanelTarget: { target: string | undefined } = { target: 'AuthGroupsPage' }
   setContext('ActionPanelTarget', { getTarget: () => uiLog.targetFromTreeStore($store, 'id') })
+
+  let searchInput: HTMLInputElement
+  async function onClickMinifiedSearch () {
+    $hidden = false
+    await tick()
+    searchInput?.focus()
+  }
 
   type Modals = 'addgroup' | 'deletegroup'
   const modalContext = new ModalContextStore<Modals>(undefined, () => modalContext.targetDescriptor ?? actionPanelTarget.target)
@@ -81,7 +89,10 @@
   }
 </script>
 
-<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Groups'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()} filterinput on:filter={e => { filter = e.detail }}>
+<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Groups'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
+  <svelte:fragment slot="abovePanel" let:panelHidden>
+    <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
+  </svelte:fragment>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/groups/' + detail.id)} headers ={[
     { id: 'name', label: 'Name', get: 'name', grow: 2, icon: { icon: usersThree } },
     { id: 'members', label: 'Members', render: item => String(item.users.length), fixed: '7em' },

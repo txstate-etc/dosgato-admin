@@ -3,13 +3,21 @@
   import keyIcon from '@iconify-icons/ph/key'
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
+  import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContextStore } from '$lib'
-  import { setContext } from 'svelte'
+  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContextStore, SearchInput } from '$lib'
+  import { hidden } from '$lib/components/ActionPanel.svelte'
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+
+  let searchInput: HTMLInputElement
+  async function onClickMinifiedSearch () {
+    $hidden = false
+    await tick()
+    searchInput?.focus()
+  }
 
   type Modals = 'addrole' | 'deleterole'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
@@ -73,7 +81,10 @@
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'id')
 </script>
 
-<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Roles'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()} filterinput on:filter={e => { filter = e.detail }}>
+<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Roles'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
+  <svelte:fragment slot="abovePanel" let:panelHidden>
+    <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
+  </svelte:fragment>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/roles/' + detail.id)} headers={[
     { id: 'name', label: 'Name', get: 'name', grow: 4, icon: { icon: keyIcon } }
   ]} searchable='name' {filter} enableResize>

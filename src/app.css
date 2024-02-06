@@ -59,3 +59,56 @@ button.reset {
 [data-eq~="700px"] .tree-node .modified span.short {
   display: block;
 }
+
+button.search-find-in-tree {
+  position: relative;
+  background-color: var(--dg-button-cancel-bg, #808080);
+  color: var(--dg-button-cancel-text, white);
+  border: 0;
+  border-radius: 0.2em;
+  padding: 0.4em;
+  font-size: 0.85em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+button.search-find-in-tree span {
+  display: none;
+}
+
+.tree-node.selected button.search-find-in-tree span {
+  margin-left: 0.2em;
+  display: block;
+}
+
+.tree-node.selected button.search-find-in-tree {
+  background-color: var(--dg-button-bg, #501214);
+  color: var(--dg-button-text, white);
+  border: 1px solid var(--action-panel-accent, #666666);
+}
+
+.tree-search .tree-cell.name .page-name {
+  max-width: calc(100% - 1.9em);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+}
+.tree-search .tree-cell.name .page-path {
+  width: 100%;
+  font-size: 0.9em;
+  color: #555555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-search.selected .tree-cell.name .page-name, .tree-search.selected .tree-cell.name .page-path {
+  white-space: normal;
+  word-break: break-word;
+}
+
+[data-eq~="700px"] button.search-find-in-tree span {
+  display: none;
+}

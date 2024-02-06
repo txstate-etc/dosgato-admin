@@ -1,39 +1,44 @@
 <script lang="ts">
-  import { Dialog, FieldSelect, FieldText, FormDialog, Tree } from '@dosgato/dialog'
-  import browserIcon from '@iconify-icons/ph/browser'
+  import { Dialog, FieldSelect, FieldText, FormDialog, expandTreePath, Tree } from '@dosgato/dialog'
+  import cursorMove from '@iconify-icons/mdi/cursor-move'
+  import contentCopy from '@iconify-icons/mdi/content-copy'
+  import contentPaste from '@iconify-icons/mdi/content-paste'
   import copySimple from '@iconify-icons/ph/copy-simple'
   import deleteEmpty from '@iconify-icons/mdi/delete-empty'
+  import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
-  import archive from '@iconify-icons/ph/archive'
+  import duplicateIcon from '@iconify-icons/mdi/content-duplicate'
+  import exportIcon from '@iconify-icons/mdi/export'
   import fileX from '@iconify-icons/ph/file-x'
   import historyIcon from '@iconify-icons/mdi/history'
+  import importIcon from '@iconify-icons/mdi/import'
   import layout from '@iconify-icons/ph/layout'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/mdi/plus'
   import publishIcon from '@iconify-icons/mdi/publish'
   import publishOffIcon from '@iconify-icons/mdi/publish-off'
-  import duplicateIcon from '@iconify-icons/mdi/content-duplicate'
-  import cursorMove from '@iconify-icons/mdi/cursor-move'
-  import contentCopy from '@iconify-icons/mdi/content-copy'
-  import contentPaste from '@iconify-icons/mdi/content-paste'
-  import exportIcon from '@iconify-icons/mdi/export'
-  import importIcon from '@iconify-icons/mdi/import'
-  import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
+  import treeStructure from '@iconify-icons/ph/tree-structure'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
+  import { setContext, tick } from 'svelte'
+  import { htmlEncode, isBlank, isNotBlank } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig, UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog, ModalContextStore, getSiteIcon } from '$lib'
-  import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
-  import { _store as store, type TypedPageItem } from './+page'
-  import { sandboxIcon } from '../../lib/sandboxicon'
+  import {
+    api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig,
+    UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog,
+    ModalContextStore, getSiteIcon, SearchInput, CreateWithPageDialog, findInTreeIconSVG
+  } from '$lib'
+  import { _store as store, _searchStore as searchStore, _pagesStore as pagesStore, type TypedPageItem } from './+page'
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
   import { copyWithSubpagesIcon } from './copywithsubpagesicon'
   import { moveIntoIcon } from './moveintoicon'
   import { moveAboveIcon } from './moveaboveicon'
   import { statusIcon } from './[id]/helpers'
-  import { setContext } from 'svelte'
+  import { hidden } from '$lib/components/ActionPanel.svelte'
+
+  $: activeStore = $pagesStore.showsearch ? searchStore : store
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
@@ -41,13 +46,57 @@
   type Modals = 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
-  const siteIcon = {
-    PRIMARY: browserIcon,
-    SANDBOX: sandboxIcon,
-    ARCHIVE: archive
+  function onFilter (e: CustomEvent<string>) {
+    if (isBlank(e.detail)) {
+      $pagesStore = { showsearch: false, search: '' }
+    } else {
+      $pagesStore = { showsearch: true, search: e.detail }
+    }
+    searchStore.refresh().catch(console.error)
+  }
+  let searchInput: HTMLInputElement
+  async function onClickMinifiedSearch () {
+    $hidden = false
+    await tick()
+    searchInput?.focus()
+  }
+
+  function findInPageTree (path: string) {
+    return async () => {
+      const itm = await expandTreePath(store, path.split('/').filter(isNotBlank))
+      if (itm) store.select(itm, { clear: true, notify: true })
+      $pagesStore = { ...$pagesStore, showsearch: false }
+    }
+  }
+  (window as any).dgPagesFindInPageTree = (button: HTMLButtonElement, event: PointerEvent) => {
+    event.stopPropagation()
+    const path = button.getAttribute('data-path')!
+    findInPageTree(path)().catch(console.error)
   }
 
   function singlepageactions (page: TypedPageItem, ..._: any) {
+    const editAction = { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: async () => await goto(base + '/pages/' + page.id) }
+    const previewAction = { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${page.path}.html`), '_blank') } }
+    const showVersionsAction = { label: 'Show Versions', icon: historyIcon, onClick: async () => await goto(base + '/pages/' + page.id + '#versions') }
+    const publishAction = { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => modalContext.setModal('publishpages') }
+    const unpublishAction = { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => modalContext.setModal('unpublishpages') }
+    const exportAction = { label: 'Export', icon: exportIcon, disabled: false, onClick: async () => await api.download(`${environmentConfig.renderBase}/.page/${page.id}`) }
+    if ($pagesStore.showsearch) {
+      return [{
+        id: 'findintree',
+        actions: [{ label: 'Find in Page Tree', icon: treeStructure, onClick: findInPageTree(page.path) }]
+      }, {
+        id: 'basic',
+        actions: [editAction, previewAction, showVersionsAction]
+      }, {
+        id: 'publish',
+        actions: [publishAction, unpublishAction]
+      }, {
+        id: 'export',
+        actions: [exportAction]
+      }]
+    }
+
     const createDestroy: ActionPanelGroup = {
       id: 'createdestroy',
       actions: []
@@ -65,11 +114,11 @@
     const simple: ActionPanelGroup = {
       id: 'simple',
       actions: [
-        { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: async () => await goto(base + '/pages/' + page.id) },
+        editAction,
         { label: 'Rename', icon: renameIcon, disabled: !page.permissions.move, onClick: () => modalContext.setModal('renamepage') },
         { label: 'Change Template', icon: layout, disabled: !page.permissions.update, onClick: onClickTemplateChange },
-        { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${page.path}.html`), '_blank') } },
-        { label: 'Show Versions', icon: historyIcon, onClick: async () => await goto(base + '/pages/' + page.id + '#versions') }
+        previewAction,
+        showVersionsAction
       ]
     }
 
@@ -102,15 +151,15 @@
     }
 
     publishing.actions.push(
-      { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => modalContext.setModal('publishpages') },
+      publishAction,
       { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => modalContext.setModal('publishwithsubpages'), class: 'pubsubpages' },
-      { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => modalContext.setModal('unpublishpages') }
+      unpublishAction
     )
 
     const exportimport: ActionPanelGroup = {
       id: 'exportimport',
       actions: [
-        { label: 'Export', icon: exportIcon, disabled: false, onClick: async () => await api.download(`${environmentConfig.renderBase}/.page/${page.id}`) },
+        exportAction,
         { label: 'Export w/ Subpages', icon: exportIcon, disabled: false, onClick: async () => await api.download(`${environmentConfig.renderBase}/.page/${page.id}?withSubpages=1`) },
         { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => modalContext.setModal('import') }
       ]
@@ -146,17 +195,17 @@
   let availableTemplates: PopupMenuItem[] = []
 
   async function onClickAddPage () {
-    availableTemplates = await api.getTemplatesByPage($store.selectedItems[0].id)
+    availableTemplates = await api.getTemplatesByPage($activeStore.selectedItems[0].id)
     modalContext.setModal('addpage')
   }
 
   async function validateAddPage (state) {
-    const resp = await api.createPage(state.name, state.templateKey, state.data, $store.selectedItems[0].id, false, true)
+    const resp = await api.createPage(state.name, state.templateKey, state.data, $activeStore.selectedItems[0].id, false, true)
     return resp.messages.map(m => ({ ...m, path: (m.arg === 'name' || m.arg === 'templateKey') ? m.arg : `data.${m.arg}` }))
   }
 
   async function onAddPage (state) {
-    const resp = await api.createPage(state.name, state.templateKey, state.data, $store.selectedItems[0].id, false, false)
+    const resp = await api.createPage(state.name, state.templateKey, state.data, $activeStore.selectedItems[0].id, false, false)
     modalContext.logModalResponse(resp, actionPanelTarget.target, { name: state.name, templateKey: state.templateKey })
     return {
       success: resp.success,
@@ -168,17 +217,17 @@
   async function onAddPageComplete () {
     availableTemplates = []
     modalContext.reset()
-    await store.openAndRefresh($store.selectedItems[0])
+    await store.openAndRefresh($activeStore.selectedItems[0])
   }
 
   async function validateRename (state) {
-    const resp = await api.renamePage($store.selectedItems[0].id, state.name, true)
+    const resp = await api.renamePage($activeStore.selectedItems[0].id, state.name, true)
     return messageForDialog(resp.messages, '')
   }
 
   async function onRenamePage (state) {
-    const resp = await api.renamePage($store.selectedItems[0].id, state.name)
-    modalContext.logModalResponse(resp, $store.selectedItems[0].id, { oldName: $store.selectedItems[0].name, newName: state.name })
+    const resp = await api.renamePage($activeStore.selectedItems[0].id, state.name)
+    modalContext.logModalResponse(resp, $activeStore.selectedItems[0].id, { oldName: $activeStore.selectedItems[0].name, newName: state.name })
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
@@ -192,8 +241,8 @@
   }
 
   async function onDuplicatePage () {
-    const resp = await api.duplicatePage($store.selectedItems[0].id, $store.selectedItems[0].parent!.id)
-    modalContext.logModalResponse(resp, $store.selectedItems[0].id, { parentId: $store.selectedItems[0].parent!.id })
+    const resp = await api.duplicatePage($activeStore.selectedItems[0].id, $activeStore.selectedItems[0].parent!.id)
+    modalContext.logModalResponse(resp, $activeStore.selectedItems[0].id, { parentId: $activeStore.selectedItems[0].parent!.id })
     if (resp.success) {
       void store.refresh()
       modalContext.reset()
@@ -201,21 +250,21 @@
   }
 
   async function onPublishPages () {
-    const resp = await api.publishPages($store.selectedItems.map(d => d.id), false)
+    const resp = await api.publishPages($activeStore.selectedItems.map(d => d.id), false)
     modalContext.logModalResponse(resp, actionPanelTarget.target)
     modalContext.reset()
     if (resp.success) await store.refresh()
   }
 
   async function onPublishPagesWithSubpages () {
-    const resp = await api.publishPages($store.selectedItems.map(d => d.id), true)
+    const resp = await api.publishPages($activeStore.selectedItems.map(d => d.id), true)
     modalContext.logModalResponse(resp, actionPanelTarget.target)
     modalContext.reset()
     if (resp.success) await store.refresh()
   }
 
   async function onUnpublishPages () {
-    const resp = await api.unpublishPages($store.selectedItems.map(d => d.id))
+    const resp = await api.unpublishPages($activeStore.selectedItems.map(d => d.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target)
     modalContext.reset()
     if (resp.success) await store.refresh()
@@ -223,13 +272,13 @@
 
   let pagesToDeleteCount: number | undefined = undefined
   async function countPages (modal: Modals) {
-    pagesToDeleteCount = await api.getDeletePageCount($store.selectedItems.map(page => page.id))
+    pagesToDeleteCount = await api.getDeletePageCount($activeStore.selectedItems.map(page => page.id))
     console.log('setting modal to ' + modal)
     modalContext.setModal(modal)
   }
 
   async function onDeletePage () {
-    const resp = await api.deletePages($store.selectedItems.map(page => page.id))
+    const resp = await api.deletePages($activeStore.selectedItems.map(page => page.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target)
     modalContext.reset()
     pagesToDeleteCount = undefined
@@ -237,7 +286,7 @@
   }
 
   async function onPublishDeletion () {
-    const resp = await api.publishDeletion($store.selectedItems.map(page => page.id))
+    const resp = await api.publishDeletion($activeStore.selectedItems.map(page => page.id))
     modalContext.logModalResponse(resp, actionPanelTarget.target)
     modalContext.reset()
     pagesToDeleteCount = undefined
@@ -245,14 +294,14 @@
   }
 
   async function onUndeletePage () {
-    const resp = await api.undeletePages([$store.selectedItems[0].id])
+    const resp = await api.undeletePages([$activeStore.selectedItems[0].id])
     modalContext.logModalResponse(resp, actionPanelTarget.target)
     modalContext.reset()
     if (resp.success) await store.refresh()
   }
 
   async function onUndeletePageWithChildren () {
-    const resp = await api.undeletePages($store.selectedItems.map(page => page.id), true)
+    const resp = await api.undeletePages($activeStore.selectedItems.map(page => page.id), true)
     modalContext.logModalResponse(resp, actionPanelTarget.target)
     modalContext.reset()
     pagesToDeleteCount = undefined
@@ -262,25 +311,25 @@
   async function onImportSaved () {
     modalContext.logModalResponse({ success: true }, actionPanelTarget.target)
     modalContext.reset()
-    await store.openAndRefresh($store.selectedItems[0])
+    await store.openAndRefresh($activeStore.selectedItems[0])
   }
 
   async function onClickTemplateChange () {
-    availableTemplates = await api.getTemplatesByPage($store.selectedItems[0].id)
+    availableTemplates = await api.getTemplatesByPage($activeStore.selectedItems[0].id)
     modalContext.setModal('changetemplate')
   }
   async function onChangeTemplateSubmit (data: { templateKey: string }) {
-    const resp = await api.changeTemplate($store.selectedItems[0].id, data.templateKey)
+    const resp = await api.changeTemplate($activeStore.selectedItems[0].id, data.templateKey)
     modalContext.logModalResponse(resp, actionPanelTarget.target, { templateKey: data.templateKey })
     return resp
   }
   async function validateChangeTemplate (data: { templateKey: string }) {
-    const resp = await api.changeTemplate($store.selectedItems[0].id, data.templateKey, { validateOnly: true })
+    const resp = await api.changeTemplate($activeStore.selectedItems[0].id, data.templateKey, { validateOnly: true })
     return resp.messages
   }
   async function onChangeTemplateSaved () {
     modalContext.reset()
-    await store.refresh($store.selectedItems[0].parent)
+    await store.refresh($activeStore.selectedItems[0].parent)
   }
 
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'path')
@@ -298,7 +347,25 @@
   }
 </script>
 
-<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Pages'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
+{#if $pagesStore.showsearch}
+  Searching for "{$pagesStore.search}"...
+{/if}
+<ActionPanel actionsTitle={$activeStore.selected.size === 1 ? $activeStore.selectedItems[0].name : 'Pages'} actions={$activeStore.selected.size === 1 ? singlepageactions($activeStore.selectedItems[0]) : multipageactions($activeStore.selectedItems)}>
+  <svelte:fragment slot="abovePanel" let:panelHidden>
+    <SearchInput bind:searchInput value={$pagesStore.search} on:search={onFilter} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
+  </svelte:fragment>
+  {#if $pagesStore.showsearch}
+  <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}
+    headers={[
+      { label: 'Name', id: 'name', grow: 4.5, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) }), render: item => `<div class="page-name">${item.name}<div class="page-path">${item.path.split('/').slice(0, -1).join('/')}</div></div><button class="reset search-find-in-tree" type="button" tabindex="-1" onclick="window.dgPagesFindInPageTree(this, event)" data-path="${htmlEncode(item.path)}">${findInTreeIconSVG}<span>Find in page tree</span></button>` },
+      { label: 'Title', id: 'title', grow: 3, get: 'title' },
+      { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
+      { label: 'Status', id: 'status', fixed: '4em', icon: item => ({ icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' }), class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
+      { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
+      { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
+    ]}
+  />
+  {:else}
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}
     headers={[
       { label: 'Path', id: 'name', grow: 4, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) }), render: item => `<div class="page-name">${item.name}</div>` },
@@ -309,13 +376,14 @@
       { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
     ]} searchable='name' enableResize
   />
+  {/if}
 </ActionPanel>
 {#if $modalContext.modal === 'addpage'}
   <CreateWithPageDialog
     submit={onAddPage}
     validate={validateAddPage}
     title="Add New Page"
-    pagetreeId={$store.selectedItems[0].pagetree.id}
+    pagetreeId={$activeStore.selectedItems[0].pagetree.id}
     templateChoices={availableTemplates}
     on:escape={modalContext.onModalEscape}
     on:saved={onAddPageComplete}/>
@@ -325,7 +393,7 @@
     validate={validateRename}
     name='renamepage'
     title='Rename Page'
-    preload={{ name: $store.selectedItems[0].name }}
+    preload={{ name: $activeStore.selectedItems[0].name }}
     on:escape={modalContext.onModalEscape}
     on:saved={onRenamePageComplete}>
     <FieldText path='name' label='Name' required />
@@ -335,14 +403,14 @@
     submit={onChangeTemplateSubmit}
     validate={validateChangeTemplate}
     title='Change Page Template'
-    preload={{ templateKey: $store.selectedItems[0].template?.key }}
+    preload={{ templateKey: $activeStore.selectedItems[0].template?.key }}
     on:escape={modalContext.onModalEscape}
     on:saved={onChangeTemplateSaved}>
     <FieldSelect notNull path="templateKey" choices={availableTemplates} />
   </FormDialog>
 {:else if $modalContext.modal === 'duplicatepage'}
   <Dialog
-    title={`Duplicate Page${$store.selectedItems[0].hasChildren ? 's' : ''}`}
+    title={`Duplicate Page${$activeStore.selectedItems[0].hasChildren ? 's' : ''}`}
     continueText='Duplicate'
     cancelText='Cancel'
     on:continue={onDuplicatePage}
@@ -353,7 +421,7 @@
   <Dialog
     title='Copy'
     on:continue={modalContext.onModalEscape}>
-    Copied page {$store.selectedItems[0].name}
+    Copied page {$activeStore.selectedItems[0].name}
   </Dialog>
 {:else if $modalContext.modal === 'publishpages'}
   <Dialog
@@ -362,7 +430,7 @@
     cancelText='Cancel'
     on:continue={onPublishPages}
     on:escape={modalContext.onModalEscape}>
-    Publish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''}?`}
+    Publish {`${$activeStore.selectedItems.length} page${$activeStore.selectedItems.length > 1 ? 's' : ''}?`}
   </Dialog>
 {:else if $modalContext.modal === 'publishwithsubpages'}
   <Dialog
@@ -371,7 +439,7 @@
     cancelText='Cancel'
     on:continue={onPublishPagesWithSubpages}
     on:escape={modalContext.onModalEscape}>
-    Publish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''} and ${$store.selectedItems.length > 1 ? 'their' : 'its'} subpages?`}
+    Publish {`${$activeStore.selectedItems.length} page${$activeStore.selectedItems.length > 1 ? 's' : ''} and ${$activeStore.selectedItems.length > 1 ? 'their' : 'its'} subpages?`}
   </Dialog>
 {:else if $modalContext.modal === 'unpublishpages'}
   <Dialog
@@ -380,7 +448,7 @@
     cancelText='Cancel'
     on:continue={onUnpublishPages}
     on:escape={modalContext.onModalEscape}>
-    Unpublish {`${$store.selectedItems.length} page${$store.selectedItems.length > 1 ? 's' : ''} and ${$store.selectedItems.length > 1 ? 'their' : 'its'} subpages?`}
+    Unpublish {`${$activeStore.selectedItems.length} page${$activeStore.selectedItems.length > 1 ? 's' : ''} and ${$activeStore.selectedItems.length > 1 ? 'their' : 'its'} subpages?`}
   </Dialog>
 {:else if $modalContext.modal === 'deletepage'}
   <Dialog
@@ -418,10 +486,10 @@
     on:escape={modalContext.onModalEscape}>
     Restore {pagesToDeleteCount} pages?
   </Dialog>
-{:else if $modalContext.modal === 'import' && $store.selectedItems[0]}
+{:else if $modalContext.modal === 'import' && $activeStore.selectedItems[0]}
   <UploadUI
-    title="Import page into {$store.selectedItems[0].path}"
-    uploadPath="{environmentConfig.apiBase}/pages/{$store.selectedItems[0].id}"
+    title="Import page into {$activeStore.selectedItems[0].path}"
+    uploadPath="{environmentConfig.apiBase}/pages/{$activeStore.selectedItems[0].id}"
     mimeWhitelist={['application/json', 'application/x-gzip']}
     maxFiles={1}
     helptext="Uploaded file must be a Gato .json or .json.gz export file."

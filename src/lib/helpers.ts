@@ -4,7 +4,7 @@ import { DateTime } from 'luxon'
 import { isNull, isNotBlank, omit } from 'txstate-utils'
 import browserIcon from '@iconify-icons/ph/browser'
 import archive from '@iconify-icons/ph/archive'
-import { sandboxIcon } from './sandboxicon'
+import { sandboxIcon } from './icons'
 
 export function messageForDialog (messages: MessageFromAPI[], prefix?: string) {
   return messages.map(m => {
