@@ -89,9 +89,6 @@
         id: 'basic',
         actions: [editAction, previewAction, showVersionsAction]
       }, {
-        id: 'publish',
-        actions: [publishAction, unpublishAction]
-      }, {
         id: 'export',
         actions: [exportAction]
       }]
@@ -348,23 +345,36 @@
 </script>
 
 {#if $pagesStore.showsearch}
-  Searching for "{$pagesStore.search}"...
+  <div class="searching">Search results for "{$pagesStore.search}"...</div>
 {/if}
 <ActionPanel actionsTitle={$activeStore.selected.size === 1 ? $activeStore.selectedItems[0].name : 'Pages'} actions={$activeStore.selected.size === 1 ? singlepageactions($activeStore.selectedItems[0]) : multipageactions($activeStore.selectedItems)}>
   <svelte:fragment slot="abovePanel" let:panelHidden>
     <SearchInput bind:searchInput value={$pagesStore.search} on:search={onFilter} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
   </svelte:fragment>
   {#if $pagesStore.showsearch}
-  <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}
-    headers={[
-      { label: 'Name', id: 'name', grow: 4.5, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) }), render: item => `<div class="page-name">${item.name}<div class="page-path">${item.path.split('/').slice(0, -1).join('/')}</div></div><button class="reset search-find-in-tree" type="button" tabindex="-1" onclick="window.dgPagesFindInPageTree(this, event)" data-path="${htmlEncode(item.path)}">${findInTreeIconSVG}<span>Find in page tree</span></button>` },
-      { label: 'Title', id: 'title', grow: 3, get: 'title' },
-      { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
-      { label: 'Status', id: 'status', fixed: '4em', icon: item => ({ icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' }), class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
-      { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
-      { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
-    ]}
-  />
+    {#if $searchStore.loading || $searchStore.rootItems?.length}
+      <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}
+        headers={[
+          { label: 'Name', id: 'name', grow: 4.5, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) }), render: item => `<div class="page-name">${item.name}<div class="page-path">${item.path.split('/').slice(0, -1).join('/')}</div></div><button class="reset search-find-in-tree" type="button" tabindex="-1" onclick="window.dgPagesFindInPageTree(this, event)" data-path="${htmlEncode(item.path)}">${findInTreeIconSVG}<span>Find in page tree</span></button>` },
+          { label: 'Title', id: 'title', grow: 3, get: 'title' },
+          { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
+          { label: 'Status', id: 'status', fixed: '4em', icon: item => ({ icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' }), class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
+          { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
+          { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
+        ]}
+      />
+    {:else}
+      <div class="emptysearch">
+        <h2>Looks like we don't have any matches for "{$pagesStore.search}"</h2>
+        <ul>
+          <li>Keywords you enter may match anywhere in a page's name and/or title, including in the middle of a word.<br>For instance, "grad" will find pages with "undergraduate" or "graduate" in their name/title.</li>
+          <li>Non alphanumeric characters are treated as spaces, so "high-chair" is treated as the two keywords "high" and "chair".</li>
+          <li>Keywords you enter that are less than 4 characters are ignored.</li>
+          <li>If you don't enter any keywords 4 characters or larger, your search will return no results.</li>
+          <li>If you search for multiple words over 4 characters, all words must be present in either the name or title of the page. Pages missing any of the words will not show up in your search.</li>
+        </ul>
+      </div>
+    {/if}
   {:else}
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}
     headers={[
@@ -501,5 +511,16 @@
   :global(.tree-node[tabindex="0"]) :global(.page-name) {
     word-wrap: break-word;
     white-space: normal;
+  }
+
+  .searching {
+    margin-bottom: 0.2em;
+    font-weight: 500;
+  }
+  .emptysearch {
+    padding: 1em;
+  }
+  .emptysearch li {
+    padding: 0.5em;
   }
 </style>

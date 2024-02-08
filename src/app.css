@@ -109,6 +109,6 @@ button.search-find-in-tree span {
   word-break: break-word;
 }
 
-[data-eq~="700px"] button.search-find-in-tree span {
-  display: none;
+[data-eq~="700px"] button.search-find-in-tree {
+  display: none !important;
 }
