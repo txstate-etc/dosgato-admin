@@ -61,7 +61,7 @@
   }
 </script>
 
-<Dialog continueText={selected.size > 1 ? 'Compare' : 'Preview'} cancelText="Cancel" disabled={selected.size < 1 || selected.size > 2} on:escape on:continue={visit}>
+<Dialog size="normal" continueText={selected.size > 1 ? 'Compare' : 'Preview'} cancelText="Cancel" disabled={selected.size < 1 || selected.size > 2} on:escape on:continue={visit}>
   <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={latest ? [latest] : []} title="Latest Version" {dataId} on:marked={onMarked} />
   <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={published ? [published] : []} title="Published Version" {dataId} on:marked={onMarked} />
   <VersionHistoryTable bind:selected {selectedInTitle} {maxVersion} versions={(oldversions ?? []).filter(v => v.marked)} title="Marked Versions" {dataId} on:marked={onMarked} />

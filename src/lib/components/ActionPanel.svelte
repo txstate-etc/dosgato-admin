@@ -118,12 +118,12 @@
           <slot name="preview" panelHidden={$hidden} />
         </section>
       {/if}
+      {#if $$slots.bottom}
+        <section class="action-panel-bottom">
+          <slot name="bottom" panelHidden={$hidden} />
+        </section>
+      {/if}
     </div>
-    {#if $$slots.bottom}
-      <section class="action-panel-bottom">
-        <slot name="bottom" panelHidden={$hidden} />
-      </section>
-    {/if}
   </div>
 </div>
 
@@ -238,6 +238,9 @@
   }
   .actions li :global(svg) {
     margin-right: 0.3em;
+  }
+  .hidden .actions li :global(svg) {
+    margin-right: 0;
   }
   .actions li button {
     display: flex;

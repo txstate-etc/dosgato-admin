@@ -5,9 +5,17 @@
     return dt.toLocaleString()
   }
 
+  function formatTinyDate (dt: DateTime | undefined) {
+    return formatDate(dt).replace(/\/\d{2}(\d{2})$/, '/$1')
+  }
+
   function formatTime (dt: DateTime | undefined) {
     if (!dt) return ''
     return dt.toLocaleString(DateTime.TIME_SIMPLE).toLocaleLowerCase()
+  }
+
+  function formatTinyTime (dt: DateTime | undefined) {
+    return formatTime(dt).replace(/ ?(a|p)m$/, '$1')
   }
 </script>
 <script lang="ts">
@@ -16,7 +24,8 @@
   import bookmarkSimpleFill from '@iconify-icons/ph/bookmark-simple-fill'
   import caretDown from '@iconify-icons/ph/caret-down'
   import caretRight from '@iconify-icons/ph/caret-right'
-  import { ScreenReaderOnly, glue } from '@txstate-mws/svelte-components'
+  import { ResizeStore, ScreenReaderOnly, glue, resize } from '@txstate-mws/svelte-components'
+  import { derivedStore } from '@txstate-mws/svelte-store'
   import { createEventDispatcher, tick } from 'svelte'
   import { isNotBlank, randomid, titleCase } from 'txstate-utils'
   import type { HistoryVersion } from './VersionHistory.svelte'
@@ -89,10 +98,12 @@
   }
 
   const checkboxid = randomid()
+  const store = new ResizeStore()
+  const small = derivedStore(store, sz => (sz?.clientWidth ?? 1000) < 500)
 </script>
 
 {#if versions.length}
-<section>
+<section use:resize={{ store }} class:small={$small}>
   <header>{title}</header>
   <table class:compressDays>
     <tr>
@@ -102,9 +113,9 @@
       {#if isMarkedTable}
         <th class="tags">Date Marked</th>
       {:else}
-        <th class="tags">Tags</th>
+        <th class="tags">{#if $small}Pub{:else}Tags{/if}</th>
       {/if}
-      <th class="modified">Modified By</th>
+      <th class="modified">{$small ? 'By' : 'Modified By'}</th>
       <th class="mark">Mark</th>
     </tr>
     {#each versions as version, i (version.version)}
@@ -118,7 +129,7 @@
       <td class="checkbox"><Checkbox name="version-compare-{version.version}" value={selected.has(version.version)} disabled={selected.has(version.version) && selectedInTitle.get(version.version) !== title} onChange={onSelect(version.version)} id={checkboxid} /><label for={checkboxid}><ScreenReaderOnly>Select for Preview/Compare</ScreenReaderOnly></label></td>
       <td class="date" class:expandable on:click={async () => { if (expandable) await toggleExpanded(day) }}>
         {#if showsDate || (dayCount[day] ?? 0) <= 1}
-          {formatDate(version.date)}
+          {$small ? formatTinyDate(version.date) : formatDate(version.date)}
         {:else}
           <ScreenReaderOnly>{formatDate(version.date)}</ScreenReaderOnly>
         {/if}
@@ -128,13 +139,19 @@
           </button>
         {/if}
       </td>
-      <td class="time">{formatTime(version.date)}</td>
-      {#if isMarkedTable}
-        <td class="tags">{formatDate(version.markedAt)}</td>
-      {:else}
-        <td class="tags">{[version.version === maxVersion ? 'Latest' : undefined, ...version.tags.map(titleCase), restored ? 'Restored' : undefined].filter(isNotBlank).join(', ')}</td>
-      {/if}
-      <td class="modified">{version.user.name}</td>
+      <td class="time">{$small ? formatTinyTime(version.date) : formatTime(version.date)}</td>
+      <td class="tags">
+        {#if $small}
+          {#if version.tags.some(t => t === 'published')}Y{/if}
+        {:else}
+          {#if isMarkedTable}
+            {formatDate(version.markedAt)}
+          {:else}
+            {[version.version === maxVersion ? 'Latest' : undefined, ...version.tags.map(titleCase), restored ? 'Restored' : undefined].filter(isNotBlank).join(', ')}
+          {/if}
+        {/if}
+      </td>
+      <td class="modified">{$small ? version.user.id : version.user.name}</td>
       <td class="mark">
         <button type="button" class="reset" on:click={onMark(version.version)}>
           <Icon width="1.5em" inline icon={version.marked ? bookmarkSimpleFill : bookmarkSimple} hiddenLabel={version.marked ? 'Mark this version' : 'Unmark this version'} />
@@ -167,12 +184,46 @@
   tr.hidden {
     display: none;
   }
+  .checkbox {
+    width: 1.8em;
+  }
+  .date {
+    width: 7.5em;
+    white-space: nowrap;
+  }
+  section.small .date {
+    width: 6em;
+  }
+  .time {
+    width: 6em;
+  }
+  section.small .time {
+    width: 4em;
+  }
+  .modified {
+    width: 11em;
+  }
+  section.small .modified {
+    width: auto;
+  }
+  .mark {
+    width: 3.5em;
+  }
+  .tags {
+    width: auto;
+  }
+  section.small .tags {
+    width: 3.5em;
+  }
   th {
     border-bottom: var(--dg-table-border, 2px solid #666666);
     text-align: left;
   }
   th, td {
     padding: 0.5em;
+  }
+  section.small th, section.small td {
+    padding: 0.5em 0.2em;
   }
   td {
     line-height: 1.5;

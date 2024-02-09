@@ -34,7 +34,7 @@
       actions: [
         { label: 'Preview', icon: eye, onClick: () => pageEditorStore.previewVersion({ version: page.version.version, date: DateTime.fromISO(page.version.date), modifiedBy: page.version.user.name }) },
         { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${$editorStore.page.path}.html`), '_blank') } },
-        { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions({ version: page.versions[0]!.version, date: DateTime.fromISO(page.versions[0]!.date), modifiedBy: page.versions[0]!.user.name }, { version: page.version.version, date: DateTime.fromISO(page.version.date), modifiedBy: page.version.user.name }), disabled: !page.published || !page.hasUnpublishedChanges }
+        { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions({ version: page.versions[0].version, date: DateTime.fromISO(page.versions[0].date), modifiedBy: page.versions[0].user.name }, { version: page.version.version, date: DateTime.fromISO(page.version.date), modifiedBy: page.version.user.name }), disabled: !page.published || !page.hasUnpublishedChanges }
       ]
     }
 
@@ -263,7 +263,7 @@
       </select>
     </div>
     <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.device === 'mobile'} class:tablet={$editorStore.device === 'tablet'}></iframe>
-    <div slot="bottom" class="status {status}"><Icon width="1.1em" inline icon={statusIcon[status]}/><span>{titleCase(status)}</span></div>
+    <div slot="bottom" class="status {status}" let:panelHidden><Icon width="1.1em" inline icon={statusIcon[status]} hiddenLabel={panelHidden ? titleCase(status) : undefined}/>{#if !panelHidden}<span>{titleCase(status)}</span>{/if}</div>
   </ActionPanel>
 {/if}
 
