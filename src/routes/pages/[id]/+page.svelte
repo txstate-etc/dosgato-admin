@@ -233,6 +233,14 @@
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
   $: actionPanelTarget.target = $editorStore.page.path
 
+  const deviceWidths: Record<string, { label: string, maxWidth?: string }> = {
+    desktop: { label: 'Desktop' },
+    tablet: { label: 'Tablet', maxWidth: '800px' },
+    mobile: { label: 'Mobile', maxWidth: '400px' }
+  }
+  $: allowEditorMaxWidth = $editorStore.previewing
+  $: editorMaxWidth = allowEditorMaxWidth && deviceWidths[$editorStore.device!]?.maxWidth
+
   let addToTop: boolean = false
 </script>
 
@@ -256,13 +264,15 @@
           {/if}
         {/each}
       {/if}
-      <select value={$editorStore.device ?? 'desktop'} on:change={function () { pageEditorStore.setPreviewMode(this.value) }}>
-        <option value="desktop">Desktop</option>
-        <option value="tablet">Tablet</option>
-        <option value="mobile">Mobile</option>
-      </select>
+      {#if $editorStore.previewing}
+        <select value={$editorStore.device ?? 'desktop'} on:change={function () { pageEditorStore.setPreviewMode(this.value) }}>
+          {#each Object.keys(deviceWidths) as device}
+            <option value={device}>{deviceWidths[device].label}</option>
+          {/each}
+        </select>
+      {/if}
     </div>
-    <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:mobile={$editorStore.device === 'mobile'} class:tablet={$editorStore.device === 'tablet'}></iframe>
+    <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:devicemode={editorMaxWidth != null} style:max-width={editorMaxWidth}></iframe>
     <div slot="bottom" class="status {status}" let:panelHidden><Icon width="1.1em" inline icon={statusIcon[status]} hiddenLabel={panelHidden ? titleCase(status) : undefined}/>{#if !panelHidden}<span>{titleCase(status)}</span>{/if}</div>
   </ActionPanel>
 {/if}
@@ -355,17 +365,10 @@
     border: 0;
     width: 100%;
     height: calc(100% - 2em);
-  }
-  iframe.mobile {
-    border: 1px solid #757575;
-    width: 400px;
     margin: 0 auto;
   }
-
-  iframe.tablet {
+  iframe.devicemode {
     border: 1px solid #757575;
-    width: 800px;
-    margin: 0 auto;
   }
 
   .position-form {
