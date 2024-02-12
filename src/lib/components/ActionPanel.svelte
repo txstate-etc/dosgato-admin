@@ -1,10 +1,3 @@
-<script lang="ts" context="module">
-  import { writable } from 'svelte/store'
-  export const hidden = writable<boolean | undefined>(undefined)
-  export function showActionPanel () {
-    hidden.set(true)
-  }
-</script>
 <script lang="ts">
   import { Icon } from '@dosgato/dialog'
   import arrowCircleLeftLight from '@iconify-icons/ph/arrow-circle-left-light'
@@ -13,13 +6,14 @@
   import { Store } from '@txstate-mws/svelte-store'
   import { createEventDispatcher, getContext, onMount } from 'svelte'
   import { isNotNull } from 'txstate-utils'
-  import type { ActionPanelAction, ActionPanelGroup } from './actionpanel'
+  import { type ActionPanelAction, type ActionPanelGroup, actionPanelStore } from './actionpanel'
   import { uiLog } from '$lib/logging'
 
   export let actionsTitle: string | undefined = ''
   export let actions: (ActionPanelAction | ActionPanelGroup)[]
   export let panelelement: HTMLElement | undefined = undefined
 
+  const hidden = actionPanelStore.hidden
   interface $$Events {
     returnfocus: CustomEvent
   }
@@ -44,9 +38,10 @@
   $: disabledCount = allactions.length - enabled.length
 
   const eqstore = new Store({ width: 900 })
-  $: allowCollapse = $eqstore.width <= 900
+  $: $actionPanelStore.eligibleToBeHidden = $eqstore.width <= 900
+  $: if (!$actionPanelStore.userHasInteracted) $actionPanelStore.wantsToBeHidden = $eqstore.width <= 600
   function onClick () {
-    $hidden = !$hidden
+    actionPanelStore.toggle()
   }
 
   function onKeydown (e: KeyboardEvent) {
@@ -57,11 +52,6 @@
       dispatch('returnfocus')
     }
   }
-
-  function reactToScreenWidth (..._: any) {
-    $hidden = $eqstore.width <= 600
-  }
-  $: reactToScreenWidth($eqstore)
 
   let scrollY
   const offsetStore = new OffsetStore()
@@ -90,9 +80,9 @@
       <section class="actions">
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <header on:click={allowCollapse ? onClick : undefined}>
+        <header on:click={$actionPanelStore.eligibleToBeHidden ? onClick : undefined}>
           {#if $hidden}<ScreenReaderOnly>{actionsTitle}</ScreenReaderOnly>{:else}<div class="actions-title">{actionsTitle}</div>{/if}
-          {#if allowCollapse}<button type="button" class="reset" on:click|stopPropagation={onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={$hidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
+          {#if $actionPanelStore.eligibleToBeHidden}<button type="button" class="reset" on:click|stopPropagation={onClick} on:keydown={onKeydown}><Icon width="1.2em" icon={$actionPanelStore.wantsToBeHidden ? arrowCircleLeftLight : arrowCircleRightLight} hiddenLabel="Minimize Menu" inline /></button>{/if}
         </header>
         <ScreenReaderOnly {arialive}>{actions.length ? `${enabled.length} actions available for ${actionsTitle}, ${disabledCount} disabled. Press Control-M to read available actions.` : 'no actions available'}</ScreenReaderOnly>
         {#each grouped as group (group.id)}

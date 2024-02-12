@@ -28,7 +28,7 @@
   import {
     api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig,
     UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog,
-    ModalContextStore, getSiteIcon, SearchInput, CreateWithPageDialog, findInTreeIconSVG
+    ModalContextStore, getSiteIcon, SearchInput, CreateWithPageDialog, findInTreeIconSVG, actionPanelStore
   } from '$lib'
   import { _store as store, _searchStore as searchStore, _pagesStore as pagesStore, type TypedPageItem } from './+page'
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
@@ -36,7 +36,6 @@
   import { moveIntoIcon } from './moveintoicon'
   import { moveAboveIcon } from './moveaboveicon'
   import { statusIcon } from './[id]/helpers'
-  import { hidden } from '$lib/components/ActionPanel.svelte'
 
   $: activeStore = $pagesStore.showsearch ? searchStore : store
 
@@ -50,13 +49,14 @@
     if (isBlank(e.detail)) {
       $pagesStore = { showsearch: false, search: '' }
     } else {
+      actionPanelStore.hide()
       $pagesStore = { showsearch: true, search: e.detail }
     }
     searchStore.refresh().catch(console.error)
   }
   let searchInput: HTMLInputElement
   async function onClickMinifiedSearch () {
-    $hidden = false
+    actionPanelStore.show()
     await tick()
     searchInput?.focus()
   }

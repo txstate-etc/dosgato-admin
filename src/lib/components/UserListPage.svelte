@@ -14,8 +14,7 @@
   import { csv, intersect, isBlank, isNull, pick, rescue, sleep, sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContextStore, uiLog, UserTrainingsChooser, SearchInput } from '$lib'
-  import { hidden } from './ActionPanel.svelte'
+  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContextStore, uiLog, UserTrainingsChooser, SearchInput, actionPanelStore } from '$lib'
 
   export let system: boolean
   export let trainings: { id: string, name: string, lcName: string }[]
@@ -27,7 +26,7 @@
 
   let searchInput: HTMLInputElement
   async function onClickMinifiedSearch () {
-    $hidden = false
+    actionPanelStore.show()
     await tick()
     searchInput?.focus()
   }

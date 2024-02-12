@@ -9,9 +9,8 @@
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog, ModalContextStore, LaunchState, SearchInput } from '$lib'
+  import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog, ModalContextStore, LaunchState, SearchInput, actionPanelStore } from '$lib'
   import { buildAuditCSV } from './audit'
-  import { hidden } from '$lib/components/ActionPanel.svelte'
 
   type TypedSiteItem = TypedTreeItem<SiteListSite>
 
@@ -22,7 +21,7 @@
 
   let searchInput: HTMLInputElement
   async function onClickMinifiedSearch () {
-    $hidden = false
+    actionPanelStore.show()
     await tick()
     searchInput?.focus()
   }

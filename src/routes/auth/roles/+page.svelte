@@ -6,15 +6,14 @@
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContextStore, SearchInput } from '$lib'
-  import { hidden } from '$lib/components/ActionPanel.svelte'
+  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContextStore, SearchInput, actionPanelStore } from '$lib'
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   let searchInput: HTMLInputElement
   async function onClickMinifiedSearch () {
-    $hidden = false
+    actionPanelStore.show()
     await tick()
     searchInput?.focus()
   }
