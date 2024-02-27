@@ -33,6 +33,7 @@
   import { _store as store, _searchStore as searchStore, _pagesStore as pagesStore, type TypedPageItem } from './+page'
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
   import { copyWithSubpagesIcon } from './copywithsubpagesicon'
+  import { exportWithSubpagesIcon } from './exportwithsubpagesicon'
   import { moveIntoIcon } from './moveintoicon'
   import { moveAboveIcon } from './moveaboveicon'
   import { statusIcon } from './[id]/helpers'
@@ -157,7 +158,7 @@
       id: 'exportimport',
       actions: [
         exportAction,
-        { label: 'Export w/ Subpages', icon: exportIcon, disabled: false, onClick: async () => await api.download(`${environmentConfig.renderBase}/.page/${page.id}?withSubpages=1`) },
+        { label: 'Export w/ Subpages', icon: exportWithSubpagesIcon, disabled: false, onClick: async () => await api.download(`${environmentConfig.renderBase}/.page/${page.id}?withSubpages=1`) },
         { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => modalContext.setModal('import') }
       ]
     }
