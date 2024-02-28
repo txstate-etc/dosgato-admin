@@ -1,26 +1,17 @@
 const exportWithSubpagesSVG = `
-<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16">
-  <defs>
-    <style>
-      .cls-1 {
-        stroke: #fff;
-      }
-
-      .cls-2, .cls-3 {
-        stroke-width: 0px;
-      }
-
-      .cls-3 {
-        fill-rule: evenodd;
-      }
-    </style>
-  </defs>
-  <g id="Layer_1-2" data-name="Layer 1" fill="#ffffff">
-    <path class="cls-1" d="M2.5,10.5v-5h1v5h-1Z"/>
-    <path class="cls-3" d="M20,4l4,4-4,4v-3h-12v-2h12v-3ZM2,13v1c0,.53.21,1.04.59,1.41.38.38.88.59,1.41.59h12c.53,0,1.04-.21,1.41-.59.38-.38.59-.88.59-1.41v-3h-2v3H4v-1h-2ZM2,3h2v-1h12v3h2v-3c0-.53-.21-1.04-.59-1.41-.38-.38-.88-.59-1.41-.59H4c-.53,0-1.04.21-1.41.59-.38.38-.59.88-.59,1.41v1Z"/>
-    <rect class="cls-2" y="7" width="6" height="2"/>
-  </g>
-</svg>
+  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 34.13 22.753">
+    <defs>
+      <clipPath id="clip-path">
+        <rect id="Rectangle_2799" data-name="Rectangle 2799" width="34.13" height="22.753" transform="translate(0 0)" fill="none"/>
+      </clipPath>
+    </defs>
+    <g id="Group_3188" data-name="Group 3188" transform="translate(0 0)">
+      <g id="Group_3187" data-name="Group 3187" clip-path="url(#clip-path)">
+        <path id="Path_1583" data-name="Path 1583" d="M28.441,5.688l5.688,5.689-5.688,5.688V12.8H15.129V9.954H28.441ZM2.844,2.844H22.753V7.11H25.6V2.844A2.844,2.844,0,0,0,22.753,0H5.688A2.844,2.844,0,0,0,2.844,2.844M8.532,19.909H2.844a2.844,2.844,0,0,0,2.844,2.844H22.753A2.844,2.844,0,0,0,25.6,19.909V15.643H22.753v4.266Z" fill-rule="evenodd" fill="#fff"/>
+        <path id="Path_1584" data-name="Path 1584" d="M2.844,12.8v2.844H5.688V12.8H8.532V9.955H5.688V7.111H2.844V9.955H0V12.8Z" fill-rule="evenodd" fill="#fff"/>
+      </g>
+    </g>
+  </svg>
 `
 
 export const exportWithSubpagesIcon = { raw: true, body: exportWithSubpagesSVG }
