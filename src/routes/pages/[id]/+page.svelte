@@ -15,7 +15,7 @@
   import trash from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
   import { onMount, setContext } from 'svelte'
-  import { isNotNull, printIf, titleCase } from 'txstate-utils'
+  import { isNotNull, keyby, printIf, titleCase } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api, VersionHistory, uiLog } from '$lib'
   import { statusIcon } from './helpers'
   import VersionView from './VersionView.svelte'
@@ -233,13 +233,15 @@
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
   $: actionPanelTarget.target = $editorStore.page.path
 
-  const deviceWidths: Record<string, { label: string, maxWidth?: string }> = {
-    desktop: { label: 'Desktop' },
-    tablet: { label: 'Tablet', maxWidth: '800px' },
-    mobile: { label: 'Mobile', maxWidth: '400px' }
-  }
-  $: allowEditorMaxWidth = $editorStore.previewing
-  $: editorMaxWidth = allowEditorMaxWidth && deviceWidths[$editorStore.device!]?.maxWidth
+  $: deviceWidths = keyby(pagetemplate.devicePreview?.sizes ?? [
+    { label: 'Desktop' },
+    { label: 'Tablet', width: 800 },
+    { label: 'Mobile', width: 400 }
+  ], 'label')
+  $: deviceDefault = Object.values(deviceWidths).reduce((acc, curr) => !(acc.default) && ((curr.width ?? Number.MAX_SAFE_INTEGER) > (acc.width ?? Number.MAX_SAFE_INTEGER) || curr.default) ? curr : acc, Object.values(deviceWidths)[0])
+  $: allowEditorMaxWidth = $editorStore.previewing || pagetemplate.devicePreview?.showWhileEditing
+  $: resolvedDevice = $editorStore.device ?? deviceDefault.label
+  $: editorMaxWidth = allowEditorMaxWidth ? ((deviceWidths[resolvedDevice]?.width ?? 0) > 0 ? deviceWidths[resolvedDevice]?.width + 'px' : undefined) : undefined
 
   let addToTop: boolean = false
 </script>
@@ -264,8 +266,8 @@
           {/if}
         {/each}
       {/if}
-      {#if $editorStore.previewing}
-        <select value={$editorStore.device ?? 'desktop'} on:change={function () { pageEditorStore.setPreviewMode(this.value) }}>
+      {#if allowEditorMaxWidth}
+        <select value={resolvedDevice} on:change={function () { pageEditorStore.setPreviewMode(this.value) }}>
           {#each Object.keys(deviceWidths) as device}
             <option value={device}>{deviceWidths[device].label}</option>
           {/each}
