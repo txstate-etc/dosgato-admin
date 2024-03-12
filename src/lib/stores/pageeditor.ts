@@ -53,6 +53,7 @@ export interface EditorState {
     availableComponents: (UITemplate & { name: string })[]
     availableComponentsByCategory: { category: string, templates: (UITemplate & { name: string })[] }[]
     templateKey?: string
+    disableAddToTop?: boolean
   }
   scrollY?: number
 }
@@ -167,7 +168,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     })
   }
 
-  async addComponentShowModal (path: string, refreshIframe: () => Promise<void>, addToTop?: boolean) {
+  async addComponentShowModal (path: string, refreshIframe: () => Promise<void>, disableAddToTop: boolean, addToTop?: boolean) {
     const active = this.getActiveState()
     if (!active) return
     const m = path.match(/(.*)\.?areas\.(\w+)$/)
@@ -177,7 +178,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const templateKey = parentData.templateKey
     const availableComponents = await api.getAvailableComponents(templateKey, area, active.pageId)
     const availableComponentsByCategory = Object.entries(groupby(availableComponents, 'displayCategory')).map(([category, templates]) => ({ category, templates }))
-    this.update(v => set(v, `editors["${active.pageId}"]`, { ...active.editor, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + (String(parentData.areas?.[area]?.length) ?? '0'), data: undefined, availableComponents, availableComponentsByCategory } }))
+    this.update(v => set(v, `editors["${active.pageId}"]`, { ...active.editor, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + (String(parentData.areas?.[area]?.length) ?? '0'), data: undefined, availableComponents, availableComponentsByCategory, disableAddToTop } }))
     this.logActionShown('Add Component', path)
     if (availableComponents.length === 1) await this.addComponentChooseTemplate(availableComponents[0].templateKey, refreshIframe, !!addToTop)
   }

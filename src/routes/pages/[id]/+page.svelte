@@ -15,7 +15,7 @@
   import trash from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
   import { onMount, setContext } from 'svelte'
-  import { isNotNull, keyby, printIf, titleCase } from 'txstate-utils'
+  import { get, isNotNull, keyby, printIf, titleCase } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api, VersionHistory, uiLog } from '$lib'
   import { statusIcon } from './helpers'
   import VersionView from './VersionView.svelte'
@@ -78,7 +78,7 @@
     }
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean, mayEdit?: boolean, editbarpaths?: string[], buttonIndex?: number }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean, mayEdit?: boolean, editbarpaths?: string[], buttonIndex?: number, disableAddToTop?: boolean }) {
     if (message.action === 'scroll') {
       $editorStore.scrollY = message.scrollTop!
       return
@@ -113,7 +113,7 @@
     } else if (message.action === 'cancelCopy') {
       pageEditorStore.clearClipboard()
     } else if (message.action === 'create') {
-      void pageEditorStore.addComponentShowModal(message.path, refreshIframe, addToTop)
+      void pageEditorStore.addComponentShowModal(message.path, refreshIframe, message.disableAddToTop ?? false, addToTop)
     } else if (message.action === 'del') {
       pageEditorStore.removeComponentShowModal(message.path)
     } else if (message.action === 'drop') {
@@ -306,6 +306,7 @@
         <Tabs tabs={$editorStore.creating.availableComponentsByCategory.map(cat => ({ name: cat.category }))} accordionOnMobile={false}>
           {#each $editorStore.creating.availableComponentsByCategory as { category, templates } (category)}
             <Tab name={category}>
+              {#if !$editorStore.creating.disableAddToTop && get($editorStore.page.data, $editorStore.creating.path)?.length}
               <form class="position-form">
                 <div class="position-label">Positioning</div>
                 <div id={`position-help-${category}`} class="position-help">By default your new element will be at the bottom of the area.</div>
@@ -314,6 +315,7 @@
                   Add this to the top of the area.
                 </label>
               </form>
+              {/if}
               <div class="chooser-container">
                 <div class="component-chooser">
                   {#each templates as availableComponent}
