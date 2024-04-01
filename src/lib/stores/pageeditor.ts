@@ -152,6 +152,17 @@ class PageEditorStore extends Store<IPageEditorStore> {
     return true
   }
 
+  allowPasteInArea (areaPath: string, maxReached: boolean, v: IPageEditorStore) {
+    const editorState = v.editors[v.active!]
+    if (!editorState) return false
+    const targetOnSamePage = v.clipboardPage === v.active
+    const targetIsSibling = targetOnSamePage && v.clipboardPath?.split('.').slice(0, -1).join('.') === areaPath
+    if (maxReached && !targetIsSibling) return false
+    if (v.active && v.clipboardPath) return this.validMove(editorState.page.data, v.clipboardPath, areaPath)
+    if (v.clipboardData) return this.validCopy(editorState.page.data, v.clipboardData.templateKey, areaPath)
+    return false
+  }
+
   /**
    * convenience function to replace the editor state of the active editor
    *

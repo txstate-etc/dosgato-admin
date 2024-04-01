@@ -61,11 +61,11 @@
         { label: 'Delete', icon: trash, disabled: !$editorStore.selectedMayDelete, onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) },
         ...($actionsStore.clipboardActive
           ? [
-              { label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, icon: fileX, onClick: () => pageEditorStore.clearClipboard() }
+              { label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, icon: fileX, onClick: () => { pageEditorStore.clearClipboard(); iframe.contentWindow?.postMessage({ action: 'cancelcopy' }, '*') } }
             ]
           : [
-              { label: 'Cut', icon: scissors, disabled: !$editorStore.selectedMayDelete, onClick: () => pageEditorStore.cutComponent(selectedPath) },
-              { label: 'Copy', icon: copyIcon, onClick: () => pageEditorStore.copyComponent(selectedPath) }
+              { label: 'Cut', icon: scissors, disabled: !$editorStore.selectedMayDelete, onClick: () => handleCopyAndCut(true) },
+              { label: 'Copy', icon: copyIcon, onClick: () => handleCopyAndCut(false) }
             ]),
         { label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardText, disabled: !$editorStore.pasteAllowed, onClick: async () => await pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) }
       ]
@@ -78,7 +78,7 @@
     }
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean, mayEdit?: boolean, editbarpaths?: string[], buttonIndex?: number, disableAddToTop?: boolean }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean, mayEdit?: boolean, editbarpaths?: string[], buttonIndex?: number, disableAddToTop?: boolean, newbarpaths?: { path: string, maxreached: boolean }[] }) {
     if (message.action === 'scroll') {
       $editorStore.scrollY = message.scrollTop!
       return
@@ -102,16 +102,21 @@
     } else if (message.action === 'edit') {
       pageEditorStore.editComponentShowModal(message.path)
     } else if (message.action === 'cut') {
-      pageEditorStore.cutComponent($editorStore.selectedPath)
+      handleCopyAndCut(true)
     } else if (message.action === 'copy') {
-      pageEditorStore.copyComponent($editorStore.selectedPath)
+      handleCopyAndCut(false)
     } else if (message.action === 'paste') {
       if ($editorStore.pasteAllowed) {
         pageEditorStore.pasteComponent($editorStore.selectedPath)
           .then(refreshIframe).catch(console.error)
       }
+    } else if (message.action === 'pasteAtPath') {
+      pageEditorStore.select(message.path)
+      pageEditorStore.pasteComponent(message.path)
+        .then(refreshIframe).catch(console.error)
     } else if (message.action === 'cancelCopy') {
       pageEditorStore.clearClipboard()
+      iframe.contentWindow?.postMessage({ action: 'cancelcopy' }, '*')
     } else if (message.action === 'create') {
       void pageEditorStore.addComponentShowModal(message.path, refreshIframe, message.disableAddToTop ?? false, addToTop)
     } else if (message.action === 'del') {
@@ -131,6 +136,16 @@
       if (isNotNull(message.buttonIndex)) {
         document.getElementById(`pagebar-button-${message.buttonIndex}`)?.focus()
       }
+    } else if (message.action === 'maypaste') {
+      // need to determine which of the newbarpaths allow the clipboard component to be pasted
+      // then send them back so the buttons can be turned on.
+      if ($actionsStore.clipboardActive) {
+        const validPastePaths = new Set<string>()
+        for (const p of message.newbarpaths ?? []) {
+          if (pageEditorStore.allowPasteInArea(p.path, p.maxreached, $pageEditorStore)) validPastePaths.add(p.path)
+        }
+        iframe.contentWindow?.postMessage({ validPastePaths }, '*')
+      }
     }
   }
 
@@ -138,6 +153,17 @@
     const returnPath = $editorStore.selectedPath
     pageEditorStore.cancelModal()
     iframe.contentWindow?.postMessage({ focus: returnPath }, '*')
+  }
+
+  function handleCopyAndCut (isCut) {
+    if (isCut) {
+      pageEditorStore.cutComponent($editorStore.selectedPath)
+    } else {
+      pageEditorStore.copyComponent($editorStore.selectedPath)
+    }
+    if ($actionsStore.clipboardActive) {
+      iframe.contentWindow?.postMessage({ action: 'clipboardactive' }, '*')
+    }
   }
 
   async function refreshIframe () {
