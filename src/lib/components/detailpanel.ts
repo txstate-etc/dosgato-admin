@@ -4,4 +4,5 @@ export interface DetailPanelButton {
   hiddenLabel?: string
   onClick: () => void | Promise<void>
   disabled?: boolean
+  [keys: `aria-${string}`]: string | number | boolean
 }

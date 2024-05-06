@@ -38,7 +38,8 @@ import {
   CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
-  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST, GET_SEARCH_PAGES, type SearchTreePage
+  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST, GET_SEARCH_PAGES, type SearchTreePage,
+  type AssetWithPages, ASSET_WITH_PAGES
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -366,6 +367,11 @@ class API {
   async undeleteAssetFolder (folderId: string) {
     const { undeleteAssetFolder } = await this.query<{ undeleteAssetFolder: MutationResponse & { folder: TreeAssetFolder } }>(UNDELETE_ASSET_FOLDER, { folderId })
     return undeleteAssetFolder
+  }
+
+  async getAssetReferencingPages (assetId: string) {
+    const { assets } = await this.query<AssetWithPages>(ASSET_WITH_PAGES, { assetId })
+    return { assetReferences: sortby(assets[0]?.pages ?? [], 'path'), assetReferencesIndirect: sortby(assets[0]?.pagesIndirect ?? [], 'path') }
   }
 
   async getEditorPage (pageId: string) {

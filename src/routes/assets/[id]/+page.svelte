@@ -1,5 +1,7 @@
 <script lang="ts">
   import { FileIcon, FormDialog, bytesToHuman, Icon } from '@dosgato/dialog'
+  import arrowSquareOut from '@iconify-icons/ph/arrow-square-out'
+  import caretDown from '@iconify-icons/ph/caret-down'
   import clipboardText from '@iconify-icons/ph/clipboard-text'
   import downloadIcon from '@iconify-icons/ph/download'
   import fileMagnifyingGlass from '@iconify-icons/ph/file-magnifying-glass'
@@ -10,13 +12,21 @@
   import xLight from '@iconify-icons/ph/x-light'
   import { Modal } from '@txstate-mws/svelte-components'
   import { roundTo } from 'txstate-utils'
-  import { DetailList, DetailPanel, DetailPanelSection, environmentConfig, UploadUI, StyledList, dateStamp, ChooserClient, api, ModalContextStore, toast, type DetailPanelButton } from '$lib'
+  import {
+    DetailList, DetailPanel, DetailPanelSection, environmentConfig, UploadUI, StyledList, dateStamp,
+    ChooserClient, api, ModalContextStore, toast, type DetailPanelButton, type AssetWithPages,
+    SortableTable
+  } from '$lib'
   import { getAssetDetail, type AssetDetail } from './helpers'
   import { uiConfig } from '../../../local'
+  import { base } from '$app/paths'
 
   export let data: { asset: AssetDetail }
   $: asset = data.asset
   $: image = asset.box
+  let assetReferencesPending = false
+  let assetReferences: AssetWithPages['assets'][number]['pages'] | undefined
+  let assetReferencesIndirect: AssetWithPages['assets'][number]['pages'] | undefined
 
   type Modals = 'edit' | 'upload' | 'preview'
   const modalContext = new ModalContextStore<Modals>()
@@ -32,6 +42,12 @@
     modalContext.reset()
     asset = await getAssetDetail(asset.id)
     watchForResizes()
+  }
+
+  async function expandReferences () {
+    if (assetReferencesPending) return
+    assetReferencesPending = true
+    ;({ assetReferences, assetReferencesIndirect } = await api.getAssetReferencingPages(asset.id))
   }
 
   const chooserClient = new ChooserClient()
@@ -149,6 +165,28 @@
           {#if asset.pagetree.type !== 'ARCHIVE'}<div><dt>External URL:</dt><dd><a bind:this={externalURLElement} href="{image ? `${assetBase}/${asset.id}/w/2000/${asset.checksum.substring(0, 12)}/${encodeURIComponent(asset.filename)}` : `${assetBase}/${asset.id}/${encodeURIComponent(asset.filename)}`}" on:click|preventDefault={onExternal}>{asset.filename}</a><button type="button" class="reset" on:click={onExternal}><Icon icon={clipboardText} hiddenLabel="copy external url to clipboard" inline /></button></dd></div>{/if}
         </dl>
       </DetailPanelSection>
+    </DetailPanel>
+    <DetailPanel header="Appears On" headerColor="#E5D1BD" button={{ icon: caretDown, onClick: expandReferences, hiddenLabel: 'Expand', 'aria-expanded': assetReferencesPending }} loading={assetReferencesPending && !assetReferences}>
+      {#if assetReferences && assetReferencesIndirect}
+        <DetailPanelSection>
+          {#if assetReferences.length || !assetReferencesIndirect.length}
+            <SortableTable items={assetReferences} emptyMessage="Could not find pages directly referencing this asset."
+              headers={[
+                { id: 'name', label: 'Asset appears directly on', render: (item) => item.permissions.viewLatest ? `<a href="${base}/pages/${item.id}">${item.path}</a>` : item.path },
+                { id: 'view', label: 'Preview', actions: [{ icon: arrowSquareOut, hiddenLabel: 'Preview In New Window', label: 'Preview', onClick: (item) => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${item.permissions.viewLatest || !item.published ? 'latest' : 'public'}${item.path}.html`), '_blank') } }] }
+              ]}
+            />
+          {/if}
+          {#if assetReferencesIndirect.length}
+            <SortableTable items={assetReferencesIndirect} emptyMessage="Could not find pages referencing this asset's parent folders."
+              headers={[
+                { id: 'name', label: 'A parent folder appears on', render: (item) => item.permissions.viewLatest ? `<a href="${base}/pages/${item.id}">${item.path}</a>` : item.path },
+                { id: 'view', label: 'Preview', actions: [{ icon: arrowSquareOut, hiddenLabel: 'Preview In New Window', label: 'Preview', onClick: (item) => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${item.permissions.viewLatest || !item.published ? 'latest' : 'public'}${item.path}.html`), '_blank') } }] }
+              ]}
+            />
+          {/if}
+        </DetailPanelSection>
+      {/if}
     </DetailPanel>
     {#if false && (asset.resizes.length || refreshes)}
         <DetailPanel headerColor="#E5D1BD" header="Resizes{refreshes ? ' (loading more...)' : ''}">

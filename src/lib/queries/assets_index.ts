@@ -130,6 +130,45 @@ export const GET_ASSETFOLDER_CHILDREN = `
   }
 `
 
+export const ASSET_WITH_PAGES = `
+  query getAssetWithPages ($assetId: ID!) {
+    assets (filter: { ids: [$assetId] }) {
+      pages (direct: true) {
+        id
+        name
+        path
+        published
+        permissions { viewLatest }
+      }
+      pagesIndirect: pages (direct: false) {
+        id
+        name
+        path
+        published
+        permissions { viewLatest }
+      }
+    }
+  }
+`
+export interface AssetWithPages {
+  assets: [{
+    pages: {
+      id: string
+      name: string
+      path: string
+      published: boolean
+      permissions: { viewLatest: boolean }
+    }[]
+    pagesIndirect: {
+      id: string
+      name: string
+      path: string
+      published: boolean
+      permissions: { viewLatest: boolean }
+    }[]
+  }]
+}
+
 export const MOVE_ASSETS = `
   query moveAssets ($ids: [ID], $target: ID) {
     mutation moveAssets TODO

@@ -52,6 +52,7 @@
     border: 0;
     background-color: transparent;
     color: black;
+    cursor: pointer;
   }
   .actions-container {
     display: flex;

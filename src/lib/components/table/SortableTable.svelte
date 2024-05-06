@@ -11,6 +11,7 @@
   export let headers: SortableTableHeader[]
   export let cardedOnMobile = false
   export let mobileHeader: (item: any) => string = (item: any) => 'Row'
+  export let emptyMessage = ''
 
   $: sortedItems = items
   let sortBy: { column: string, desc: boolean } | undefined = undefined
@@ -50,20 +51,22 @@
   </thead>
   <tbody>
     {#each sortedItems as item (item.id)}
-    <tr>
-      {#each headers as header (header.id)}
-        {#if header.actions?.length}
-          <td use:eq>
-            <SortableTableCell {item} {header}/>
-          </td>
-        {:else}
-          <td>
-            <SortableTableCell {item} {header}/>
-          </td>
-        {/if}
-      {/each}
-    </tr>
-  {/each}
+      <tr>
+        {#each headers as header (header.id)}
+          {#if header.actions?.length}
+            <td use:eq>
+              <SortableTableCell {item} {header}/>
+            </td>
+          {:else}
+            <td>
+              <SortableTableCell {item} {header}/>
+            </td>
+          {/if}
+        {/each}
+      </tr>
+    {:else}
+      <tr><td colspan={headers.length}>{emptyMessage}</td></tr>
+    {/each}
   </tbody>
 </table>
 {#if cardedOnMobile}
@@ -94,6 +97,8 @@
           {/if}
         </Accordion>
       </div>
+    {:else}
+      {emptyMessage}
     {/each}
   </div>
 {/if}
@@ -156,6 +161,7 @@
     border: 0;
     border-radius: 4px;
     padding: 5px 10px;
+    cursor: pointer;
   }
   .actions button:not(:last-child) {
     margin-right: 1.5em;
