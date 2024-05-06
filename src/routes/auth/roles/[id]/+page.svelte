@@ -103,8 +103,8 @@
     if (!state.userIds?.length) {
       return {
         success: false,
-        data: { userIds: []},
-        messages: [{ type: 'error' as const, path: 'userIds', message: 'Please select at least one user'}]
+        data: { userIds: [] },
+        messages: [{ type: 'error' as const, path: 'userIds', message: 'Please select at least one user' }]
       }
     }
     const resp = await api.assignRoleToUsers($store.role.id, state.userIds)
@@ -116,8 +116,8 @@
     if (!state.groupIds.length) {
       return {
         success: false,
-        data: { groupIds: []},
-        messages: [{ type: 'error' as const, path: 'groupIds', message: 'Please select at least one group'}]
+        data: { groupIds: [] },
+        messages: [{ type: 'error' as const, path: 'groupIds', message: 'Please select at least one group' }]
       }
     }
     const resp = await api.addRoleToGroups($store.role.id, state.groupIds)

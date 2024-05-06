@@ -100,8 +100,8 @@
     if (!state.roleIds.length) {
       return {
         success: false,
-        data: { roleIds: []},
-        messages: [{ type: 'error' as const, path: 'roleIds', message: 'No roles have been added '}]
+        data: { roleIds: [] },
+        messages: [{ type: 'error' as const, path: 'roleIds', message: 'No roles have been added.' }]
       }
     }
     const resp = await api.addRolesToUser(state.roleIds, $store.user.id)
@@ -159,7 +159,7 @@
             'Last Name': $store.user.lastname,
             Login: $store.user.id,
             Email: $store.user.email,
-            ...( !uiConfig.trainings?.hide ? { Training: $store.user.trainings?.length === 0 ? 'none' : $store.user.trainings.map(t => t.name).join(', ') } : {}),
+            ...(!uiConfig.trainings?.hide ? { Training: $store.user.trainings?.length === 0 ? 'none' : $store.user.trainings.map(t => t.name).join(', ') } : {}),
             'Last Login': $store.user.lastlogin ? DateTime.fromISO($store.user.lastlogin).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : 'Never',
             'Inactive Since': $store.user.disabledAt ? DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : ''
           }} />
