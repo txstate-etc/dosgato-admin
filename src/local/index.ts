@@ -15,6 +15,7 @@ import { HorizontalRule } from './horizontalrule.js'
 import { textImage } from './textimage.js'
 import AssetDialog from './AssetDialog.svelte'
 import { columnLayoutComponentTemplate } from './columnlayout.js'
+import DocumentsDialog from './DocumentsDialog.svelte'
 
 export const uiConfig: UIConfig = {
   templates: [
@@ -31,7 +32,8 @@ export const uiConfig: UIConfig = {
     pageTemplate4,
     richText,
     textImage,
-    columnLayoutComponentTemplate
+    columnLayoutComponentTemplate,
+    { templateKey: 'documents', dialog: DocumentsDialog }
   ],
   login: {
     handleUnauthorized (environmentConfig: any) {

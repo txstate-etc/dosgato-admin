@@ -3,6 +3,7 @@ import { mutationResponse } from './global'
 
 const assetFolderDetails = `
 id
+linkId
 path
 name
 deleted
@@ -23,6 +24,7 @@ permissions {
 `
 export interface TreeAssetFolder {
   id: string
+  linkId: string
   path: string
   name: string
   deleted: boolean

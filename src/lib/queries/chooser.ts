@@ -64,6 +64,7 @@ export interface ChooserAssetDetails {
 
 const chooserFolderDetails = `
 id
+linkId
 name
 path
 site { id }
@@ -75,6 +76,7 @@ permissions {
 `
 export interface ChooserFolderDetails {
   id: string
+  linkId: string
   name: string
   path: string
   site: { id: string }
@@ -257,7 +259,7 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
 
 export function apiAssetFolderToChooserFolder (f: ChooserFolderDetails | RootAssetFolder): Folder | undefined {
   if (!f) return
-  const assetFolderLink: AssetFolderLink = { id: f.id, siteId: f.site.id, path: f.path, source: 'assets', type: 'assetfolder' }
+  const assetFolderLink: AssetFolderLink = { id: f.linkId, siteId: f.site.id, path: f.path, source: 'assets', type: 'assetfolder' }
   return {
     type: 'folder' as const,
     source: 'assets',
