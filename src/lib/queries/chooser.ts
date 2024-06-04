@@ -257,7 +257,7 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
   }
 }
 
-export function apiAssetFolderToChooserFolder (f: ChooserFolderDetails | RootAssetFolder): Folder | undefined {
+export function apiAssetFolderToChooserFolder (f: ChooserFolderDetails | RootAssetFolder): (Folder & { originalId: string }) | undefined {
   if (!f) return
   const assetFolderLink: AssetFolderLink = { id: f.linkId, siteId: f.site.id, path: f.path, source: 'assets', type: 'assetfolder' }
   return {
@@ -268,6 +268,7 @@ export function apiAssetFolderToChooserFolder (f: ChooserFolderDetails | RootAss
     id: stringify(assetFolderLink),
     acceptsUpload: f.permissions.create,
     hasChildren: (f.assets.length + f.folders.length) > 0,
-    childCount: f.assets.length + f.folders.length
+    childCount: f.assets.length + f.folders.length,
+    originalId: f.id
   }
 }

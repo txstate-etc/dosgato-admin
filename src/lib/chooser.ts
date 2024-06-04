@@ -106,15 +106,12 @@ export class ChooserClient implements Client {
   }
 
   async upload (folder: Folder, files: File[], progress: (ratio: number) => void) {
-    const folderLink = JSON.parse(folder.id) as AssetFolderLink
-
     const data = new FormData()
     for (let i = 0; i < files.length; i++) {
       data.append('file' + String(i), files[i])
     }
-
     await uploadWithProgress(
-      `${environmentConfig.apiBase}/assets/${folderLink.id}`,
+      `${environmentConfig.apiBase}/assets/${(folder as any).originalId}`,
       { Authorization: `Bearer ${api.token!}` },
       data,
       progress
