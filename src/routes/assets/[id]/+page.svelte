@@ -19,14 +19,15 @@
   } from '$lib'
   import { getAssetDetail, type AssetDetail } from './helpers'
   import { uiConfig } from '../../../local'
+  import { afterNavigate } from '$app/navigation'
   import { base } from '$app/paths'
 
-  export let data: { asset: AssetDetail, assetReferencesPending: boolean, assetReferences: AssetWithPages['assets'][number]['pages'], assetReferencesIndirect: AssetWithPages['assets'][number]['pages'] }
+  export let data: { asset: AssetDetail }
   $: asset = data.asset
   $: image = asset.box
-  $: assetReferencesPending = data.assetReferencesPending
-  $: assetReferences = data.assetReferences
-  $: assetReferencesIndirect = data.assetReferencesIndirect
+  let assetReferencesPending = false
+  let assetReferences: AssetWithPages['assets'][number]['pages'] | undefined = undefined
+  let assetReferencesIndirect: AssetWithPages['assets'][number]['pages'] | undefined = undefined
 
   type Modals = 'edit' | 'upload' | 'preview'
   const modalContext = new ModalContextStore<Modals>()
@@ -101,6 +102,12 @@
     }
     return buttons
   }
+
+  afterNavigate(() => {
+    assetReferencesPending = false
+    assetReferences = undefined
+    assetReferencesIndirect = undefined
+  })
 </script>
 
 <div class="container">
