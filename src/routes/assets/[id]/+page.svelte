@@ -21,12 +21,12 @@
   import { uiConfig } from '../../../local'
   import { base } from '$app/paths'
 
-  export let data: { asset: AssetDetail }
+  export let data: { asset: AssetDetail, assetReferencesPending: boolean, assetReferences: AssetWithPages['assets'][number]['pages'], assetReferencesIndirect: AssetWithPages['assets'][number]['pages'] }
   $: asset = data.asset
   $: image = asset.box
-  let assetReferencesPending = false
-  let assetReferences: AssetWithPages['assets'][number]['pages'] | undefined
-  let assetReferencesIndirect: AssetWithPages['assets'][number]['pages'] | undefined
+  $: assetReferencesPending = data.assetReferencesPending
+  $: assetReferences = data.assetReferences
+  $: assetReferencesIndirect = data.assetReferencesIndirect
 
   type Modals = 'edit' | 'upload' | 'preview'
   const modalContext = new ModalContextStore<Modals>()
