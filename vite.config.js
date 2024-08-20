@@ -1,13 +1,11 @@
-import { sveltekit } from '@sveltejs/kit/vite';
+import { sveltekit } from '@sveltejs/kit/vite'
+import { defineConfig } from 'vite'
 
-/** @type {import('vite').UserConfig} */
-const config = {
+export default defineConfig({
   plugins: [sveltekit()],
   build: { sourcemap: true },
   css: { devSourcemap: true },
   optimizeDeps: {
     exclude: ['@iconify-icons/ph', '@iconify-icons/mdi', '@iconify-icons/material-symbols', '@iconify-icons/file-icons']
   }
-};
-
-export default config;
+});

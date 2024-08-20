@@ -19,6 +19,8 @@
   import { currentSubNav, globalStore, subNavSize, subnavStore, toasts, LabeledIcon, LabeledIconButton, environmentConfig, uiLog, api } from '$lib'
   import { uiConfig } from '../local'
   import '../local/tracking.js'
+  import '../normalize.css'
+  import '../app.css'
 
   uiLog.logger = uiConfig.uiInteractionsLogger ?? ((arg: any) => console.log('UI:', arg))
   $: uiLog.screen = $page.route.id ?? undefined
@@ -168,8 +170,6 @@
 {/if}
 
 <style>
-  @import url(../normalize.css);
-  @import url(../app.css);
   .topbar {
     display: flex;
     justify-content: space-between;

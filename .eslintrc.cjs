@@ -20,6 +20,7 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 'off',
 		'@typescript-eslint/no-this-alias': 'off',
 		'@typescript-eslint/no-throw-literal': 'off', // sveltekit error() function does not return an Error :/
+		'@typescript-eslint/no-unsafe-argument': 'off',
     '@typescript-eslint/no-unused-vars': 'off', // typescript does this better
 		'@typescript-eslint/prefer-nullish-coalescing': 'off',
     '@typescript-eslint/prefer-readonly': 'off',

@@ -30,7 +30,7 @@
     UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog,
     ModalContextStore, getSiteIcon, SearchInput, CreateWithPageDialog, findInTreeIconSVG, actionPanelStore
   } from '$lib'
-  import { _store as store, _searchStore as searchStore, _pagesStore as pagesStore, type TypedPageItem } from './+page'
+  import { _store as store, _searchStore as searchStore, _pagesStore as pagesStore, type TypedPageItem } from './+page.js'
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
   import { copyWithSubpagesIcon } from './copywithsubpagesicon'
   import { exportWithSubpagesIcon } from './exportwithsubpagesicon'
@@ -197,13 +197,13 @@
     modalContext.setModal('addpage')
   }
 
-  async function validateAddPage (state) {
-    const resp = await api.createPage(state.name, state.templateKey, state.data, $activeStore.selectedItems[0].id, false, true)
+  async function validateAddPage (state: CreateWithPageState) {
+    const resp = await api.createPage(state.name!, state.templateKey, state.data, $activeStore.selectedItems[0].id, false, true)
     return resp.messages.map(m => ({ ...m, path: (m.arg === 'name' || m.arg === 'templateKey') ? m.arg : `data.${m.arg}` }))
   }
 
-  async function onAddPage (state) {
-    const resp = await api.createPage(state.name, state.templateKey, state.data, $activeStore.selectedItems[0].id, false, false)
+  async function onAddPage (state: CreateWithPageState) {
+    const resp = await api.createPage(state.name!, state.templateKey, state.data, $activeStore.selectedItems[0].id, false, false)
     modalContext.logModalResponse(resp, actionPanelTarget.target, { name: state.name, templateKey: state.templateKey })
     return {
       success: resp.success,
@@ -218,19 +218,19 @@
     await store.openAndRefresh($activeStore.selectedItems[0])
   }
 
-  async function validateRename (state) {
+  async function validateRename (state: { name: string }) {
     const resp = await api.renamePage($activeStore.selectedItems[0].id, state.name, true)
     return messageForDialog(resp.messages, '')
   }
 
-  async function onRenamePage (state) {
+  async function onRenamePage (state: { name: string }) {
     const resp = await api.renamePage($activeStore.selectedItems[0].id, state.name)
     modalContext.logModalResponse(resp, $activeStore.selectedItems[0].id, { oldName: $activeStore.selectedItems[0].name, newName: state.name })
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
       data: resp.success ? resp.page!.name : state
-    }
+    } as SubmitResponse<{ name: string }>
   }
 
   function onRenamePageComplete () {
