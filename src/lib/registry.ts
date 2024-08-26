@@ -1,10 +1,12 @@
-import { api } from '$lib'
 import type { ComponentData, UITemplate, UITemplateData } from '@dosgato/templating'
+import tags from '@iconify-icons/mdi/tags'
 import { Cache, rescue } from 'txstate-utils'
+import { api } from '$lib'
+import UserTagsDialog from './components/UserTagsDialog.svelte'
 import { uiConfig } from '../local/index.js'
 
 const templateCache = new Cache(async (_, templateMap: Map<string, EnhancedUITemplate>) => {
-  const { templates } = await api.query<{ templates: { key: string, name: string, templateProperties: any, displayCategory?: string, global?: boolean, areas: { name: string, availableComponents: { key: string }[] }[] }[] }>('query enhanceTemplateInfo { templates { key name templateProperties displayCategory global areas { name availableComponents { key } } } }')
+  const { templates } = await api.query<{ templates: { key: string, name: string, templateProperties: any, displayCategory?: string, global?: boolean, nopublish: boolean, areas: { name: string, availableComponents: { key: string }[] }[] }[] }>('query enhanceTemplateInfo { templates { key name templateProperties displayCategory global nopublish areas { name availableComponents { key } } } }')
   for (const t of templates) {
     const old = templateMap.get(t.key)
     if (old) {
@@ -13,6 +15,7 @@ const templateCache = new Cache(async (_, templateMap: Map<string, EnhancedUITem
       old.displayCategory = t.displayCategory ?? 'Standard'
       old.areas = new Map()
       ;(old as any).global = t.global
+      old.nopublish = t.nopublish
       old.genDefaultContent = typeof old.defaultContent === 'undefined' ? () => ({}) : (typeof old.defaultContent === 'object' ? () => old.defaultContent! : old.defaultContent)
       for (const a of t.areas) old.areas.set(a.name, { name: a.name, availableComponents: new Set(a.availableComponents.map(ac => ac.key)) })
     }
@@ -22,6 +25,7 @@ const templateCache = new Cache(async (_, templateMap: Map<string, EnhancedUITem
 interface UITemplateEnhancement {
   name: string
   templateProperties: any
+  nopublish: boolean
 }
 
 export interface EnhancedUITemplate extends UITemplate, UITemplateEnhancement {
@@ -61,3 +65,10 @@ class TemplateRegistry {
 
 export const templateRegistry = new TemplateRegistry()
 templateRegistry.addTemplates(uiConfig.templates)
+templateRegistry.addTemplate({
+  templateKey: 'dosgato-core-tags',
+  dialog: UserTagsDialog,
+  icon: tags,
+  nameColumn: { icon: data => tags, get: data => data.title },
+  columns: [{ title: 'Disabled', get: data => data.disabled ? 'Disabled' : '', fixed: '6em' }]
+} as UITemplateData)

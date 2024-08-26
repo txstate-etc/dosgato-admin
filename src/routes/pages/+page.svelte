@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Dialog, FieldSelect, FieldText, FormDialog, expandTreePath, Tree } from '@dosgato/dialog'
+  import { Dialog, FieldSelect, FieldText, FormDialog, expandTreePath, Tree, FieldTagPicker } from '@dosgato/dialog'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
@@ -18,6 +18,7 @@
   import publishIcon from '@iconify-icons/mdi/publish'
   import publishOffIcon from '@iconify-icons/mdi/publish-off'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
+  import tag from '@iconify-icons/ph/tag'
   import treeStructure from '@iconify-icons/ph/tree-structure'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
@@ -28,7 +29,8 @@
   import {
     api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig,
     UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog,
-    ModalContextStore, getSiteIcon, SearchInput, CreateWithPageDialog, findInTreeIconSVG, actionPanelStore
+    ModalContextStore, getSiteIcon, SearchInput, CreateWithPageDialog, findInTreeIconSVG, actionPanelStore,
+    tagClientBySiteId
   } from '$lib'
   import { _store as store, _searchStore as searchStore, _pagesStore as pagesStore, type TypedPageItem } from './+page.js'
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
@@ -43,7 +45,7 @@
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
-  type Modals = 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import'
+  type Modals = 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | 'tagpage'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   function onFilter (e: CustomEvent<string>) {
@@ -114,6 +116,7 @@
       actions: [
         editAction,
         { label: 'Rename', icon: renameIcon, disabled: !page.permissions.move, onClick: () => modalContext.setModal('renamepage') },
+        { label: 'Set Tags', icon: tag, disabled: !page.permissions.update, onClick: () => modalContext.setModal('tagpage') },
         { label: 'Change Template', icon: layout, disabled: !page.permissions.update, onClick: onClickTemplateChange },
         previewAction,
         showVersionsAction
@@ -234,6 +237,16 @@
   }
 
   function onRenamePageComplete () {
+    void store.refresh()
+    modalContext.reset()
+  }
+
+  async function onTagPage (state: { tags: string[] }) {
+    const success = await api.setUserTags($activeStore.selectedItems[0].id, state.tags)
+    return { success, messages: [], data: state }
+  }
+
+  function onTagPageComplete () {
     void store.refresh()
     modalContext.reset()
   }
@@ -409,6 +422,19 @@
     on:saved={onRenamePageComplete}>
     <FieldText path='name' label='Name' required />
   </FormDialog>
+{:else if $modalContext.modal === 'tagpage'}
+  {#await api.getUserTagsForPage($activeStore.selectedItems[0].id) then tags}
+    <FormDialog
+      tagClient={tagClientBySiteId}
+      submit={onTagPage}
+      name='tagpage'
+      title='Set Page Tags'
+      preload={{ tags }}
+      on:escape={modalContext.onModalEscape}
+      on:saved={onTagPageComplete}>
+      <FieldTagPicker path='tags' label='Tags' target={$activeStore.selectedItems[0].site.id} />
+    </FormDialog>
+  {/await}
 {:else if $modalContext.modal === 'changetemplate'}
   <FormDialog
     submit={onChangeTemplateSubmit}

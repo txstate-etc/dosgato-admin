@@ -1,4 +1,5 @@
 import { base } from '$app/paths'
+import type { TagGroup } from '@dosgato/dialog'
 import type { AssetFolderLink, AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
 import { MessageType } from '@txstate-mws/svelte-forms'
@@ -1011,6 +1012,53 @@ class API {
       mutation updateAssetMeta ($assetId: ID!, $data: JsonData!, $validateOnly: Boolean) { updateAsset (assetId: $assetId, data: $data, validateOnly: $validateOnly) { success messages { message type arg } } }
     `, { assetId, data, validateOnly })
     return { ...updateAsset, messages: messageForDialog(updateAsset.messages, 'meta.'), data }
+  }
+
+  async getUserTagsForPage (pageId: string) {
+    const { pages } = await this.query<{ pages: { userTags: { id: string, name: string }[] }[] }>(`
+      query getUserTagsForPage ($pageId: ID!) { pages (filter: { ids: [$pageId] }) {
+        userTags {
+          id
+          name
+        }
+      } }
+    `, { pageId })
+    return pages[0]?.userTags.map(t => t.id)
+  }
+
+  async getAvailableTagsForLink (link: string | PageLink, pagetreeId?: string) {
+    const pageLink: PageLink = typeof link === 'string' ? JSON.parse(link) : link
+    const { pages } = await this.query<{ pages: { site: { id: string } }[] }>(`
+      query getPageIdByLink ($pageLink: PageLinkInput!) { pages (filter: { links: [$pageLink] }) {
+        site { id }
+      } }
+    `, { pageLink: { ...pick(pageLink, 'linkId', 'siteId', 'path'), context: pagetreeId ? { pagetreeId } : undefined } })
+    return await this.getAvailableTags(pages[0]?.site.id)
+  }
+
+  async getAvailableTags (siteId?: string): Promise<(TagGroup & { internal: boolean })[]> {
+    const { globalGroups, siteGroups } = await this.query<{ globalGroups: { id: string, data: { title: string, excludeTitle?: boolean, disabled?: boolean, internal?: boolean, tags: { id: string, name: string, disabled?: boolean }[] } }[], siteGroups: { id: string, data: { title: string, excludeTitle?: boolean, disabled?: boolean, internal?: boolean, tags: { id: string, name: string, disabled?: boolean }[] } }[] }>(`
+      query getAvailableTags ($siteId: ID!) {
+        globalGroups: data (filter: { templateKeys: ["dosgato-core-tags"], global: true, deleteStates: [NOTDELETED] }) {
+          id
+          data
+        }
+        siteGroups: data (filter: { templateKeys: ["dosgato-core-tags"], siteIds: [$siteId], deleteStates: [NOTDELETED] }) {
+          id
+          data
+        }
+      }
+    `, { siteId: siteId ?? '' })
+    return globalGroups.concat(siteGroups).filter(g => !g.data.disabled).map(g => ({ id: g.id, title: g.data.title, excludeTitle: g.data.excludeTitle, internal: !!g.data.internal, tags: g.data.tags.filter(t => !t.disabled).map(t => ({ ...pick(t, 'id', 'name') })) }))
+  }
+
+  async setUserTags (pageId: string, tagIds: string[]) {
+    const { replaceTagsOnPage } = await this.query<{ replaceTagsOnPage: { success: boolean } }>(`
+      mutation replaceTagsOnPage ($pageId: ID!, $tagIds: [ID!]!) {
+        replaceTagsOnPage(pageId: $pageId, tagIds: $tagIds) { success }
+      }
+    `, { pageId, tagIds })
+    return replaceTagsOnPage.success
   }
 }
 

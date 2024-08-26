@@ -5,7 +5,7 @@ import type { BaseEvent } from '@dosgato/templating'
 
 interface ISuccess { success: boolean }
 
-export interface IModalContextStore <ModalTypes extends Exclude<string, ModalTypes>> {
+export interface IModalContextStore <ModalTypes extends string> {
   modal: ModalTypes | undefined
 }
 
@@ -27,7 +27,7 @@ export interface IModalContextStore <ModalTypes extends Exclude<string, ModalTyp
  * menuContext.onModalEscape // handler reference that will:
  * // - log modal escape with the result of menuContext.target()
  * // - default the modal value and inform subscribers */
-export class ModalContextStore<ModalTypes extends Exclude<string, ModalTypes>> extends Store<IModalContextStore<ModalTypes>> {
+export class ModalContextStore<ModalTypes extends string> extends Store<IModalContextStore<ModalTypes>> {
   default: ModalTypes | undefined
   targetDescriptor: string | undefined
   target: () => string | undefined

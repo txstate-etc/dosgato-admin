@@ -32,6 +32,7 @@ permissions {
   unpublish
 }
 site {
+  id
   launchState
 }
 `
@@ -73,6 +74,7 @@ export interface TreePage {
     unpublish: boolean
   }
   site: {
+    id: string
     launchState: LaunchState
   }
 }
