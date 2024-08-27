@@ -1014,15 +1014,15 @@ class API {
     return { ...updateAsset, messages: messageForDialog(updateAsset.messages, 'meta.'), data }
   }
 
-  async getUserTagsForPage (pageId: string) {
+  async getUserTagsForPage (pageId: string, includeDisabled?: boolean, includeInternal?: boolean) {
     const { pages } = await this.query<{ pages: { userTags: { id: string, name: string }[] }[] }>(`
-      query getUserTagsForPage ($pageId: ID!) { pages (filter: { ids: [$pageId] }) {
-        userTags {
+      query getUserTagsForPage ($pageId: ID!, $includeDisabled: Boolean, $includeInternal: Boolean) { pages (filter: { ids: [$pageId] }) {
+        userTags (includeDisabled: $includeDisabled, includeInternal: $includeInternal) {
           id
           name
         }
       } }
-    `, { pageId })
+    `, { pageId, includeDisabled, includeInternal })
     return pages[0]?.userTags.map(t => t.id)
   }
 

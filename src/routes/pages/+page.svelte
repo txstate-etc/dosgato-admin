@@ -423,7 +423,7 @@
     <FieldText path='name' label='Name' required />
   </FormDialog>
 {:else if $modalContext.modal === 'tagpage'}
-  {#await api.getUserTagsForPage($activeStore.selectedItems[0].id) then tags}
+  {#await api.getUserTagsForPage($activeStore.selectedItems[0].id, true, true) then tags}
     <FormDialog
       tagClient={tagClientBySiteId}
       submit={onTagPage}
