@@ -1041,11 +1041,11 @@ class API {
       query getAvailableTags ($siteId: ID!) {
         globalGroups: data (filter: { templateKeys: ["dosgato-core-tags"], global: true, deleteStates: [NOTDELETED] }) {
           id
-          data
+          data (published: true)
         }
         siteGroups: data (filter: { templateKeys: ["dosgato-core-tags"], siteIds: [$siteId], deleteStates: [NOTDELETED] }) {
           id
-          data
+          data (published: true)
         }
       }
     `, { siteId: siteId ?? '' })

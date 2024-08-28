@@ -1,6 +1,6 @@
 {
   "name": "dosgato-admin",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "scripts": {
     "prepublishOnly": "echo \"Do not publish this project.\"",
     "dev": "vite dev --host 0.0.0.0 --port 80",
