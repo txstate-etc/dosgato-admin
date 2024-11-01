@@ -527,7 +527,7 @@
   <UploadUI
     title="Import page into {$activeStore.selectedItems[0].path}"
     uploadPath="{environmentConfig.apiBase}/pages/{$activeStore.selectedItems[0].id}"
-    mimeWhitelist={['application/json', 'application/x-gzip']}
+    mimeWhitelist={['application/json', 'application/x-gzip', 'application/gzip']}
     maxFiles={1}
     helptext="Uploaded file must be a Gato .json or .json.gz export file."
     on:escape={modalContext.onModalEscape}
