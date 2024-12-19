@@ -40,7 +40,7 @@ import {
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
   type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST, GET_SEARCH_PAGES, type SearchTreePage,
-  type AssetWithPages, ASSET_WITH_PAGES
+  type AssetWithPages, ASSET_WITH_PAGES, UNDELETE_DATA_FOLDERS, mutationResponse, FINALIZE_DATA_FOLDER_DELETION
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -561,6 +561,16 @@ class API {
   async moveDataFolders (folderIds: string[], siteId?: string) {
     const { moveDataFolders } = await this.query<{ moveDataFolders: MutationResponse & { dataFolders: DataFolder[] } }>(MOVE_DATA_FOLDERS, { folderIds, siteId })
     return moveDataFolders
+  }
+
+  async undeleteDataFolders (folderIds: string[]) {
+    const { undeleteDataFolders } = await this.query<{ undeleteDataFolders: MutationResponse & { dataFolders: DataFolder[] } }>(UNDELETE_DATA_FOLDERS, { folderIds })
+    return undeleteDataFolders
+  }
+
+  async finalizeDataFolderDeletion (folderIds: string[]) {
+    const { finalizeDataFolderDeletion } = await this.query<{ finalizeDataFolderDeletion: MutationResponse & { dataFolders: DataFolder[] } }>(FINALIZE_DATA_FOLDER_DELETION, { folderIds })
+    return finalizeDataFolderDeletion
   }
 
   async addDataEntry (data: any, templateKey: string, siteId?: string, folderId?: string, validateOnly?: boolean) {

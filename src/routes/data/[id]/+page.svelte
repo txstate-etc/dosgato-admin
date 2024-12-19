@@ -9,6 +9,7 @@
   import deleteEmpty from '@iconify-icons/mdi/delete-empty'
   import fileX from '@iconify-icons/ph/file-x'
   import folderOutline from '@iconify-icons/mdi/folder-outline'
+  import folderRemoveOutline from '@iconify-icons/mdi/folder-remove-outline'
   import folderPlusOutline from '@iconify-icons/mdi/folder-plus-outline'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import publishIcon from '@iconify-icons/mdi/publish'
@@ -18,7 +19,7 @@
   import triangleIcon from '@iconify-icons/mdi/triangle'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TreeHeader, type TypedTreeItem } from '@dosgato/dialog'
-  import type { DataData } from '@dosgato/templating'
+  import type { DataData, IconOrSVG } from '@dosgato/templating'
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { htmlEncode, unique, get, isNull } from 'txstate-utils'
@@ -35,7 +36,7 @@
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
-  type Modals = 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'editdata' | 'publishdata' | 'unpublishdata' | 'deletedata' | 'publishdeletedata' | 'undeletedata'
+  type Modals = 'addfolder' | 'adddata' | 'deletefolder' | 'renamefolder' | 'editdata' | 'publishdata' | 'unpublishdata' | 'deletedata' | 'publishdeletedata' | 'undeletedata' | 'finalizedeletefolder' | 'restorefolder'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   const chooserClient = new ChooserClient()
@@ -118,11 +119,15 @@
     return []
   }
 
-  function getPathIcon (item: AnyDataTreeItem) {
-    const type = item.type
-    if (type === 'data') return item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : cube
-    else if (type === 'folder') return folderOutline
-    else return applicationOutline
+  function getPathIcon (item: AnyDataTreeItem, tmpl: EnhancedDataTemplate) {
+    let icon: IconOrSVG
+    if (item.type === 'data') {
+      if (item.deleteState === DeleteState.MARKEDFORDELETE) icon = deleteEmpty
+      else icon = tmpl?.nameColumn?.icon?.(item.data) ?? cube
+    } else if (item.type === 'folder') {
+      icon = item.deleteState === DeleteState.MARKEDFORDELETE ? folderRemoveOutline : folderOutline
+    } else icon = applicationOutline
+    return { icon }
   }
 
   async function moveHandler (selectedItems: TypedDataTreeItem[], dropTarget: TypedDataTreeItem, above: boolean) {
@@ -192,10 +197,9 @@
   const store = new TreeStore<AnyDataTreeItem>(fetchChildren, { moveHandler, dragEligible, dropEffect })
 
   function singleActions (item: TypedDataTreeItem) {
+    const actions: ActionPanelAction[] = []
     if (item.type === 'data') {
-      const actions: ActionPanelAction[] = [
-        { label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: onClickEdit }
-      ]
+      actions.push({ label: 'Edit', icon: pencilIcon, disabled: !item.permissions?.update, onClick: onClickEdit })
       if ($store.copied.size) {
         actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
         actions.push({ label: 'Move Above', hiddenLabel: `Move above ${item.name}`, disabled: !store.pasteEligible(true), onClick: () => { void store.paste(true, false) }, icon: contentPaste })
@@ -212,21 +216,25 @@
       else if (item.deleteState === DeleteState.MARKEDFORDELETE) {
         actions.push({ label: 'Restore Data', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => modalContext.setModal('undeletedata') })
       }
-      return actions
     } else if (item.type === 'folder') {
-      return [
-        { label: 'Rename', icon: renameIcon, disabled: !item.permissions?.update, onClick: () => modalContext.setModal('renamefolder') },
-        { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => modalContext.setModal('adddata') },
-        { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => modalContext.setModal('deletefolder') },
-        { label: 'Undelete', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => {} },
-        { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { void store.paste() } }
-      ]
+      if (item.deleteState === DeleteState.NOTDELETED) {
+        actions.push(
+          { label: 'Rename', icon: renameIcon, disabled: !item.permissions?.update, onClick: () => modalContext.setModal('renamefolder') },
+          { label: 'Add Data', icon: plusIcon, disabled: !item.permissions?.create, onClick: () => modalContext.setModal('adddata') },
+          { label: 'Delete', icon: deleteOutline, disabled: !item.permissions?.delete, onClick: () => modalContext.setModal('deletefolder') },
+          { label: $store.cut ? 'Move Into' : 'Paste', hiddenLabel: `${$store.cut ? '' : 'into '}${item.name}`, icon: contentPaste, disabled: !store.pasteEligible(), onClick: () => { void store.paste() } }
+        )
+      } else if (item.deleteState === DeleteState.MARKEDFORDELETE) {
+        actions.push({ label: 'Restore', icon: deleteRestore, disabled: !item.permissions?.undelete, onClick: () => modalContext.setModal('restorefolder') })
+        actions.push({ label: 'Finalize Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('finalizedeletefolder') })
+      }
     } else {
-      return [
+      actions.push(
         { label: 'Add Data', icon: plusIcon, disabled: !item.permissions.create, onClick: () => modalContext.setModal('adddata') },
         { label: 'Add Data Folder', icon: folderPlusOutline, disabled: !item.permissions.create, onClick: () => modalContext.setModal('addfolder') }
-      ]
+      )
     }
+    return actions
   }
 
   function publishMultipleDeletionDisabled (items: TypedTreeItem<TreeDataItem>[]) {
@@ -240,10 +248,16 @@
     // and that doesn't make sense in the context of multiple selections
     if (items.some((item) => item.type === 'root')) return []
     if (items.every((item) => item.type === 'folder')) {
-      return [
-        { label: 'Delete', icon: deleteOutline, disabled: false, onClick: () => modalContext.setModal('deletefolder') },
-        { label: 'Undelete', icon: deleteRestore, disabled: false, onClick: () => {} }
-      ]
+      if (items.every((item) => item.deleteState === DeleteState.NOTDELETED)) {
+        return [
+          { label: 'Delete', icon: deleteOutline, disabled: items.some((item) => !item.permissions.delete), onClick: () => modalContext.setModal('deletefolder') }
+        ]
+      } else if (items.every((item) => item.deleteState === DeleteState.MARKEDFORDELETE)) {
+        return [
+          { label: 'Restore', icon: deleteRestore, disabled: items.some((item) => !item.permissions.undelete), onClick: () => modalContext.setModal('restorefolder') },
+          { label: 'Finalize Deletion', icon: deleteOutline, disabled: items.some((item) => !item.permissions.delete), onClick: () => modalContext.setModal('finalizedeletefolder') }
+        ]
+      } else return []
     }
     if (items.every((item) => item.type === 'data')) {
       const actions: ActionPanelAction[] = [
@@ -430,6 +444,20 @@
     modalContext.reset()
   }
 
+  async function onUndeleteDatafolders () {
+    const resp = await api.undeleteDataFolders($store.selectedItems.map(f => f.id))
+    modalContext.logModalResponse(resp, actionPanelTarget.target)
+    if (resp.success) void store.refresh()
+    modalContext.reset()
+  }
+
+  async function onFinalizeDataFolderDeletion () {
+    const resp = await api.finalizeDataFolderDeletion($store.selectedItems.map(f => f.id))
+    modalContext.logModalResponse(resp, actionPanelTarget.target)
+    if (resp.success) void store.refresh()
+    modalContext.reset()
+  }
+
   afterNavigate(() => { store.refresh().catch(console.error) })
 
 
@@ -468,7 +496,7 @@
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Data'} actions={getActions($store.selectedItems)}>
   <Tree {store} headers={[
-    { label: tmpl?.nameColumn?.title ?? 'Name', id: 'name', grow: 1, icon: item => item.type === 'data' ? { icon: tmpl?.nameColumn?.icon?.(item.data) ?? getPathIcon(item) } : { icon: getPathIcon(item) }, render: renderCustomColumn(tmpl?.nameColumn?.get, item => item.name) },
+    { label: tmpl?.nameColumn?.title ?? 'Name', id: 'name', grow: 1, icon: item => getPathIcon(item, tmpl), render: renderCustomColumn(tmpl?.nameColumn?.get, item => item.name) },
     ...(tmpl?.columns?.map(c => ({
       label: c.title,
       id: 'custom-' + c.title,
@@ -586,4 +614,22 @@
     on:escape={modalContext.onModalEscape}>
     Restore this deleted data?
   </Dialog>
+{:else if $modalContext.modal === 'restorefolder'}
+  <Dialog
+    title={`Restore Deleted ${$store.selectedItems.length === 1 ? 'Folder' : 'Folders'}`}
+    continueText='Restore'
+    cancelText='Cancel'
+    on:continue={onUndeleteDatafolders}
+    on:escape={modalContext.onModalEscape}>
+    Restore deleted datafolder{$store.selectedItems.length === 1 ? '' : 's'}?
+  </Dialog>
+{:else if $modalContext.modal === 'finalizedeletefolder'}
+  <Dialog
+      title={`Delete ${$store.selectedItems.length === 1 ? 'Folder' : 'Folders'}`}
+      continueText='Delete'
+      cancelText='Cancel'
+      on:continue={onFinalizeDataFolderDeletion}
+      on:escape={modalContext.onModalEscape}>
+      Delete {$store.selectedItems.length === 1 ? 'this data folder and its contents?' : 'these data folders and their contents?'}
+    </Dialog>
 {/if}

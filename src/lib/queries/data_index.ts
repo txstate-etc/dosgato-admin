@@ -40,6 +40,7 @@ const dataFolderDetails = `
     name
   }
   deleted
+  deleteState
   permissions {
     create
     update
@@ -83,6 +84,7 @@ export interface DataFolder {
   id: string
   name: string
   deleted: boolean
+  deleteState: DeleteState
   data: {
     id: string
     name: string
@@ -207,6 +209,28 @@ export const RENAME_DATA_FOLDER = `
 export const MOVE_DATA_FOLDERS = `
   mutation moveDataFolders ($folderIds: [ID!]!, $siteId: ID) {
     moveDataFolders (folderIds: $folderIds, siteId: $siteId) {
+      ${mutationResponse}
+      dataFolders {
+        ${dataFolderDetails}
+      }
+    }
+  }
+`
+
+export const UNDELETE_DATA_FOLDERS = `
+  mutation undeleteDataFolders ($folderIds: [ID!]!) {
+    undeleteDataFolders (folderIds: $folderIds) {
+      ${mutationResponse}
+      dataFolders {
+        ${dataFolderDetails}
+      }
+    }
+  }
+`
+
+export const FINALIZE_DATA_FOLDER_DELETION = `
+  mutation finalizeDataFolderDeletion ($folderIds: [ID!]!) {
+    finalizeDataFolderDeletion (folderIds: $folderIds) {
       ${mutationResponse}
       dataFolders {
         ${dataFolderDetails}
