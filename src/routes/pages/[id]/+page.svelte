@@ -283,22 +283,28 @@
 {:else}
   <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath, $editorStore.previewing, page)} on:returnfocus={onReturnFocus}>
     <div class="page-bar"><span>{$editorStore.page.path}</span>
-      {#if !$editorStore.previewing}
-        {#each pagetemplate.pageBarButtons ?? [] as button, idx}
-          {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
-            <button id={`pagebar-button-${idx}`} type="button" class="user-button" on:click={onUserButtonClick(button, idx)}>
-              <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
-              {#if !button.hideLabel}{button.label}{/if}
-            </button>
+      {#if !$editorStore.previewing || allowEditorMaxWidth}
+        <div class="page-bar-controls">
+          {#if !$editorStore.previewing}
+            <div class="page-bar-buttons {pagetemplate.pageBarButtons ? 'has-buttons' : ''}">
+              {#each pagetemplate.pageBarButtons ?? [] as button, idx}
+                {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
+                  <button id={`pagebar-button-${idx}`} type="button" class="user-button" on:click={onUserButtonClick(button, idx)}>
+                    <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
+                    {#if !button.hideLabel}{button.label}{/if}
+                  </button>
+                {/if}
+              {/each}
+            </div>
           {/if}
-        {/each}
-      {/if}
-      {#if allowEditorMaxWidth}
-        <select value={resolvedDevice} on:change={function () { pageEditorStore.setPreviewMode(this.value) }}>
-          {#each Object.keys(deviceWidths) as device}
-            <option value={device}>{deviceWidths[device].label}</option>
-          {/each}
-        </select>
+          {#if allowEditorMaxWidth}
+            <select value={resolvedDevice} on:change={function () { pageEditorStore.setPreviewMode(this.value) }}>
+              {#each Object.keys(deviceWidths) as device}
+                <option value={device}>{deviceWidths[device].label}</option>
+              {/each}
+            </select>
+          {/if}
+        </div>
       {/if}
     </div>
     <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:devicemode={editorMaxWidth != null} style:max-width={editorMaxWidth}></iframe>
@@ -494,6 +500,26 @@
     color: black;
     border-radius: 2px;
     border: 1px solid #757575;
+  }
+  .page-bar .page-bar-controls {
+    display: flex;
+    gap: 1.5em;
+  }
+  .page-bar .page-bar-controls .page-bar-buttons {
+    display: flex;
+    gap: 0.5em;
+  }
+  @media screen and (max-width: 50em) {
+    .page-bar {
+      flex-direction: column;
+    }
+    .page-bar .page-bar-buttons.has-buttons {
+      margin-top: 0.5em;
+    }
+    .page-bar .page-bar-controls {
+      justify-content: space-between;
+      width: 100%;
+    }
   }
   .status {
     font-size: 0.9em;
