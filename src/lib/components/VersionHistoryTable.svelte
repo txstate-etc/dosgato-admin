@@ -142,7 +142,15 @@
       <td class="time">{$small ? formatTinyTime(version.date) : formatTime(version.date)}</td>
       <td class="tags">
         {#if $small}
-          {#if version.tags.some(t => t === 'published')}Y{/if}
+          {#if isMarkedTable}
+            {formatDate(version.markedAt)}
+          {:else}
+            {#if version.tags.some(t => t === 'published')}
+              Y
+            {:else}
+              &mdash;<ScreenReaderOnly>No</ScreenReaderOnly>
+            {/if}
+          {/if}
         {:else}
           {#if isMarkedTable}
             {formatDate(version.markedAt)}
