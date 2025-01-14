@@ -11,6 +11,20 @@ const templateDetails = `
     assign
   }
 `
+
+const templateDetailsWithAreas = `
+  ${templateDetails}
+  areas {
+    name
+    availableComponents {
+      ${templateDetails}
+      areas {
+        name
+      }
+    }
+  }
+`
+
 export interface TemplateListTemplate {
   type: 'PAGE' | 'COMPONENT' | 'DATA'
   id: string
@@ -22,6 +36,27 @@ export interface TemplateListTemplate {
     setUniversal: boolean
     assign: boolean
   }
+}
+
+export interface TemplateListTemplateArea {
+  id: string
+  name: string
+  availableComponents: {
+    id: string
+    key: string
+    name: string
+    universal: boolean
+    global?: boolean
+    permissions: {
+      setUniversal: boolean
+      assign: boolean
+    }
+    areas: TemplateListTemplateArea[]
+  }[]
+}
+
+export interface TemplateListTemplateWithAreas extends TemplateListTemplate {
+  areas: TemplateListTemplateArea[]
 }
 
 export const GET_ALL_TEMPLATES = `
@@ -44,6 +79,30 @@ export const GET_TEMPLATE_INFO = `
   query getTemplateInfo ($key: ID!) {
     templates (filter:{ keys: [$key] }) {
       ${templateDetails}
+    }
+  }
+`
+
+export const GET_TEMPLATE_DETAIL = `
+  query getTemplateDetails ($key: ID!) {
+    templates (filter: { keys: [$key] }) {
+      ${templateDetailsWithAreas}
+    }
+  }
+`
+
+export const GET_TEMPLATES_WITH_AREAS_BY_TYPE = `
+  query getTemplatesWithAreasByType ($type: TemplateType!) {
+    templates (filter: { types: [$type] }) {
+      ${templateDetailsWithAreas}
+    }
+  }
+`
+
+export const GET_TEMPLATE_AREAS = `
+  query getTemplateAreas ($key: ID!) {
+    templates (filter: { keys: [$key]}) {
+      ${templateDetailsWithAreas}
     }
   }
 `

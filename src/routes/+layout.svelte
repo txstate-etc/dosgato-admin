@@ -121,7 +121,7 @@
         {#if $globalStore.access.viewDataManager}<li class:selected={$page.url.pathname.startsWith(`${base}/data`)}><LabeledIcon href="{base}/data" icon={databaseLight} label="Data" /></li>{/if}
         {#if $globalStore.access.viewSiteManager}<li class="separator" class:selected={$page.url.pathname.startsWith(`${base}/sites`)}><LabeledIcon href="{base}/sites" icon={globeLight} label="Sites" /></li>{/if}
         {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager} class:selected={$page.url.pathname.startsWith(`${base}/auth`)}><LabeledIcon href="{base}/auth/users" icon={usersLight} label="Access" /></li>{/if}
-        {#if $globalStore.access.manageTemplates}<li class:selected={$page.url.pathname.startsWith(`${base}/settings`)}><LabeledIcon href="{base}/settings/templates" icon={dotsThree} label="More" /></li>{/if}
+        {#if $globalStore.access.manageTemplates}<li class:selected={$page.url.pathname.startsWith(`${base}/settings`)}><LabeledIcon href="{base}/settings/templates/pages" icon={dotsThree} label="More" /></li>{/if}
       </ul>
       <div class="profile-compact">
         <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />

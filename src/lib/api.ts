@@ -40,7 +40,8 @@ import {
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
   type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST, GET_SEARCH_PAGES, type SearchTreePage,
-  type AssetWithPages, ASSET_WITH_PAGES, UNDELETE_DATA_FOLDERS, mutationResponse, FINALIZE_DATA_FOLDER_DELETION
+  type AssetWithPages, ASSET_WITH_PAGES, UNDELETE_DATA_FOLDERS, mutationResponse, FINALIZE_DATA_FOLDER_DELETION, type TemplateListTemplateWithAreas,
+  GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -487,6 +488,37 @@ class API {
     const t = templates[0]
     t.id = t.key
     return t
+  }
+
+  addIdToTemplate (template: TemplateListTemplateWithAreas) {
+    const updatedTemplate = { ...template, id: template.key }
+    for (const area of updatedTemplate.areas) {
+      for (const component of area.availableComponents) {
+        component.id = component.key
+      }
+    }
+    return updatedTemplate
+  }
+
+  async getTemplateWithAreasByKey (key: string) {
+    const { templates } = await this.query<{ templates: TemplateListTemplateWithAreas[] }>(GET_TEMPLATE_DETAIL, { key })
+    const template = templates[0]
+    return this.addIdToTemplate(template)
+  }
+
+  async getTemplatesWithAreassByType (type: string) {
+    const { templates } = await this.query<{ templates: TemplateListTemplateWithAreas[] }>(GET_TEMPLATES_WITH_AREAS_BY_TYPE, { type })
+    return templates.map(t => this.addIdToTemplate(t))
+  }
+
+  async getTemplateAreas (key: string) {
+    const { templates } = await this.query<{ templates: TemplateListTemplateWithAreas[] }>(GET_TEMPLATE_AREAS, { key })
+    if (!templates.length) return []
+    const t = templates[0]
+    return t.areas.map(area => ({
+      ...area,
+      id: `${t.key}_${area.name}`
+    }))
   }
 
   async getAvailableTemplateInfo (keys: string[]) {
