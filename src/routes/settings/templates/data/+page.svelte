@@ -4,7 +4,7 @@
 
   async function fetchChildren (template?: TypedTemplateTreeItem) {
     if (template) return []
-    const templates = await api.getTemplatesWithAreassByType('DATA')
+    const templates = await api.getTemplatesWithAreasByType('DATA')
     return templates.map(t => ({ ...t, type: 'template' as const, hasChildren: false }))
   }
 

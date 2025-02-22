@@ -34,6 +34,13 @@
         </DetailPanelSection>
       </DetailPanel>
     {/if}
+    {#if $store.template.type !== 'DATA' && !$store.template.universal}
+      <DetailPanel header="Sites Allowed to Use This Template" headerColor={panelHeaderColor}>
+        <DetailPanelSection>
+          <SortableTable items={$store.pagetrees} headers={[{ id: 'name', label: 'Name', get: 'name' }]} />
+        </DetailPanelSection>
+      </DetailPanel>
+    {/if}
   </div>
 </DetailPageContent>
 

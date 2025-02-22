@@ -41,7 +41,9 @@ import {
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
   type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST, GET_SEARCH_PAGES, type SearchTreePage,
   type AssetWithPages, ASSET_WITH_PAGES, UNDELETE_DATA_FOLDERS, mutationResponse, FINALIZE_DATA_FOLDER_DELETION, type TemplateListTemplateWithAreas,
-  GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE
+  GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE,
+  type TemplateWithPagetrees,
+  GET_TEMPLATE_PAGETREES
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -506,7 +508,7 @@ class API {
     return this.addIdToTemplate(template)
   }
 
-  async getTemplatesWithAreassByType (type: string) {
+  async getTemplatesWithAreasByType (type: string) {
     const { templates } = await this.query<{ templates: TemplateListTemplateWithAreas[] }>(GET_TEMPLATES_WITH_AREAS_BY_TYPE, { type })
     return templates.map(t => this.addIdToTemplate(t))
   }
@@ -519,6 +521,14 @@ class API {
       ...area,
       id: `${t.key}_${area.name}`
     }))
+  }
+
+  async getRestrictedTemplatePagetrees (key: string) {
+    const { templates } = await this.query<{ templates: TemplateWithPagetrees[] }>(GET_TEMPLATE_PAGETREES, { key })
+    if (!templates.length) return
+    const t = templates[0]
+    t.id = t.key
+    return t
   }
 
   async getAvailableTemplateInfo (keys: string[]) {

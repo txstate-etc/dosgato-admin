@@ -59,6 +59,16 @@ export interface TemplateListTemplateWithAreas extends TemplateListTemplate {
   areas: TemplateListTemplateArea[]
 }
 
+export interface TemplateWithPagetrees {
+  id: string
+  key: string
+  pagetrees: {
+    id: string
+    name: string
+    type: string
+  }[]
+}
+
 export const GET_ALL_TEMPLATES = `
   query getAllTemplates {
     templates {
@@ -111,6 +121,19 @@ export const GET_AVAILABLE_TEMPLATE_INFO = `
   query getAvailableTemplateInfo ($keys: [String]) {
     templates (filter: { keys: $keys }) {
       ${templateDetails}
+    }
+  }
+`
+
+export const GET_TEMPLATE_PAGETREES = `
+  query getTemplatePagetrees ($key: ID!) {
+    templates (filter: { keys: [$key]}) {
+      key
+      pagetrees {
+        id
+        name
+        type
+      }
     }
   }
 `

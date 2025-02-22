@@ -3,7 +3,7 @@ import { TreeStore } from '@dosgato/dialog'
 
 async function fetchChildren (item?: TypedTemplateTreeItem) {
   if (!item) {
-    const templates = await api.getTemplatesWithAreassByType('PAGE')
+    const templates = await api.getTemplatesWithAreasByType('PAGE')
     return templates.map(t => ({ ...t, type: 'template' as const, hasChildren: t.areas.length > 0 }))
   } else {
     if (item.type === 'area') {
