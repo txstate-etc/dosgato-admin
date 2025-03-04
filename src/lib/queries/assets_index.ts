@@ -171,6 +171,21 @@ export interface AssetWithPages {
   }]
 }
 
+export interface AssetSearchResult extends TreeAsset {
+  data
+}
+
+export const GET_SEARCH_ASSETS = `
+  query getSearchAssets ($search: String!) {
+    assets (filter:{ search: $search }) {
+      ${assetDetails}
+      data
+    }
+  }
+`
+
+// mutations
+
 export const MOVE_ASSETS = `
   query moveAssets ($ids: [ID], $target: ID) {
     mutation moveAssets TODO

@@ -363,7 +363,7 @@
 {/if}
 <ActionPanel actionsTitle={$activeStore.selected.size === 1 ? $activeStore.selectedItems[0].name : 'Pages'} actions={$activeStore.selected.size === 1 ? singlepageactions($activeStore.selectedItems[0]) : multipageactions($activeStore.selectedItems)}>
   <svelte:fragment slot="abovePanel" let:panelHidden>
-    <SearchInput bind:searchInput value={$pagesStore.search} on:search={onFilter} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
+    <SearchInput bind:searchInput value={$pagesStore.search} on:search={onFilter} on:maximize={onClickMinifiedSearch} minimized={panelHidden} searchLabel="Search Pages" />
   </svelte:fragment>
   {#if $pagesStore.showsearch}
     {#if $searchStore.loading || $searchStore.rootItems?.length}

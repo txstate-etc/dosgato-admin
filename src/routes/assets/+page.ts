@@ -1,6 +1,7 @@
 import { type TypedTreeItem, TreeStore } from '@dosgato/dialog'
+import { Store } from '@txstate-mws/svelte-store'
 import { DateTime } from 'luxon'
-import { sortby } from 'txstate-utils'
+import { isBlank, sortby } from 'txstate-utils'
 import { type TreeAsset, type TreeAssetFolder, api, mutationResponse, type RootAssetFolder } from '$lib'
 
 export interface AssetItem extends Omit<TreeAsset, 'modifiedAt'> {
@@ -85,3 +86,18 @@ function dropEffect (selectedItems: (TypedAssetFolderItem | TypedAssetItem)[], d
 }
 
 export const _store = new TreeStore<AssetItem | AssetFolderItem>(fetchChildren, { copyHandler, moveHandler, dragEligible, dropEffect })
+export const _assetsStore = new Store({ showsearch: false, search: '' })
+export const _searchStore = new TreeStore(async () => {
+  const search = (_assetsStore as any).value.search
+  if (isBlank(search)) return []
+  else {
+    const assets = await api.getSearchAssets(search)
+    return assets.map<AssetItem>(a => ({
+      ...a,
+      kind: 'asset',
+      modifiedAt: DateTime.fromISO(a.modifiedAt),
+      hasChildren: false,
+      children: undefined
+    }))
+  }
+})

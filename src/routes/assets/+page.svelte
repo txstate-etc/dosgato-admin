@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { iconForMime, bytesToHuman, FieldText, FormDialog, Tree, Dialog, humanFileType } from '@dosgato/dialog'
+  import { iconForMime, bytesToHuman, FieldText, FormDialog, Tree, Dialog, humanFileType, Icon, expandTreePath } from '@dosgato/dialog'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
@@ -14,11 +14,15 @@
   import deleteRestore from '@iconify-icons/mdi/delete-restore'
   import uploadIcon from '@iconify-icons/ph/upload'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
+  import treeStructure from '@iconify-icons/ph/tree-structure'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, dateStamp, dateStampShort, DeleteState, uiLog, ModalContextStore } from '$lib'
-  import { _store as store, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem, type TypedAssetItem } from './+page'
-  import { setContext } from 'svelte'
+  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, actionPanelStore, dateStamp, dateStampShort, DeleteState, uiLog, ModalContextStore, SearchInput, DetailList, findInTreeIconSVG } from '$lib'
+  import { _store as store, _searchStore as searchStore, _assetsStore as assetsStore, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem, type TypedAssetItem } from './+page'
+  import { setContext, tick } from 'svelte'
+  import { htmlEncode, isBlank, isNotBlank, isNotNull, isNull } from 'txstate-utils'
+
+  $: activeStore = $assetsStore.showsearch ? searchStore : store
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
@@ -28,9 +32,55 @@
 
   let selectedFolder: TypedAssetFolderItem | undefined
   let selectedAsset: TypedAssetItem | undefined
-  $: selectedItem = $store.selected.size === 1 ? $store.selectedItems[0] : undefined
+  $: selectedItem = $activeStore.selected.size === 1 ? $activeStore.selectedItems[0] : undefined
+
+  function onFilter (e: CustomEvent<string>) {
+    if (isBlank(e.detail)) {
+      $assetsStore = { showsearch: false, search: '' }
+    } else {
+      actionPanelStore.hide()
+      $assetsStore = { showsearch: true, search: e.detail }
+    }
+    searchStore.refresh().catch(console.error)
+  }
+  let searchInput: HTMLInputElement
+  async function onClickMinifiedSearch () {
+    actionPanelStore.show()
+    await tick()
+    searchInput?.focus()
+  }
+
+  function findInAssetTree (path: string) {
+    return async () => {
+      const itm = await expandTreePath(store, path.split('/').filter(isNotBlank))
+      if (itm) store.select(itm, { clear: true, notify: true })
+      $assetsStore = { ...$assetsStore, showsearch: false }
+    }
+  }
+  (window as any).dgAssetsFindInAssetTree = (button: HTMLButtonElement, event: PointerEvent) => {
+    event.stopPropagation()
+    const path = button.getAttribute('data-path')!
+    findInAssetTree(path)().catch(console.error)
+  }
 
   function singlepageactions (item: TypedAnyAssetItem) {
+    if ($assetsStore.showsearch) {
+      if (item.kind === 'folder') return [] // should not happen
+      const actions: ActionPanelAction[] = [
+        { label: 'Find in Asset Tree', icon: treeStructure, onClick: findInAssetTree(item.path) },
+        { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: async () => await goto(base + '/assets/' + item.id) },
+        { label: 'Download', icon: download, onClick: () => { void api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } }
+      ]
+      if (item.deleteState === DeleteState.NOTDELETED) {
+        actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('delete') })
+      } else {
+        actions.push(
+          { label: 'Restore', icon: deleteRestore, disabled: !item.permissions.undelete, onClick: () => modalContext.setModal('restore') },
+          { label: 'Finalize Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('finalizeDelete') }
+        )
+      }
+      return actions
+    }
     const actions: ActionPanelAction[] = item.kind === 'asset'
       ? [
           { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: async () => await goto(base + '/assets/' + item.id) },
@@ -146,45 +196,45 @@
 
   async function onDelete () {
     let resp
-    if ($store.selectedItems[0].kind === 'asset') {
-      resp = await api.deleteAssets($store.selectedItems.map(a => a.id))
-      modalContext.logModalResponse(resp, $store.selectedItems.map(a => a.path).join(', '))
+    if ($activeStore.selectedItems[0].kind === 'asset') {
+      resp = await api.deleteAssets($activeStore.selectedItems.map(a => a.id))
+      modalContext.logModalResponse(resp, $activeStore.selectedItems.map(a => a.path).join(', '))
     } else {
-      resp = await api.deleteAssetFolder($store.selectedItems[0].gqlId)
-      modalContext.logModalResponse(resp, $store.selectedItems[0].path)
+      resp = await api.deleteAssetFolder($activeStore.selectedItems[0].gqlId)
+      modalContext.logModalResponse(resp, $activeStore.selectedItems[0].path)
     }
     if (resp.success) {
-      void store.refresh()
+      void activeStore.refresh()
     }
     modalContext.reset()
   }
 
   async function onFinalizeDelete () {
     let resp
-    if ($store.selectedItems[0].kind === 'asset') {
-      resp = await api.finalizeDeleteAssets($store.selectedItems.map(a => a.id))
-      modalContext.logModalResponse(resp, $store.selectedItems.map(a => a.id).join(', '))
+    if ($activeStore.selectedItems[0].kind === 'asset') {
+      resp = await api.finalizeDeleteAssets($activeStore.selectedItems.map(a => a.id))
+      modalContext.logModalResponse(resp, $activeStore.selectedItems.map(a => a.id).join(', '))
     } else {
-      resp = await api.finalizeDeleteAssetFolder($store.selectedItems[0].gqlId)
-      modalContext.logModalResponse(resp, $store.selectedItems[0].gqlId)
+      resp = await api.finalizeDeleteAssetFolder($activeStore.selectedItems[0].gqlId)
+      modalContext.logModalResponse(resp, $activeStore.selectedItems[0].gqlId)
     }
     if (resp.success) {
-      void store.refresh()
+      void activeStore.refresh()
     }
     modalContext.reset()
   }
 
   async function onRestore () {
     let resp
-    if ($store.selectedItems[0].kind === 'asset') {
-      resp = await api.undeleteAssets($store.selectedItems.map(a => a.id))
-      modalContext.logModalResponse(resp, $store.selectedItems.map(a => a.id).join(', '))
+    if ($activeStore.selectedItems[0].kind === 'asset') {
+      resp = await api.undeleteAssets($activeStore.selectedItems.map(a => a.id))
+      modalContext.logModalResponse(resp, $activeStore.selectedItems.map(a => a.id).join(', '))
     } else {
-      resp = await api.undeleteAssetFolder($store.selectedItems[0].gqlId)
-      modalContext.logModalResponse(resp, $store.selectedItems[0].gqlId)
+      resp = await api.undeleteAssetFolder($activeStore.selectedItems[0].gqlId)
+      modalContext.logModalResponse(resp, $activeStore.selectedItems[0].gqlId)
     }
     if (resp.success) {
-      void store.refresh()
+      void activeStore.refresh()
     }
     modalContext.reset()
   }
@@ -200,18 +250,53 @@
       return ['name', 'type']
     }
   }
+
+  function handleResponsiveSearchTreeHeaders (treeWidth: number) {
+    if (treeWidth > 700) {
+      return ['image', 'name', 'size', 'type', 'modified', 'modifiedBy']
+    } else if (treeWidth > 500) {
+      return ['image', 'name', 'size']
+    } else {
+      return ['image', 'name']
+    }
+  }
 </script>
 
-<ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Assets'} actions={$store.selected.size === 1 ? singlepageactions($store.selectedItems[0]) : multipageactions($store.selectedItems)}>
-  <Tree {store} on:choose={onChoose}
-    headers={[
-      { label: 'Path', id: 'name', grow: 5, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : (item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpen : folderIcon)) }), render: itm => 'filename' in itm ? itm.filename : itm.name },
-      { label: 'Size', id: 'size', fixed: '6em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },
-      { label: 'Type', id: 'type', fixed: '10em', render: itm => itm.kind === 'asset' ? humanFileType(itm.mime, itm.extension) : '' },
-      { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.kind === 'asset' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
-      { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
-    ]} searchable='name' enableResize responsiveHeaders={handleResponsiveHeaders}
-  />
+{#if $assetsStore.showsearch}
+  <div class="searching">Search results for "{$assetsStore.search}"...</div>
+{/if}
+<ActionPanel actionsTitle={$activeStore.selected.size === 1 ? $activeStore.selectedItems[0].name : 'Assets'} actions={$activeStore.selected.size === 1 ? singlepageactions($activeStore.selectedItems[0]) : multipageactions($activeStore.selectedItems)}>
+  <svelte:fragment slot="abovePanel" let:panelHidden>
+    <SearchInput bind:searchInput value={$assetsStore.search} on:search={onFilter} on:maximize={onClickMinifiedSearch} minimized={panelHidden} searchLabel="Search Assets" />
+  </svelte:fragment>
+  {#if $assetsStore.showsearch}
+    {#if $searchStore.loading || $searchStore.rootItems?.length}
+      <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/assets/' + detail.id) }} responsiveHeaders={handleResponsiveSearchTreeHeaders}
+        headers={[
+          { label: 'Asset', id: 'image', fixed: '10em', class: item => { return 'image-column' }, render: item => { return isNotNull(item.box) ? `<div class="image-wrapper"><img src="${environmentConfig.renderBase}/.asset/${item.id}/w/400/${item.checksum.substring(0, 12)}/${encodeURIComponent(item.filename)}" width="${item.box.width}" height="${item.box.height}" alt="" style="object-fit: contain; max-height: 100px; max-width: 100%;"/>${item.deleteState === DeleteState.MARKEDFORDELETE ? '<span class="sr-only">asset marked for deletion</span><span class="deleted" aria-hidden="true">Deleted</span>' : ''}</div>` : '' }, icon: item => { if (isNull(item.box)) return { icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : iconForMime(item.mime), label: item.deleteState === DeleteState.MARKEDFORDELETE ? 'Deleted Asset' : undefined } } },
+          { label: 'Path', id: 'name', render: item => `<div class="page-name">${item.filename}<div class="page-path">${item.path.split('/').slice(0, -1).join('/')}</div></div><button class="reset search-find-in-tree" type="button" tabindex="-1" onclick="window.dgAssetsFindInAssetTree(this, event)" data-path="${htmlEncode(item.path)}">${findInTreeIconSVG}<span>Find in asset tree</span></button>`, class: item => 'name-column' },
+          { label: 'Size', id: 'size', fixed: '6em', render: itm => bytesToHuman(itm.size) },
+          { label: 'Type', id: 'type', fixed: '10em', render: itm => humanFileType(itm.mime, itm.extension) },
+          { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
+          { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
+        ]}
+      />
+    {:else}
+      <div class="emptysearch">
+        <h2>Looks like we don't have any matches for "{$assetsStore.search}"</h2>
+      </div>
+    {/if}
+  {:else}
+    <Tree {store} on:choose={onChoose}
+      headers={[
+        { label: 'Path', id: 'name', grow: 5, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : (item.kind === 'asset' ? iconForMime(item.mime) : (item.open ? folderNotchOpen : folderIcon)) }), render: itm => 'filename' in itm ? itm.filename : itm.name },
+        { label: 'Size', id: 'size', fixed: '6em', render: itm => itm.kind === 'asset' ? bytesToHuman(itm.size) : '' },
+        { label: 'Type', id: 'type', fixed: '10em', render: itm => itm.kind === 'asset' ? humanFileType(itm.mime, itm.extension) : '' },
+        { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.kind === 'asset' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
+        { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
+      ]} searchable='name' enableResize responsiveHeaders={handleResponsiveHeaders}
+    />
+  {/if}
   <svelte:fragment slot="preview">
     {#if selectedItem?.kind === 'asset' && selectedItem.box}
       <img src="{environmentConfig.renderBase}/.asset/{selectedItem.id}/w/400/{selectedItem.checksum.substring(0, 12)}/{encodeURIComponent(selectedItem.filename)}" width={selectedItem.box.width} height={selectedItem.box.height} alt="">
@@ -233,25 +318,25 @@
     <FieldText path="name" label="Name" required />
   </FormDialog>
 {:else if $modalContext.modal === 'delete' }
-  <Dialog title={`Delete ${$store.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onDelete} on:escape={onModalEscape}>
-    {#if $store.selectedItems[0].kind === 'asset'}
-      {`Delete ${$store.selectedItems.length} asset${$store.selectedItems.length === 1 ? '' : 's'}?`}
+  <Dialog title={`Delete ${$activeStore.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onDelete} on:escape={onModalEscape}>
+    {#if $activeStore.selectedItems[0].kind === 'asset'}
+      {`Delete ${$activeStore.selectedItems.length} asset${$activeStore.selectedItems.length === 1 ? '' : 's'}?`}
     {:else}
       Delete this asset folder? All contents will be marked for deletion.
     {/if}
   </Dialog>
 {:else if $modalContext.modal === 'finalizeDelete'}
-  <Dialog title={`Delete ${$store.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onFinalizeDelete} on:escape={onModalEscape}>
-    {#if $store.selectedItems[0].kind === 'asset'}
-    {`Delete ${$store.selectedItems.length} asset${$store.selectedItems.length === 1 ? '' : 's'}?`}
+  <Dialog title={`Delete ${$activeStore.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onFinalizeDelete} on:escape={onModalEscape}>
+    {#if $activeStore.selectedItems[0].kind === 'asset'}
+    {`Delete ${$activeStore.selectedItems.length} asset${$activeStore.selectedItems.length === 1 ? '' : 's'}?`}
     {:else}
       Delete this asset folder and its contents?
     {/if}
   </Dialog>
 {:else if $modalContext.modal === 'restore'}
-  <Dialog title={`Restore ${$store.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Restore' cancelText='Cancel' on:continue={onRestore} on:escape={onModalEscape}>
-    {#if $store.selectedItems[0].kind === 'asset'}
-    {`Restore ${$store.selectedItems.length} asset${$store.selectedItems.length === 1 ? '' : 's'}?`}
+  <Dialog title={`Restore ${$activeStore.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Restore' cancelText='Cancel' on:continue={onRestore} on:escape={onModalEscape}>
+    {#if $activeStore.selectedItems[0].kind === 'asset'}
+    {`Restore ${$activeStore.selectedItems.length} asset${$activeStore.selectedItems.length === 1 ? '' : 's'}?`}
     {:else}
       Restore this asset folder?
     {/if}
@@ -264,5 +349,38 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  :global(.tree-search){
+    height: 120px;
+  }
+  :global(.name-column) {
+    display: flex;
+  }
+  :global(.tree-cell.image-column .icon) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+  :global(.tree-cell.image-column .icon svg) {
+    width: 5em;
+    height: 5em;
+  }
+  :global(.tree-cell.image-column .image-wrapper) {
+    position: relative;
+  }
+  :global(.tree-cell.image-column .image-wrapper span.deleted) {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 0.2em;
+    background-color: #fff;
+    border: 1px solid black;
+    border-radius: 2px;
+  }
+  .emptysearch {
+    padding: 1em;
   }
 </style>

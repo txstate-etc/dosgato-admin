@@ -112,3 +112,17 @@ button.search-find-in-tree span {
 [data-eq~="700px"] button.search-find-in-tree {
   display: none !important;
 }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+  font-size: 20px !important;
+  background: white !important;
+  color: black !important;
+}

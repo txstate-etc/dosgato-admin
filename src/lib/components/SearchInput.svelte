@@ -9,6 +9,7 @@
   export let asYouType = false
   export let searchInput: HTMLInputElement | undefined = undefined
   export let minimized = false
+  export let searchLabel = 'Search'
 
   interface $$Events {
     search: CustomEvent<string>
@@ -41,7 +42,7 @@
   {#if minimized}
     <button type="button" class="reset maximize" on:click|stopPropagation={onMaximize}><Icon icon={magnifyingGlass} hiddenLabel="Search"/></button>
   {:else}
-    <input bind:this={searchInput} {value} type="text" placeholder="Search..." on:keydown|stopPropagation on:keyup|preventDefault={onChange} on:change={onChange} />
+    <input bind:this={searchInput} {value} type="text" placeholder="Search..." on:keydown|stopPropagation on:keyup|preventDefault={onChange} on:change={onChange} aria-label={searchLabel} />
     <div class="search-buttons">
       {#if isNotBlank(value)}
         <button type="button" class="reset cancelsearch" on:click|stopPropagation={onCancel}><Icon icon={xIcon} hiddenLabel="Cancel Search" inline /></button>
