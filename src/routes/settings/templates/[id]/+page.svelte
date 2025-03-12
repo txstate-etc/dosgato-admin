@@ -34,10 +34,21 @@
         </DetailPanelSection>
       </DetailPanel>
     {/if}
+    {#if $store.template.type === 'COMPONENT'}
+    <DetailPanel header="Page Templates That Allow This Component" headerColor={panelHeaderColor}>
+      <DetailPanelSection>
+        <SortableTable items={$store.pageTemplates} headers={[{ id: 'name', label: 'Name', render: (item) => `<a href="${base}/settings/templates/${item.id}">${item.name}</a>` }, { id: 'key', label: 'Template Key', get: 'key' }]} />
+      </DetailPanelSection>
+    </DetailPanel>
+    {/if}
     {#if $store.template.type !== 'DATA' && !$store.template.universal}
       <DetailPanel header="Sites Allowed to Use This Template" headerColor={panelHeaderColor}>
         <DetailPanelSection>
-          <SortableTable items={$store.pagetrees} headers={[{ id: 'name', label: 'Name', get: 'name' }]} />
+          {#if $store.pagetrees.length > 0}
+            <SortableTable items={$store.pagetrees} headers={[{ id: 'name', label: 'Name', get: 'name' }]} />
+          {:else}
+            <div>This restricted template is not permissioned for any sites.</div>
+          {/if}
         </DetailPanelSection>
       </DetailPanel>
     {/if}

@@ -138,6 +138,16 @@ export const GET_TEMPLATE_PAGETREES = `
   }
 `
 
+export const GET_PAGE_TEMPLATES_ALLOWING_COMPONENT = `
+  query getPageTemplatesAllowingComponent ($key: ID!) {
+    templates (filter: { keys: [$key]}) {
+      rootPageTemplates {
+        ${templateDetails}
+      }
+    }
+  }
+`
+
 export const SET_TEMPLATE_UNIVERSAL = `
   mutation setTemplateUniversal ($templateKey: ID!, $universal: Boolean!) {
     setTemplateUniversal (templateId: $templateKey, universal: $universal) {

@@ -4,13 +4,14 @@ import { Store } from '@txstate-mws/svelte-store'
 interface ITemplateDetailStore {
   template: TemplateListTemplateWithAreas
   pagetrees: { id: string, name: string, type: string }[]
+  pageTemplates: { key: string, name: string }[]
 }
 
 const initialValue: TemplateListTemplateWithAreas = { id: '', key: '', name: '', universal: false, type: 'COMPONENT', permissions: { setUniversal: false, assign: false }, areas: [] }
 
 export class TemplateDetailStore extends Store<ITemplateDetailStore> {
   constructor (public fetchTemplate: (key: string) => Promise<TemplateListTemplateWithAreas>) {
-    super({ template: initialValue, pagetrees: [] })
+    super({ template: initialValue, pagetrees: [], pageTemplates: [] })
   }
 
   async refresh (key: string) {
@@ -20,7 +21,11 @@ export class TemplateDetailStore extends Store<ITemplateDetailStore> {
       const templateWithPagetrees = await api.getRestrictedTemplatePagetrees(key)
       pagetrees = templateWithPagetrees?.pagetrees ?? []
     }
-    this.set({ template, pagetrees })
+    let pageTemplates: { key: string, name: string }[] = []
+    if (template.type === 'COMPONENT') {
+      pageTemplates = await api.getPageTemplatesAllowingComponent(key)
+    }
+    this.set({ template, pagetrees, pageTemplates })
     return template
   }
 

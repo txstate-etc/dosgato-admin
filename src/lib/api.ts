@@ -41,7 +41,8 @@ import {
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
   type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST, GET_SEARCH_PAGES, type SearchTreePage,
   type AssetWithPages, ASSET_WITH_PAGES, UNDELETE_DATA_FOLDERS, mutationResponse, FINALIZE_DATA_FOLDER_DELETION, type TemplateListTemplateWithAreas,
-  GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE, type TemplateWithPagetrees, GET_TEMPLATE_PAGETREES, type AssetSearchResult, GET_SEARCH_ASSETS
+  GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE, type TemplateWithPagetrees, GET_TEMPLATE_PAGETREES, type AssetSearchResult, GET_SEARCH_ASSETS,
+  GET_PAGE_TEMPLATES_ALLOWING_COMPONENT
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -532,6 +533,16 @@ class API {
     const t = templates[0]
     t.id = t.key
     return t
+  }
+
+  async getPageTemplatesAllowingComponent (key: string) {
+    const { templates } = await this.query<{ templates: { rootPageTemplates: TemplateListTemplate[] }[] }>(GET_PAGE_TEMPLATES_ALLOWING_COMPONENT, { key })
+    if (!templates.length) return []
+    const temp = templates[0]
+    return temp.rootPageTemplates.map(t => {
+      t.id = t.key
+      return t
+    })
   }
 
   async getAvailableTemplateInfo (keys: string[]) {
