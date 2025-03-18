@@ -301,6 +301,10 @@
     list-style: none;
     z-index: var(--toast-z, calc(var(--modal-z, 3000) + 1));
   }
+  .topbar .logo > :global(*) {
+   max-height: 50px;
+   width: auto;
+  }
 
   @media (max-width: 30em) {
     .topbar .logo {
