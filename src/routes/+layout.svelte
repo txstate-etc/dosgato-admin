@@ -21,6 +21,7 @@
   import '../local/tracking.js'
   import '../normalize.css'
   import '../app.css'
+  import type { IconOrSVG } from '@dosgato/templating'
 
   uiLog.logger = uiConfig.uiInteractionsLogger ?? ((arg: any) => console.log('UI:', arg))
   $: uiLog.screen = $page.route.id ?? undefined
@@ -95,10 +96,20 @@
 
   const labeledIconButtonTarget: { target: string | undefined } = { target: 'Profile-PopupMenu' }
   setContext('LabeledIconButtonTarget', { getTarget: () => labeledIconButtonTarget.target })
+
+  function getLogo (): IconOrSVG | undefined {
+    if (isNotNull(uiConfig.logo)) {
+      if (typeof uiConfig.logo === 'object') return uiConfig.logo
+      else return uiConfig.logo(environmentConfig)
+    }
+  }
 </script>
 
 <svelte:head>
   <title>{environmentTitle} {uiConfig.title ?? 'DG Editing'}</title>
+  {#if uiConfig.favicon}
+    <link rel="icon" href="{typeof uiConfig.favicon === 'string' ? `${uiConfig.favicon}` : uiConfig.favicon(environmentConfig)}">
+  {/if}
 </svelte:head>
 
 {#if data.errObj}
@@ -113,7 +124,7 @@
   <nav>
     <div class="topbar" style:background-image={environmentTitle ? `url('data:image/svg+xml;utf8,<svg style="transform:rotate(45deg)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${(environmentTitle.length + 1) * 10} ${environmentTitle.length * 10}"><text x="0" y="25" fill="%23000" fill-opacity="0.1">${environmentTitle} </text></svg>')` : undefined}>
       <div class="logo">
-        <Icon icon={uiConfig.logo} width={uiConfig.logo?.width} height={uiConfig.logo?.height}/>
+        <Icon icon={getLogo()} width={getLogo()?.width} height={getLogo()?.height}/>
       </div>
       <ul class="topnav">
         {#if $globalStore.access.viewPageManager}<li class:selected={$page.url.pathname.startsWith(`${base}/pages`)}><LabeledIcon href="{base}/pages" icon={fileCodeLight} label="Pages"/></li>{/if}
