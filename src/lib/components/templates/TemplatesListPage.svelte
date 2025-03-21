@@ -17,10 +17,6 @@
   export let type: 'page' | 'component' | 'data'
   export let store: TreeStore<T>
 
-  // export let fetchChildren: (item?: TypedTemplateTreeItem) => Promise<AnyTemplateTreeItem[]>
-
-  // const store = new TreeStore<AnyTemplateTreeItem>(fetchChildren)
-
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
@@ -61,7 +57,7 @@
     { id: 'key', label: 'Key', get: 'key', grow: 4 }
   ]
   if (type !== 'data') {
-    treeHeaders.push({ id: 'restricted', label: 'Restricted', icon: item => item.type === 'template' && !item.universal ? { icon: checkIcon, label: 'Universal' } : undefined, fixed: '6em' })
+    treeHeaders.push({ id: 'restricted', label: 'Restricted', icon: item => item.type === 'template' && !item.universal ? { icon: checkIcon, label: 'Restricted' } : undefined, fixed: '6em' })
   }
 </script>
 
