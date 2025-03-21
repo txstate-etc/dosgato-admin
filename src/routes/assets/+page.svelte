@@ -271,7 +271,7 @@
   </svelte:fragment>
   {#if $assetsStore.showsearch}
     {#if $searchStore.loading || $searchStore.rootItems?.length}
-      <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/assets/' + detail.id) }} responsiveHeaders={handleResponsiveSearchTreeHeaders}
+      <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search asset-tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/assets/' + detail.id) }} responsiveHeaders={handleResponsiveSearchTreeHeaders}
         headers={[
           { label: 'Asset', id: 'image', fixed: '10em', class: item => { return 'image-column' }, render: item => { return isNotNull(item.box) ? `<div class="image-wrapper"><img src="${environmentConfig.renderBase}/.asset/${item.id}/w/400/${item.checksum.substring(0, 12)}/${encodeURIComponent(item.filename)}" width="${item.box.width}" height="${item.box.height}" alt="" style="object-fit: contain; max-height: 100px; max-width: 100%;"/>${item.deleteState === DeleteState.MARKEDFORDELETE ? '<span class="sr-only">asset marked for deletion</span><span class="deleted" aria-hidden="true">Deleted</span>' : ''}</div>` : '' }, icon: item => { if (isNull(item.box)) return { icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : iconForMime(item.mime), label: item.deleteState === DeleteState.MARKEDFORDELETE ? 'Deleted Asset' : undefined } } },
           { label: 'Path', id: 'name', render: item => `<div class="page-name">${item.filename}<div class="page-path">${item.path.split('/').slice(0, -1).join('/')}</div></div><button class="reset search-find-in-tree" type="button" tabindex="-1" onclick="window.dgAssetsFindInAssetTree(this, event)" data-path="${htmlEncode(item.path)}">${findInTreeIconSVG}<span>Find in asset tree</span></button>`, class: item => 'name-column' },
@@ -351,11 +351,12 @@
     object-fit: cover;
   }
 
-  :global(.tree-search){
+  :global(.asset-tree-search){
     height: 120px;
   }
   :global(.name-column) {
     display: flex;
+    align-items: center;
   }
   :global(.tree-cell.image-column .icon) {
     display: flex;
