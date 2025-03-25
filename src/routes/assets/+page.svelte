@@ -252,8 +252,10 @@
   }
 
   function handleResponsiveSearchTreeHeaders (treeWidth: number) {
-    if (treeWidth > 700) {
+    if (treeWidth > 1000) {
       return ['image', 'name', 'size', 'type', 'modified', 'modifiedBy']
+    } else if (treeWidth > 700) {
+      return ['image', 'name', 'size', 'type']
     } else if (treeWidth > 500) {
       return ['image', 'name', 'size']
     } else {
@@ -353,6 +355,9 @@
 
   :global(.asset-tree-search){
     height: 120px;
+  }
+  :global(.asset-tree-search.selected) {
+    height: auto;
   }
   :global(.name-column) {
     display: flex;
