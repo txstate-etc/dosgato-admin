@@ -29,7 +29,7 @@
 <FieldCheckbox path="disabled" boxLabel="Mark entire tag set as inactive." helptext="Deactivation of a full set of tags will remove all function of this tag set. As long as tags are inactive they will not be shown or referenced in any function, internal or external. " />
 <FieldMultiple path="tags" label="Page Tag List" removable reorder confirmDelete="Tag will be permanently removed upon saving this dialog.">
   <FieldIdentifier path="id" />
-  <FieldText path="name" label="Tag Name" maxlength={20} />
+  <FieldText path="name" label="Tag Name" maxlength={38} />
   <FieldCheckbox path="disabled" boxLabel="Inactive" />
 </FieldMultiple>
 <dialog open={showDeleteTagWarning}>
