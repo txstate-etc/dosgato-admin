@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Dialog, FieldSelect, FieldText, FormDialog, expandTreePath, Tree, FieldTagPicker } from '@dosgato/dialog'
+  import { Dialog, FieldSelect, FieldText, FormDialog, expandTreePath, Tree, FieldTagPicker, Button } from '@dosgato/dialog'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
@@ -20,6 +20,8 @@
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import tag from '@iconify-icons/ph/tag'
   import treeStructure from '@iconify-icons/ph/tree-structure'
+  import arrowSquareOut from '@iconify-icons/ph/arrow-square-out'
+  import warningIcon from '@iconify-icons/ph/warning'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
   import { setContext, tick } from 'svelte'
@@ -30,7 +32,7 @@
     api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig,
     UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog,
     ModalContextStore, getSiteIcon, SearchInput, CreateWithPageDialog, findInTreeIconSVG, actionPanelStore,
-    tagClientBySiteId
+    tagClientBySiteId, tagIndicatorIconSVG, globalStore
   } from '$lib'
   import { _store as store, _searchStore as searchStore, _pagesStore as pagesStore, type TypedPageItem } from './+page.js'
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
@@ -116,7 +118,7 @@
       actions: [
         editAction,
         { label: 'Rename', icon: renameIcon, disabled: !page.permissions.move, onClick: () => modalContext.setModal('renamepage') },
-        { label: 'Set Tags', icon: tag, disabled: !page.permissions.update, onClick: () => modalContext.setModal('tagpage') },
+        { label: 'Manage Page Tags', icon: tag, disabled: !page.permissions.update, onClick: () => modalContext.setModal('tagpage') },
         { label: 'Change Template', icon: layout, disabled: !page.permissions.update, onClick: onClickTemplateChange },
         previewAction,
         showVersionsAction
@@ -356,6 +358,15 @@
       return ['name', 'status']
     }
   }
+
+  async function getTagsAndTagsDataroots () {
+    return await Promise.all([
+      api.getUserTagsForPage($activeStore.selectedItems[0].id, true, true),
+      api.getDataRootsByTemplateKey('dosgato-core-tags') // if they can see any tags dataroots, they are allowed to edit tags
+    ])
+  }
+
+  let pageTagsModalOpen = false
 </script>
 
 {#if $pagesStore.showsearch}
@@ -392,7 +403,7 @@
   {:else}
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}
     headers={[
-      { label: 'Path', id: 'name', grow: 4, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) }), render: item => `<div class="page-name">${item.name}</div>` },
+      { label: 'Path', id: 'name', grow: 4, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) }), render: item => `<div class="page-name">${item.name}</div>${item.userTags?.length ? `<div class="tag-indicator">${tagIndicatorIconSVG}<span class="sr-only">has page tags</span></div>` : ''}` },
       { label: 'Title', id: 'title', grow: 3, get: 'title' },
       { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
       { label: 'Status', id: 'status', fixed: '4em', icon: item => ({ icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' }), class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
@@ -423,16 +434,31 @@
     <FieldText path='name' label='Name' required />
   </FormDialog>
 {:else if $modalContext.modal === 'tagpage'}
-  {#await api.getUserTagsForPage($activeStore.selectedItems[0].id, true, true) then tags}
+  {#await getTagsAndTagsDataroots() then [tags, dataroots]}
     <FormDialog
       tagClient={tagClientBySiteId}
       submit={onTagPage}
       name='tagpage'
-      title='Set Page Tags'
+      title='Select Page Tags'
       preload={{ tags }}
       on:escape={modalContext.onModalEscape}
       on:saved={onTagPageComplete}>
-      <FieldTagPicker path='tags' label='Tags' target={$activeStore.selectedItems[0].site.id} />
+      {#if $globalStore.access.viewDataManager && dataroots.length > 0}
+        <Button class="manage-tags" icon={arrowSquareOut} on:click={() => { pageTagsModalOpen = true }}>Manage Tags in Data</Button>
+        {#if pageTagsModalOpen}
+          <Dialog
+            title='Leave Tag Selection to Edit Page Tags?'
+            continueText='Continue to Data'
+            cancelText='Go Back to Tag Selection'
+            continueIcon={arrowSquareOut}
+            icon={warningIcon}
+            on:continue={async () => { await goto(base + '/data/dosgato-core-tags') }}
+            on:escape={() => { pageTagsModalOpen = false }}>
+            Page tag are managed in the Data section of the CMS. Any changes made in the previous window may not be saved. Do you wish to continue?
+          </Dialog>
+        {/if}
+      {/if}
+      <FieldTagPicker path='tags' label='Tags' target={$activeStore.selectedItems[0].site.id} helptext="Tap the field below to open dropdown or begin typing to search for tags." />
     </FormDialog>
   {/await}
 {:else if $modalContext.modal === 'changetemplate'}
@@ -538,6 +564,14 @@
   :global(.tree-node[tabindex="0"]) :global(.page-name) {
     word-wrap: break-word;
     white-space: normal;
+  }
+
+  :global(.tag-indicator) {
+    margin-left: 1.5em;
+  }
+
+  :global(.manage-tags) {
+    margin-top: 1em;
   }
 
   .searching {

@@ -35,6 +35,9 @@ site {
   id
   launchState
 }
+userTags {
+  id
+}
 `
 
 export enum DeleteState {
@@ -77,6 +80,9 @@ export interface TreePage {
     id: string
     launchState: LaunchState
   }
+  userTags: {
+    id: string
+  }[]
 }
 
 export type PagetreeTypes = 'PRIMARY' | 'SANDBOX' | 'ARCHIVE'
