@@ -449,7 +449,7 @@
           <Dialog
             title='Leave Tag Selection to Edit Page Tags?'
             continueText='Continue to Data'
-            cancelText='Go Back to Tag Selection'
+            cancelText='Go Back'
             continueIcon={arrowSquareOut}
             icon={warningIcon}
             on:continue={async () => { await goto(base + '/data/dosgato-core-tags') }}
