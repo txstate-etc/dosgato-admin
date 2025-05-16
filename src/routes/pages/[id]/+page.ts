@@ -23,5 +23,5 @@ export const load: Load<{ id: string }> = async ({ params, fetch }) => {
     for (const pageId of toBeFreed.values()) pageEditorStore.free(pageId)
     toBeFreed.clear()
   }, 500)
-  return { page, pagetemplate }
+  return { page, pagetemplate, navigating:false }
 }

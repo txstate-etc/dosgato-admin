@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto } from '$app/navigation'
+  import { beforeNavigate, goto, onNavigate } from '$app/navigation'
   import { base } from '$app/paths'
   import { Checkbox, Dialog, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
   import type { UITemplate } from '@dosgato/templating'
@@ -20,14 +20,25 @@
   import { statusIcon } from './helpers'
   import VersionView from './VersionView.svelte'
 
-  export let data: { page: PageEditorPage, pagetemplate: EnhancedUITemplate }
-  $: ({ page, pagetemplate } = data)
+  export let data: { page: PageEditorPage, pagetemplate: EnhancedUITemplate, navigating: boolean }
+  $: ({ page, pagetemplate, navigating } = data)
   $: pageEditorStore.open(page)
   $: chooserClient = new ChooserClient(page.pagetree.id)
   $: tagClient = new TagClientByLink(page.pagetree.id)
   let iframe: HTMLIFrameElement
   let panelelement: HTMLElement
   $: editable = $editorStore.page.permissions.update
+  let startTime, iframeLoaded=false, passLoadingTimeThreshold=false
+  const LOADING_TIME_THRESHOLD = 2000
+
+  function checkTime() {
+    const loadingTime = (new Date()).getTime() - startTime
+    if(loadingTime > LOADING_TIME_THRESHOLD) {
+      passLoadingTimeThreshold = true
+      return
+    }
+    window.setTimeout(checkTime,  LOADING_TIME_THRESHOLD);
+  }
 
   function getActions (selectedPath?: string, ..._: any[]): (ActionPanelAction | ActionPanelGroup)[] {
     const previewGroup: ActionPanelGroup = {
@@ -236,19 +247,33 @@
   }
 
   onMount(() => {
+    startTime = (new Date()).getTime()
     if (location.hash === '#versions') {
       pageEditorStore.versionsShowModal()
       history.replaceState(null, '', ' ')
     }
+    checkTime()
+  })
+
+  // handle clicks on diff tab
+  beforeNavigate (() => {
+    navigating = true
+  })
+
+  // handle clicks on the same tab
+  onNavigate (() => {
+    navigating = false
   })
 
   async function iframeload () {
+    iframeLoaded = true
     // notify the page about the last known scroll and bar selection state so it can load it up nicely
     iframe.contentWindow?.postMessage({ scrollTop: $editorStore.scrollY ?? 0, selectedPath: `${$editorStore.selectedPath}${addToTop ? '.0' : ''}`, state: $editorStore.state }, '*')
     addToTop = false
   }
   $: status = $editorStore.page.published ? ($editorStore.page.hasUnpublishedChanges ? 'modified' as const : 'published' as const) : 'unpublished' as const
-  $: iframesrc = editable && !$editorStore.previewing
+  // $: iframesrc = navigating ? 'about:blank': editable &&
+  $: iframesrc = navigating ? `${environmentConfig.renderBase}/.spinner` : editable &&!$editorStore.previewing
     ? `${environmentConfig.renderBase}/.edit${$pageStore.path}`
     : (
         $editorStore.previewing?.fromVersion?.version
@@ -307,6 +332,12 @@
         </div>
       {/if}
     </div>
+    <!-- show the loading spinner when iframe loading time > threshold -->
+    {#if passLoadingTimeThreshold && !iframeLoaded}
+      <div id="spinner">
+        <div class="loader" />
+      </div>
+    {/if}
     <iframe use:messages src={iframesrc} title="page preview for editing" on:load={iframeload} class:devicemode={editorMaxWidth != null} style:max-width={editorMaxWidth}></iframe>
     <div slot="bottom" class="status {status}" let:panelHidden><Icon width="1.1em" inline icon={statusIcon[status]} hiddenLabel={panelHidden ? titleCase(status) : undefined}/>{#if !panelHidden}<span>{titleCase(status)}</span>{/if}</div>
   </ActionPanel>
@@ -544,4 +575,30 @@
     max-width: 100em;
     margin: 0 auto;
   }
+  .loader {
+  border: 6px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 6px solid blue;
+  border-right: 6px solid green;
+  border-bottom: 6px solid red;
+  border-left: 6px solid pink;
+  width: 30px;
+  height: 30px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+}
+
+#spinner {
+  transform: translate(50%, 160px);
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 </style>
