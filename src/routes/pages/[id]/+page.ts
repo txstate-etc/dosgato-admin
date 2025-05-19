@@ -11,7 +11,7 @@ function getPageIcon (type: string) {
   return type === 'PRIMARY' ? editPageIcon : (type === 'SANDBOX' ? editSandboxPageIcon : editArchivePageIcon)
 }
 
-export const load: Load<{ id: string }> = async ({ params, fetch }) => {
+export const load: Load<{ id: string }> = async ({ params }) => {
   await templateRegistry.enhanceInfo()
   const page = await api.getEditorPage(params.id)
   if (!page) throw error(404)
@@ -23,5 +23,5 @@ export const load: Load<{ id: string }> = async ({ params, fetch }) => {
     for (const pageId of toBeFreed.values()) pageEditorStore.free(pageId)
     toBeFreed.clear()
   }, 500)
-  return { page, pagetemplate, navigating:false }
+  return { page, pagetemplate, loaded: true }
 }
