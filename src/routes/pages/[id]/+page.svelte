@@ -246,7 +246,12 @@
   // when the editor navigates to another page tab, we need to reset the iframe or
   // else the new tab will activate while the old iframe is stuck on the old page
   let navigating = true
-  beforeNavigate(() => { navigating = true; loaded = false })
+  beforeNavigate(navigation => {
+    if (navigation.to?.route.id === navigation.from?.route.id && navigation.to?.params?.id !== navigation.from?.params?.id) {
+      navigating = true
+      loaded = false
+    }
+  })
   async function iframeload () {
     if (navigating) {
       navigating = false
