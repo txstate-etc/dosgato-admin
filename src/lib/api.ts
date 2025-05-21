@@ -1118,12 +1118,12 @@ class API {
     return globalGroups.concat(siteGroups).filter(g => !g.data.disabled).map(g => ({ id: g.id, title: g.data.title, excludeTitle: g.data.excludeTitle, internal: !!g.data.internal, tags: g.data.tags.filter(t => !t.disabled).map(t => ({ ...pick(t, 'id', 'name') })) }))
   }
 
-  async setUserTags (pageId: string, tagIds: string[]) {
+  async setUserTags (pageIds: string[], tagIds: string[], includeChildren?: boolean) {
     const { replaceTagsOnPage } = await this.query<{ replaceTagsOnPage: { success: boolean } }>(`
-      mutation replaceTagsOnPage ($pageId: ID!, $tagIds: [ID!]!) {
-        replaceTagsOnPage(pageId: $pageId, tagIds: $tagIds) { success }
+      mutation replaceTagsOnPage ($pageIds: [ID!]!, $tagIds: [ID!]!, $includeChildren: Boolean) {
+        replaceTagsOnPage(pageIds: $pageIds, tagIds: $tagIds, includeChildren: $includeChildren) { success }
       }
-    `, { pageId, tagIds })
+    `, { pageIds, tagIds, includeChildren })
     return replaceTagsOnPage.success
   }
 }

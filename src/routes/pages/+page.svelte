@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Dialog, FieldSelect, FieldText, FormDialog, expandTreePath, Tree, FieldTagPicker, Button } from '@dosgato/dialog'
+  import { Dialog, FieldSelect, FieldText, FormDialog, expandTreePath, Tree, FieldTagPicker, Button, FieldCheckbox } from '@dosgato/dialog'
   import cursorMove from '@iconify-icons/mdi/cursor-move'
   import contentCopy from '@iconify-icons/mdi/content-copy'
   import contentPaste from '@iconify-icons/mdi/content-paste'
@@ -25,7 +25,7 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
   import { setContext, tick } from 'svelte'
-  import { htmlEncode, isBlank, isNotBlank } from 'txstate-utils'
+  import { htmlEncode, isBlank, isNotBlank, randomid } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import {
@@ -41,6 +41,7 @@
   import { moveIntoIcon } from './moveintoicon'
   import { moveAboveIcon } from './moveaboveicon'
   import { statusIcon } from './[id]/helpers'
+  import Warning from './Warning.svelte'
 
   $: activeStore = $pagesStore.showsearch ? searchStore : store
 
@@ -172,6 +173,7 @@
   function multipageactions (pages: TypedPageItem[]) {
     if (!pages?.length) return []
     const actions: ActionPanelAction[] = []
+    actions.push({ label: 'Manage Page Tags (Batch)', icon: tag, disabled: !pages.every(p => p.permissions.update), onClick: () => modalContext.setModal('tagpage') })
     if (pages.every(p => p.deleteState === DeleteState.NOTDELETED)) {
       actions.push({ label: 'Delete Pages', icon: deleteOutline, disabled: pages.some(p => !p.permissions.delete), onClick: () => { void countPages('deletepage') } })
     }
@@ -243,8 +245,12 @@
     modalContext.reset()
   }
 
-  async function onTagPage (state: { tags: string[] }) {
-    const success = await api.setUserTags($activeStore.selectedItems[0].id, state.tags)
+  async function onTagPage (state: { tags: string[], tagChildren?: boolean }) {
+    let includeChildren = false
+    if ($activeStore.selectedItems.length === 1 && state.tagChildren) {
+      includeChildren = true
+    }
+    const success = await api.setUserTags($activeStore.selectedItems.map(d => d.id), state.tags, includeChildren)
     return { success, messages: [], data: state }
   }
 
@@ -361,7 +367,8 @@
 
   async function getTagsAndTagsDataroots () {
     return await Promise.all([
-      api.getUserTagsForPage($activeStore.selectedItems[0].id, true, true),
+      // if they are tagging multiple pages, don't preload tags in the Manage Page Tags dialog
+      $store.selectedItems.length > 1 ? Promise.resolve([]) : api.getUserTagsForPage($activeStore.selectedItems[0].id, true, true),
       api.getDataRootsByTemplateKey('dosgato-core-tags') // if they can see any tags dataroots, they are allowed to edit tags
     ])
   }
@@ -458,7 +465,13 @@
           </Dialog>
         {/if}
       {/if}
+      {#if $activeStore.selected.size === 1}
+        <FieldCheckbox path='tagChildren' boxLabel='Apply tag selection to this page and its children' defaultValue={false} helptext="If child page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." />
+      {/if}
       <FieldTagPicker path='tags' label='Tags' target={$activeStore.selectedItems[0].site.id} helptext="Tap the field below to open dropdown or begin typing to search for tags." />
+      {#if $activeStore.selected.size > 1}
+        <Warning message="If page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." open={true} />
+      {/if}
     </FormDialog>
   {/await}
 {:else if $modalContext.modal === 'changetemplate'}
