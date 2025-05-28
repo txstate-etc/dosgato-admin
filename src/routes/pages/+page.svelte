@@ -468,9 +468,9 @@
       {#if $activeStore.selected.size === 1}
         <FieldCheckbox path='tagChildren' boxLabel='Apply tag selection to this page and its children' defaultValue={false} helptext="If child page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." />
       {/if}
-      <FieldTagPicker path='tags' label='Tags' target={$activeStore.selectedItems[0].site.id} helptext="Tap the field below to open dropdown or begin typing to search for tags." />
+      <FieldTagPicker path='tags' label='Tags' target={$activeStore.selectedItems[0].site.id} helptext="Tap the field below to open dropdown or begin typing to search for tags." showTitleInDialog extradescid="multpagetagwarning"/>
       {#if $activeStore.selected.size > 1}
-        <Warning message="If page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." open={true} />
+        <Warning messageId="multpagetagwarning" message="If page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." open={true} />
       {/if}
     </FormDialog>
   {/await}
