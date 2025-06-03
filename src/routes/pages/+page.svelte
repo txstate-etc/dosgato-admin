@@ -449,7 +449,8 @@
       title='Select Page Tags'
       preload={{ tags }}
       on:escape={modalContext.onModalEscape}
-      on:saved={onTagPageComplete}>
+      on:saved={onTagPageComplete} let:data>
+
       {#if $globalStore.access.viewDataManager && dataroots.length > 0}
         <Button class="manage-tags" icon={arrowSquareOut} on:click={() => { pageTagsModalOpen = true }}>Manage Tags in Data</Button>
         {#if pageTagsModalOpen}
@@ -466,9 +467,12 @@
         {/if}
       {/if}
       {#if $activeStore.selected.size === 1}
-        <FieldCheckbox path='tagChildren' boxLabel='Apply tag selection to this page and its children' defaultValue={false} helptext="If child page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." />
+        <FieldCheckbox path='tagChildren' boxLabel='Apply tag selection to this page and its child page(s)' defaultValue={false} extradescid="tagchildwarning" />
+        {#if !!data.tagChildren}
+          <Warning messageId="tagchildwarning" message="If child page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." open={true} />
+        {/if}
       {/if}
-      <FieldTagPicker path='tags' label='Tags' target={$activeStore.selectedItems[0].site.id} helptext="Tap the field below to open dropdown or begin typing to search for tags." showTitleInDialog extradescid="multpagetagwarning"/>
+      <FieldTagPicker path='tags' label='Tag Selector' target={$activeStore.selectedItems[0].site.id} helptext="Tap the field below to open dropdown or begin typing to search for tags." showTitleInDialog extradescid="multpagetagwarning"/>
       {#if $activeStore.selected.size > 1}
         <Warning messageId="multpagetagwarning" message="If page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." open={true} />
       {/if}
