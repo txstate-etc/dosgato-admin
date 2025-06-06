@@ -119,7 +119,7 @@
       actions: [
         editAction,
         { label: 'Rename', icon: renameIcon, disabled: !page.permissions.move, onClick: () => modalContext.setModal('renamepage') },
-        { label: 'Manage Page Tags', icon: tag, disabled: !page.permissions.update, onClick: () => modalContext.setModal('tagpage') },
+        { label: 'Apply Page Tags', icon: tag, disabled: !page.permissions.update, onClick: () => modalContext.setModal('tagpage') },
         { label: 'Change Template', icon: layout, disabled: !page.permissions.update, onClick: onClickTemplateChange },
         previewAction,
         showVersionsAction
@@ -173,7 +173,7 @@
   function multipageactions (pages: TypedPageItem[]) {
     if (!pages?.length) return []
     const actions: ActionPanelAction[] = []
-    actions.push({ label: 'Manage Page Tags (Batch)', icon: tag, disabled: !pages.every(p => p.permissions.update), onClick: () => modalContext.setModal('tagpage') })
+    actions.push({ label: 'Apply Page Tags (Bulk)', icon: tag, disabled: !pages.every(p => p.permissions.update), onClick: () => modalContext.setModal('tagpage') })
     if (pages.every(p => p.deleteState === DeleteState.NOTDELETED)) {
       actions.push({ label: 'Delete Pages', icon: deleteOutline, disabled: pages.some(p => !p.permissions.delete), onClick: () => { void countPages('deletepage') } })
     }
@@ -367,7 +367,7 @@
 
   async function getTagsAndTagsDataroots () {
     return await Promise.all([
-      // if they are tagging multiple pages, don't preload tags in the Manage Page Tags dialog
+      // if they are tagging multiple pages, don't preload tags in the Apply Page Tags dialog
       $store.selectedItems.length > 1 ? Promise.resolve([]) : api.getUserTagsForPage($activeStore.selectedItems[0].id, true, true),
       api.getDataRootsByTemplateKey('dosgato-core-tags') // if they can see any tags dataroots, they are allowed to edit tags
     ])
@@ -446,11 +446,21 @@
       tagClient={tagClientBySiteId}
       submit={onTagPage}
       name='tagpage'
-      title='Select Page Tags'
+      title={`Apply Page Tags${$activeStore.selected.size > 1 ? ' (Bulk)' : ''}`}
       preload={{ tags }}
       on:escape={modalContext.onModalEscape}
       on:saved={onTagPageComplete} let:data>
-
+      <p class="tag-info">Use tags to apply metadata to your pages, improving organization, searchability, and SEO.</p>
+      <FieldTagPicker path='tags' label='Tag Selector' target={$activeStore.selectedItems[0].site.id} helptext="Tap the field below to open dropdown or begin typing to search for tags." showTitleInDialog extradescid={$activeStore.selected.size > 1 ? 'multpagetagwarning' : ''}/>
+      {#if $activeStore.selected.size > 1}
+        <Warning messageId="multpagetagwarning" message="If page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." open={true} />
+      {/if}
+      {#if $activeStore.selected.size === 1}
+        <FieldCheckbox path='tagChildren' boxLabel='Apply tag selection to this page and its child page(s)' defaultValue={false} extradescid="tagchildwarning" />
+        {#if !!data.tagChildren}
+          <Warning messageId="tagchildwarning" message="If child page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." open={true} />
+        {/if}
+      {/if}
       {#if $globalStore.access.viewDataManager && dataroots.length > 0}
         <Button class="manage-tags" icon={arrowSquareOut} on:click={() => { pageTagsModalOpen = true }}>Manage Tags in Data</Button>
         {#if pageTagsModalOpen}
@@ -465,16 +475,6 @@
             Page tag are managed in the Data section of the CMS. Any changes made in the previous window may not be saved. Do you wish to continue?
           </Dialog>
         {/if}
-      {/if}
-      {#if $activeStore.selected.size === 1}
-        <FieldCheckbox path='tagChildren' boxLabel='Apply tag selection to this page and its child page(s)' defaultValue={false} extradescid="tagchildwarning" />
-        {#if !!data.tagChildren}
-          <Warning messageId="tagchildwarning" message="If child page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." open={true} />
-        {/if}
-      {/if}
-      <FieldTagPicker path='tags' label='Tag Selector' target={$activeStore.selectedItems[0].site.id} helptext="Tap the field below to open dropdown or begin typing to search for tags." showTitleInDialog extradescid="multpagetagwarning"/>
-      {#if $activeStore.selected.size > 1}
-        <Warning messageId="multpagetagwarning" message="If page(s) in your selection already have tags applied, selections saved here will replace all previously applied tags." open={true} />
       {/if}
     </FormDialog>
   {/await}
@@ -600,5 +600,12 @@
   }
   .emptysearch li {
     padding: 0.5em;
+  }
+  .tag-info {
+    color: #595959;
+    font-size: 0.9em;
+  }
+  :global(button.manage-tags) {
+    margin-bottom: 2em;
   }
 </style>
