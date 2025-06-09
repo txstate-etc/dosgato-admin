@@ -472,7 +472,7 @@
             icon={warningIcon}
             on:continue={async () => { await goto(base + '/data/dosgato-core-tags') }}
             on:escape={() => { pageTagsModalOpen = false }}>
-            Page tag are managed in the Data section of the CMS. Any changes made in the previous window may not be saved. Do you wish to continue?
+            Page tags are managed in the Data section of the CMS. Any changes made in the previous window may not be saved. Do you wish to continue?
           </Dialog>
         {/if}
       {/if}
