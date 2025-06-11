@@ -16,7 +16,7 @@
   import { DateTime } from 'luxon'
   import { onMount, setContext } from 'svelte'
   import { get, isNotNull, keyby, printIf, titleCase } from 'txstate-utils'
-  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, type PageEditorPage, type EnhancedUITemplate, ChooserClient, type ActionPanelGroup, api, VersionHistory, TagClientByLink } from '$lib'
+  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, schemaVersion, ChooserClient, type ActionPanelGroup, api, VersionHistory, TagClientByLink } from '$lib'
   import { statusIcon } from './helpers'
   import VersionView from './VersionView.svelte'
   import type { PageData } from './$types'
@@ -263,7 +263,7 @@
   }
   $: status = $editorStore.page.published ? ($editorStore.page.hasUnpublishedChanges ? 'modified' as const : 'published' as const) : 'unpublished' as const
   $: iframesrc = navigating || !loaded
-    ? `${environmentConfig.renderBase}/.spinner`
+    ? `${environmentConfig.renderBase}/.editing/${schemaVersion}/spinner.html`
     : editable && !$editorStore.previewing
       ? `${environmentConfig.renderBase}/.edit${$pageStore.path}`
       : (
