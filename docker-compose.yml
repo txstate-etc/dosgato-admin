@@ -39,7 +39,8 @@ services:
       - ../dosgato/test/files/blankpdf.pdf:/files/storage/P/K/BUoghpogATqmK14ry1wqKsP-e-S8GVqHKuCxH7k1k
       - ../dosgato/test/files/bobcat.jpg:/files/storage/Q/7/HN1moFtRWxE_gLyvxM8B2sK5CrjB3482LttjgbWME
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
   dosgato-resizer:
     image: registry.its.txstate.edu/dosgato-resizer:qual
     environment:
@@ -84,6 +85,12 @@ services:
       MYSQL_PASSWORD: password
     volumes:
       - dosgatodb:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "$$MYSQL_USER", "--password=$$MYSQL_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 6
+
 volumes:
   dosgatodb: {}
   dosgatofiles: {}

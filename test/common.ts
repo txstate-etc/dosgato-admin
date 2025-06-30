@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test"
+import type { Page } from '@playwright/test'
 
 export async function loadAdminPages(page: Page){
   await page.goto('/.admin/pages')

@@ -1,102 +1,74 @@
 services:
-  dosgato-admin-test:
+  proxy:
+    image: nginx:alpine
+    attach: false
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/nginx.conf
+  ui:
     build:
       context: .
-      dockerfile: Dockerfile
-    ports:
-      - 127.0.0.1:3000:80
     attach: false
     environment:
-      API_BASE: /.api
-      RENDER_BASE: ""
-      AUTH_REDIRECT: http://fakeauth-test/login?clientId=dosgato-admin-test
-      ADMIN_ALLOW_HOST_REGEX: 'dosgato-proxy-test|localhost'
-      TRACING_SERVER: http://localhost:8200
-    volumes:
-      - ./src:/usr/app/src
-      - ./static:/usr/app/static
-      - ./svelte.config.js:/usr/app/svelte.config.js
-      - ./vite.config.js:/usr/app/vite.config.js
-  dosgato-api-test:
+      API_BASE: http://proxy/.api
+      RENDER_BASE: http://proxy
+      AUTH_REDIRECT: http://fakeauth/login?clientId=dosgato-admin&returnUrl=http%3A%2F%2Fproxy%2F.admin
+      ADMIN_ALLOW_HOST_REGEX: 'proxy|ui'
+  api:
     build:
       context: ../dosgato
-      dockerfile: Dockerfile.dev
     attach: false
-    ports:
-      - 127.0.0.1:8080:80
-      - 127.0.0.1:9229:9229
+    depends_on:
+      mysql:
+        condition: service_healthy
     environment:
       NODE_ENV: development
       TZ: America/Chicago
       MYSQL_USER: dosgato
       MYSQL_PASS: password
       MYSQL_DATABASE: dosgatodev
-      MYSQL_HOST: mysql-test
+      MYSQL_HOST: mysql
       RESET_DB_ON_STARTUP: 'true'
-      JWT_TRUSTED_ISSUERS: '[{ "iss": "unified-auth", "url": "http://fakeauth-test/jwks" }, { "iss": "dg-render", "secret": "rendertoken" }]'
-    volumes:
-      - dosgatofilestest:/files
-      - ../dosgato/src:/usr/app/src
-      - ../dosgato/testserver:/usr/app/testserver
-      - ../dosgato/bootstrap:/bootstrap
-    depends_on:
-      - mysql-test
-  dosgato-render-test:
+      JWT_TRUSTED_ISSUERS: '[{ "iss": "unified-auth", "url": "http://fakeauth/jwks" }, { "iss": "dg-render", "secret": "rendertoken" }]'
+  render:
     build:
       context: ../dosgato-render
-    ports:
-      - 127.0.0.1:3002:80
-      - 127.0.0.1:9230:9229
-
     attach: false
     environment:
       NODE_ENV: development
       DOSGATO_RENDER_JWT_SECRET: rendertoken
-      DOSGATO_API_BASE: http://dosgato-api-test
-      DOSGATO_ADMIN_BASE: http://dosgato-admin-test/.admin
-    volumes:
-      - ../dosgato-render/src:/usr/app/src
-      - ../dosgato-render/test:/usr/app/test
-    depends_on:
-      - dosgato-api-test
-  dosgato-proxy-test:
-    build:
-      dockerfile: proxy/Dockerfile
-      context: .
-    attach: false
-    ports:
-      - 80:80
-  fakeauth-test:
+      DOSGATO_API_BASE: http://proxy/.api
+      DOSGATO_ADMIN_BASE: http://proxy/.admin
+  fakeauth:
     image: registry.its.txstate.edu/unified-auth-stub:dev
-    ports:
-      - 127.0.0.1:3001:80
-  mysql-test:
+    attach: false
+  mysql:
     image: mariadb
     command: --max_allowed_packet=32505856
-    ports:
-      - 127.0.0.1:3306:3306
+    attach: false
     environment:
       MYSQL_ROOT_PASSWORD: secret
       MYSQL_DATABASE: dosgatodev
       MYSQL_USER: dosgato
       MYSQL_PASSWORD: password
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      start_period: 1m
+      start_interval: 10s
+      interval: 1m
+      timeout: 5s
+      retries: 3
     volumes:
       - dosgatodbtest:/var/lib/mysql
-  dosgato-e2e-test:
+  testing-container:
      build:
-       context: .
-       dockerfile: ./tests/Dockerfile.test
-     ports:
-       - 9323:9323
+       context: test
+     attach: true
      environment:
-       API_BASE: http://dosgato-proxy-test/.api
-       RENDER_BASE: http://dosgato-proxy-test
-       AUTH_REDIRECT: http://fakeauth-test/login?clientId=dosgato-admin-test&returnUrl=http%3A%2F%2Fdosgato-proxy-test%2F%2Eadmin
-       DOSGATO_ADMIN_BASE: http://dosgato-proxy-test/.admin
+       API_BASE: http://proxy/.api
+       RENDER_BASE: http://proxy
+       DOSGATO_ADMIN_BASE: http://proxy/.admin
      volumes:
-       - ./tests/.auth:/app/tests/.auth
-       - ./tests/artifacts:/app/tests/artifacts
-       - ./tests/report:/app/tests/report
+       - ./test/test-results:/test-results
 volumes:
   dosgatodbtest: {}
   dosgatofilestest: {}

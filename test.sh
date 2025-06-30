@@ -1,17 +1,9 @@
 
-# making sure it is in the directory where test.sh is saved
-cd "`dirname "$0"`"
-
-docker-compose -f docker-compose.test.yml down
-
-#clean previous run data
-rm -r ./tests/.auth
-rm -r ./tests/artifacts
-rm -r ./tests/report
+docker-compose -p dosgato-admin-test -f docker-compose.test.yml down -v
 
 override=''
 if [ -e docker-compose.test.override.yml ]; then
   override='-f docker-compose.test.override.yml'
 fi
 
-docker-compose -f docker-compose.test.yml $override up --build --abort-on-container-exit --exit-code-from dosgato-e2e-test
+docker-compose -p dosgato-admin-test -f docker-compose.test.yml $override up --build --abort-on-container-exit --exit-code-from testing-container
