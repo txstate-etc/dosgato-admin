@@ -9,7 +9,7 @@ COPY vite.config.js ./
 COPY tsconfig.json ./
 COPY src src
 
-RUN npm --quiet install
+RUN npm ci
 RUN echo "export const schemaVersion = '$(date +"%Y%m%d%H%M%S")'" > src/lib/schemaversion.ts
 RUN npm run build
 

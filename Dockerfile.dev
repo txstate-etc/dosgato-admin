@@ -9,5 +9,5 @@ COPY vite.config.js ./
 COPY tsconfig.json ./
 COPY src src
 
-RUN npm --quiet install
-CMD npm run dev
+RUN npm ci
+CMD ["npm", "run", "dev"]
