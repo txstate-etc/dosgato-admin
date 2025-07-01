@@ -17,7 +17,6 @@ const config: PlaywrightTestConfig = {
 	},
 	testDir: 'tests',
 	testMatch: /.+\.ts/,
-	workers: 1,
 	projects: [
 		{
 			name: 'chromium',

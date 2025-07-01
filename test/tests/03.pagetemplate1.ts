@@ -2,7 +2,7 @@ import { locateEditFrame } from '../common'
 import { test, expect } from '../fixtures'
 
 test.beforeEach(async ({ adminPage }) => {
-  await adminPage.goto('/.admin/pages/1')
+  await adminPage.goto('/.admin/pages/2')
   ;(await locateEditFrame(adminPage)).getByRole('button', { name: 'Add main Content' }).click()
 })
 
@@ -35,16 +35,17 @@ test.describe('pagetemplate1 contents', () => {
       await adminPage.getByLabel('Title').fill('Text and Image Title')
       await adminPage.getByLabel('Rich Text').fill('Where is rich text tool bars')
       await adminPage.getByRole('button', { name: 'Select Image' }).click()
-      await adminPage.getByRole('treeitem', { name: 'site1 up down to navigate , right arrow to show children' }).locator('svg').nth(1).click()
+      await adminPage.getByRole('treeitem', { name: /\bsite1\b/ }).click()
       await adminPage.getByText('bobcat').click()
       await adminPage.getByRole('button', { name: 'Choose' }).click()
       await adminPage.getByRole('button', { name: 'Select Page' }).click()
-      await adminPage.getByText('bs-site').click()
+      await adminPage.getByRole('treeitem', { name: /\bsite1\b/ }).click()
       await adminPage.getByRole('button', { name: 'Choose' }).click()
       await adminPage.getByRole('button', { name: 'Save' }).click()
-      await expect(locateEditFrame(adminPage).getByRole('heading', { name: 'Text and Image Title' }).last()).toBeVisible()
-      await expect(locateEditFrame(adminPage).getByText('Where is rich text tool bars').last()).toBeVisible()
-      await expect(locateEditFrame(adminPage).getByRole('img').last()).toBeVisible()
+      const editFrame = locateEditFrame(adminPage)
+      await expect(editFrame.getByRole('heading', { name: 'Text and Image Title' }).last()).toBeVisible()
+      await expect(editFrame.getByText('Where is rich text tool bars').last()).toBeVisible()
+      await expect(editFrame.getByRole('img').last()).toBeVisible()
     })
   })
   test.describe('containers', () => {
