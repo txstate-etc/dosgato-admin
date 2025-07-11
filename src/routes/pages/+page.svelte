@@ -109,7 +109,7 @@
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) {
       createDestroy.actions.push(
         { label: 'Restore Page', icon: deleteRestore, disabled: !page.permissions.undelete, onClick: () => modalContext.setModal('undeletepage') },
-        { label: 'Restore incl. Subpages', icon: deleteRestore, disabled: !page.permissions.undelete || !page.hasChildren, onClick: () => modalContext.setModal('undeletewithsubpages') },
+        { label: 'Restore incl. Subpages', icon: deleteRestore, disabled: !page.permissions.undelete || !page.hasChildren, onClick: () => { void countPages('undeletewithsubpages') } },
         { label: 'Finalize Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { void countPages('publishdelete') } }
       )
     }
@@ -292,7 +292,6 @@
   let pagesToDeleteCount: number | undefined = undefined
   async function countPages (modal: Modals) {
     pagesToDeleteCount = await api.getDeletePageCount($activeStore.selectedItems.map(page => page.id))
-    console.log('setting modal to ' + modal)
     modalContext.setModal(modal)
   }
 
