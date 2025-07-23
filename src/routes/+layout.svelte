@@ -39,11 +39,19 @@
   }
 
   const profileItems: PopupMenuItem[] = [
+    ...(uiConfig.profileMenuLinks ?? []).map(link => ({
+      value: link.url,
+      label: link.label,
+      icon: link.icon
+    })),
     { value: 'Logout' }
   ]
 
   function onProfileChange (e: any) {
-    if (e.detail.value === 'Logout') {
+    const item = e.detail as PopupMenuItem
+    if (!item) return
+    uiLog.log({ eventType: 'ProfileMenu', action: item.label ?? item.value }, item.value)
+    if (item.value === 'Logout') {
       const token = sessionStorage.getItem('token')
       if (token) {
         sessionStorage.setItem('token', '')
@@ -53,6 +61,8 @@
           location.reload()
         }
       }
+    } else if (item.value) {
+      void goto(item.value)
     }
   }
 
