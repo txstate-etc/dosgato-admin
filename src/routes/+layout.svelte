@@ -3,6 +3,7 @@
   import caretRightFill from '@iconify-icons/ph/caret-right-fill'
   import closeThick from '@iconify-icons/mdi/close-thick'
   import copySimpleLight from '@iconify-icons/ph/copy-simple-light'
+  import doorOpenIcon from '@iconify-icons/ph/door-open'
   import dotsThree from '@iconify-icons/ph/dots-three'
   import databaseLight from '@iconify-icons/ph/database-light'
   import fileCodeLight from '@iconify-icons/ph/file-code-light'
@@ -38,14 +39,16 @@
     void goto(e.detail.value)
   }
 
-  const profileItems: PopupMenuItem[] = [
+  const profileItems: (PopupMenuItem & { icon?: IconOrSVG })[] = [
     ...(uiConfig.profileMenuLinks ?? []).map(link => ({
       value: link.url,
       label: link.label,
       icon: link.icon
     })),
-    { value: 'Logout' }
+    { value: 'Logout', icon: doorOpenIcon }
   ]
+
+  const profileIcons = profileItems.reduce<Record<string, IconOrSVG | undefined>>((acc, item) => ({ ...acc, [item.value]: item.icon }), {})
 
   function onProfileChange (e: any) {
     const item = e.detail as PopupMenuItem
@@ -151,8 +154,20 @@
         {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}<ScreenReaderOnly>Application Actions</ScreenReaderOnly>
         <Icon icon={menuDown} inline />
       </button>
-      <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
-      <PopupMenu usemenurole buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} />
+      <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} let:item let:label>
+        {@const icon = profileIcons[item.value]}
+        {#if icon}
+          <Icon icon={icon} inline />
+        {/if}
+        {label}
+      </PopupMenu>
+      <PopupMenu usemenurole buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} let:item let:label>
+        {@const icon = profileIcons[item.value]}
+        {#if icon}
+          <Icon icon={icon} inline />
+        {/if}
+        {label}
+      </PopupMenu>
     </div>
     {#if $currentSubNav}
       <div class="subnav">
