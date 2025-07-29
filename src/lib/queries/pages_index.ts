@@ -122,7 +122,7 @@ export const GET_TREE_PAGES = `
 
 export const GET_SEARCH_PAGES = `
   query getSearchPages ($search: String!) {
-    pages (filter:{ search: $search }) {
+    pages (filter:{ search: $search, viewForEdit: true }) {
       ${pageDetails}
       pagetree {
         type
