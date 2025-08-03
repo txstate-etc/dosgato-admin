@@ -25,7 +25,7 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
   import { setContext, tick } from 'svelte'
-  import { htmlEncode, isBlank, isNotBlank, randomid } from 'txstate-utils'
+  import { htmlEncode, isBlank, isNotBlank } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import {

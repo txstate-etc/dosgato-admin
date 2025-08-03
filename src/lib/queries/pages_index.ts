@@ -35,7 +35,7 @@ site {
   id
   launchState
 }
-userTags {
+userTags (includeInternal: true) {
   id
 }
 `
