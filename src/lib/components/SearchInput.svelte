@@ -1,91 +1,85 @@
 <script lang="ts">
-  import { Icon } from '@dosgato/dialog'
-  import magnifyingGlass from '@iconify-icons/ph/magnifying-glass'
-  import xIcon from '@iconify-icons/ph/x'
-  import { createEventDispatcher, tick } from 'svelte'
   import { isNotBlank } from 'txstate-utils'
+  import { Icon } from '@dosgato/dialog'
+  import searchIconBold from '@iconify-icons/ph/magnifying-glass-bold'
+  import xIcon from '@iconify-icons/ph/x'
+  import { createEventDispatcher } from 'svelte'
 
-  export let value = ''
-  export let asYouType = false
-  export let searchInput: HTMLInputElement | undefined = undefined
-  export let minimized = false
-  export let searchLabel = 'Search'
+  export let searchStore
 
   interface $$Events {
-    search: CustomEvent<string>
-    maximize: CustomEvent
+    escape: CustomEvent
   }
   const dispatch = createEventDispatcher()
 
-  function onChange (e: (KeyboardEvent | InputEvent) & { currentTarget: HTMLInputElement }) {
-    value = e.currentTarget?.value
-    if (asYouType || ('key' in e && e.key === 'Enter')) dispatch('search', e.currentTarget?.value ?? '')
+  function handleInput (e: Event & { currentTarget: HTMLInputElement }) {
+    const value = e.currentTarget.value
+    searchStore.update(v => ({ ...v, searchInput: value }))
+    if ($searchStore.asYouType) {
+      searchStore.topSearchFn?.(value)
+    }
   }
 
-  function onSearch (e: MouseEvent) {
-    dispatch('search', searchInput?.value ?? '')
+  function handleKeydown (e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      // only run search on enter if not as-you-type to avoid double-searching
+      if (!$searchStore.asYouType) searchStore.topSearchFn?.($searchStore.searchInput)
+    } else if (e.key === 'Escape') {
+      dispatch('escape')
+    }
   }
 
-  function onMaximize () {
-    dispatch('maximize')
-  }
-
-  async function onCancel () {
-    value = ''
-    dispatch('search', '')
-    await tick()
-    searchInput?.focus()
+  function onCancelSearch () {
+    searchStore.reset()
+    searchStore.topSearchFn?.('')
   }
 </script>
 
-<div class="search-input">
-  {#if minimized}
-    <button type="button" class="reset maximize" on:click|stopPropagation={onMaximize}><Icon icon={magnifyingGlass} hiddenLabel="Search"/></button>
-  {:else}
-    <input bind:this={searchInput} {value} type="text" placeholder="Search..." on:keydown|stopPropagation on:keyup|preventDefault={onChange} on:change={onChange} aria-label={searchLabel} />
+{#if $searchStore.show}
+  <div class="search-input">
+    <input value={$searchStore.searchInput} type="text" on:keydown|stopPropagation={handleKeydown} aria-label="Search" placeholder="{$searchStore.placeholder ?? 'Search...'}" on:input={handleInput} />
     <div class="search-buttons">
-      {#if isNotBlank(value)}
-        <button type="button" class="reset cancelsearch" on:click|stopPropagation={onCancel}><Icon icon={xIcon} hiddenLabel="Cancel Search" inline /></button>
+      {#if isNotBlank($searchStore.searchInput)}
+        <button type="button" class="reset cancelsearch" on:click|stopPropagation={onCancelSearch}><Icon icon={xIcon} hiddenLabel="Cancel Search" inline /></button>
       {/if}
-      {#if !asYouType}
-        <button type="button" class="reset search" on:click|stopPropagation={onSearch}>Search</button>
+      {#if !$searchStore.asYouType}
+        <button type="button" class="reset search" aria-label="Search" on:click|stopPropagation={() => searchStore.topSearchFn?.($searchStore.searchInput)}>
+          <Icon icon={searchIconBold}/>
+        </button>
       {/if}
     </div>
-  {/if}
-</div>
+  </div>
+{/if}
 
 <style>
   .search-input {
     position: relative;
   }
-  input {
+  .search-input input {
     width: 100%;
+    height: 36px;
+    padding: 0.15em 2.5em 0.15em 0.3em;
     border: 1px solid var(--action-panel-accent, #666666);
-    border-radius: 0.2em;
-    padding: 0.15em 5em 0.15em 0.3em;
-    line-height: 1.6;
+    border-radius: 4px;
   }
   .search-buttons {
     position: absolute;
     top: 50%;
     right: 0.3em;
     transform: translateY(-50%);
+    display: flex;
+    gap: 0.3em;
   }
-  .maximize {
-    width: 100%;
-    padding: 0.2em;
-    text-align: center;
-  }
-  .search {
+  .search-input button.search {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 28px;
+    height: 28px;
     background-color: var(--dg-button-bg, #501214);
     color: var(--dg-button-text, white);
-    border: 1px solid var(--action-panel-accent, #666666);
-    border-radius: 0.3em;
-    padding: 0.3em;
-    font-size: 0.8em;
-  }
-  .cancelsearch {
-    padding: 0.3em 0.2em;
-    color: #222222;
+    border-width: 0;
+    border-radius: 4px;
   }
 </style>

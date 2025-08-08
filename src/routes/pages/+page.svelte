@@ -51,22 +51,6 @@
   type Modals = 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | 'tagpage'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
-  function onFilter (e: CustomEvent<string>) {
-    if (isBlank(e.detail)) {
-      $pagesStore = { showsearch: false, search: '' }
-    } else {
-      actionPanelStore.hide()
-      $pagesStore = { showsearch: true, search: e.detail }
-    }
-    searchStore.refresh().catch(console.error)
-  }
-  let searchInput: HTMLInputElement
-  async function onClickMinifiedSearch () {
-    actionPanelStore.show()
-    await tick()
-    searchInput?.focus()
-  }
-
   function findInPageTree (path: string) {
     return async () => {
       const itm = await expandTreePath(store, path.split('/').filter(isNotBlank))
@@ -379,9 +363,6 @@
   <div class="searching">Search results for "{$pagesStore.search}"...</div>
 {/if}
 <ActionPanel actionsTitle={$activeStore.selected.size === 1 ? $activeStore.selectedItems[0].name : 'Pages'} actions={$activeStore.selected.size === 1 ? singlepageactions($activeStore.selectedItems[0]) : multipageactions($activeStore.selectedItems)}>
-  <svelte:fragment slot="abovePanel" let:panelHidden>
-    <SearchInput bind:searchInput value={$pagesStore.search} on:search={onFilter} on:maximize={onClickMinifiedSearch} minimized={panelHidden} searchLabel="Search Pages" />
-  </svelte:fragment>
   {#if $pagesStore.showsearch}
     {#if $searchStore.loading || $searchStore.rootItems?.length}
       <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}

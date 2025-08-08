@@ -10,21 +10,24 @@
   import doorOpenIcon from '@iconify-icons/ph/door-open'
   import fileCode from '@iconify-icons/ph/file-code'
   import globe from '@iconify-icons/ph/globe'
+  import searchIcon from '@iconify-icons/ph/magnifying-glass'
   import userCircleLight from '@iconify-icons/ph/user-circle-light'
   import userIcon from '@iconify-icons/ph/user-circle-fill'
   import usersIcon from '@iconify-icons/ph/users'
+  import xIcon from '@iconify-icons/ph/x-bold'
   import { eq, PopupMenu, type PopupMenuItem, resize, ScreenReaderOnly } from '@txstate-mws/svelte-components'
-  import { onMount, setContext } from 'svelte'
+  import { onMount, setContext, tick } from 'svelte'
   import { isNotNull } from 'txstate-utils'
   import { afterNavigate, goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
-  import { currentSubNav, globalStore, subNavSize, subnavStore, toasts, LabeledIcon, LabeledIconButton, TopNavLink, environmentConfig, uiLog, api } from '$lib'
+  import { currentSubNav, globalStore, subNavSize, subnavStore, toasts, LabeledIconButton, TopNavLink, environmentConfig, uiLog, api, SearchInput } from '$lib'
   import { uiConfig } from '../local'
   import '../local/tracking.js'
   import '../normalize.css'
   import '../app.css'
   import type { IconOrSVG } from '@dosgato/templating'
+  import { topSearchStore } from '$lib/stores/topsearch'
 
   uiLog.logger = uiConfig.uiInteractionsLogger ?? ((arg: any) => console.log('UI:', arg))
   $: uiLog.screen = $page.route.id ?? undefined
@@ -35,6 +38,7 @@
   let profileelement: HTMLButtonElement
   let overflowbutton: HTMLButtonElement
   let navbutton: HTMLButtonElement
+  let mobilesearchbutton: HTMLButtonElement
   const subnavLinks: HTMLAnchorElement[] = []
   $: subnavStore.setMaxItems(Math.floor(($subNavSize.clientWidth ?? 800) / 140))
   $: overflowItems = $currentSubNav?.links.slice($currentSubNav.maxItems).map(l => ({ value: l.href, label: l.label })) ?? []
@@ -156,6 +160,20 @@
   }
 
   let mobileNavMenuShown = false
+  let mobileSearchShown = false
+
+  async function toggleMobileSearch () {
+    mobileSearchShown = !mobileSearchShown
+    if (mobileSearchShown) {
+      // Focus the search input when the search is opened
+      await tick()
+      const searchInput = document.querySelector('.search-mobile input')
+      if (searchInput) (searchInput as HTMLInputElement).focus()
+    } else {
+      // Close the search input and focus the toggle button
+      mobilesearchbutton?.focus()
+    }
+  }
 
   $: navlabel = getNavLabel($page.url.pathname)
   $: navIcon = navIconsByLabel[navlabel]
@@ -209,32 +227,46 @@
           </div>
         </PopupMenu>
       </div>
-      <div class="profile-compact">
-        <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
+      <div class="right-topbar">
+        <div class="search-desktop">
+          <SearchInput searchStore={topSearchStore} />
+        </div>
+        <div class="toggle-search">
+          <LabeledIconButton label={mobileSearchShown ? 'Close' : 'Search'} icon={mobileSearchShown ? xIcon : searchIcon} on:click={toggleMobileSearch} bind:buttonelement={mobilesearchbutton} aria-expanded={mobileSearchShown} />
+        </div>
+        <div class="profile-compact">
+          <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
+        </div>
+        <button type="button" bind:this={profileelement} class="login-status reset" on:click={() => { uiLog.log({ eventType: 'button', action: 'LoginStatus' }, 'Login-PopupMenu') }} aria-expanded={false}>
+          <Icon icon={userIcon} inline width="1.5em"/>
+          {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}<ScreenReaderOnly>Application Actions</ScreenReaderOnly>
+        </button>
+        <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
+          {@const icon = profileIcons[item.value]}
+          <div class="menu-item">
+            {#if icon}
+              <Icon icon={icon} inline width="1.2em" />
+            {/if}
+            {label}
+          </div>
+        </PopupMenu>
+        <PopupMenu usemenurole buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
+          {@const icon = profileIcons[item.value]}
+          <div class="menu-item">
+            {#if icon}
+              <Icon icon={icon} inline width="1.2em" />
+            {/if}
+            {label}
+          </div>
+        </PopupMenu>
       </div>
-      <button type="button" bind:this={profileelement} class="login-status reset" on:click={() => { uiLog.log({ eventType: 'button', action: 'LoginStatus' }, 'Login-PopupMenu') }} aria-expanded={false}>
-        <Icon icon={userIcon} inline width="1.5em"/>
-        {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}<ScreenReaderOnly>Application Actions</ScreenReaderOnly>
-      </button>
-      <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
-        {@const icon = profileIcons[item.value]}
-        <div class="menu-item">
-          {#if icon}
-            <Icon icon={icon} inline width="1.2em" />
-          {/if}
-          {label}
+      {#if mobileSearchShown}
+        <div class="search-mobile">
+          <SearchInput searchStore={topSearchStore} on:escape={() => { toggleMobileSearch() }} />
         </div>
-      </PopupMenu>
-      <PopupMenu usemenurole buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
-        {@const icon = profileIcons[item.value]}
-        <div class="menu-item">
-          {#if icon}
-            <Icon icon={icon} inline width="1.2em" />
-          {/if}
-          {label}
-        </div>
-      </PopupMenu>
+      {/if}
     </div>
+
     {#if $currentSubNav}
       <div class="subnav">
         <ul use:resize={{ store: subNavSize }}>
@@ -280,8 +312,9 @@
     background-color: #f5f1ee;
     padding: 0.5em;
     color: #000;
+    position: relative;
   }
-  .left-topbar {
+  .left-topbar, .right-topbar {
     display: flex;
     align-items: center;
     gap: 1em;
@@ -343,6 +376,15 @@
     display: flex;
     gap: 0.5em;
     align-items: center;
+  }
+  .search-desktop {
+    display: block;
+  }
+  .toggle-search {
+    display: none;
+  }
+  .search-mobile {
+    display: none;
   }
   .subnav ul {
     position: relative;
@@ -485,13 +527,32 @@
     .topnav {
       display: none;
     }
+    .search-desktop {
+      display: none;
+    }
+    .toggle-search {
+      display: block;
+    }
+    .search-mobile {
+      display: block;
+      background-color: var(--dg-button-bg, #501214);
+      padding: 0.75em 0.5em;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      z-index: calc(var(--modal-z, 3000) + 1);
+    }
+    .toggle-search :global(button[aria-expanded="true"]) {
+      background-color: var(--dg-button-bg, #501214);
+      color: var(--dg-button-text, white);
+    }
   }
 
   @media (max-width: 30em) {
     .topbar .logo {
       display: none;
     }
-    .topnav li, .profile-compact {
+    .topnav li, .profile-compact, .toggle-search {
       font-size: 0.85rem;
     }
     button.login-status {

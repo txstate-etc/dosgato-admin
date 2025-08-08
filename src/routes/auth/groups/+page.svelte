@@ -12,13 +12,6 @@
   const actionPanelTarget: { target: string | undefined } = { target: 'AuthGroupsPage' }
   setContext('ActionPanelTarget', { getTarget: () => uiLog.targetFromTreeStore($store, 'id') })
 
-  let searchInput: HTMLInputElement
-  async function onClickMinifiedSearch () {
-    actionPanelStore.show()
-    await tick()
-    searchInput?.focus()
-  }
-
   type Modals = 'addgroup' | 'deletegroup'
   const modalContext = new ModalContextStore<Modals>(undefined, () => modalContext.targetDescriptor ?? actionPanelTarget.target)
 
@@ -77,7 +70,6 @@
     if (resp.success) void store.refresh()
     modalContext.reset()
   }
-  let filter = ''
 
   function handleResponsiveHeaders (treeWidth: number) {
     if (treeWidth > 500) {
@@ -89,14 +81,11 @@
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Groups'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
-  <svelte:fragment slot="abovePanel" let:panelHidden>
-    <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
-  </svelte:fragment>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/groups/' + detail.id)} headers ={[
     { id: 'name', label: 'Name', get: 'name', grow: 2, icon: { icon: usersThree } },
     { id: 'members', label: 'Members', render: item => String(item.users.length), fixed: '7em' },
     { id: 'roles', label: 'Roles', render: item => (item.roles.map(r => r.name)).join(', '), grow: 3 }
-  ]} searchable='name' {filter} enableResize responsiveHeaders={handleResponsiveHeaders}/>
+  ]} enableResize responsiveHeaders={handleResponsiveHeaders}/>
 </ActionPanel>
 {#if $modalContext.modal === 'addgroup'}
   <FormDialog

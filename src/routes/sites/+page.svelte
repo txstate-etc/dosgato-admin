@@ -11,6 +11,7 @@
   import { base } from '$app/paths'
   import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog, ModalContextStore, LaunchState, SearchInput, actionPanelStore } from '$lib'
   import { buildAuditCSV } from './audit'
+  import { _siteFilterStore as siteFilterStore } from './+page'
 
   type TypedSiteItem = TypedTreeItem<SiteListSite>
 
@@ -18,13 +19,6 @@
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
-
-  let searchInput: HTMLInputElement
-  async function onClickMinifiedSearch () {
-    actionPanelStore.show()
-    await tick()
-    searchInput?.focus()
-  }
 
   type Modals = 'addsite' | 'deletesite' | 'restoresite'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
@@ -107,7 +101,6 @@
     j.click()
   }
 
-  let filter = ''
   function searchable (itm: TypedSiteItem) {
     return [itm.name, itm.url?.prefix ?? '']
   }
@@ -123,15 +116,12 @@
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Sites'} actions={getActions($store.selectedItems)}>
-  <svelte:fragment slot="abovePanel" let:panelHidden>
-    <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
-  </svelte:fragment>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/sites/' + detail.id)} headers={[
     { id: 'name', label: 'Site Name', get: 'name', grow: 10, icon: { icon: globeLight } },
     { id: 'url', label: 'URL', grow: 10, render: (site) => `<span class="${site.launchState === LaunchState.LAUNCHED ? '' : 'not-live'}">${site.url?.prefix ?? ''}</span>` },
     { id: 'organization', label: 'Organization', get: 'organization.name', grow: 8 },
     { id: 'owner', label: 'Owner', render: renderOwner, grow: 7 }
-  ]} {searchable} {filter} enableResize responsiveHeaders={handleResponsiveHeaders}>
+  ]} {searchable} filter={$siteFilterStore.search} enableResize responsiveHeaders={handleResponsiveHeaders}>
   </Tree>
 </ActionPanel>
 {#if $modalContext.modal === 'addsite'}
