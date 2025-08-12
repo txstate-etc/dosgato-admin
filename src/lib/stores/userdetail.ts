@@ -1,6 +1,6 @@
 import { Store } from '@txstate-mws/svelte-store'
 import type { FullUser, AccessDetailSiteRule, AccessDetailPageRule, AccessDetailAssetRule, AccessDetailDataRule } from '$lib/queries'
-import { isNotBlank, isNotNull, set, sortby } from 'txstate-utils'
+import { isNotNull, set, sortby } from 'txstate-utils'
 import { getDataAccess, getSiteAccess, type SiteAccessRole } from '$lib'
 
 interface IUserDetailStore {
@@ -27,6 +27,7 @@ export class UserDetailStore extends Store<IUserDetailStore> {
   }
 
   async refresh (id: string) {
+    if (id !== this.value.user.id) this.set({ user: initialValue, sites: [], dataTemplates: [] })
     const user = await this.fetchUser(id)
     const userAccessBySite: Record<string, string[]> = {}
     const siteNameById: Record<string, string> = { }

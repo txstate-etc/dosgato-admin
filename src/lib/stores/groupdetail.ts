@@ -1,6 +1,6 @@
 import { Store } from '@txstate-mws/svelte-store'
 import type { FullGroup, AccessDetailSiteRule, AccessDetailPageRule, AccessDetailAssetRule } from '$lib/queries'
-import { isNotNull, isNull, sortby, unique } from 'txstate-utils'
+import { isNotNull, sortby } from 'txstate-utils'
 import { getSiteAccess, type SiteAccessRole } from '$lib'
 
 interface IGroupDetailStore {
@@ -17,6 +17,7 @@ export class GroupDetailStore extends Store<IGroupDetailStore> {
   }
 
   async refresh (id: string) {
+    if (id !== this.value.group.id) this.set({ group: initialValue, sites: [] })
     const group = await this.fetchGroup(id)
     const groupAccessBySite: Record<string, string[]> = {}
     const siteNameById: Record<string, string> = {}

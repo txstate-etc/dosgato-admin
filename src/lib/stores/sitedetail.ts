@@ -1,7 +1,7 @@
 /* eslint-disable no-trailing-spaces */
-import { Store, derivedStore } from '@txstate-mws/svelte-store'
+import { Store } from '@txstate-mws/svelte-store'
 import type { FullSite, SitePagetree } from '$lib/queries'
-import { isNull, sortby, set, keyby, unique } from 'txstate-utils'
+import { sortby, set, keyby, unique } from 'txstate-utils'
 import { getSiteAccess } from '$lib'
 
 interface ISiteDetailStore {
@@ -93,6 +93,7 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
   }
 
   async refresh (id: string) {
+    if (id !== this.value.site.id) this.set({ site: initialValue, siteRoles: { specific: [], universal: [] }, groups: { specific: [], universal: [] }, users: { specific: [], universal: [] }, pageTemplates: [], componentTemplates: [] })
     const site = await this.fetchSite(id)
     const siteRoles = { specific: [] as SiteRole[], universal: [] as SiteRole[] }
     const groupRoles: Record<string, { name: string, roles: string[] }> = {}

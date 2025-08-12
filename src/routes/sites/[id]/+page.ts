@@ -6,15 +6,16 @@ import { error, type Load } from '@sveltejs/kit'
 export const _store = new SiteDetailStore(getSite)
 
 export const load: Load<{ id: string }> = async ({ params }) => {
-  const site = await _store.refresh(params.id)
-  if (!_store.siteFetched()) throw error(404)
-
-  const [organizations, users, allPageTemplates, allComponentTemplates] = await Promise.all([
+  const [organizations, users, allPageTemplates, allComponentTemplates, site] = await Promise.all([
     api.getOrganizationList(),
     api.getUserList({ system: false }),
     api.getTemplatesByType('PAGE'),
-    api.getTemplatesByType('COMPONENT')
+    api.getTemplatesByType('COMPONENT'),
+    _store.refresh(params.id)
   ])
+
+  if (!_store.siteFetched()) throw error(404)
+
   subnavStore.open('sites', { label: site.name, href: base + '/sites/' + site.id, icon: globe })
   siteListStore.open({ id: params.id, name: site.name })
   return { organizations, users, allPageTemplates, allComponentTemplates }

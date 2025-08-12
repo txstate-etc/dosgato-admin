@@ -271,7 +271,7 @@
       <div class="subnav">
         <ul use:resize={{ store: subNavSize }}>
           {#each $currentSubNav.links.slice(0, $currentSubNav.maxItems) as link, i}
-            {@const selected = $page.url.pathname === link.href || (!$currentSubNav.links.some(l => l.href === $page.url.pathname) && $page.url.pathname.startsWith(link.href))}
+            {@const selected = $page.url.pathname === link.href || (!$currentSubNav.links.some(l => l.href === $page.url.pathname) && $page.url.pathname.startsWith(link.href + (link.href.endsWith('/') ? '' : '/')))}
             <li class:selected class:closeable={link.closeable} style:flex-shrink={Math.pow(Math.max(0.00000001, link.label.length - 12), 0.5)}>
               <a bind:this={subnavLinks[i]} class:selected href={link.href}>{#if link.icon}<Icon icon={link.icon} inline/>{/if} {link.label}</a>
               {#if link.closeable}

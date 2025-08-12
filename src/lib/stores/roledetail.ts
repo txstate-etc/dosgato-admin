@@ -41,6 +41,7 @@ export class RoleDetailStore extends Store<IRoleDetailStore> {
   }
 
   async refresh (id: string) {
+    if (id !== this.value.role.id) this.set({ role: initialValue })
     const role = await this.fetchRole(id)
     this.set({ role })
   }
@@ -72,6 +73,7 @@ export class RoleDetailStore extends Store<IRoleDetailStore> {
       return set(v, 'userRemoving', undefined)
     })
   }
+
   setGroupRemoving (id: string, name: string) {
     this.update(v => {
       return set(v, 'groupRemoving', { id, name })
