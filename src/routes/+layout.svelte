@@ -262,7 +262,7 @@
       </div>
       {#if mobileSearchShown}
         <div class="search-mobile">
-          <SearchInput searchStore={topSearchStore} on:escape={() => { toggleMobileSearch() }} />
+          <SearchInput searchStore={topSearchStore} on:escape={() => { void toggleMobileSearch() }} />
         </div>
       {/if}
     </div>
@@ -485,6 +485,10 @@
     border-radius: 12px;
   }
 
+  .profile-compact {
+    display: none;
+  }
+
   :global(.login-status[aria-expanded="true"]) {
    background-color: var(--dg-button-bg, #501214);
   color: var(--dg-button-text, white);
@@ -520,18 +524,16 @@
     font-weight: 700;
   }
 
-  @media (max-width: 50em) {
-    button.mobile-nav {
-      display: flex;
-    }
-    .topnav {
-      display: none;
-    }
+  @media (max-width: 64em) {
     .search-desktop {
       display: none;
     }
-    .toggle-search {
+    .toggle-search, .profile-compact {
       display: block;
+    }
+    .toggle-search :global(svg), .profile-compact :global(svg) {
+      width: 65%;
+      height: auto;
     }
     .search-mobile {
       display: block;
@@ -545,22 +547,26 @@
     .toggle-search :global(button[aria-expanded="true"]) {
       background-color: var(--dg-button-bg, #501214);
       color: var(--dg-button-text, white);
-    }
-  }
-
-  @media (max-width: 30em) {
-    .topbar .logo {
-      display: none;
-    }
-    .topnav li, .profile-compact, .toggle-search {
-      font-size: 0.85rem;
+      margin-top: -0.5em;
+      margin-bottom: -0.5em;
+      height: calc(44px + 1em);
     }
     button.login-status {
       display: none;
     }
   }
-  @media (min-width: 30em) {
-    .profile-compact {
+
+  @media (max-width: 50em) {
+    button.mobile-nav {
+      display: flex;
+    }
+    .topnav {
+      display: none;
+    }
+  }
+
+  @media (max-width: 30em) {
+    .topbar .logo {
       display: none;
     }
   }

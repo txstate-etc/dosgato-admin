@@ -217,6 +217,10 @@
   // TODO: Get with Rachel on what we want the target to be here. Probably don't want it to be the user. Do we want IDs in the logs??? I think yes but can that bite us?
   // $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'id')
 </script>
+
+{#if filter}
+  <div class="searching">Search results for "{filter}"...</div>
+{/if}
 <ActionPanel {actions} actionsTitle={$store.selected.size ? $store.selectedItems[0].id : 'Users'}>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/users/' + detail.id)} headers={[
     { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', fixed: '10em', icon: u => ({ icon: u.disabled ? accountOff : accountIcon }) },

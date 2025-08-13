@@ -62,6 +62,9 @@
   }
 </script>
 
+{#if filter}
+  <div class="searching">Search results for "{filter}"...</div>
+{/if}
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : `${titleCase(type)} Templates`} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : []}>
   <Tree singleSelect {store} on:choose={({ detail }) => { if (detail.type === 'template') void goto(base + '/settings/templates/' + detail.id) }} headers={treeHeaders} enableResize responsiveHeaders={handleResponsiveHeaders} searchable={['name', 'id']} {filter}/>
 </ActionPanel>

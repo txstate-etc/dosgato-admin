@@ -72,6 +72,9 @@
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'id')
 </script>
 
+{#if $roleFilterStore.search}
+  <div class="searching">Search results for "{$roleFilterStore.search}"...</div>
+{/if}
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Roles'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/roles/' + detail.id)} headers={[
     { id: 'name', label: 'Name', get: 'name', grow: 4, icon: { icon: keyIcon } }

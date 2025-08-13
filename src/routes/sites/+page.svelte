@@ -115,6 +115,9 @@
   }
 </script>
 
+{#if $siteFilterStore.search}
+  <div class="searching">Search results for "{$siteFilterStore.search}"...</div>
+{/if}
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Sites'} actions={getActions($store.selectedItems)}>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/sites/' + detail.id)} headers={[
     { id: 'name', label: 'Site Name', get: 'name', grow: 10, icon: { icon: globeLight } },
