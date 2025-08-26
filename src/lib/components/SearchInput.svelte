@@ -59,7 +59,7 @@
   .search-input input {
     width: 100%;
     height: 36px;
-    padding: 0.15em 2.5em 0.15em 0.3em;
+    padding: 0.15em 3.5em 0.15em 0.3em;
     border: 1px solid var(--action-panel-accent, #666666);
     border-radius: 4px;
   }

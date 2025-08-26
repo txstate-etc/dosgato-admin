@@ -15,7 +15,7 @@
   import userIcon from '@iconify-icons/ph/user-circle-fill'
   import usersIcon from '@iconify-icons/ph/users'
   import xIcon from '@iconify-icons/ph/x-bold'
-  import { eq, PopupMenu, type PopupMenuItem, resize, ScreenReaderOnly } from '@txstate-mws/svelte-components'
+  import { eq, PopupMenu, type PopupMenuItem, resize, ResizeStore, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { onMount, setContext, tick } from 'svelte'
   import { isNotNull } from 'txstate-utils'
   import { afterNavigate, goto } from '$app/navigation'
@@ -37,6 +37,7 @@
   let buttonelement: HTMLButtonElement
   let profileelement: HTMLButtonElement
   let overflowbutton: HTMLButtonElement
+  let topNavListElement: HTMLUListElement
   let navbutton: HTMLButtonElement
   let mobilesearchbutton: HTMLButtonElement
   const subnavLinks: HTMLAnchorElement[] = []
@@ -118,13 +119,6 @@
   const labeledIconButtonTarget: { target: string | undefined } = { target: 'Profile-PopupMenu' }
   setContext('LabeledIconButtonTarget', { getTarget: () => labeledIconButtonTarget.target })
 
-  function getLogo (): IconOrSVG | undefined {
-    if (isNotNull(uiConfig.logo)) {
-      if (typeof uiConfig.logo === 'object') return uiConfig.logo
-      else return uiConfig.logo(environmentConfig)
-    }
-  }
-
   const navIconsByLabel = {
     Pages: fileCode,
     Assets: copySimple,
@@ -178,6 +172,43 @@
   $: navlabel = getNavLabel($page.url.pathname)
   $: navIcon = navIconsByLabel[navlabel]
 
+  const topbarsize = new ResizeStore()
+
+  $: navButtonWidth = `${navbutton?.offsetWidth ?? 0}px`
+  let logo: IconOrSVG | undefined
+  function getLogo (): IconOrSVG | undefined {
+    if (isNotNull(uiConfig.logo)) {
+      if (typeof uiConfig.logo === 'object') return uiConfig.logo
+      else return uiConfig.logo(environmentConfig)
+    }
+  }
+  async function showCorrectNavForScreenWidth () {
+    const firstNavItem = topNavListElement.querySelector('li')
+    const lastNavItem = topNavListElement.querySelector('li:last-child')
+    if (!firstNavItem || !lastNavItem) return
+    if (useMobileNav) {
+      useMobileNav = false
+      await tick()
+    }
+    if (firstNavItem.getBoundingClientRect().top < lastNavItem.getBoundingClientRect().top) {
+      useMobileNav = true
+    }
+  }
+  let useMobileNav = false
+  $: if (typeof $topbarsize !== 'undefined') {
+    // the dropdown nav should have the same width as the button that opens it, which changes based on screen width
+    navButtonWidth = `${navbutton?.offsetWidth ?? 0}px`
+    // Recompute logo whenever topbarsize changes
+    logo = getLogo()
+    // We want to show the nav across the top bar unless it would wrap due to lack of space.
+    // Hide the nav and show the mobile navigation button if the first nav item and the last nav item
+    // are not on the same line.
+    if (topNavListElement) {
+      void showCorrectNavForScreenWidth()
+    }
+  }
+
+
 </script>
 
 <svelte:head>
@@ -197,12 +228,12 @@
   {/if}
 {:else}
   <nav>
-    <div class="topbar" style:background-image={environmentTitle ? `url('data:image/svg+xml;utf8,<svg style="transform:rotate(45deg)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${(environmentTitle.length + 1) * 10} ${environmentTitle.length * 10}"><text x="0" y="25" fill="%23000" fill-opacity="0.1">${environmentTitle} </text></svg>')` : undefined}>
+    <div class="topbar" use:resize={{ store: topbarsize }} style:background-image={environmentTitle ? `url('data:image/svg+xml;utf8,<svg style="transform:rotate(45deg)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${(environmentTitle.length + 1) * 10} ${environmentTitle.length * 10}"><text x="0" y="25" fill="%23000" fill-opacity="0.1">${environmentTitle} </text></svg>')` : undefined}>
       <div class="left-topbar">
         <div class="logo">
-          <Icon icon={getLogo()} width={getLogo()?.width} height={getLogo()?.height}/>
+          <Icon icon={logo} width={logo?.width} height={logo?.height}/>
         </div>
-        <ul class="topnav">
+        <ul class="topnav" bind:this={topNavListElement} class:hide={useMobileNav}>
           {#if $globalStore.access.viewPageManager}<li class:selected={$page.url.pathname.startsWith(`${base}/pages`)}><TopNavLink href="{base}/pages" icon={fileCode} label="Pages"/></li>{/if}
           {#if $globalStore.access.viewAssetManager}<li class:selected={$page.url.pathname.startsWith(`${base}/assets`)}><TopNavLink href="{base}/assets" icon={copySimple} label="Assets" /></li>{/if}
           {#if $globalStore.access.viewDataManager}<li class:selected={$page.url.pathname.startsWith(`${base}/data`)}><TopNavLink href="{base}/data" icon={database} label="Data" /></li>{/if}
@@ -211,14 +242,14 @@
           {#if $globalStore.access.manageTemplates}<li class:selected={$page.url.pathname.startsWith(`${base}/settings`)}><TopNavLink href="{base}/settings/templates/pages" icon={bag} label="More" /></li>{/if}
         </ul>
         <!-- Button with dropdown menu for mobile navigation -->
-        <button type="button" bind:this={navbutton} class="mobile-nav reset" aria-expanded={mobileNavMenuShown}>
+        <button type="button" bind:this={navbutton} class="mobile-nav reset" aria-expanded={mobileNavMenuShown} class:hide={!useMobileNav}>
           <div class="nav-button-content">
-            <Icon icon={navIcon}></Icon>
+            <Icon icon={navIcon} width="1.2em"></Icon>
             {navlabel}
           </div>
           <Icon icon={mobileNavMenuShown ? caretUp : caretDown} />
         </button>
-        <PopupMenu bind:menushown={mobileNavMenuShown} usemenurole buttonelement={navbutton} items={getTopNavItems()} showSelected={true} hideSelectedIndicator={true} on:change={onClickMobileNav} let:label menuContainerClass="profile-menu mobile-nav-menu" gap={-10}>
+        <PopupMenu bind:menushown={mobileNavMenuShown} usemenurole buttonelement={navbutton} items={getTopNavItems()} showSelected={true} hideSelectedIndicator={true} on:change={onClickMobileNav} let:label menuContainerClass="profile-menu mobile-nav-menu" gap={-10} width={navButtonWidth}>
           <div class="menu-item">
             {#if isNotNull(navIconsByLabel[label])}
               <Icon icon={navIconsByLabel[label]} width="1.2em" />
@@ -308,6 +339,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1em;
     background: none 0 0/80px 80px;
     background-color: #f5f1ee;
     padding: 0.5em;
@@ -319,15 +351,24 @@
     align-items: center;
     gap: 1em;
   }
-
+  .left-topbar {
+    flex: 1;
+  }
+  .right-topbar {
+    justify-content: flex-end;
+  }
   nav ul {
     padding: 0;
     margin: 0;
     list-style: none;
     display: flex;
+    flex-wrap: wrap;
   }
   ul.topnav {
     justify-content: center;
+  }
+  ul.topnav.hide {
+    display: none;
   }
   .topnav li {
     margin-left: 0.5em;
@@ -358,19 +399,23 @@
     height: 50%;
   }
   button.mobile-nav {
-    display: none;
     background-color: var(--dg-button-bg, #501214);
     color: var(--dg-button-text, #fff);
     height: 44px;
     border-radius: 12px;
     font-size: 0.9em;
     font-weight: 700;
+    display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 0.125em;
     padding: 0.25em 0.75em 0.25em 0.375em;
-    min-width: 150px;
+    width: 100%;
+    max-width: 300px;
     z-index: calc(var(--toast-z, calc(var(--modal-z, 3000) + 1)) + 1);
+  }
+  button.mobile-nav.hide {
+    display: none;
   }
   button.mobile-nav .nav-button-content {
     display: flex;
@@ -502,7 +547,6 @@
   }
 
   :global(.profile-menu.mobile-nav-menu) {
-    min-width: 148px;
     border-top-right-radius: 0;
     border-top-left-radius: 0;
     border-top-color: white;
@@ -541,6 +585,7 @@
       padding: 0.75em 0.5em;
       position: absolute;
       right: 0;
+      left: 0;
       top: 100%;
       z-index: calc(var(--modal-z, 3000) + 1);
     }
@@ -552,21 +597,6 @@
       height: calc(44px + 1em);
     }
     button.login-status {
-      display: none;
-    }
-  }
-
-  @media (max-width: 50em) {
-    button.mobile-nav {
-      display: flex;
-    }
-    .topnav {
-      display: none;
-    }
-  }
-
-  @media (max-width: 30em) {
-    .topbar .logo {
       display: none;
     }
   }

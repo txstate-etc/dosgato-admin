@@ -16,6 +16,8 @@ import { textImage } from './textimage.js'
 import AssetDialog from './AssetDialog.svelte'
 import { columnLayoutComponentTemplate } from './columnlayout.js'
 import DocumentsDialog from './DocumentsDialog.svelte'
+import { base } from '$app/paths'
+import lifeBuoy from '@iconify-icons/ph/lifebuoy'
 
 export const uiConfig: UIConfig = {
   templates: [
@@ -57,5 +59,25 @@ export const uiConfig: UIConfig = {
   assetMeta: {
     dialog: AssetDialog,
     details: meta => ({ Title: meta.title, Description: meta.description })
-  }
+  },
+  logo: () => {
+    if (window.matchMedia('(max-width: 600px)').matches) {
+      return {
+        raw: true, width: 26, height: 50, body: `
+          <svg height="50" width="26" viewBox="0 0 26 50" xmlns="http://www.w3.org/2000/svg">
+            <text x="0" y="40" font-family="Arial, sans-serif" font-size="40" fill="#501214">d</text>
+          </svg>`
+      }
+    } else {
+      return {
+        raw: true, width: 140, height: 50, body: `
+        <svg height="50" viewBox="0 0 140 50" xmlns="http://www.w3.org/2000/svg">
+          <text x="0" y="38" font-family="Arial, sans-serif" font-size="38" fill="#501214">dosgato</text>
+        </svg>`
+      }
+    }
+  },
+  profileMenuLinks: [
+    { label: 'Support', url: 'https:www.google.com', icon: lifeBuoy }
+  ]
 }
