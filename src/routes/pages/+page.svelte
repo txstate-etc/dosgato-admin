@@ -360,7 +360,7 @@
 </script>
 
 {#if $pagesStore.showsearch}
-  <div class="searching">Search results for "{$pagesStore.search}"...</div>
+  <div class="searching">Search results for "{$pagesStore.search}," {#if $searchStore.rootItems?.length === 200} showing top 200 results{:else}showing {$searchStore.rootItems?.length ?? 0} result{$searchStore.rootItems?.length === 1 ? '' : 's'}{/if}</div>
 {/if}
 <ActionPanel actionsTitle={$activeStore.selected.size === 1 ? $activeStore.selectedItems[0].name : 'Pages'} actions={$activeStore.selected.size === 1 ? singlepageactions($activeStore.selectedItems[0]) : multipageactions($activeStore.selectedItems)}>
   {#if $pagesStore.showsearch}

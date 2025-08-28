@@ -259,7 +259,9 @@
 </script>
 
 {#if $assetsStore.showsearch}
-  <div class="searching">Search results for "{$assetsStore.search}"...</div>
+  <div class="searching">
+    Search results for "{$assetsStore.search}," {#if $searchStore.rootItems?.length === 200} showing top 200 results{:else}showing {$searchStore.rootItems?.length ?? 0} result{$searchStore.rootItems?.length === 1 ? '' : 's'}{/if}
+  </div>
 {/if}
 <ActionPanel actionsTitle={$activeStore.selected.size === 1 ? $activeStore.selectedItems[0].name : 'Assets'} actions={$activeStore.selected.size === 1 ? singlepageactions($activeStore.selectedItems[0]) : multipageactions($activeStore.selectedItems)}>
   {#if $assetsStore.showsearch}
