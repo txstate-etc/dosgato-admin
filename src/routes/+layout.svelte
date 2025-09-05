@@ -89,8 +89,10 @@
 
   let cookieAcquired = false
   let environmentTitle = ''
+  let environmentBackgroundColor = ''
   onMount(() => {
     environmentTitle = uiConfig.environmentTitle?.(environmentConfig) ?? ''
+    environmentBackgroundColor = uiConfig.environmentBackgroundColor?.(environmentConfig) ?? ''
     // populate the user's token to the render service so that it can create a cookie for itself
     // this way we can load images that require authentication in <img> tags and the editing iframe
     // will be authenticated
@@ -228,7 +230,7 @@
   {/if}
 {:else}
   <nav>
-    <div class="topbar" use:resize={{ store: topbarsize }} style:background-image={environmentTitle ? `url('data:image/svg+xml;utf8,<svg style="transform:rotate(45deg)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${(environmentTitle.length + 1) * 10} ${environmentTitle.length * 10}"><text x="0" y="25" fill="%23000" fill-opacity="0.1">${environmentTitle} </text></svg>')` : undefined}>
+    <div class="topbar" use:resize={{ store: topbarsize }} style:background-image={environmentTitle ? `url('data:image/svg+xml;utf8,<svg style="transform:rotate(45deg)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${(environmentTitle.length + 1) * 10} ${environmentTitle.length * 10}"><text x="0" y="25" fill="%23000" fill-opacity="0.1">${environmentTitle} </text></svg>')` : undefined} style:background-color={environmentBackgroundColor}>
       <div class="left-topbar">
         <div class="logo">
           <Icon icon={logo} width={logo?.width} height={logo?.height}/>
@@ -300,7 +302,7 @@
 
     {#if $currentSubNav}
       <div class="subnav">
-        <ul use:resize={{ store: subNavSize }}>
+        <ul use:resize={{ store: subNavSize }} style:background-color={environmentBackgroundColor ? `color-mix(in srgb, ${environmentBackgroundColor} 70%, black)` : undefined}>
           {#each $currentSubNav.links.slice(0, $currentSubNav.maxItems) as link, i}
             {@const selected = $page.url.pathname === link.href || (!$currentSubNav.links.some(l => l.href === $page.url.pathname) && $page.url.pathname.startsWith(link.href + (link.href.endsWith('/') ? '' : '/')))}
             <li class:selected class:closeable={link.closeable} style:flex-shrink={Math.pow(Math.max(0.00000001, link.label.length - 12), 0.5)}>
@@ -341,7 +343,7 @@
     align-items: center;
     gap: 1em;
     background: none 0 0/80px 80px;
-    background-color: #f5f1ee;
+    background-color: var(--environment-overlay-bg ,#f5f1ee);
     padding: 0.5em;
     color: #000;
     position: relative;
@@ -376,7 +378,7 @@
   }
 
   .topnav li:hover :global(a) {
-    background-color: #d9d4cf;
+    background-color: rgba(0,0,0,0.12);
   }
 
   .topnav li.selected :global(a){
