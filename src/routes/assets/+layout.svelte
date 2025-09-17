@@ -2,6 +2,8 @@
   import { isNotBlank } from 'txstate-utils'
   import { actionPanelStore, TopSearchManager } from '$lib'
   import { _assetsStore as assetsStore, _searchStore as searchStore } from './+page'
+  import { page } from '$app/stores'
+  import { base } from '$app/paths'
 
   function handleAssetsSearch (searchTerm: string) {
     const showsearch = isNotBlank(searchTerm)
@@ -14,11 +16,13 @@
   }
 </script>
 
-<TopSearchManager
-  placeholder="Search Assets"
-  asYouType={false}
-  filterStore={assetsStore}
-  onSearch={handleAssetsSearch}
-/>
+{#if $page.url.pathname === `${base}/assets`}
+  <TopSearchManager
+    placeholder="Search Assets"
+    asYouType={false}
+    filterStore={assetsStore}
+    onSearch={handleAssetsSearch}
+  />
+{/if}
 
 <slot />
