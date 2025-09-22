@@ -14,8 +14,7 @@ services:
       AUTH_REDIRECT: http://fakeauth/login?clientId=dosgato-admin&returnUrl=http%3A%2F%2Fproxy%2F.admin
       ADMIN_ALLOW_HOST_REGEX: 'proxy|ui'
   api:
-    build:
-      context: ../dosgato
+    image: registry.its.txstate.edu/dosgato
     attach: false
     depends_on:
       mysql:
@@ -30,8 +29,7 @@ services:
       RESET_DB_ON_STARTUP: 'true'
       JWT_TRUSTED_ISSUERS: '[{ "iss": "unified-auth", "url": "http://fakeauth/jwks" }, { "iss": "dg-render", "secret": "rendertoken" }]'
   render:
-    build:
-      context: ../dosgato-render
+    image: registry.its.txstate.edu/dosgato-render
     attach: false
     environment:
       NODE_ENV: development
