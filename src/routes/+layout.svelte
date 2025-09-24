@@ -584,7 +584,8 @@
     .search-mobile {
       display: block;
       background-color: var(--dg-button-bg, #501214);
-      padding: 0.75em 0.5em;
+      border-bottom: 1px solid #fff;
+      padding: 1em 1.5em;
       position: absolute;
       right: 0;
       left: 0;
