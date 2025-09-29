@@ -531,14 +531,17 @@
     padding: 0.25em 0.75em;
     border-radius: 12px;
   }
+  .login-status:hover {
+    background-color: rgba(0,0,0,0.12);
+  }
 
   .profile-compact {
     display: none;
   }
 
-  :global(.login-status[aria-expanded="true"]) {
-   background-color: var(--dg-button-bg, #501214);
-  color: var(--dg-button-text, white);
+  :global(.login-status[aria-expanded="true"]), :global(.login-status[aria-expanded="true"]):hover {
+    background-color: var(--dg-button-bg, #501214) !important;
+    color: var(--dg-button-text, white);
   }
 
   :global(.profile-menu) {
