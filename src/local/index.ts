@@ -78,6 +78,6 @@ export const uiConfig: UIConfig = {
     }
   },
   profileMenuLinks: [
-    { label: 'Support', url: 'https:www.google.com', icon: lifeBuoy }
+    { label: 'Support', url: 'https://www.google.com', icon: lifeBuoy }
   ]
 }

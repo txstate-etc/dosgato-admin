@@ -74,7 +74,12 @@
         }
       }
     } else if (item.value) {
-      void goto(item.value)
+      if (/^https?:\/\//.test(item.value)) {
+        // we can't use goto for external links
+        window.location.href = item.value;
+      } else {
+        void goto(item.value);
+      }
     }
   }
 
