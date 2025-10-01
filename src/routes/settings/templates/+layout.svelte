@@ -9,9 +9,14 @@
     topSearchStore.reset()
     templateFilterStore.set({ search: '' })
   })
+
+  const templatePagePaths = [
+    `${base}/settings/templates/components`,
+    `${base}/settings/templates/data`,
+    `${base}/settings/templates/pages`]
 </script>
 
-{#if $page.url.pathname === `${base}/settings/templates`}
+{#if templatePagePaths.includes($page.url.pathname)}
   <TopSearchManager
     placeholder="Search Templates"
     asYouType={true}
