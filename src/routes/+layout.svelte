@@ -419,7 +419,7 @@
     padding: 0.25em 0.75em 0.25em 0.375em;
     width: 100%;
     max-width: 300px;
-    z-index: calc(var(--toast-z, calc(var(--modal-z, 3000) + 1)) + 1);
+    z-index: var(--modal-z, 3000);
   }
   button.mobile-nav.hide {
     display: none;
