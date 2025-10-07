@@ -279,7 +279,7 @@
           <Icon icon={userIcon} inline width="1.5em"/>
           {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}<ScreenReaderOnly>Application Actions</ScreenReaderOnly>
         </button>
-        <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
+        <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={true} hideSelectedIndicator={true} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
           {@const icon = profileIcons[item.value]}
           <div class="menu-item">
             {#if icon}
@@ -288,7 +288,7 @@
             {label}
           </div>
         </PopupMenu>
-        <PopupMenu usemenurole buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
+        <PopupMenu usemenurole buttonelement={profileelement} items={profileItems} showSelected={true} hideSelectedIndicator={true} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
           {@const icon = profileIcons[item.value]}
           <div class="menu-item">
             {#if icon}
