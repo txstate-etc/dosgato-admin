@@ -42,7 +42,9 @@
   let mobilesearchbutton: HTMLButtonElement
   const subnavLinks: HTMLAnchorElement[] = []
   $: subnavStore.setMaxItems(Math.floor(($subNavSize.clientWidth ?? 800) / 140))
-  $: overflowItems = $currentSubNav?.links.slice($currentSubNav.maxItems).map(l => ({ value: l.href, label: l.label })) ?? []
+  $: overflowItems = ($currentSubNav && $currentSubNav.links.length > $currentSubNav.maxItems)
+    ? $currentSubNav.links.slice($currentSubNav.maxItems).map((l: { href: string, label: string }) => ({ value: l.href, label: l.label }))
+    : []
   function onOverflowChange (e: any) {
     void goto(e.detail.value)
   }
@@ -163,6 +165,12 @@
   let mobileNavMenuShown = false
   let mobileSearchShown = false
 
+  function handleClickOutsideMobileSearch (e: MouseEvent) {
+    if (mobileSearchShown && !mobilesearchbutton?.contains(e.target as Node) && !(document.querySelector('.search-mobile')?.contains(e.target as Node))) {
+      void toggleMobileSearch()
+    }
+  }
+
   async function toggleMobileSearch () {
     mobileSearchShown = !mobileSearchShown
     if (mobileSearchShown) {
@@ -170,9 +178,11 @@
       await tick()
       const searchInput = document.querySelector('.search-mobile input')
       if (searchInput) (searchInput as HTMLInputElement).focus()
+      document.addEventListener('click', handleClickOutsideMobileSearch)
     } else {
       // Close the search input and focus the toggle button
       mobilesearchbutton?.focus()
+      document.removeEventListener('click', handleClickOutsideMobileSearch)
     }
   }
 
@@ -269,9 +279,11 @@
         <div class="search-desktop">
           <SearchInput searchStore={topSearchStore} />
         </div>
-        <div class="toggle-search">
-          <LabeledIconButton label={mobileSearchShown ? 'Close' : 'Search'} icon={mobileSearchShown ? xIcon : searchIcon} on:click={toggleMobileSearch} bind:buttonelement={mobilesearchbutton} aria-expanded={mobileSearchShown} />
-        </div>
+        {#if $topSearchStore.show}
+          <div class="toggle-search">
+            <LabeledIconButton label={mobileSearchShown ? 'Close' : 'Search'} icon={mobileSearchShown ? xIcon : searchIcon} on:click={toggleMobileSearch} bind:buttonelement={mobilesearchbutton} aria-expanded={mobileSearchShown} />
+          </div>
+        {/if}
         <div class="profile-compact">
           <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
         </div>
