@@ -1,7 +1,6 @@
 <script lang="ts">
   import { api, TemplatesListPage, type AnyTemplateTreeItem, type TypedTemplateTreeItem } from '$lib'
   import { TreeStore } from '@dosgato/dialog'
-  import { templateFilterStore } from '../templateFilterStore'
 
   async function fetchChildren (template?: TypedTemplateTreeItem) {
     if (template) return []
@@ -13,4 +12,4 @@
 
 </script>
 
-<TemplatesListPage type="component" {store} filter={$templateFilterStore.search} />
+<TemplatesListPage type="component" {store} />

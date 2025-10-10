@@ -44,6 +44,13 @@
     searchStore.refresh().catch(console.error)
   }
 
+  let searchInput: HTMLInputElement
+  async function onClickMinifiedSearch () {
+    actionPanelStore.show()
+    await tick()
+    searchInput?.focus()
+  }
+
   function findInAssetTree (path: string) {
     return async () => {
       const itm = await expandTreePath(store, path.split('/').filter(isNotBlank))
@@ -264,6 +271,9 @@
   </div>
 {/if}
 <ActionPanel actionsTitle={$activeStore.selected.size === 1 ? $activeStore.selectedItems[0].name : 'Assets'} actions={$activeStore.selected.size === 1 ? singlepageactions($activeStore.selectedItems[0]) : multipageactions($activeStore.selectedItems)}>
+  <svelte:fragment slot="abovePanel" let:panelHidden>
+    <SearchInput bind:searchInput value={$assetsStore.search} on:search={onFilter} on:maximize={onClickMinifiedSearch} minimized={panelHidden} searchLabel="Search Assets" />
+  </svelte:fragment>
   {#if $assetsStore.showsearch}
     {#if $searchStore.loading || $searchStore.rootItems?.length}
       <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search asset-tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/assets/' + detail.id) }} responsiveHeaders={handleResponsiveSearchTreeHeaders}

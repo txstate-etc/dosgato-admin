@@ -7,10 +7,16 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContextStore, SearchInput, actionPanelStore } from '$lib'
-  import { _roleFilterStore as roleFilterStore } from './+page'
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+
+  let searchInput: HTMLInputElement
+  async function onClickMinifiedSearch () {
+    actionPanelStore.show()
+    await tick()
+    searchInput?.focus()
+  }
 
   type Modals = 'addrole' | 'deleterole'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
@@ -69,16 +75,21 @@
     modalContext.reset()
   }
 
+let filter = ''
+
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'id')
 </script>
 
-{#if $roleFilterStore.search}
-  <div class="searching">Search results for "{$roleFilterStore.search}"...</div>
+{#if filter.length}
+  <div class="searching">Search results for "{filter}"...</div>
 {/if}
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Roles'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
+  <svelte:fragment slot="abovePanel" let:panelHidden>
+    <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
+  </svelte:fragment>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/roles/' + detail.id)} headers={[
     { id: 'name', label: 'Name', get: 'name', grow: 4, icon: { icon: keyIcon } }
-  ]} searchable='name' filter={$roleFilterStore.search} enableResize>
+  ]} searchable='name' filter={filter} enableResize>
   </Tree>
 </ActionPanel>
 {#if $modalContext.modal === 'addrole'}

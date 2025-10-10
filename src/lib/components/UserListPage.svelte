@@ -18,12 +18,18 @@
 
   export let system: boolean
   export let trainings: { id: string, name: string, lcName: string }[]
-  export let filter = ''
 
   type TypedUserItem = TypedTreeItem<UserListUser>
 
   const actionPanelTarget: { target: string | undefined } = { target: 'UserListPage' }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+
+  let searchInput: HTMLInputElement
+  async function onClickMinifiedSearch () {
+    actionPanelStore.show()
+    await tick()
+    searchInput?.focus()
+  }
 
   type Modals = 'create' | 'disable' | 'enable'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
@@ -212,6 +218,8 @@
     }
   }
 
+  let filter = ''
+
   $: actions = $store.selected.size ? ($store.selected.size === 1 ? singleactions($store.selectedItems[0]) : multiactions($store.selectedItems)) : emptyactions
 
   // TODO: Get with Rachel on what we want the target to be here. Probably don't want it to be the user. Do we want IDs in the logs??? I think yes but can that bite us?
@@ -222,6 +230,9 @@
   <div class="searching">Search results for "{filter}"...</div>
 {/if}
 <ActionPanel {actions} actionsTitle={$store.selected.size ? $store.selectedItems[0].id : 'Users'}>
+  <svelte:fragment slot="abovePanel" let:panelHidden>
+    <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
+  </svelte:fragment>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/users/' + detail.id)} headers={[
     { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', fixed: '10em', icon: u => ({ icon: u.disabled ? accountOff : accountIcon }) },
     { id: 'fullname', label: 'Full Name', get: 'name', fixed: '17em' },

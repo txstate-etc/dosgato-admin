@@ -20,7 +20,7 @@
 </script>
 
 <button type="button" bind:this={buttonelement} class="reset" style:max-width="calc(1.2 * {size})"
- on:click={() => logInteraction()} {...$$restProps}>
+ on:click={() => logInteraction()}>
   <Icon {icon} width={size} />
   <div style:font-size="calc(0.3 * {size})">{label}</div>
 </button>

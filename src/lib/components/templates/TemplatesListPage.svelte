@@ -1,7 +1,7 @@
 <script lang="ts">
   import { titleCase } from 'txstate-utils'
-  import { ActionPanel, api, ModalContextStore, templateRegistry, uiLog, type ActionPanelAction, type TemplateListTemplateArea, type TemplateListTemplateWithAreas } from '$lib'
-  import { setContext } from 'svelte'
+  import { ActionPanel, actionPanelStore, api, ModalContextStore, SearchInput, templateRegistry, uiLog, type ActionPanelAction, type TemplateListTemplateArea, type TemplateListTemplateWithAreas } from '$lib'
+  import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { Dialog, Tree, type TreeStore, type TreeHeader } from '@dosgato/dialog'
@@ -16,10 +16,16 @@
 
   export let type: 'page' | 'component' | 'data'
   export let store: TreeStore<T>
-  export let filter = ''
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+
+  let searchInput: HTMLInputElement
+  async function onClickMinifiedSearch () {
+    actionPanelStore.show()
+    await tick()
+    searchInput?.focus()
+  }
 
   type Modals = 'setuniversal' | 'setrestricted'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
@@ -60,13 +66,15 @@
   if (type !== 'data') {
     treeHeaders.push({ id: 'restricted', label: 'Restricted', icon: item => item.type === 'template' && !item.universal ? { icon: checkIcon, label: 'Restricted' } : undefined, fixed: '6em' })
   }
+
+  let filter = ''
 </script>
 
-{#if filter}
-  <div class="searching">Search results for "{filter}"...</div>
-{/if}
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : `${titleCase(type)} Templates`} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : []}>
-  <Tree singleSelect {store} on:choose={({ detail }) => { if (detail.type === 'template') void goto(base + '/settings/templates/' + detail.id) }} headers={treeHeaders} enableResize responsiveHeaders={handleResponsiveHeaders} searchable={['name', 'id']} {filter}/>
+  <svelte:fragment slot="abovePanel" let:panelHidden>
+    <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
+  </svelte:fragment>
+  <Tree singleSelect {store} on:choose={({ detail }) => { if (detail.type === 'template') void goto(base + '/settings/templates/' + detail.id) }} headers={treeHeaders} enableResize responsiveHeaders={handleResponsiveHeaders} searchable={['name', 'id']} {filter} />
 </ActionPanel>
 {#if $modalContext.modal === 'setuniversal'}
   <Dialog title="Make Template Universal" cancelText="Cancel" continueText="Set Universal" on:escape={modalContext.onModalEscape} on:continue={async () => await setUniversal(true)}>

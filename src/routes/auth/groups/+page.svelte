@@ -6,7 +6,7 @@
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog, ModalContextStore, uiLog, SearchInput, actionPanelStore } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog, ModalContextStore, uiLog, actionPanelStore } from '$lib'
 
   // TODO: Need to get with Rachel on what we want defined for target in this screen's context.
   const actionPanelTarget: { target: string | undefined } = { target: 'AuthGroupsPage' }

@@ -51,7 +51,23 @@
   type Modals = 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | 'tagpage'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
-  function findInPageTree (path: string) {
+  function onFilter (e: CustomEvent<string>) {
+    if (isBlank(e.detail)) {
+      $pagesStore = { showsearch: false, search: '' }
+    } else {
+      actionPanelStore.hide()
+      $pagesStore = { showsearch: true, search: e.detail }
+    }
+    searchStore.refresh().catch(console.error)
+  }
+  let searchInput: HTMLInputElement
+  async function onClickMinifiedSearch () {
+    actionPanelStore.show()
+    await tick()
+    searchInput?.focus()
+  }
+
+    function findInPageTree (path: string) {
     return async () => {
       const itm = await expandTreePath(store, path.split('/').filter(isNotBlank))
       if (itm) store.select(itm, { clear: true, notify: true })
@@ -358,11 +374,13 @@
 
   let pageTagsModalOpen = false
 </script>
-
 {#if $pagesStore.showsearch}
   <div class="searching">Search results for "{$pagesStore.search}," {#if $searchStore.rootItems?.length === 200} showing top 200 results{:else}showing {$searchStore.rootItems?.length ?? 0} result{$searchStore.rootItems?.length === 1 ? '' : 's'}{/if}</div>
 {/if}
 <ActionPanel actionsTitle={$activeStore.selected.size === 1 ? $activeStore.selectedItems[0].name : 'Pages'} actions={$activeStore.selected.size === 1 ? singlepageactions($activeStore.selectedItems[0]) : multipageactions($activeStore.selectedItems)}>
+  <svelte:fragment slot="abovePanel" let:panelHidden>
+    <SearchInput bind:searchInput value={$pagesStore.search} on:search={onFilter} on:maximize={onClickMinifiedSearch} minimized={panelHidden} searchLabel="Search Pages" />
+  </svelte:fragment>
   {#if $pagesStore.showsearch}
     {#if $searchStore.loading || $searchStore.rootItems?.length}
       <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}
