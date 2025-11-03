@@ -263,19 +263,21 @@ class API {
 
   async chooserPageByLink (link: PageLink, pagetreeId?: string) {
     const { pages } = await this.query<ChooserPageByLink>(CHOOSER_PAGE_BY_LINK, { pageLink: { ...pick(link, 'linkId', 'siteId', 'path'), context: pagetreeId ? { pagetreeId } : undefined } })
-    return apiPageToChooserPage(pages[0], link.hash)
+    return apiPageToChooserPage(pages[0], link.hash, link.query)
   }
 
   async chooserPageByPath (path: string) {
-    const [pagePath, hash] = path.split('#')
+    const [pagePathWithQuery, hash] = path.split('#')
+    const [pagePath, query] = pagePathWithQuery.split('?')
     const { pages } = await this.query<ChooserPageByPath>(CHOOSER_PAGE_BY_PATH, { path: pagePath })
-    return apiPageToChooserPage(pages[0], hash)
+    return apiPageToChooserPage(pages[0], hash, query)
   }
 
   async chooserPageByUrl (url: string) {
-    const [pageUrl, hash] = url.split('#')
+    const [pageUrlWithQuery, hash] = url.split('#')
+    const [pageUrl, query] = pageUrlWithQuery.split('?')
     const { pages } = await this.query<ChooserPageByPath>(CHOOSER_PAGE_BY_URL, { url: pageUrl })
-    return apiPageToChooserPage(pages[0], hash)
+    return apiPageToChooserPage(pages[0], hash, query)
   }
 
   async chooserSubFoldersAndAssetsByPath (path: string, pagetreeId: string | undefined) {
