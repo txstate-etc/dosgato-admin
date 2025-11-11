@@ -1,7 +1,7 @@
 <script lang="ts">
   import { FileIcon, FormDialog, bytesToHuman, Icon } from '@dosgato/dialog'
   import arrowSquareOut from '@iconify-icons/ph/arrow-square-out'
-  import caretDown from '@iconify-icons/ph/caret-down'
+  import refreshIcon from '@iconify-icons/mdi/refresh'
   import clipboardText from '@iconify-icons/ph/clipboard-text'
   import downloadIcon from '@iconify-icons/ph/download'
   import fileMagnifyingGlass from '@iconify-icons/ph/file-magnifying-glass'
@@ -96,7 +96,7 @@
   }
 
   function assetPanelButtons (asset: AssetDetail): DetailPanelButton[] {
-    const buttons: DetailPanelButton[] = [{ icon: swapIcon, hiddenLabel: 'upload new file for asset', onClick: onUploadClick }]
+    const buttons: DetailPanelButton[] = []
     if (!asset.corrupt) {
       buttons.push({ icon: downloadIcon, hiddenLabel: 'download asset', disabled: asset.corrupt, onClick: () => { void api.download(`${environmentConfig.renderBase}/.asset/${asset.id}/${encodeURIComponent(asset.filename)}`) } })
     }
@@ -111,7 +111,7 @@
 </script>
 
 <div class="container">
-  <DetailPanel header="Asset" class="image" headerColor="#E5D1BD" button={assetPanelButtons(asset)}>
+  <DetailPanel header="Preview" class="image" headerColor="#E5D1BD" button={assetPanelButtons(asset)}>
     <DetailPanelSection>
       {#if image}
         <div class="image-container">
@@ -145,9 +145,7 @@
     </DetailPanelSection>
   </DetailPanel>
   <div class="left-column">
-    <DetailPanel header="Asset Details" headerColor="#E5D1BD" button={[
-      ...(uiConfig.assetMeta ? [{ icon: pencilIcon, hiddenLabel: 'edit asset details', onClick: onEditClick }] : [])
-    ]}>
+    <DetailPanel header="Asset Details" headerColor="#E5D1BD" button={[{ icon: swapIcon, hiddenLabel: 'upload new file for asset', onClick: onUploadClick }]} >
       <DetailPanelSection>
         {#if asset?.corrupt}
           <div class="corrupt-warning">
@@ -173,7 +171,18 @@
         </dl>
       </DetailPanelSection>
     </DetailPanel>
-    <DetailPanel header="Appears On" headerColor="#E5D1BD" button={{ icon: caretDown, onClick: expandReferences, hiddenLabel: 'Expand', 'aria-expanded': assetReferencesPending }} loading={assetReferencesPending && !assetReferences}>
+    <DetailPanel header="Asset Metadata" headerColor="#E5D1BD" button={[
+      ...(uiConfig.assetMeta ? [{ icon: pencilIcon, hiddenLabel: 'edit asset details', onClick: onEditClick }] : [])
+    ]}>
+      <DetailPanelSection>
+        {#if asset.data.meta && Object.keys(asset.data.meta).length}
+          <DetailList columns={1} records={uiConfig.assetMeta?.details ? uiConfig.assetMeta.details(asset.data.meta) : asset.data.meta} />
+        {:else}
+          <p>No metadata available for this asset.</p>
+        {/if}
+      </DetailPanelSection>
+    </DetailPanel>
+    <DetailPanel header="Appears On" headerColor="#E5D1BD" button={{ icon: refreshIcon, onClick: expandReferences, hiddenLabel: 'Expand', 'aria-expanded': assetReferencesPending }} loading={assetReferencesPending && !assetReferences}>
       {#if assetReferences && assetReferencesIndirect}
         <DetailPanelSection>
           {#if assetReferences.length || !assetReferencesIndirect.length}
