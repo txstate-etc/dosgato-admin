@@ -58,7 +58,7 @@ export const uiConfig: UIConfig = {
   environmentTitle: () => 'DEV',
   assetMeta: {
     dialog: AssetDialog,
-    details: meta => ({ Title: meta.title, Description: meta.description })
+    details: meta => ({ Title: meta.title ?? 'Not Provided', Description: meta.description ?? 'Not Provided' })
   },
   logo: () => {
     if (window.matchMedia('(max-width: 600px)').matches) {
