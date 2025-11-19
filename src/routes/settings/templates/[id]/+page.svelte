@@ -5,14 +5,15 @@
   import { sortby } from 'txstate-utils'
   const panelHeaderColor = '#BFF3FD'
 
-  const templateInfo: Record<string, string> = {
-    Name: $store.template.name,
-    Key: $store.template.key,
-    Type: $store.template.type
-  }
-  if ($store.template.type !== 'DATA') {
-    templateInfo.Availability = $store.template.universal ? 'Universal' : 'Restricted'
-  }
+  $: templateInfo = {
+  Name: $store.template.name,
+  Key: $store.template.key,
+  Type: $store.template.type,
+  ...( $store.template.type !== 'DATA'
+    ? { Availability: $store.template.universal ? 'Universal' : 'Restricted' }
+    : {}
+  )
+}
 </script>
 
 <DetailPageContent>
