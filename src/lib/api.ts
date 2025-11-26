@@ -290,8 +290,13 @@ class API {
     return [...assets.map(a => apiAssetToChooserAsset(a)!), ...assetfolders.map(f => apiAssetFolderToChooserFolder(f))]
   }
 
-  async chooserAssetByLink (link: AssetLink, pagetreeId?: string) {
+  async assetByLink (link: AssetLink, pagetreeId?: string) {
     const { assets } = await this.query<ChooserAssetByLink>(CHOOSER_ASSET_BY_LINK, { link: { ...pick(link, 'siteId', 'path', 'checksum'), linkId: link.id, context: pagetreeId ? { pagetreeId } : undefined } })
+    return assets
+  }
+
+  async chooserAssetByLink (link: AssetLink, pagetreeId?: string) {
+    const assets = await this.assetByLink(link, pagetreeId)
     return apiAssetToChooserAsset(assets[0])
   }
 

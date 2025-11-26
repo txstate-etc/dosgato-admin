@@ -2,6 +2,7 @@ import type { AnyItem, ChooserType, Client, Folder, Page, Source } from '@dosgat
 import type { AssetFolderLink, LinkDefinition } from '@dosgato/templating'
 import { Cache, isNotBlank, isNotNull, sortby, stringify } from 'txstate-utils'
 import { api, environmentConfig, uploadWithProgress } from '$lib'
+import { base } from '$app/paths'
 
 const pagetreeInfoCache = new Cache(async (id: string) => {
   return await api.getPagetreeContext(id)
@@ -117,5 +118,13 @@ export class ChooserClient implements Client {
       progress
     )
     return undefined
+  }
+
+  async idToEditingUrl (id: string) {
+    const link = JSON.parse(id) as LinkDefinition
+    if (link.type !== 'asset') return
+    const asset = await api.assetByLink(link)
+    if (!asset.length) return
+    return `${base}/assets/${asset[0].id}`
   }
 }

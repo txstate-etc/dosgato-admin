@@ -39,6 +39,7 @@ checksum
 site { id }
 box { width height }
 thumbnail { id extension }
+data
 `
 export interface ChooserAssetDetails {
   id: string
@@ -59,6 +60,9 @@ export interface ChooserAssetDetails {
   thumbnail?: {
     id: string
     extension: string
+  }
+  data?: {
+    meta?: Record<string, any>
   }
 }
 
@@ -251,7 +255,8 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
       ? {
           ...asset.box,
           thumbnailUrl: `${environmentConfig.renderBase}/.asset/${asset.id}/w/150/${asset.checksum.substring(0, 12)}/${asset.name}.${asset.extension}`,
-          previewUrl: `${environmentConfig.renderBase}/.asset/${asset.id}/w/700/${asset.checksum.substring(0, 12)}/${asset.name}.${asset.extension}`
+          previewUrl: `${environmentConfig.renderBase}/.asset/${asset.id}/w/700/${asset.checksum.substring(0, 12)}/${asset.name}.${asset.extension}`,
+          altText: asset.data?.meta?.altText || undefined
         }
       : undefined
   }
