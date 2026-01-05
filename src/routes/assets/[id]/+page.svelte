@@ -165,7 +165,7 @@
           Dimensions: asset.box ? `${asset.box.width}x${asset.box.height}` : 'N/A',
           'Created On': dateStamp(asset.createdAt),
           'Modified On': dateStamp(asset.modifiedAt),
-          'Created By': `${asset.modifiedBy.name} (${asset.modifiedBy.id})`,
+          'Created By': `${asset.createdBy.name} (${asset.createdBy.id})`,
           'Modified By': `${asset.modifiedBy.name} (${asset.modifiedBy.id})`,
           'Filename Uploaded': asset.uploadedFilename !== asset.filename ? asset.uploadedFilename : undefined
         }} />
