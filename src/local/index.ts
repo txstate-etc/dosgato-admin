@@ -18,6 +18,7 @@ import { columnLayoutComponentTemplate } from './columnlayout.js'
 import DocumentsDialog from './DocumentsDialog.svelte'
 import { base } from '$app/paths'
 import lifeBuoy from '@iconify-icons/ph/lifebuoy'
+import { songTemplate } from './song.js'
 
 export const uiConfig: UIConfig = {
   templates: [
@@ -33,6 +34,7 @@ export const uiConfig: UIConfig = {
     pageTemplate3,
     pageTemplate4,
     richText,
+    songTemplate,
     textImage,
     columnLayoutComponentTemplate,
     { templateKey: 'documents', dialog: DocumentsDialog }
