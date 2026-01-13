@@ -1,9 +1,19 @@
 import { assetRuleDetails, dataRuleDetails, globalRuleDetails, pageRuleDetails, siteRuleDetails, templateRuleDetails, type AssetRule, type DataRule, type GlobalRule, type PageRule, type SiteRule, type TemplateRule } from '$lib'
 import { mutationResponse } from './global'
 
+export interface CreateRoleInput {
+  name: string
+  description?: string
+  siteId?: string
+}
+
 const roleDetails = `
   id
   name
+  description
+  site {
+    id
+  }
   permissions {
     assign
     delete
@@ -15,6 +25,10 @@ const roleDetails = `
 export interface RoleListRole {
   id: string
   name: string
+  description?: string
+  site?: {
+    id: string
+  }
   permissions: {
     assign: boolean
     delete: boolean
@@ -26,6 +40,10 @@ export interface RoleListRole {
 const fullRoleDetails = `
   id
   name
+  description
+  site {
+    id
+  }
   permissions {
     assign
     delete
@@ -85,6 +103,10 @@ const fullRoleDetails = `
 export interface FullRole {
   id: string
   name: string
+  description?: string
+  site?: {
+    id: string
+  }
   directUsers: {
     id: string
     firstname: string
@@ -147,8 +169,8 @@ export const GET_ROLE_BY_ID = `
 `
 
 export const CREATE_ROLE = `
-  mutation createRole ($name: UrlSafeString!, $validateOnly: Boolean) {
-    createRole (name: $name, validateOnly: $validateOnly) {
+  mutation createRole ($input: RoleInput!, $validateOnly: Boolean) {
+    createRole (input: $input, validateOnly: $validateOnly) {
       ${mutationResponse}
       role {
         ${roleDetails}
@@ -158,8 +180,8 @@ export const CREATE_ROLE = `
 `
 
 export const UPDATE_ROLE = `
-  mutation updateRole ($roleId: ID!, $name: UrlSafeString!, $validateOnly: Boolean) {
-    updateRole (roleId: $roleId, name: $name, validateOnly: $validateOnly) {
+  mutation updateRole ($roleId: ID!, $input: RoleInput!, $validateOnly: Boolean) {
+    updateRole (roleId: $roleId, input: $input, validateOnly: $validateOnly) {
       ${mutationResponse}
       role {
         ${roleDetails}

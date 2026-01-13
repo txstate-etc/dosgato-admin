@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Dialog, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
+  import { Dialog, FieldSelect, FieldText, FormDialog, Tree, TreeStore, type TypedTreeItem } from '@dosgato/dialog'
   import keyIcon from '@iconify-icons/ph/key'
   import plusIcon from '@iconify-icons/mdi/plus'
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
@@ -7,6 +7,12 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContextStore, SearchInput, actionPanelStore } from '$lib'
+
+  export let data: { siteOptions: { value: string, label: string }[] }
+  const siteNamesById: Record<string, string> = data.siteOptions.reduce((acc, site) => {
+    acc[site.value] = site.label
+    return acc
+  }, {} as Record<string, string>)
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
@@ -44,13 +50,14 @@
   }
 
 
+  // TODO: send state params as object { name, description, siteId }
   async function validateAddRole (state) {
-    const resp = await api.addRole(state.name, true)
+    const resp = await api.addRole(state, true)
     return resp.messages.map(m => ({ path: m.arg, type: m.type, message: m.message }))
   }
 
   async function onAddRole (state) {
-    const resp = await api.addRole(state.name)
+    const resp = await api.addRole(state)
     modalContext.logModalResponse(resp, resp.role?.name)
     return {
       success: resp.success,
@@ -88,7 +95,9 @@ let filter = ''
     <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
   </svelte:fragment>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/roles/' + detail.id)} headers={[
-    { id: 'name', label: 'Name', get: 'name', grow: 4, icon: { icon: keyIcon } }
+    { id: 'name', label: 'Name', get: 'name', icon: { icon: keyIcon } },
+    { id: 'description', label: 'Description', get: 'description' },
+    { id: 'site', label: 'Site', render: role => role.site?.id ? siteNamesById[role.site.id] : '' }
   ]} searchable='name' filter={filter} enableResize>
   </Tree>
 </ActionPanel>
@@ -101,6 +110,8 @@ let filter = ''
     on:escape={modalContext.onModalEscape}
     on:saved={onCompleteAddRole}>
     <FieldText path='name' label='Name' required />
+    <FieldText path='description' label='Description' />
+    <FieldSelect path='siteId' label='Site' choices={data.siteOptions} />
   </FormDialog>
 {:else if $modalContext.modal === 'deleterole'}
   <Dialog

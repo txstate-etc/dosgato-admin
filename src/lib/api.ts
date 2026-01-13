@@ -42,7 +42,8 @@ import {
   type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST, GET_SEARCH_PAGES, type SearchTreePage,
   type AssetWithPages, ASSET_WITH_PAGES, UNDELETE_DATA_FOLDERS, mutationResponse, FINALIZE_DATA_FOLDER_DELETION, type TemplateListTemplateWithAreas,
   GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE, type TemplateWithPagetrees, GET_TEMPLATE_PAGETREES, type AssetSearchResult, GET_SEARCH_ASSETS,
-  GET_PAGE_TEMPLATES_ALLOWING_COMPONENT
+  GET_PAGE_TEMPLATES_ALLOWING_COMPONENT,
+  type CreateRoleInput
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -697,10 +698,10 @@ class API {
     return await this.trainingsCache.get()
   }
 
-  async addRole (name: string, validateOnly?: boolean) {
-    const resp = validateRequired<{ role: undefined }>({ name }, ['name'])
+  async addRole (input: CreateRoleInput, validateOnly?: boolean) {
+    const resp = validateRequired<{ role: undefined }>(input, ['name'])
     if (resp) return resp
-    const { createRole } = await this.query<{ createRole: MutationResponse & { role: RoleListRole } }>(CREATE_ROLE, { name, validateOnly })
+    const { createRole } = await this.query<{ createRole: MutationResponse & { role: RoleListRole } }>(CREATE_ROLE, { input, validateOnly })
     return createRole
   }
 
@@ -753,8 +754,8 @@ class API {
     return roles[0]
   }
 
-  async editRole (roleId: string, name: string, validateOnly?: boolean) {
-    const { updateRole } = await this.query<{ updateRole: MutationResponse & { role: RoleListRole } }>(UPDATE_ROLE, { roleId, name, validateOnly })
+  async editRole (roleId: string, input: CreateRoleInput, validateOnly?: boolean) {
+    const { updateRole } = await this.query<{ updateRole: MutationResponse & { role: RoleListRole } }>(UPDATE_ROLE, { roleId, input, validateOnly })
     return updateRole
   }
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Dialog, FieldText, FormDialog, Icon, Tabs, Tab, FieldMultiselect } from '@dosgato/dialog'
+  import { Dialog, FieldText, FormDialog, Icon, Tabs, Tab, FieldMultiselect, FieldSelect } from '@dosgato/dialog'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import plusIcon from '@iconify-icons/ph/plus'
   import deleteIcon from '@iconify-icons/ph/trash'
@@ -26,6 +26,10 @@
 
   export let data: { siteOptions: { value: string, label: string }[], users: UserListUser[], groups: GroupListGroup[], templates: TemplateListTemplate[] }
   $: ({ siteOptions, users, groups, templates } = data)
+  $: siteNamesById = siteOptions.reduce((acc, site) => {
+    acc[site.value] = site.label
+    return acc
+  }, {} as Record<string, string>)
   $: dataTemplateOptions = templates.filter(t => t.type === 'DATA').map(t => ({ label: t.name, value: t.key }))
 
   type Modals = 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' | 'assignrole' |
@@ -80,14 +84,15 @@
     if (group) return { label: group.name, value: group.id }
   }
 
+
   async function validateBasic (state) {
-    const resp = await api.editRole($store.role.id, state.name, true)
+    const resp = await api.editRole($store.role.id, state, true)
     return resp.messages.map(m => ({ ...m, path: m.arg }))
   }
 
   async function onEditBasic (state) {
-    const resp = await api.editRole($store.role.id, state.name)
-    modalContext.logModalResponse(resp, $store.role.id, { name: state.name })
+    const resp = await api.editRole($store.role.id, state)
+    modalContext.logModalResponse(resp, $store.role.id, { name: state.name, description: state.description, siteId: state.siteId })
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
@@ -206,7 +211,7 @@
   <div class="vertical-list">
     <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={basicInfoButtons}>
       <DetailPanelSection>
-        <DetailList records={{ Name: $store.role.name }}/>
+        <DetailList records={{ Name: $store.role.name, Description: $store.role.description, Site: $store.role.site?.id ? siteNamesById[$store.role.site.id] : '' }} columns={1} />
       </DetailPanelSection>
       <DetailPanelSection addTopBorder hasBackground>
         <Accordion title="List of Users with this Role">
@@ -333,11 +338,13 @@
     submit={onEditBasic}
     validate={validateBasic}
     name='editbasicinfo'
-    title='Rename Role'
-    preload={{ name: $store.role.name }}
+    title='Edit Role'
+    preload={{ name: $store.role.name, description: $store.role.description, siteId: $store.role.site?.id }}
     on:escape={modalContext.onModalEscape}
     on:saved={onSaved}>
     <FieldText path='name' label="Name" required/>
+    <FieldText path='description' label="Description" />
+    <FieldSelect path='siteId' label='Site' choices={data.siteOptions} />
   </FormDialog>
 {:else if $modalContext.modal === 'assignrole'}
   <Dialog title="Assign Role" on:escape={modalContext.onModalEscape} continueText="Cancel" on:continue={modalContext.onModalEscape}>
