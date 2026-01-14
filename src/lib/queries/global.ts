@@ -1,6 +1,7 @@
 export const GET_GLOBAL_SELF = `
   query getSelf {
     users (filter:{ ids: ["self"], enabled: true }) {
+      id
       firstname
       lastname
     }
@@ -20,6 +21,7 @@ export const GET_GLOBAL_SELF = `
 
 export interface GlobalSelf {
   users: [{
+    id: string
     firstname: string
     lastname: string
   }]

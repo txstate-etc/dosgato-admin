@@ -42,8 +42,7 @@ import {
   type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST, GET_SEARCH_PAGES, type SearchTreePage,
   type AssetWithPages, ASSET_WITH_PAGES, UNDELETE_DATA_FOLDERS, mutationResponse, FINALIZE_DATA_FOLDER_DELETION, type TemplateListTemplateWithAreas,
   GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE, type TemplateWithPagetrees, GET_TEMPLATE_PAGETREES, type AssetSearchResult, GET_SEARCH_ASSETS,
-  GET_PAGE_TEMPLATES_ALLOWING_COMPONENT,
-  type CreateRoleInput
+  GET_PAGE_TEMPLATES_ALLOWING_COMPONENT, type CreateRoleInput, GET_DASHBOARD_SITE_LIST, type DashboardSite, GET_DASHBOARD_USER_DETAILS, type DashboardUser
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -1133,6 +1132,16 @@ class API {
       }
     `, { pageIds, tagIds, includeChildren })
     return replaceTagsOnPage.success
+  }
+
+  async getDashboardSites () {
+    const { sites } = await this.query<{ sites: DashboardSite[] }>(GET_DASHBOARD_SITE_LIST)
+    return sites
+  }
+
+  async getDashboardUser (userId: string) {
+    const { users } = await this.query<{ users: DashboardUser[] }>(GET_DASHBOARD_USER_DETAILS, { userId })
+    return users[0]
   }
 }
 

@@ -13,6 +13,7 @@
   import userCircleLight from '@iconify-icons/ph/user-circle-light'
   import userIcon from '@iconify-icons/ph/user-circle-fill'
   import usersIcon from '@iconify-icons/ph/users'
+  import gaugeIcon from '@iconify-icons/ph/gauge'
   import { eq, PopupMenu, type PopupMenuItem, resize, ResizeStore, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { onMount, setContext, tick } from 'svelte'
   import { isNotNull } from 'txstate-utils'
@@ -45,8 +46,8 @@
     void goto(e.detail.value)
   }
 
-  // TODO: Add Dashboard to the beginning of this list because, like Logout, it's part of Core
   const profileItems: (PopupMenuItem & { icon?: IconOrSVG })[] = [
+    { value: `${base}/dashboard`, label: 'Dashboard', icon: gaugeIcon },
     ...(uiConfig.profileMenuLinks ?? []).map(link => ({
       value: link.url,
       label: link.label,
@@ -256,7 +257,7 @@
         <Icon icon={userIcon} inline width="1.5em"/>
         {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}<ScreenReaderOnly>Application Actions</ScreenReaderOnly>
       </button>
-      <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={false} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
+      <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={true} hideSelectedIndicator={true} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
         {@const icon = profileIcons[item.value]}
         <div class="menu-item">
           {#if icon}
@@ -265,7 +266,7 @@
           {label}
         </div>
       </PopupMenu>
-      <PopupMenu usemenurole buttonelement={profileelement} items={profileItems} showSelected={false} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
+      <PopupMenu usemenurole buttonelement={profileelement} items={profileItems} showSelected={true} hideSelectedIndicator={true} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
         {@const icon = profileIcons[item.value]}
         <div class="menu-item">
           {#if icon}
