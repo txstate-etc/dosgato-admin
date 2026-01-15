@@ -1,5 +1,4 @@
-import { accessDetailRules, type AccessDetailAssetRule, type AccessDetailDataRule, type AccessDetailPageRule, type AccessDetailSiteRule, type LaunchState } from '$lib'
-
+import { accessDetailRules, dateStamp, type AccessDetailAssetRule, type AccessDetailDataRule, type AccessDetailPageRule, type AccessDetailSiteRule, type LaunchState } from '$lib'
 export interface DashboardSite {
   id: string
   name: string
@@ -67,4 +66,83 @@ export const GET_DASHBOARD_USER_DETAILS = `
   }
 `
 
+export interface DashboardSiteDetailRaw {
+  id: string
+  name: string
+  url?: {
+    prefix?: string
+  }
+  launched: boolean
+  launchState: LaunchState
+  owner?: {
+    id: string
+    name: string
+  }
+  managers: {
+    id: string
+    name: string
+  }[]
+  primaryPagetree: {
+    pages: {
+      id: string
+      live: boolean
+    }[]
+  }
+  pagetrees: {
+    created: string
+  }[]
+}
 
+export const GET_DASHBOARD_SITE_BY_ID = `
+  query getDashboardSiteById ($siteId: ID!) {
+    sites (filter: { ids: [$siteId]}) {
+      id
+      name
+      url {
+        prefix
+      }
+      launched
+      launchState
+      owner {
+        id
+        name
+      }
+      managers {
+        id
+        name
+      }
+      primaryPagetree {
+        pages {
+          id
+          live
+        }
+      }
+      pagetrees {
+        created
+      }
+    }
+  }
+`
+
+
+export interface DashboardSiteDetailDisplay extends Omit<DashboardSiteDetailRaw, 'pagetrees' | 'primaryPagetree'> {
+  createdAt: string
+  totalPages: number
+  publishedPages: number
+  // will also include information gathered from examining the roles, managers, owners
+}
+
+export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
+  // get the earliest pagetree creation date
+  const earliestPagetreeCreationDate = site.pagetrees.reduce((earliest, pagetree) => {
+    const createdDate = new Date(pagetree.created)
+    return createdDate < earliest ? createdDate : earliest
+  }, new Date())
+  const { primaryPagetree, pagetrees, ...rest } = site
+  return {
+    ...rest,
+    createdAt: dateStamp(earliestPagetreeCreationDate.toISOString()),
+    totalPages: site.primaryPagetree.pages.length,
+    publishedPages: site.primaryPagetree.pages.filter(page => page.live).length
+  }
+}
