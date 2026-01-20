@@ -261,3 +261,11 @@ export const GET_PAGES_AND_DESCENDANTS = `
     }
   }
 `
+
+export const GET_PAGE_PATH_BY_ID = `
+  query getPagePathById ($pageId: ID!) {
+    pages (filter: { ids: [$pageId]}) {
+      path
+    }
+  }
+`

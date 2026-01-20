@@ -43,7 +43,7 @@ import {
   type AssetWithPages, ASSET_WITH_PAGES, UNDELETE_DATA_FOLDERS, mutationResponse, FINALIZE_DATA_FOLDER_DELETION, type TemplateListTemplateWithAreas,
   GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE, type TemplateWithPagetrees, GET_TEMPLATE_PAGETREES, type AssetSearchResult, GET_SEARCH_ASSETS,
   GET_PAGE_TEMPLATES_ALLOWING_COMPONENT, type CreateRoleInput, GET_DASHBOARD_SITE_LIST, type DashboardSite, GET_DASHBOARD_USER_DETAILS, type DashboardUser, GET_DASHBOARD_SITE_BY_ID, type DashboardSiteDetailRaw,
-  apiSiteToDashboardSite
+  apiSiteToDashboardSite, GET_PAGE_PATH_BY_ID
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -1148,6 +1148,11 @@ class API {
   async getDashboardSiteById (siteId: string) {
     const { sites } = await this.query<{ sites: DashboardSiteDetailRaw[] }>(GET_DASHBOARD_SITE_BY_ID, { siteId })
     return apiSiteToDashboardSite(sites[0])
+  }
+
+  async getPagePathById (pageId: string) {
+    const { pages } = await this.query<{ pages: { path: string }[] }>(GET_PAGE_PATH_BY_ID, { pageId })
+    return pages[0]?.path ?? ''
   }
 }
 

@@ -49,4 +49,14 @@
     padding: 0;
     margin: 0;
   }
+  @media screen and (max-width: 64em) {
+    .sites {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media screen and (max-width: 50em) {
+    .sites {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

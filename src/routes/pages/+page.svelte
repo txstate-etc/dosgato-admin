@@ -24,7 +24,7 @@
   import warningIcon from '@iconify-icons/ph/warning'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
-  import { setContext, tick } from 'svelte'
+  import { onMount, setContext, tick } from 'svelte'
   import { htmlEncode, isBlank, isNotBlank } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
@@ -373,6 +373,17 @@
   }
 
   let pageTagsModalOpen = false
+
+  onMount(async () => {
+    const params = new URLSearchParams(window.location.search)
+    const selectedPage = params.get('selectedPage')
+    if (selectedPage) {
+      const path = await api.getPagePathById(selectedPage)
+      if (path) {
+        findInPageTree(path)().catch(console.error)
+      }
+    }
+  })
 </script>
 {#if $pagesStore.showsearch}
   <div class="searching">Search results for "{$pagesStore.search}," {#if $searchStore.rootItems?.length === 200} showing top 200 results{:else}showing {$searchStore.rootItems?.length ?? 0} result{$searchStore.rootItems?.length === 1 ? '' : 's'}{/if}</div>

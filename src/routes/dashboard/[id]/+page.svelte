@@ -1,15 +1,29 @@
 <script lang="ts">
-  import { DetailList, DetailPageContent, DetailPanel, DetailPanelSection, getSiteIcon } from '$lib'
+  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, environmentConfig, getSiteIcon, SortableTable, toast } from '$lib'
   import type { DashboardSiteDetailDisplay } from '$lib'
   import { Button, Icon } from '@dosgato/dialog'
   import eye from '@iconify-icons/ph/eye-bold'
   import clipboard from '@iconify-icons/ph/clipboard-fill'
   import tree from '@iconify-icons/ph/tree-structure-bold'
+  import { base } from '$app/paths'
+  import { goto } from '$app/navigation';
 
   export let data: { site: DashboardSiteDetailDisplay }
-  const site = data.site
+  $: site = data.site
 
-  const icon = getSiteIcon(site.launchState, 'PRIMARY')
+  $: icon = getSiteIcon(site.launchState, 'PRIMARY')
+
+  function onCopyURL (e: MouseEvent) {
+    if (!site.url?.prefix) return
+    navigator.clipboard.writeText(site.url.prefix).then(() => {
+      toast('Copied Live URL to clipboard.', 'success')
+    }).catch(console.error)
+  }
+
+  function onRevealInPageTree (e: MouseEvent) {
+    e.preventDefault()
+    goto(`${base}/pages?selectedPage=${site.rootPageId}`)
+  }
 </script>
 
 <DetailPageContent>
@@ -24,9 +38,9 @@
             <div class="value">{site.url?.prefix ?? 'None'}</div>
           </div>
           <div class="site-actions">
-            <Button type="button"><Icon icon={eye} /> Preview in New Window</Button>
-            {#if site.launched}<Button type="button"><Icon icon={clipboard} /> Copy Live URL</Button>{/if}
-            <Button type="button"><Icon icon={tree} /> Reveal in Page Tree</Button>
+            <Button type="button" on:click={() => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${site.rootPagePath}.html`), '_blank') }}><Icon icon={eye} /> Preview in New Window</Button>
+            {#if site.launched}<Button type="button" on:click={onCopyURL}><Icon icon={clipboard} /> Copy Live URL</Button>{/if}
+            <Button type="button" on:click={onRevealInPageTree}><Icon icon={tree} /> Reveal in Page Tree</Button>
           </div>
         </div>
       </div>
@@ -60,8 +74,16 @@
       </div>
     </div>
   </div>
+  <!-- Audit Warning Panel -->
   <DetailPanel header="Team Members" headerColor="#E5D1BD">
-    <DetailPanelSection></DetailPanelSection>
+    <DetailPanelSection>
+     <SortableTable items={site.team} headers={[
+        { id: 'access', label: 'Role', get: 'access', sortable: true},
+        { id: 'name', label: 'Name', get: 'name', sortable: true },
+        { id: 'username', label: 'User ID', get: 'id', sortable: true },
+        { id: 'lastlogin', label: 'Last Login', render: (item) => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true }
+      ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
+    </DetailPanelSection>
   </DetailPanel>
 </DetailPageContent>
 
@@ -127,6 +149,7 @@
   .site-stats .top .basic-info .site-actions {
     padding-top: 0.5em;
     display: flex;
+    flex-wrap: wrap;
     gap: 1em;
   }
   .site-stats .bottom {
