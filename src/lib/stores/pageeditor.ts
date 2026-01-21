@@ -1,7 +1,7 @@
-import type { BaseEvent, ComponentData, PageData, UITemplate } from '@dosgato/templating'
+import type { BaseEvent, ComponentData, PageData } from '@dosgato/templating'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
 import { get, groupby, isBlank, randomid, set, isNotEmpty, sortby } from 'txstate-utils'
-import { api, type PageEditorPage, templateRegistry, toast, uiLog } from '$lib'
+import { api, type EnhancedUITemplate, type PageEditorPage, templateRegistry, toast, uiLog } from '$lib'
 import type { Feedback } from '@txstate-mws/svelte-forms'
 import type { DateTime } from 'luxon'
 
@@ -50,8 +50,8 @@ export interface EditorState {
     path: string
     componentEventualPath: string
     data: any
-    availableComponents: (UITemplate & { name: string })[]
-    availableComponentsByCategory: { category: string, templates: (UITemplate & { name: string })[] }[]
+    availableComponents: (EnhancedUITemplate & { useOnPageWithoutRole: boolean })[]
+    availableComponentsByCategory: { category: string, templates: (EnhancedUITemplate & { useOnPageWithoutRole: boolean })[] }[]
     templateKey?: string
     disableAddToTop?: boolean
   }

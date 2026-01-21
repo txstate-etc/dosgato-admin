@@ -374,7 +374,7 @@
                           <Icon icon={templateIcon} height="50%" />
                         </div>
                       {/if}
-                      <span class="component-name">{availableComponent.name}</span>
+                      <span class="component-name">{availableComponent.name}{#if !availableComponent.useOnPageWithoutRole} [!]{/if}</span>
                     </button>
                   {/each}
                 </div>

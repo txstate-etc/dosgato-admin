@@ -110,6 +110,7 @@ export const GET_AVAILABLE_COMPONENTS = `
           name
           permissions {
             useOnPage (pageId: $pageId)
+            useOnPageWithoutRole (pageId: $pageId)
           }
         }
       }
@@ -123,6 +124,7 @@ export interface TemplateArea {
     name: string
     permissions: {
       useOnPage: boolean
+      useOnPageWithoutRole: boolean
     }
   }[]
 }
