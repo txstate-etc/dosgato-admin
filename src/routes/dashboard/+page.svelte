@@ -21,7 +21,7 @@
     </div>
     <ul class="sites">
       {#each data.sites as site}
-        <li><DashboardSiteCard {site} /></li>
+        <li class="site-list-item"><DashboardSiteCard {site} /></li>
       {/each}
     </ul>
   </div>
@@ -42,21 +42,24 @@
     color: #767676;
   }
   .sites {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    display: flex;
+    flex-wrap: wrap;
     gap: 1em;
     list-style: none;
     padding: 0;
     margin: 0;
   }
+  .sites .site-list-item {
+    flex: 1 1 calc(33.3333% - 1em);
+  }
   @media screen and (max-width: 64em) {
-    .sites {
-      grid-template-columns: 1fr 1fr;
+    .sites .site-list-item {
+      flex: 1 1 calc(50% - 1em);
     }
   }
   @media screen and (max-width: 50em) {
-    .sites {
-      grid-template-columns: 1fr;
+    .sites .site-list-item {
+      flex: 1 1 100%;
     }
   }
 </style>

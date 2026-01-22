@@ -31,6 +31,11 @@ export interface DashboardUser {
   sitesOwned: {
     id: string
     name: string
+    url?: {
+      prefix: string
+    }
+    launched: boolean
+    launchState: LaunchState
   }[]
   sitesManaged: {
     id: string
@@ -52,10 +57,20 @@ export const GET_DASHBOARD_USER_DETAILS = `
       sitesOwned {
         id
         name
+        url {
+          prefix
+        }
+        launched
+        launchState
       }
       sitesManaged {
         id
         name
+        url {
+          prefix
+        }
+        launched
+        launchState
       }
       roles {
         id
@@ -97,6 +112,8 @@ export interface DashboardSiteDetailRaw {
     }
   }
   pagetrees: {
+    id: string
+    name: string
     created: string
   }[]
   siteSpecificRoles: {
@@ -162,6 +179,8 @@ export const GET_DASHBOARD_SITE_BY_ID = `
         }
       }
       pagetrees {
+        id
+        name
         created
       }
       siteSpecificRoles: roles(filter: { siteIds: [$siteId] }) {
@@ -268,7 +287,7 @@ export interface DashboardSiteTeamMember {
 }
 
 
-export interface DashboardSiteDetailDisplay extends Omit<DashboardSiteDetailRaw, 'pagetrees' | 'primaryPagetree'> {
+export interface DashboardSiteDetailDisplay extends Omit<DashboardSiteDetailRaw, 'primaryPagetree'> {
   createdAt: string
   totalPages: number
   publishedPages: number
@@ -286,7 +305,7 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
     }, new Date(site.pagetrees[0].created))
     : new Date()
 
-  const { primaryPagetree, pagetrees, ...rest } = site
+  const { primaryPagetree, ...rest } = site
   const teamMembersById: Record<string, Omit<DashboardSiteTeamMember, 'access'>> = {}
   const accessByUserId = new Map<string, Set<string>>()
 

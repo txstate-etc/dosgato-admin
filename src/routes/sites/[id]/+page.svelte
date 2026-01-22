@@ -8,7 +8,7 @@
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { csv, isBlank, keyby, titleCase } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, ModalContextStore, DetailList, LaunchState, Accordion } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, ModalContextStore, DetailList, LaunchState, Accordion, downloadPageList } from '$lib'
   import { base } from '$app/paths'
   import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
@@ -310,17 +310,8 @@
     }
     modalContext.reset()
     const pagetree = $store.site.pagetrees.find(p => p.id === state.pagetree)
-    const pages = await api.getPagetreePages(state.pagetree)
-    const rows: string[][] = [['Path', 'Title', 'Template', 'Status', 'Last Modified', 'Modified By']]
-    for (const page of pages) {
-      rows.push([page.path, page.title ?? '', page.template?.name ?? '', (page.published ? 'Published' : 'Not Published'), page.modifiedAt, page.modifiedBy.id])
-    }
-    const csvString = csv(rows)
-    const j = document.createElement('a')
-    j.download = `${$store.site.name}_${pagetree!.name}_pages_` + Date.now() + '.csv'
-    j.href = URL.createObjectURL(new Blob([csvString]))
-    j.click()
-    return { success: true, data: {}, messages: [] }
+    downloadPageList(state.pagetree, pagetree!.name, $store.site.name)
+    return { success: true, data: state, messages: [] }
   }
 </script>
 
@@ -352,6 +343,12 @@
                     <Icon icon={pencilIcon} hiddenLabel="Edit URL or launch site" inline width="1.3em"/>
                   </button>
                 {/if}
+              </div>
+              <div class="dl-row">
+                <span>
+                  <span class="label">Launch Status:</span>
+                  <span>{$store.site.launchState === 'LAUNCHED' ? 'Live' : $store.site.launchState === 'PRELAUNCH' ? 'Prelaunch' : 'Inactive'}</span>
+                </span>
               </div>
             </div>
           </div>

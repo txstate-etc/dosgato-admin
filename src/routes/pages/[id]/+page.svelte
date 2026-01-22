@@ -374,7 +374,7 @@
                           <Icon icon={templateIcon} height="50%" />
                         </div>
                       {/if}
-                      <span class="component-name">{availableComponent.name}{#if !availableComponent.useOnPageWithoutRole} [!]{/if}</span>
+                      <span class="component-name">{availableComponent.name}{#if !availableComponent.useOnPageWithoutRole} <span class="admin-component">[!]</span>{/if}</span>
                     </button>
                   {/each}
                 </div>
@@ -477,6 +477,10 @@
   }
   .component-name {
     font-size: 1em;
+  }
+  .admin-component {
+    margin-left: 0.2em;
+    letter-spacing: 0.1em;
   }
   @container (max-width: 600px) {
     .component-chooser {

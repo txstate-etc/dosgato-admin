@@ -1,17 +1,23 @@
 <script lang="ts">
-  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, environmentConfig, getSiteIcon, SortableTable, toast } from '$lib'
+  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, environmentConfig, getSiteIcon, SortableTable, toast } from '$lib'
   import type { DashboardSiteDetailDisplay } from '$lib'
-  import { Button, Icon } from '@dosgato/dialog'
+  import { Button, FieldSelect, FormDialog, Icon } from '@dosgato/dialog'
   import eye from '@iconify-icons/ph/eye-bold'
   import clipboard from '@iconify-icons/ph/clipboard-fill'
   import tree from '@iconify-icons/ph/tree-structure-bold'
+  import exportIcon from '@iconify-icons/mdi/export'
   import { base } from '$app/paths'
-  import { goto } from '$app/navigation';
+  import { goto } from '$app/navigation'
+  import { ModalContextStore } from '$lib'
+
 
   export let data: { site: DashboardSiteDetailDisplay }
   $: site = data.site
 
   $: icon = getSiteIcon(site.launchState, 'PRIMARY')
+
+  type Modals = 'downloadcsv'
+  const modalContext = new ModalContextStore<Modals>()
 
   function onCopyURL (e: MouseEvent) {
     if (!site.url?.prefix) return
@@ -24,13 +30,23 @@
     e.preventDefault()
     goto(`${base}/pages?selectedPage=${site.rootPageId}`)
   }
+
+  async function onDownloadPageList (state) {
+    if (!state.pagetree) {
+      return { success: false, data: {}, messages: [] }
+    }
+    modalContext.reset()
+    const pagetree = data.site.pagetrees.find(p => p.id === state.pagetree)
+    downloadPageList(state.pagetree, pagetree!.name, data.site.name)
+    return { success: true, data: state, messages: [] }
+  }
 </script>
 
 <DetailPageContent>
   <div class="site-stats">
     <div class="top" class:launched={site.launchState === 'LAUNCHED'} class:prelaunch={site.launchState === 'PRELAUNCH'} class:decommissioned={site.launchState === 'DECOMMISSIONED'}>
       <div class="basic-info">
-        <Icon {icon} />
+        <Icon {icon} width="1.75em" />
         <div class="title-block">
           <h1 class="site-title">{site.name}</h1>
           <div class="url">
@@ -85,9 +101,26 @@
       ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
     </DetailPanelSection>
   </DetailPanel>
+  <DetailPanel header="Utilities" headerColor="#E5D1BD">
+    <DetailPanelSection>
+      <Button type="button" on:click={() => { modalContext.setModal('downloadcsv') }}><Icon icon={exportIcon} /> Download Page List</Button>
+    </DetailPanelSection>
+  </DetailPanel>
 </DetailPageContent>
+{#if $modalContext.modal === 'downloadcsv'}
+  <FormDialog
+      name='downloadcsv'
+      title='Download Page List'
+      on:escape={modalContext.onModalEscape}
+      submit={onDownloadPageList}>
+      <FieldSelect path='pagetree' label='Pagetree' choices={data.site.pagetrees.map(p => ({ label: p.name, value: p.id }))} required/>
+    </FormDialog>
+{/if}
 
 <style>
+  :global(.panel) {
+    margin-bottom: 2em;
+  }
   .site-stats {
     display: flex;
     flex-direction: column;

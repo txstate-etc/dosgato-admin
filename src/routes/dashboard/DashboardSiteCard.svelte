@@ -10,7 +10,7 @@
 <a class="site-card" href={`${base}/dashboard/${site.id}`} on:click={() => uiLog.log({ eventType: 'DashboardSiteCard', action: 'ClickSiteCard' }, site.id)}>
   <div class="site-card-header" class:launched={site.launchState === 'LAUNCHED'} class:prelaunch={site.launchState === 'PRELAUNCH'} class:decommissioned={site.launchState === 'DECOMMISSIONED'}>
     <div class="top">
-      <Icon {icon} />
+      <Icon {icon} width="1.5em"/>
     </div>
     <div class="bottom">
       <div class="site-name">{site.name}</div>

@@ -8,7 +8,8 @@ export const load = async () => {
     api.getDashboardSites(),
     api.getDashboardUser(currentUser.me.id)
   ])
-  const userAccessBySite: Record<string, string[]> = sites.reduce<Record<string, string[]>>((acc, site) => {
+  const allSites = [...sites, ...user.sitesOwned, ...user.sitesManaged]
+  const userAccessBySite: Record<string, string[]> = allSites.reduce<Record<string, string[]>>((acc, site) => {
     acc[site.id] = []
     return acc
   }, {})
@@ -16,6 +17,9 @@ export const load = async () => {
     userAccessBySite[site.id] = ['Owner']
   }
   for (const site of user.sitesManaged) {
+    if (!userAccessBySite[site.id]) {
+      userAccessBySite[site.id] = []
+    }
     userAccessBySite[site.id].push('Manager')
   }
   const userRules = user.roles.map(role => [...role.siteRules, ...role.assetRules, ...role.pageRules]).flat()
@@ -38,5 +42,5 @@ export const load = async () => {
     userAccessBySite[site] ??= []
     userAccessBySite[site].push(...permissionsForThisSite)
   }
-  return { sites: sites.map(site => ({ ...site, roleSummary: userAccessBySite[site.id] })) }
+  return { sites: allSites.map(site => ({ ...site, roleSummary: userAccessBySite[site.id] })) }
 }
