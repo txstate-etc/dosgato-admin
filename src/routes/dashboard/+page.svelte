@@ -50,7 +50,7 @@
     margin: 0;
   }
   .sites .site-list-item {
-    flex: 1 1 calc(33.3333% - 1em);
+    flex: 0 1 calc(33.3333% - 1em);
   }
   @media screen and (max-width: 64em) {
     .sites .site-list-item {

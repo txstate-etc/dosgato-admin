@@ -93,12 +93,16 @@
   <!-- Audit Warning Panel -->
   <DetailPanel header="Team Members" headerColor="#E5D1BD">
     <DetailPanelSection>
-     <SortableTable items={site.team} headers={[
-        { id: 'access', label: 'Role', get: 'access', sortable: true},
-        { id: 'name', label: 'Name', get: 'name', sortable: true },
-        { id: 'username', label: 'User ID', get: 'id', sortable: true },
-        { id: 'lastlogin', label: 'Last Login', render: (item) => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true }
-      ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
+      {#if site.team.length}
+      <SortableTable items={site.team} headers={[
+          { id: 'access', label: 'Role', get: 'access', sortable: true},
+          { id: 'name', label: 'Name', get: 'name', sortable: true },
+          { id: 'username', label: 'User ID', get: 'id', sortable: true },
+          { id: 'lastlogin', label: 'Last Login', render: (item) => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true }
+        ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
+      {:else}
+        <p>No team members have been added to this site.</p>
+      {/if}
     </DetailPanelSection>
   </DetailPanel>
   <DetailPanel header="Utilities" headerColor="#E5D1BD">
