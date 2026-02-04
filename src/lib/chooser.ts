@@ -32,6 +32,7 @@ export class ChooserClient implements Client {
   async findById (id: string): Promise<AnyItem | undefined> {
     try {
       let linkStr = id; let hash = ''
+      if (id.length > 4096) return undefined // likely a data url, won't match a page or asset so we can stop
       const m = id.match(/(.*)#(\w+)$/)
       if (m) {
         linkStr = m[1]
