@@ -343,7 +343,7 @@
     on:escape={modalContext.onModalEscape}
     on:saved={onSaved}>
     <FieldText path='name' label="Name" required/>
-    <FieldText path='description' label="Description" />
+    <FieldText path='description' label="Description" maxlength={200} />
     <FieldSelect path='siteId' label='Site' choices={data.siteOptions} />
   </FormDialog>
 {:else if $modalContext.modal === 'assignrole'}
