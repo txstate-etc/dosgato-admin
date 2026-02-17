@@ -1,11 +1,15 @@
 <script lang="ts">
-  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, environmentConfig, getSiteIcon, SortableTable, toast } from '$lib'
+  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, environmentConfig, getSiteIcon, SortableTable, toast, titleCaseAccess } from '$lib'
   import type { DashboardSiteDetailDisplay } from '$lib'
   import { Button, FieldSelect, FormDialog, Icon } from '@dosgato/dialog'
   import eye from '@iconify-icons/ph/eye-bold'
   import clipboard from '@iconify-icons/ph/clipboard-fill'
   import tree from '@iconify-icons/ph/tree-structure-bold'
-  import exportIcon from '@iconify-icons/mdi/export'
+  import exportIcon from '@iconify-icons/ph/export-bold'
+  import plusIcon from '@iconify-icons/ph/plus-circle-fill'
+  import teamIcon from '@iconify-icons/ph/users-three-fill'
+  import editUserIcon from '@iconify-icons/ph/user-gear-fill'
+  import trashIcon from '@iconify-icons/ph/trash-simple-fill'
   import { base } from '$app/paths'
   import { goto } from '$app/navigation'
   import { ModalContextStore } from '$lib'
@@ -85,13 +89,25 @@
           </div>
         </dl>
       </div>
-      <div class="owner-change">
-        <!-- Button to request owner change -->
+      <div class="secondary-actions">
+        <Button secondary icon={editUserIcon}>Update Website Management</Button>
+        <Button secondary icon={trashIcon}>Request Site Decommission</Button>
       </div>
     </div>
   </div>
   <!-- Audit Warning Panel -->
+   <DetailPanel header="Utilities" headerColor="#E5D1BD">
+    <DetailPanelSection>
+      <Button type="button" on:click={() => { modalContext.setModal('downloadcsv') }}><Icon icon={exportIcon} /> Download Page List</Button>
+    </DetailPanelSection>
+  </DetailPanel>
   <DetailPanel header="Team Members" headerColor="#E5D1BD">
+    <!-- Last Audit Timestamp-->
+     <div class="team-actions">
+        <Button icon={plusIcon}>Add User</Button>
+        <Button icon={teamIcon}>Audit Team</Button>
+        <Button icon={exportIcon}>Export CSV</Button>
+     </div>
     <DetailPanelSection>
       {#if site.team.length}
       <SortableTable items={site.team} headers={[
@@ -105,9 +121,28 @@
       {/if}
     </DetailPanelSection>
   </DetailPanel>
-  <DetailPanel header="Utilities" headerColor="#E5D1BD">
+  <DetailPanel header="Role Management" headerColor="#E5D1BD">
     <DetailPanelSection>
-      <Button type="button" on:click={() => { modalContext.setModal('downloadcsv') }}><Icon icon={exportIcon} /> Download Page List</Button>
+      {#if site.auditRoles.length}
+      <SortableTable items={site.auditRoles} headers={[
+          { id: 'role', label: 'Role', get: 'name', sortable: true},
+          { id: 'description', label: 'Description', get: 'description' },
+          { id: 'access', label: 'Access Level', render: (item) => item.access ? titleCaseAccess[item.access] : '', sortable: true},
+          { id: 'users', label: 'Users', render: (item) => item.users.length, sortable: true }
+        ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
+      {:else}
+        <p>No roles have been associated with this site.</p>
+      {/if}
+    </DetailPanelSection>
+  </DetailPanel>
+  <DetailPanel header="Related Pagetrees" headerColor="#E5D1BD">
+    <DetailPanelSection>
+      <p>Access to additional page trees is granted to all site Editors. Including all archives, sandboxes, and the live site (if published) there {site.pagetrees.length === 1 ? 'is 1 page tree' : `are ${site.pagetrees.length} page trees`} for this website. To remove a Page Tree, submit a Decommission Request.</p>
+      <!-- link to information about page trees -->
+       <SortableTable items={site.pagetrees} headers={[
+          { id: 'name', label: 'Page Tree', get: 'name' },
+          { id: 'pagecount', label: 'Pages', render: (item) => item.pages.length }
+        ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
     </DetailPanelSection>
   </DetailPanel>
 </DetailPageContent>
@@ -202,6 +237,7 @@
     flex-wrap: wrap;
     row-gap: 1em;
     column-gap: 2em;
+    margin: 0;
   }
   .site-stats .bottom .stats dl div {
     display: flex;
@@ -215,5 +251,15 @@
   }
   .site-stats .bottom .stats dl div dd {
     margin: 0;
+  }
+  .bottom .secondary-actions {
+    display: flex;
+    gap: 1em;
+    align-items: flex-start;
+  }
+  .team-actions {
+    display: flex;
+    gap: 0.5em;
+    padding: 2em 0 1em 1.5em;
   }
 </style>

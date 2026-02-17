@@ -48,7 +48,7 @@
 
   // TODO: Add dashboard back in when ready
   const profileItems: (PopupMenuItem & { icon?: IconOrSVG })[] = [
-    // { value: `${base}/dashboard`, label: 'Dashboard', icon: gaugeIcon },
+    { value: `${base}/dashboard`, label: 'Dashboard', icon: gaugeIcon },
     ...(uiConfig.profileMenuLinks ?? []).map(link => ({
       value: link.url,
       label: link.label,

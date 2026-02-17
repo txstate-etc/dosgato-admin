@@ -211,7 +211,7 @@
   <div class="vertical-list">
     <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={basicInfoButtons}>
       <DetailPanelSection>
-        <DetailList records={{ Name: $store.role.name, Description: $store.role.description, Site: $store.role.site?.id ? siteNamesById[$store.role.site.id] : '' }} columns={1} />
+        <DetailList records={{ Name: $store.role.name, Description: $store.role.description, Site: $store.role.site?.id ? siteNamesById[$store.role.site.id] : '', 'Access Level': $store.role.access ?? '' }} columns={1} />
       </DetailPanelSection>
       <DetailPanelSection addTopBorder hasBackground>
         <Accordion title="List of Users with this Role">
@@ -339,12 +339,17 @@
     validate={validateBasic}
     name='editbasicinfo'
     title='Edit Role'
-    preload={{ name: $store.role.name, description: $store.role.description, siteId: $store.role.site?.id }}
+    preload={{ name: $store.role.name, description: $store.role.description, siteId: $store.role.site?.id, access: $store.role.access }}
     on:escape={modalContext.onModalEscape}
     on:saved={onSaved}>
     <FieldText path='name' label="Name" required/>
     <FieldText path='description' label="Description" maxlength={200} />
     <FieldSelect path='siteId' label='Site' choices={data.siteOptions} />
+    <FieldSelect path='access' label="Access Level" choices={[
+      { value: 'EDITOR', label: 'Editor' },
+      { value: 'CONTRIBUTOR', label: 'Contributor' },
+      { value: 'READONLY', label: 'Read Only' }
+    ]} helptext="A summary of the access level this role provides. Rules must be created to define what users with this role can do." />
   </FormDialog>
 {:else if $modalContext.modal === 'assignrole'}
   <Dialog title="Assign Role" on:escape={modalContext.onModalEscape} continueText="Cancel" on:continue={modalContext.onModalEscape}>

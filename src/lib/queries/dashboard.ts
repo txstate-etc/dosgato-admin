@@ -1,4 +1,4 @@
-import { accessDetailRules, dateStamp, getSiteAccess, type AccessDetailAssetRule, type AccessDetailDataRule, type AccessDetailPageRule, type AccessDetailSiteRule, type LaunchState } from '$lib'
+import { dateStamp, type LaunchState } from '$lib'
 export interface DashboardSite {
   id: string
   name: string
@@ -7,6 +7,12 @@ export interface DashboardSite {
   }
   launched: boolean
   launchState: LaunchState
+}
+
+export const titleCaseAccess = {
+  EDITOR: 'Editor',
+  CONTRIBUTOR: 'Contributor',
+  READONLY: 'Read-only'
 }
 
 export interface DashboardSiteWithRoleSummary extends DashboardSite {
@@ -44,10 +50,10 @@ export interface DashboardUser {
   roles: {
     id: string
     name: string
-    siteRules: AccessDetailSiteRule[]
-    pageRules: AccessDetailPageRule[]
-    dataRules: AccessDetailDataRule[]
-    assetRules: AccessDetailAssetRule[]
+    access?: string
+    site?: {
+      id: string
+    }
   }[]
 }
 
@@ -75,7 +81,10 @@ export const GET_DASHBOARD_USER_DETAILS = `
       roles {
         id
         name
-        ${accessDetailRules}
+        access
+        site {
+          id
+        }
       }
     }
   }
@@ -115,28 +124,15 @@ export interface DashboardSiteDetailRaw {
     id: string
     name: string
     created: string
-  }[]
-  siteSpecificRoles: {
-    id: string
-    name: string
-    siteRules: AccessDetailSiteRule[]
-    pageRules: AccessDetailPageRule[]
-    dataRules: AccessDetailDataRule[]
-    assetRules: AccessDetailAssetRule[]
-    users: {
+    pages: {
       id: string
-      name: string
-      email: string
-      lastlogin: string
     }[]
   }[]
-  rolesWithRulesBasedAccess: {
+  auditRoles: {
     id: string
     name: string
-    siteRules: AccessDetailSiteRule[]
-    pageRules: AccessDetailPageRule[]
-    dataRules: AccessDetailDataRule[]
-    assetRules: AccessDetailAssetRule[]
+    description: string
+    access: string
     users: {
       id: string
       name: string
@@ -182,11 +178,15 @@ export const GET_DASHBOARD_SITE_BY_ID = `
         id
         name
         created
+        pages {
+          id
+        }
       }
-      siteSpecificRoles: roles(filter: { siteIds: [$siteId] }) {
+      auditRoles {
         id
         name
-        ${accessDetailRules}
+        description
+        access
         users {
           id
           name
@@ -194,86 +194,6 @@ export const GET_DASHBOARD_SITE_BY_ID = `
           lastlogin
         }
       }
-      rolesWithRulesBasedAccess: roles {
-        id
-        name
-        dataRules (filter: { siteIds: [$siteId] }) {
-          site {
-            id
-            name
-          }
-          type
-          template {
-            key
-            name
-          }
-          grants {
-            viewForEdit
-            view
-            create
-            delete
-            move
-            update
-            undelete
-            publish
-            unpublish
-          }
-        }
-        siteRules (filter: { siteIds: [$siteId] }) {
-          site {
-            id
-            name
-          }
-          type
-          grants {
-            viewForEdit
-          }
-        }
-        pageRules (filter: { siteIds: [$siteId] }) {
-          site {
-            id
-            name
-          }
-          path
-          pagetreeType
-          type
-          grants {
-            viewlatest
-            viewForEdit
-            create
-            update
-            move
-            publish
-            unpublish
-            delete
-            view
-            undelete
-          }
-        }
-        assetRules (filter: { siteIds: [$siteId] }) {
-          site {
-            id
-            name
-          }
-          path
-          pagetreeType
-          type
-          grants {
-            create
-            update
-            move
-            delete
-            view
-            undelete
-          }
-        }
-        users {
-          id
-          name
-          email
-          lastlogin
-        }
-      }   
     }
   }
 `
@@ -317,31 +237,13 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
     accessByUserId.set(manager.id, accessSet)
   }
 
-  // Prepare roles
-  const siteSpecificRoleIds = new Set(site.siteSpecificRoles.map(r => r.id))
-  const rolesWithRuleBasedAccess = site.rolesWithRulesBasedAccess.filter(
-    r =>
-      (r.assetRules.length > 0 ||
-        r.pageRules.length > 0 ||
-        r.siteRules.length > 0 ||
-        r.dataRules.length > 0) &&
-      !siteSpecificRoleIds.has(r.id)
-  )
-  const allRoles = [...site.siteSpecificRoles, ...rolesWithRuleBasedAccess]
-
-  // Add role users and their access
-  for (const role of allRoles) {
-    const rules = [
-      ...role.siteRules,
-      ...role.pageRules,
-      ...role.assetRules,
-      ...role.dataRules
-    ]
-    const access = getSiteAccess(rules)
+  // Add audit role users and their access
+  for (const role of site.auditRoles) {
+    const access = role.access ? titleCaseAccess[role.access] : ''
     for (const user of role.users) {
       teamMembersById[user.id] = user
       const accessSet = accessByUserId.get(user.id) ?? new Set()
-      for (const perm of access) accessSet.add(perm)
+      accessSet.add(access)
       accessByUserId.set(user.id, accessSet)
     }
   }

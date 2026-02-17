@@ -25,10 +25,12 @@
         <dt>Assigned URL:</dt>
         <dd>{site.url?.prefix ?? 'None'}</dd>
       </div>
-      <div>
-        <dt>Roles:</dt>
-        <dd>{site.roleSummary.join(', ')}</dd>
-      </div>
+      {#if site.roleSummary.length}
+        <div>
+          <dt>Roles:</dt>
+          <dd>{site.roleSummary.join(', ')}</dd>
+        </div>
+      {/if}
     </dl>
   </div>
 </a>

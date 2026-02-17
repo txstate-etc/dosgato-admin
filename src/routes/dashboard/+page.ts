@@ -1,5 +1,5 @@
-import { api, getSiteAccess, type AccessDetailAssetRule, type AccessDetailPageRule, type AccessDetailSiteRule } from '$lib'
-import { isNotNull } from 'txstate-utils'
+import { api, titleCaseAccess } from '$lib'
+import { unique } from 'txstate-utils'
 
 export const load = async () => {
   const currentUser = await api.getSelf()
@@ -8,7 +8,7 @@ export const load = async () => {
     api.getDashboardSites(),
     api.getDashboardUser(currentUser.me.id)
   ])
-  const allSites = [...sites, ...user.sitesOwned, ...user.sitesManaged]
+  const allSites = unique([...sites, ...user.sitesOwned, ...user.sitesManaged], 'id')
   const userAccessBySite: Record<string, string[]> = allSites.reduce<Record<string, string[]>>((acc, site) => {
     acc[site.id] = []
     return acc
@@ -22,25 +22,14 @@ export const load = async () => {
     }
     userAccessBySite[site.id].push('Manager')
   }
-  const userRules = user.roles.map(role => [...role.siteRules, ...role.assetRules, ...role.pageRules]).flat()
-  const rulesBySite: Record<string, (AccessDetailAssetRule | AccessDetailPageRule | AccessDetailSiteRule)[]> = sites.reduce<Record<string, (AccessDetailAssetRule | AccessDetailPageRule | AccessDetailSiteRule)[]>>((acc, site) => {
-    acc[site.id] = []
-    return acc
-  }, {})
-  for (const rule of userRules) {
-    if (isNotNull(rule.site)) {
-      rulesBySite[rule.site.id].push(rule)
-    } else {
-      // applies to all sites
-      for (const site of sites) {
-        rulesBySite[site.id].push(rule)
-      }
+
+  for (const role of user.roles) {
+    // We are not interested in roles that are not associated with a particular site
+    if (!role.site?.id || !role.access) continue // TODO: what do we do if the role has no access level set. is there a default?
+    if (!userAccessBySite[role.site.id]) {
+      userAccessBySite[role.site.id] = []
     }
-  }
-  for (const site in rulesBySite) {
-    const permissionsForThisSite = getSiteAccess(rulesBySite[site])
-    userAccessBySite[site] ??= []
-    userAccessBySite[site].push(...permissionsForThisSite)
+    userAccessBySite[role.site.id].push(role.access ? titleCaseAccess[role.access] : '')
   }
   return { sites: allSites.map(site => ({ ...site, roleSummary: userAccessBySite[site.id] })) }
 }

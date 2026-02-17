@@ -5,12 +5,14 @@ export interface CreateRoleInput {
   name: string
   description?: string
   siteId?: string
+  access?: string
 }
 
 const roleDetails = `
   id
   name
   description
+  access
   site {
     id
   }
@@ -26,6 +28,7 @@ export interface RoleListRole {
   id: string
   name: string
   description?: string
+  access?: string
   site?: {
     id: string
   }
@@ -41,6 +44,7 @@ const fullRoleDetails = `
   id
   name
   description
+  access
   site {
     id
   }
@@ -104,6 +108,7 @@ export interface FullRole {
   id: string
   name: string
   description?: string
+  access?: string
   site?: {
     id: string
   }

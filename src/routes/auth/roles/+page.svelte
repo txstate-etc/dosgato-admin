@@ -49,8 +49,6 @@
     return actions
   }
 
-
-  // TODO: send state params as object { name, description, siteId }
   async function validateAddRole (state) {
     const resp = await api.addRole(state, true)
     return resp.messages.map(m => ({ path: m.arg, type: m.type, message: m.message }))
@@ -97,7 +95,8 @@ let filter = ''
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/roles/' + detail.id)} headers={[
     { id: 'name', label: 'Name', get: 'name', icon: { icon: keyIcon } },
     { id: 'description', label: 'Description', get: 'description' },
-    { id: 'site', label: 'Site', render: role => role.site?.id ? siteNamesById[role.site.id] : '' }
+    { id: 'site', label: 'Site', render: role => role.site?.id ? siteNamesById[role.site.id] : '' },
+    { id: 'access', label: 'Access Level', get: 'access' }
   ]} searchable='name' filter={filter} enableResize>
   </Tree>
 </ActionPanel>
@@ -112,6 +111,11 @@ let filter = ''
     <FieldText path='name' label='Name' required />
     <FieldText path='description' label='Description' maxlength={200} />
     <FieldSelect path='siteId' label='Site' choices={data.siteOptions} />
+    <FieldSelect path='access' label="Access Level" choices={[
+      { value: 'EDITOR', label: 'Editor' },
+      { value: 'CONTRIBUTOR', label: 'Contributor' },
+      { value: 'READONLY', label: 'Read Only' }
+    ]} helptext="A summary of the access level this role provides. Once the role is created, you need to assign rules to it to define what users with this role can do." />
   </FormDialog>
 {:else if $modalContext.modal === 'deleterole'}
   <Dialog
