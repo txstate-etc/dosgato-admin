@@ -1,6 +1,6 @@
 <script lang="ts">
   import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, environmentConfig, getSiteIcon, SortableTable, toast, titleCaseAccess } from '$lib'
-  import type { DashboardSiteDetailDisplay } from '$lib'
+  import type { DashboardSiteDetailDisplay, DashboardSiteTeamMemberWithRole } from '$lib'
   import { Button, FieldSelect, FormDialog, Icon } from '@dosgato/dialog'
   import eye from '@iconify-icons/ph/eye-bold'
   import clipboard from '@iconify-icons/ph/clipboard-fill'
@@ -10,9 +10,11 @@
   import teamIcon from '@iconify-icons/ph/users-three-fill'
   import editUserIcon from '@iconify-icons/ph/user-gear-fill'
   import trashIcon from '@iconify-icons/ph/trash-simple-fill'
+  import infoIcon from '@iconify-icons/ph/info-fill'
   import { base } from '$app/paths'
   import { goto } from '$app/navigation'
   import { ModalContextStore } from '$lib'
+  import UserDetailDialog from './UserDetailDialog.svelte'
 
 
   export let data: { site: DashboardSiteDetailDisplay }
@@ -20,7 +22,7 @@
 
   $: icon = getSiteIcon(site.launchState, 'PRIMARY')
 
-  type Modals = 'downloadcsv'
+  type Modals = 'downloadcsv' | 'userdetail'
   const modalContext = new ModalContextStore<Modals>()
 
   function onCopyURL (e: MouseEvent) {
@@ -43,6 +45,20 @@
     const pagetree = data.site.pagetrees.find(p => p.id === state.pagetree)
     downloadPageList(state.pagetree, pagetree!.name, data.site.name)
     return { success: true, data: state, messages: [] }
+  }
+
+  let userDetailId: string | null = null
+  let userDetail: DashboardSiteTeamMemberWithRole | null = null
+  async function viewUserDetail(userId: string) {
+    userDetailId = userId
+    userDetail = site.teamMembersWithRolesById[userId]
+    modalContext.setModal('userdetail', userId)
+  }
+
+  function dismissUserDetail() {
+    userDetailId = null
+    userDetail = null
+    modalContext.onModalEscape()
   }
 </script>
 
@@ -113,8 +129,9 @@
       <SortableTable items={site.team} headers={[
           { id: 'access', label: 'Role', get: 'access', sortable: true},
           { id: 'name', label: 'Name', get: 'name', sortable: true },
-          { id: 'username', label: 'User ID', get: 'id', sortable: true },
-          { id: 'lastlogin', label: 'Last Login', render: (item) => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true }
+          { id: 'username', label: 'User ID', get: 'id' },
+          { id: 'lastlogin', label: 'Last Login', render: (item) => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true },
+          { id: 'details', label: 'Details', actions: [{ icon: infoIcon, label: 'Details', onClick: (user) => viewUserDetail(user.id) }] }
         ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
       {:else}
         <p>No team members have been added to this site.</p>
@@ -125,10 +142,10 @@
     <DetailPanelSection>
       {#if site.auditRoles.length}
       <SortableTable items={site.auditRoles} headers={[
-          { id: 'role', label: 'Role', get: 'name', sortable: true},
+          { id: 'role', label: 'Role', get: 'name', sortable: true, sortFunction: (item) => item.name },
           { id: 'description', label: 'Description', get: 'description' },
-          { id: 'access', label: 'Access Level', render: (item) => item.access ? titleCaseAccess[item.access] : '', sortable: true},
-          { id: 'users', label: 'Users', render: (item) => item.users.length, sortable: true }
+          { id: 'access', label: 'Access Level', render: (item) => item.access ? titleCaseAccess[item.access] : '' },
+          { id: 'users', label: 'Users', render: (item) => item.users.length, sortable: true, sortFunction: (item) => item.users.length }
         ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
       {:else}
         <p>No roles have been associated with this site.</p>
@@ -154,6 +171,8 @@
       submit={onDownloadPageList}>
       <FieldSelect path='pagetree' label='Pagetree' choices={data.site.pagetrees.map(p => ({ label: p.name, value: p.id }))} required/>
     </FormDialog>
+{:else if $modalContext.modal === 'userdetail'}
+    <UserDetailDialog siteName={site.name} userDetail={userDetail} on:dismiss={dismissUserDetail}/>
 {/if}
 
 <style>

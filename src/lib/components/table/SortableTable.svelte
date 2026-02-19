@@ -4,7 +4,7 @@
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import sortAscendingIcon from '@iconify-icons/ph/sort-ascending'
   import sortDescendingIcon from '@iconify-icons/ph/sort-descending'
-  import { isNotNull, sortby } from 'txstate-utils'
+  import { isNotNull, randomid, sortby } from 'txstate-utils'
   import { Icon } from '@dosgato/dialog'
   import { Accordion } from '..'
   export let items: any[]
@@ -15,8 +15,16 @@
 
   $: sortedItems = items
   let sortBy: { column: string, desc: boolean } | undefined = undefined
+  let sortColumn: string | undefined = undefined
+  const sortId = randomid()
 
-  function sortItems (header: SortableTableHeader) {
+  function sortItems () {
+    if (!sortColumn) {
+      sortBy = undefined
+      return
+    }
+    const header = headers.find(h => h.id === sortColumn)
+    if (!header) return
     const sort = header.sortFunction ?? header.id
     if (sortBy?.column === header.id) {
       sortedItems = sortby(sortedItems, sort, !sortBy.desc)
@@ -28,26 +36,32 @@
   }
 </script>
 
+<div class="table-actions">
+  {#if headers.some(h => h.sortable)}
+    <div class="sort-table">
+      <label for="sortby-select-{sortId}">Sort by</label>
+      <select id="sortby-select-{sortId}" bind:value={sortColumn} on:change={() => sortItems()}>
+        <option value="">-- Select --</option>
+        {#each headers.filter(h => h.sortable) as header}
+          <option value={header.id}>{header.label}</option>
+        {/each}
+      </select>
+    </div>
+  {/if}
+</div>
 <table class:carded={cardedOnMobile}>
   <thead>
-    {#each headers as header (header.id) }
-      {#if header.hideHeader}
-        <th style="{header.widthPercent ? `width: ${header.widthPercent}px` : ''}"><ScreenReaderOnly>{header.label}</ScreenReaderOnly></th>
-      {:else}
-        <th class:sortable={header.sortable} style="{header.widthPercent ? `width: ${header.widthPercent}%` : ''}">
-          <span>{header.label}</span>
-          {#if header.sortable}
-            <button class="sort-button" type="button" on:click={() => sortItems(header)}>
-              {#if sortBy && sortBy.column === header.id && !sortBy.desc}
-                <Icon icon={sortDescendingIcon} width="1.5em" hiddenLabel="Sort descending"/>
-              {:else}
-                <Icon icon={sortAscendingIcon} width="1.5em" hiddenLabel="Sort ascending"/>
-              {/if}
-            </button>
-          {/if}
-        </th>
-      {/if}
-  {/each}
+    <tr>
+      {#each headers as header (header.id) }
+        {#if header.hideHeader}
+          <th style="{header.widthPercent ? `width: ${header.widthPercent}px` : ''}"><ScreenReaderOnly>{header.label}</ScreenReaderOnly></th>
+        {:else}
+          <th class:sortable={header.sortable} style="{header.widthPercent ? `width: ${header.widthPercent}%` : ''}">
+            <span>{header.label}</span>
+          </th>
+        {/if}
+      {/each}
+    </tr>
   </thead>
   <tbody>
     {#each sortedItems as item (item.id)}
@@ -113,10 +127,13 @@
     display: none;
   }
   thead {
-    border-bottom: 2px solid #A5A5A5;
+    background-color: #ddd;
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
   }
   thead th {
-    text-align: left
+    text-align: left;
+    padding: 0.5em 0;
   }
   thead th.sortable button, thead th.sortable span {
     vertical-align: middle;
@@ -126,8 +143,32 @@
     background-color: transparent;
     color: black;
   }
+  .table-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .sort-table {
+    margin-bottom: 1em;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+
   tbody tr { border-bottom: 1px dashed #707070 }
   tbody tr td { padding: 0.5em 0; }
+
+  /* Left padding on first cell in each row */
+  table tr > th:first-child,
+  table tr > td:first-child {
+    padding-left: 0.5em;
+  }
+
+  /* Right padding on last cell in each row */
+  table tr > th:last-child,
+  table tr > td:last-child {
+    padding-right: 0.5em;
+  }
+
 
   .mobile-list {
     display: none;

@@ -206,6 +206,13 @@ export interface DashboardSiteTeamMember {
   access: string
 }
 
+export interface DashboardSiteTeamMemberWithRole extends DashboardSiteTeamMember {
+  roles: {
+    name: string
+    description?: string
+    access?: string
+  }[]
+}
 
 export interface DashboardSiteDetailDisplay extends Omit<DashboardSiteDetailRaw, 'primaryPagetree'> {
   createdAt: string
@@ -214,6 +221,7 @@ export interface DashboardSiteDetailDisplay extends Omit<DashboardSiteDetailRaw,
   rootPagePath: string
   rootPageId: string
   team: DashboardSiteTeamMember[]
+  teamMembersWithRolesById: Record<string, DashboardSiteTeamMemberWithRole>
 }
 
 export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
@@ -254,6 +262,18 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
     access: Array.from(accessByUserId.get(user.id) ?? []).sort().join(', ')
   }))
 
+  const teamMembersWithRolesById: Record<string, DashboardSiteTeamMemberWithRole> = {}
+  for (const user of team) {
+    teamMembersWithRolesById[user.id] = {
+      ...user,
+      roles: site.auditRoles.filter(role => role.users.some(u => u.id === user.id)).map(role => ({
+        name: role.name,
+        description: role.description,
+        access: role.access ? titleCaseAccess[role.access] : ''
+      }))
+    }
+  }
+
   return {
     ...rest,
     createdAt: dateStamp(earliestPagetreeCreationDate.toISOString()),
@@ -261,7 +281,8 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
     publishedPages: primaryPagetree.pages.filter(page => page.live).length,
     rootPagePath: primaryPagetree.rootPage.path,
     rootPageId: primaryPagetree.rootPage.id,
-    team
+    team,
+    teamMembersWithRolesById
   }
 }
 
