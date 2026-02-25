@@ -32,9 +32,8 @@
     }).catch(console.error)
   }
 
-  function onRevealInPageTree (e: MouseEvent) {
-    e.preventDefault()
-    goto(`${base}/pages?selectedPage=${site.rootPageId}`)
+  function revealInPageTree (pageId: string) {
+    goto(`${base}/pages?selectedPage=${pageId}`)
   }
 
   async function onDownloadPageList (state) {
@@ -60,6 +59,14 @@
     userDetail = null
     modalContext.onModalEscape()
   }
+
+  function getPagetreeStatus(item) {
+    let type = item.type
+    if (type === 'PRIMARY') {
+      type = site.launched ? 'LIVE' : 'SANDBOX'
+    }
+    return type
+  }
 </script>
 
 <DetailPageContent>
@@ -76,7 +83,7 @@
           <div class="site-actions">
             <Button type="button" on:click={() => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${site.rootPagePath}.html`), '_blank') }}><Icon icon={eye} /> Preview in New Window</Button>
             {#if site.launched}<Button type="button" on:click={onCopyURL}><Icon icon={clipboard} /> Copy Live URL</Button>{/if}
-            <Button type="button" on:click={onRevealInPageTree}><Icon icon={tree} /> Reveal in Page Tree</Button>
+            <Button type="button" on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}><Icon icon={tree} /> Reveal in Page Tree</Button>
           </div>
         </div>
       </div>
@@ -107,7 +114,7 @@
       </div>
       <div class="secondary-actions">
         <Button secondary icon={editUserIcon}>Update Website Management</Button>
-        <Button secondary icon={trashIcon}>Request Site Decommission</Button>
+        {#if site.permissions.audit}<Button secondary icon={trashIcon}>Request Site Decommission</Button>{/if}
       </div>
     </div>
   </div>
@@ -119,15 +126,15 @@
   </DetailPanel>
   <DetailPanel header="Team Members" headerColor="#E5D1BD">
     <!-- Last Audit Timestamp-->
-     <div class="team-actions">
+     <!-- <div class="team-actions">
         <Button icon={plusIcon}>Add User</Button>
         <Button icon={teamIcon}>Audit Team</Button>
         <Button icon={exportIcon}>Export CSV</Button>
-     </div>
+     </div> -->
     <DetailPanelSection>
       {#if site.team.length}
       <SortableTable items={site.team} headers={[
-          { id: 'access', label: 'Role', get: 'access', sortable: true},
+          { id: 'access', label: 'Access Level', get: 'access', sortable: true },
           { id: 'name', label: 'Name', get: 'name', sortable: true },
           { id: 'username', label: 'User ID', get: 'id' },
           { id: 'lastlogin', label: 'Last Login', render: (item) => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true },
@@ -157,8 +164,11 @@
       <p>Access to additional page trees is granted to all site Editors. Including all archives, sandboxes, and the live site (if published) there {site.pagetrees.length === 1 ? 'is 1 page tree' : `are ${site.pagetrees.length} page trees`} for this website. To remove a Page Tree, submit a Decommission Request.</p>
       <!-- link to information about page trees -->
        <SortableTable items={site.pagetrees} headers={[
+          { id: 'status', label: 'Status', render: (item) => { const type = getPagetreeStatus(item); const icon = getSiteIcon(site.launchState, item.type); console.log(icon); return `<div class="pagetree-status ${type.toLowerCase()}">${type}</div>`} },
           { id: 'name', label: 'Page Tree', get: 'name' },
-          { id: 'pagecount', label: 'Pages', render: (item) => item.pages.length }
+          { id: 'pagecount', label: 'Pages', render: (item) => item.pages.length },
+          { id: 'lastedited', label: 'Last Edited', render: (item) => site.pagetreeLastModifiedById[item.id] ? dateStamp(site.pagetreeLastModifiedById[item.id].toISOString()) : '' },
+          { id: 'openinpages', label: 'Go to Page Tree', actions: [{ icon: tree, label: 'Open in Pages', onClick: (item) => { revealInPageTree(item.rootPage.id) } }] }
         ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
     </DetailPanelSection>
   </DetailPanel>
@@ -276,9 +286,31 @@
     gap: 1em;
     align-items: flex-start;
   }
-  .team-actions {
+  /* .team-actions {
     display: flex;
     gap: 0.5em;
     padding: 2em 0 1em 1.5em;
+  } */
+  :global(.pagetree-status) {
+    padding: 6px 8px;
+    border-radius: 8px;
+    width: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.75em;
+    font-weight: 600;
+  }
+  :global(.pagetree-status.live) {
+    background-color: #BFF3FD;
+    color: #000;
+  }
+  :global(.pagetree-status.archive) {
+    background-color: #767676;
+    color: #fff;
+  }
+  :global(.pagetree-status.sandbox) {
+    background-color: #E32849;
+    color: #fff;
   }
 </style>

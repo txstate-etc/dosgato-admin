@@ -380,6 +380,7 @@
     if (selectedPage) {
       const path = await api.getPagePathById(selectedPage)
       if (path) {
+        await store.refresh()
         findInPageTree(path)().catch(console.error)
       }
     }

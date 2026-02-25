@@ -2,11 +2,9 @@
   import type { SortableTableHeader } from './sortabletable'
   import SortableTableCell from './SortableTableCell.svelte'
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
-  import sortAscendingIcon from '@iconify-icons/ph/sort-ascending'
-  import sortDescendingIcon from '@iconify-icons/ph/sort-descending'
-  import { isNotNull, randomid, sortby } from 'txstate-utils'
-  import { Icon } from '@dosgato/dialog'
+  import { isNotNull, sortby } from 'txstate-utils'
   import { Accordion } from '..'
+  import Dropdown from './Dropdown.svelte'
   export let items: any[]
   export let headers: SortableTableHeader[]
   export let cardedOnMobile = false
@@ -16,7 +14,6 @@
   $: sortedItems = items
   let sortBy: { column: string, desc: boolean } | undefined = undefined
   let sortColumn: string | undefined = undefined
-  const sortId = randomid()
 
   function sortItems () {
     if (!sortColumn) {
@@ -39,13 +36,7 @@
 <div class="table-actions">
   {#if headers.some(h => h.sortable)}
     <div class="sort-table">
-      <label for="sortby-select-{sortId}">Sort by</label>
-      <select id="sortby-select-{sortId}" bind:value={sortColumn} on:change={() => sortItems()}>
-        <option value="">-- Select --</option>
-        {#each headers.filter(h => h.sortable) as header}
-          <option value={header.id}>{header.label}</option>
-        {/each}
-      </select>
+      <Dropdown label="Sort by" options={headers.filter(h => h.sortable).map(h => ({ label: h.label, value: h.id }))} onSelect={(value) => { sortColumn = value; sortItems() }} />
     </div>
   {/if}
 </div>
@@ -134,14 +125,6 @@
   thead th {
     text-align: left;
     padding: 0.5em 0;
-  }
-  thead th.sortable button, thead th.sortable span {
-    vertical-align: middle;
-  }
-  .sort-button {
-    border: 0;
-    background-color: transparent;
-    color: black;
   }
   .table-actions {
     display: flex;

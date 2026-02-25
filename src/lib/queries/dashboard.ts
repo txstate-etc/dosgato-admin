@@ -123,9 +123,14 @@ export interface DashboardSiteDetailRaw {
   pagetrees: {
     id: string
     name: string
+    type: string
     created: string
+    rootPage: {
+      id: string
+    }
     pages: {
       id: string
+      modifiedAt: string
     }[]
   }[]
   auditRoles: {
@@ -140,6 +145,9 @@ export interface DashboardSiteDetailRaw {
       lastlogin: string
     }[]
   }[]
+  permissions: {
+    audit: boolean
+  }
 }
 
 export const GET_DASHBOARD_SITE_BY_ID = `
@@ -178,8 +186,13 @@ export const GET_DASHBOARD_SITE_BY_ID = `
         id
         name
         created
+        type
+        rootPage {
+          id
+        }
         pages {
           id
+          modifiedAt
         }
       }
       auditRoles {
@@ -193,6 +206,9 @@ export const GET_DASHBOARD_SITE_BY_ID = `
           email
           lastlogin
         }
+      }
+      permissions {
+        audit
       }
     }
   }
@@ -222,6 +238,7 @@ export interface DashboardSiteDetailDisplay extends Omit<DashboardSiteDetailRaw,
   rootPageId: string
   team: DashboardSiteTeamMember[]
   teamMembersWithRolesById: Record<string, DashboardSiteTeamMemberWithRole>
+  pagetreeLastModifiedById: Record<string, Date>
 }
 
 export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
@@ -274,6 +291,14 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
     }
   }
 
+  const pagetreeLastModifiedById: Record<string, Date> = {}
+  for (const pagetree of site.pagetrees) {
+    pagetreeLastModifiedById[pagetree.id] = pagetree.pages.reduce((latest, page) => {
+      const modifiedDate = new Date(page.modifiedAt)
+      return modifiedDate > latest ? modifiedDate : latest
+    }, new Date(pagetree.pages[0].modifiedAt))
+  }
+
   return {
     ...rest,
     createdAt: dateStamp(earliestPagetreeCreationDate.toISOString()),
@@ -282,7 +307,8 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
     rootPagePath: primaryPagetree.rootPage.path,
     rootPageId: primaryPagetree.rootPage.id,
     team,
-    teamMembersWithRolesById
+    teamMembersWithRolesById,
+    pagetreeLastModifiedById
   }
 }
 
