@@ -12,6 +12,10 @@ export async function loadAdminAccessPage(page: Page, tab: 'users' | 'system' | 
   await page.goto(`/.admin/auth/${tab}`)
 }
 
+export async function loadAdminData (page: Page) {
+  await page.goto('/.admin/data')
+}
+
 export async function expandSite(page: Page, siteName: string){
   await page.getByRole('tree').getByText(siteName).click()
 }

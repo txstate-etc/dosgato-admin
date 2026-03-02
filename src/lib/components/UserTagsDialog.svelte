@@ -1,15 +1,21 @@
 <script lang="ts">
   import { FieldCheckbox, FieldHidden, FieldIdentifier, FieldMultiple, FieldText } from '@dosgato/dialog'
-    import { isNotNull } from 'txstate-utils'
+  import { isNotNull } from 'txstate-utils'
 
   export let creating, data
   let initialTags = []
-  if (!creating) {
+  let tagsReady = false
+  $: if (data?.tags) {
+    if (data.tags.every(t => t?.name)) {
+      tagsReady = true
+    }
+  }
+  $: if (!initialTags.length && tagsReady && !creating) {
     initialTags = data.tags.map(t => t.id)
   }
   let showDeleteTagWarning = false
   function reactToTags (..._: any[]) {
-    if (!creating) {
+    if (tagsReady && !creating) {
       const currentTags = data.tags.filter(isNotNull).map(t => t.id)
       if (initialTags.some(tag => !currentTags.includes(tag))) {
         showDeleteTagWarning = true
@@ -17,6 +23,7 @@
     }
   }
   $: reactToTags(data.tags)
+
 </script>
 
 <FieldText path="title" label="Page Tag Set Display Name" required helptext="Name shown in the Data menu"/>
