@@ -11,7 +11,7 @@
   import boundingBoxLight from '@iconify-icons/ph/bounding-box-light'
   import accountIcon from '@iconify-icons/ph/user-light'
   import accountGroup from '@iconify-icons/ph/users-three-light'
-  import { unique } from 'txstate-utils'
+  import { isNotBlank, unique } from 'txstate-utils'
   import { base } from '$app/paths'
   import { api, DetailPanel, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog, BackButton, DetailPanelSection, Accordion, DetailPageContent, DetailList, type DetailPanelButton, type UserListUser, type GroupListGroup, ModalContextStore, type TemplateListTemplate } from '$lib'
   import { _store as store } from './+page'
@@ -340,16 +340,17 @@
     name='editbasicinfo'
     title='Edit Role'
     preload={{ name: $store.role.name, description: $store.role.description, siteId: $store.role.site?.id, access: $store.role.access }}
+    let:data
     on:escape={modalContext.onModalEscape}
     on:saved={onSaved}>
     <FieldText path='name' label="Name" required/>
     <FieldText path='description' label="Description" maxlength={200} />
-    <FieldSelect path='siteId' label='Site' choices={data.siteOptions} />
+    <FieldSelect path='siteId' label='Site' choices={siteOptions} />
     <FieldSelect path='access' label="Access Level" choices={[
       { value: 'EDITOR', label: 'Editor' },
       { value: 'CONTRIBUTOR', label: 'Contributor' },
       { value: 'READONLY', label: 'Read Only' }
-    ]} helptext="A summary of the access level this role provides. Rules must be created to define what users with this role can do." />
+    ]} required conditional={isNotBlank(data.siteId)} helptext="A summary of the access level this role provides. Rules must be created to define what users with this role can do." />
   </FormDialog>
 {:else if $modalContext.modal === 'assignrole'}
   <Dialog title="Assign Role" on:escape={modalContext.onModalEscape} continueText="Cancel" on:continue={modalContext.onModalEscape}>

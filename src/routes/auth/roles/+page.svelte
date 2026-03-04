@@ -7,9 +7,11 @@
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContextStore, SearchInput, actionPanelStore } from '$lib'
+  import { isNotBlank } from 'txstate-utils';
 
   export let data: { siteOptions: { value: string, label: string }[] }
-  const siteNamesById: Record<string, string> = data.siteOptions.reduce((acc, site) => {
+  const { siteOptions } = data
+  const siteNamesById: Record<string, string> = siteOptions.reduce((acc, site) => {
     acc[site.value] = site.label
     return acc
   }, {} as Record<string, string>)
@@ -107,11 +109,12 @@ let filter = ''
     title='Add Role'
     name='addrole'
     on:escape={modalContext.onModalEscape}
-    on:saved={onCompleteAddRole}>
+    on:saved={onCompleteAddRole}
+    let:data>
     <FieldText path='name' label='Name' required />
     <FieldText path='description' label='Description' maxlength={200} />
-    <FieldSelect path='siteId' label='Site' choices={data.siteOptions} />
-    <FieldSelect path='access' label="Access Level" choices={[
+    <FieldSelect path='siteId' label='Site' choices={siteOptions} />
+    <FieldSelect path='access' label="Access Level" conditional={isNotBlank(data.siteId)} required choices={[
       { value: 'EDITOR', label: 'Editor' },
       { value: 'CONTRIBUTOR', label: 'Contributor' },
       { value: 'READONLY', label: 'Read Only' }
