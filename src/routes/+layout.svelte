@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Icon, InlineMessage } from '@dosgato/dialog'
+  import { Dialog, Icon, InlineMessage } from '@dosgato/dialog'
   import bag from '@iconify-icons/ph/bag-fill'
   import caretDown from '@iconify-icons/ph/caret-down-bold'
   import caretRightFill from '@iconify-icons/ph/caret-right-fill'
@@ -20,7 +20,7 @@
   import { afterNavigate, goto } from '$app/navigation'
   import { base } from '$app/paths'
   import { page } from '$app/stores'
-  import { currentSubNav, globalStore, subNavSize, subnavStore, toasts, LabeledIcon, LabeledIconButton, TopNavLink, environmentConfig, uiLog, api } from '$lib'
+  import { confirmationStore, currentSubNav, globalStore, subNavSize, subnavStore, toasts, LabeledIcon, LabeledIconButton, TopNavLink, environmentConfig, uiLog, api } from '$lib'
   import { uiConfig } from '../local'
   import '../local/tracking.js'
   import '../normalize.css'
@@ -76,9 +76,9 @@
     } else if (item.value) {
       if (/^https?:\/\//.test(item.value)) {
         // we can't use goto for external links
-        window.location.href = item.value;
+        window.location.href = item.value
       } else {
-        void goto(item.value);
+        void goto(item.value)
       }
     }
   }
@@ -312,6 +312,16 @@
       <InlineMessage message={{ message: $toasts[0].message, type: $toasts[0].type }} />
     </div>
   {/if}
+{/if}
+{#if $confirmationStore.showing}
+  <Dialog
+    title={$confirmationStore.title}
+    continueText={$confirmationStore.yesText}
+    cancelText={$confirmationStore.noText}
+    on:continue={() => confirmationStore.onConfirm()}
+    on:escape={() => confirmationStore.onCancel()}>
+    {$confirmationStore.content}
+  </Dialog>
 {/if}
 
 <style>
