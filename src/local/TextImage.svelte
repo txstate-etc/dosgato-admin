@@ -22,7 +22,7 @@
 
 <FieldText path="title" label="Title" />
 <FieldTextArea path="text" label="Rich Text" />
-<FieldChooserLink path="image" label="Image" images altTextPath="altText" altTextRequired>
+<FieldChooserLink path="image" label="Image" images altTextPath="altText" altTextRequired altTextHelp="Alt. text is recommended for accessibility.">
   <svelte:fragment slot="metadata" let:selectedAsset>
     {#if selectedAsset}
       {#await fetchSelectedAsset(selectedAsset) then assetMeta}

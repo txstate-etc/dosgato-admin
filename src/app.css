@@ -1,5 +1,8 @@
 :root {
   --tree-head-bg: #6c6c6c;
+  --dg-button-secondary-bg: #808080;
+  --dg-button-secondary-text: white;
+  --dg-button-secondary-hover-bg: #707070;
 }
 
 html * {
