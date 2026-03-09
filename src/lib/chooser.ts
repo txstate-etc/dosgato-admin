@@ -81,7 +81,7 @@ export class ChooserClient implements Client {
   }
 
   async findByUrl (url: string) {
-    let m = url.match(/^\/\.assets(.*?)\/?/)
+    let m = url.match(/^\/\.assets(.*?)\/?$/)
     if (m) {
       const path = m[1]
       return await api.chooserAssetByPath(path)
