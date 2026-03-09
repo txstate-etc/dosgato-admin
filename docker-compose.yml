@@ -76,6 +76,7 @@ services:
       - 3001:80
   mysql:
     image: percona/percona-server:8.4
+    command: --authentication_policy=caching_sha2_password
     ports:
       - 3306:3306
     environment:
