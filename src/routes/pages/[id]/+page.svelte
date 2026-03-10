@@ -8,6 +8,7 @@
   import copySimple from '@iconify-icons/ph/copy-simple'
   import eye from '@iconify-icons/ph/eye'
   import fileX from '@iconify-icons/ph/file-x'
+  import alarmFill from '@iconify-icons/ph/alarm-fill'
   import historyIcon from '@iconify-icons/mdi/history'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import publishIcon from '@iconify-icons/mdi/publish'
@@ -18,6 +19,7 @@
   import { get, isNotNull, keyby, printIf, titleCase } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, schemaVersion, ChooserClient, type ActionPanelGroup, api, VersionHistory, TagClientByLink } from '$lib'
   import { statusIcon } from './helpers'
+  import ScheduleHistoryView from './ScheduleHistoryView.svelte'
   import VersionView from './VersionView.svelte'
   import type { PageData } from './$types'
 
@@ -52,7 +54,8 @@
         id: 'editinggroup',
         actions: [
           { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
-          { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.version.version === 0 }
+          { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.version.version === 0 },
+          ...(page.hasSchedules ? [{ label: 'Schedule History', icon: alarmFill, onClick: () => { showScheduleHistory = true } }] : [])
         ]
       }
       return [previewGroup, editGroup]
@@ -286,6 +289,7 @@
   $: editorMaxWidth = allowEditorMaxWidth ? ((deviceWidths[resolvedDevice]?.width ?? 0) > 0 ? deviceWidths[resolvedDevice]?.width + 'px' : undefined) : undefined
 
   let addToTop: boolean = false
+  let showScheduleHistory = false
 </script>
 
 {#if $editorStore.previewing && ($editorStore.previewing.version.version !== $editorStore.page.version.version || $editorStore.previewing?.fromVersion)}
@@ -408,6 +412,9 @@
   <Dialog title="Are You Sure?" cancelText="Cancel" continueText="Restore" on:escape={() => pageEditorStore.cancelRestore()} on:continue={async () => await pageEditorStore.restoreVersion()}>
     Restoring will create a new "latest" version with all the content from this version. All existing versions will remain.
   </Dialog>
+{/if}
+{#if showScheduleHistory}
+  <ScheduleHistoryView pageId={page.id} on:escape={() => { showScheduleHistory = false }} />
 {/if}
 
 <style>

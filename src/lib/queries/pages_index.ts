@@ -17,6 +17,12 @@ modifiedBy {
 published
 publishedAt
 hasUnpublishedChanges
+schedules {
+  id
+  action
+  status
+  targetDate
+}
 deleteState
 children {
   id
@@ -30,6 +36,8 @@ permissions {
   delete
   undelete
   unpublish
+  schedulePublish
+  scheduleUnpublish
 }
 site {
   id
@@ -62,6 +70,12 @@ export interface TreePage {
   published: boolean
   publishedAt?: string
   hasUnpublishedChanges: boolean
+  schedules: {
+    id: string
+    action: string
+    status: string
+    targetDate: string
+  }[]
   deleteState: DeleteState
   children: {
     id: string
@@ -75,6 +89,8 @@ export interface TreePage {
     delete: boolean
     undelete: boolean
     unpublish: boolean
+    schedulePublish: boolean
+    scheduleUnpublish: boolean
   }
   site: {
     id: string
@@ -266,6 +282,97 @@ export const GET_PAGE_PATH_BY_ID = `
   query getPagePathById ($pageId: ID!) {
     pages (filter: { ids: [$pageId]}) {
       path
+    }
+  }
+`
+
+// Scheduled Publish types and queries
+
+export enum ScheduledPublishAction { PUBLISH = 'PUBLISH', PUBLISH_WITH_SUBPAGES = 'PUBLISH_WITH_SUBPAGES', UNPUBLISH = 'UNPUBLISH' }
+export enum ScheduledPublishStatus { PENDING = 'PENDING', COMPLETED = 'COMPLETED', FAILED = 'FAILED', CANCELLED = 'CANCELLED' }
+export enum ScheduledPublishRecurrenceType { DAY = 'DAY', WEEK = 'WEEK', MONTH = 'MONTH' }
+
+export interface ScheduledPublish {
+  id: string
+  action: ScheduledPublishAction
+  targetDate: string
+  status: ScheduledPublishStatus
+  recurrence?: {
+    type: ScheduledPublishRecurrenceType
+    interval: number
+    timezone: string
+  }
+  error?: string
+  createdAt: string
+  updatedAt: string
+  page: { id: string }
+  createdByUser: { id: string, name: string }
+  updatedByUser: { id: string, name: string }
+  permissions: {
+    edit: boolean
+    cancel: boolean
+  }
+}
+
+const scheduledPublishDetails = `
+  id
+  action
+  targetDate
+  status
+  recurrence {
+    type
+    interval
+    timezone
+  }
+  error
+  createdAt
+  updatedAt
+  page { id }
+  createdByUser { id name }
+  updatedByUser { id name }
+  permissions {
+    edit
+    cancel
+  }
+`
+
+export const GET_SCHEDULED_PUBLISHES = `
+  query getScheduledPublishes ($filter: ScheduledPublishFilter) {
+    scheduledPublishes (filter: $filter) {
+      ${scheduledPublishDetails}
+    }
+  }
+`
+
+export const CREATE_SCHEDULED_PUBLISH = `
+  mutation createScheduledPublish ($args: CreateScheduledPublishInput!, $validateOnly: Boolean) {
+    createScheduledPublish (args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      scheduledPublish {
+        ${scheduledPublishDetails}
+      }
+    }
+  }
+`
+
+export const UPDATE_SCHEDULED_PUBLISH = `
+  mutation updateScheduledPublish ($scheduledPublishId: ID!, $args: UpdateScheduledPublishInput!, $validateOnly: Boolean) {
+    updateScheduledPublish (scheduledPublishId: $scheduledPublishId, args: $args, validateOnly: $validateOnly) {
+      ${mutationResponse}
+      scheduledPublish {
+        ${scheduledPublishDetails}
+      }
+    }
+  }
+`
+
+export const CANCEL_SCHEDULED_PUBLISH = `
+  mutation cancelScheduledPublish ($scheduledPublishId: ID!) {
+    cancelScheduledPublish (scheduledPublishId: $scheduledPublishId) {
+      ${mutationResponse}
+      scheduledPublish {
+        ${scheduledPublishDetails}
+      }
     }
   }
 `

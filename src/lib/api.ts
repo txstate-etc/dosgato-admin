@@ -39,16 +39,20 @@ import {
   CREATE_COMPONENT, type EditComponentResponse, EDIT_COMPONENT, type RemoveComponentResponse, REMOVE_COMPONENT,
   type ChangeTemplateResponse, CHANGE_PAGE_TEMPLATE, type EditPagePropertiesResponse, EDIT_PAGE_PROPERTIES, type RootAssetFolder,
   type ChooserAssetByPath, CHOOSER_ASSET_BY_PATH, type SiteAuditSite, GET_SITE_AUDIT, type VersionDetails, GET_PAGE_VERSIONS,
-  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS, EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST, GET_SEARCH_PAGES, type SearchTreePage,
-  type AssetWithPages, ASSET_WITH_PAGES, UNDELETE_DATA_FOLDERS, mutationResponse, FINALIZE_DATA_FOLDER_DELETION, type TemplateListTemplateWithAreas,
-  GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE, type TemplateWithPagetrees, GET_TEMPLATE_PAGETREES, type AssetSearchResult, GET_SEARCH_ASSETS,
-  GET_PAGE_TEMPLATES_ALLOWING_COMPONENT, type CreateRoleInput, GET_DASHBOARD_SITE_LIST, type DashboardSite, GET_DASHBOARD_USER_DETAILS, type DashboardUser, GET_DASHBOARD_SITE_BY_ID, type DashboardSiteDetailRaw,
-  apiSiteToDashboardSite, GET_PAGE_PATH_BY_ID
+  type PageAuditPage, GET_PAGETREE_PAGES_FOR_AUDIT, VERSION_DETAILS, ASSIGN_ROLE_TO_USERS, type PageWithDescendants, GET_PAGES_AND_DESCENDANTS,
+  EDITOR_PAGE_DETAILS, RENAME_ASSET, type UserAuditUser, GET_USER_AUDIT_LIST, GET_SEARCH_PAGES, type SearchTreePage,
+  type AssetWithPages, ASSET_WITH_PAGES, UNDELETE_DATA_FOLDERS, FINALIZE_DATA_FOLDER_DELETION, type TemplateListTemplateWithAreas,
+  GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE, type TemplateWithPagetrees, GET_TEMPLATE_PAGETREES,
+  type AssetSearchResult, GET_SEARCH_ASSETS, GET_PAGE_TEMPLATES_ALLOWING_COMPONENT, type CreateRoleInput, GET_DASHBOARD_SITE_LIST,
+  type DashboardSite, GET_DASHBOARD_USER_DETAILS, type DashboardUser, GET_DASHBOARD_SITE_BY_ID, type DashboardSiteDetailRaw,
+  apiSiteToDashboardSite, GET_PAGE_PATH_BY_ID, type ScheduledPublish, GET_SCHEDULED_PUBLISHES, CREATE_SCHEDULED_PUBLISH,
+  UPDATE_SCHEDULED_PUBLISH, CANCEL_SCHEDULED_PUBLISH, type ScheduledPublishStatus, type ScheduledPublishAction,
+  type ScheduledPublishRecurrenceType
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
 import { environmentConfig, toast, LaunchState } from './stores'
-import { messageForDialog } from './helpers'
+import { messageForDialog, mutationForDialog } from './helpers'
 import { schemaVersion } from './schemaversion'
 import { DateTime } from 'luxon'
 import type { HistoryVersion } from './components/VersionHistory.svelte'
@@ -961,6 +965,26 @@ class API {
   async unpublishPages (pageIds: string[]) {
     const { unpublishPages } = await this.query<{ unpublishPages: MutationResponse }>(UNPUBLISH_PAGES, { pageIds })
     return unpublishPages
+  }
+
+  async getScheduledPublishes (pageIds: string[], statuses?: ScheduledPublishStatus[]) {
+    const { scheduledPublishes } = await this.query<{ scheduledPublishes: ScheduledPublish[] }>(GET_SCHEDULED_PUBLISHES, { filter: { pageIds, statuses } })
+    return scheduledPublishes
+  }
+
+  async createScheduledPublish (args: { pageId: string, action: ScheduledPublishAction, targetDate: string, recurrence?: { type: ScheduledPublishRecurrenceType, interval?: number, timezone?: string } }, validateOnly?: boolean) {
+    const { createScheduledPublish } = await this.query<{ createScheduledPublish: MutationResponse & { scheduledPublish: ScheduledPublish } }>(CREATE_SCHEDULED_PUBLISH, { args, validateOnly })
+    return mutationForDialog(createScheduledPublish, { prefix: 'args', dataName: 'scheduledPublish' })
+  }
+
+  async updateScheduledPublish (scheduledPublishId: string, args: { targetDate: string, recurrence?: { type: ScheduledPublishRecurrenceType, interval?: number, timezone?: string } | null }, validateOnly?: boolean) {
+    const { updateScheduledPublish } = await this.query<{ updateScheduledPublish: MutationResponse & { scheduledPublish: ScheduledPublish } }>(UPDATE_SCHEDULED_PUBLISH, { scheduledPublishId, args, validateOnly })
+    return mutationForDialog(updateScheduledPublish, { prefix: 'args', dataName: 'scheduledPublish' })
+  }
+
+  async cancelScheduledPublish (scheduledPublishId: string) {
+    const { cancelScheduledPublish } = await this.query<{ cancelScheduledPublish: MutationResponse & { scheduledPublish: ScheduledPublish } }>(CANCEL_SCHEDULED_PUBLISH, { scheduledPublishId })
+    return mutationForDialog(cancelScheduledPublish, { prefix: 'args', dataName: 'scheduledPublish' })
   }
 
   async getDeletePageCount (pageIds: string[]) {

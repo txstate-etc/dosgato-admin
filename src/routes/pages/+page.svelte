@@ -18,6 +18,7 @@
   import publishIcon from '@iconify-icons/mdi/publish'
   import publishOffIcon from '@iconify-icons/mdi/publish-off'
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
+  import alarmFill from '@iconify-icons/ph/alarm-fill'
   import tag from '@iconify-icons/ph/tag'
   import treeStructure from '@iconify-icons/ph/tree-structure'
   import arrowSquareOut from '@iconify-icons/ph/arrow-square-out'
@@ -25,14 +26,14 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import type { SubmitResponse } from '@txstate-mws/svelte-forms'
   import { onMount, setContext, tick } from 'svelte'
-  import { htmlEncode, isBlank, isNotBlank } from 'txstate-utils'
+  import { htmlEncode, isBlank, isNotBlank, sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
   import {
     api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig,
     UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog,
     ModalContextStore, getSiteIcon, SearchInput, CreateWithPageDialog, findInTreeIconSVG, actionPanelStore,
-    tagClientBySiteId, tagIndicatorIconSVG, globalStore
+    tagClientBySiteId, tagIndicatorIconSVG, globalStore, ScheduledPublishAction
   } from '$lib'
   import { _store as store, _searchStore as searchStore, _pagesStore as pagesStore, type TypedPageItem } from './+page.js'
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
@@ -41,6 +42,7 @@
   import { moveIntoIcon } from './moveintoicon'
   import { moveAboveIcon } from './moveaboveicon'
   import { statusIcon } from './[id]/helpers'
+  import SchedulePublishDialog from './SchedulePublishDialog.svelte'
   import Warning from './Warning.svelte'
 
   $: activeStore = $pagesStore.showsearch ? searchStore : store
@@ -48,7 +50,7 @@
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
-  type Modals = 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | 'tagpage'
+  type Modals = 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | 'tagpage' | 'schedulepublish'
   const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
 
   function onFilter (e: CustomEvent<string>) {
@@ -67,7 +69,7 @@
     searchInput?.focus()
   }
 
-    function findInPageTree (path: string) {
+  function findInPageTree (path: string) {
     return async () => {
       const itm = await expandTreePath(store, path.split('/').filter(isNotBlank))
       if (itm) store.select(itm, { clear: true, notify: true })
@@ -157,6 +159,7 @@
     publishing.actions.push(
       publishAction,
       { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => modalContext.setModal('publishwithsubpages'), class: 'pubsubpages' },
+      { label: 'Scheduled Publish', icon: alarmFill, disabled: !page.permissions.schedulePublish && !page.permissions.scheduleUnpublish, onClick: () => modalContext.setModal('schedulepublish') },
       unpublishAction
     )
 
@@ -350,13 +353,35 @@
     await store.refresh($activeStore.selectedItems[0].parent)
   }
 
+  function onSchedulePublishComplete () {
+    void store.refresh()
+    modalContext.reset()
+  }
+
+  function scheduleTooltip (schedules: { action: string, targetDate: string }[]) {
+    return sortby(schedules, 'targetDate').map(s => {
+      const action = s.action === 'UNPUBLISH' ? 'Unpublish' : 'Publish'
+      return `${action}: ${dateStamp(s.targetDate)}`
+    }).join('\n')
+  }
+
+  function itemAncestors (item: TypedPageItem) {
+    const ancestors: TypedPageItem[] = []
+    let current = item.parent
+    while (current) {
+      ancestors.push(current)
+      current = current.parent
+    }
+    return ancestors
+  }
+
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'path')
 
   function handleResponsiveHeaders (treeWidth: number) {
     if (treeWidth > 900) {
-      return ['name', 'title', 'template', 'status', 'modified', 'modifiedBy']
+      return ['name', 'title', 'template', 'status', 'scheduled', 'modified', 'modifiedBy']
     } else if (treeWidth > 600) {
-      return ['name', 'title', 'status', 'template']
+      return ['name', 'title', 'status', 'scheduled', 'template']
     } else if (treeWidth > 500) {
       return ['name', 'status', 'title']
     } else {
@@ -423,7 +448,20 @@
       { label: 'Path', id: 'name', grow: 4, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) }), render: item => `<div class="page-name">${item.name}</div>${item.userTags?.length ? `<div class="tag-indicator">${tagIndicatorIconSVG}<span class="sr-only">has page tags</span></div>` : ''}` },
       { label: 'Title', id: 'title', grow: 3, get: 'title' },
       { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
-      { label: 'Status', id: 'status', fixed: '4em', icon: item => ({ icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' }), class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
+      {
+        label: 'Status',
+        id: 'status',
+        fixed: '6em',
+        icon: item => [
+          { icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', class: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
+          ...(item.schedules?.length
+            ? [{ icon: alarmFill, label: 'Schedule', tooltip: scheduleTooltip(item.schedules), class: 'scheduled' }]
+            : itemAncestors(item).some(a => a.schedules?.some(s => s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES))
+              ? [{ icon: alarmFill, label: 'Has scheduled actions via an ancestor', class: 'scheduled subpage' }]
+              : []
+          )
+        ]
+      },
       { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
       { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
     ]} searchable='name' enableResize
@@ -585,6 +623,11 @@
     helptext="Uploaded file must be a Gato .json or .json.gz export file."
     on:escape={modalContext.onModalEscape}
     on:saved={onImportSaved} />
+{:else if $modalContext.modal === 'schedulepublish'}
+  <SchedulePublishDialog
+    page={$activeStore.selectedItems[0]}
+    on:escape={modalContext.onModalEscape}
+    on:saved={onSchedulePublishComplete} />
 {/if}
 
 <style>

@@ -40,11 +40,11 @@ This component is also used when creating a site or pagetree, both of which requ
   async function submitWrapper (state: CreateWithPageState) {
     if (!state.templateKey) {
       const resp = await submit(state, false)
-      modalContext.logModalResponse(resp, targetName, { name: resp.data.name, templateKey: resp.data.templateKey })
+      modalContext.logModalResponse(resp, targetName, { name: state.name, templateKey: state.templateKey })
       return resp
     }
     const resp = await submit({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey)?.genDefaultContent({ ...state.data, templateKey: state.templateKey }) } }, false)
-    modalContext.logModalResponse(resp, targetName, { name: resp.data.name, templateKey: resp.data.templateKey })
+    modalContext.logModalResponse(resp, targetName, { name: state.name, templateKey: state.templateKey })
     return resp
   }
   async function validateWrapper (state: CreateWithPageState) {
@@ -67,7 +67,7 @@ This component is also used when creating a site or pagetree, both of which requ
     } else {
       nameDialogData = state
     }
-    modalContext.logModalResponse(ret, targetName, { name: ret.data.name, templateKey: ret.data.templateKey })
+    modalContext.logModalResponse(ret, targetName, { name: state.name, templateKey: state.templateKey })
     return ret
   }
 

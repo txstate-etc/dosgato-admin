@@ -36,6 +36,7 @@ title
 fallbackTitle
 published
 hasUnpublishedChanges
+hasSchedules (filter: {statuses: [PENDING, COMPLETED, FAILED, CANCELLED]})
 pagetree {
   id
   type
@@ -72,6 +73,7 @@ export interface PageEditorPage extends DialogPageProp {
   fallbackTitle: string
   published: boolean
   hasUnpublishedChanges: boolean
+  hasSchedules: boolean
   pagetree: {
     id: string
     type: string

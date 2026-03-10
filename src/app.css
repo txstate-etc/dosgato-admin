@@ -27,24 +27,31 @@ button.reset {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.tree-node .status {
-  text-align: center;
+.tree-node .status, .tree-header .status {
+  display: flex;
+  justify-content: center;
 }
 .tree-node .status:not(.deleted) .icon svg {
   width: 1.2em;
   height: 1.2em;
 }
-.tree-node .status.published {
+.tree-node .status .published {
   color: var(--dosgato-green, #689600);
 }
-.tree-node .status.modified {
+.tree-node .status .modified {
   color: var(--dosgato-yellow, #ffbf28);
 }
-.tree-node .status.unpublished {
+.tree-node .status .unpublished {
   color: var(--dosgato-red, #9a3332);
 }
-.tree-node .status.deleted {
+.tree-node .status .deleted {
   color: #555;
+}
+.tree-node .status .scheduled {
+  color: var(--dosgato-blue, #006699);
+}
+.tree-node .status .scheduled.subpage {
+  opacity: 0.4;
 }
 .tooltip-wrapper {
   display: flex;
