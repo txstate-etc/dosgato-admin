@@ -54,7 +54,7 @@ test.describe('page actions', async () => {
     } else await expect(adminPage.getByRole('treeitem', { name: NEW_PAGE.name })
       .locator('div.title.tree-cell', { hasText: NEW_PAGE.title }))
       .toHaveCount(1)
-    await expect(adminPage.getByRole('treeitem', { name: NEW_PAGE.name }).locator('div.deleted.status.tree-cell')).toBeVisible()
+    await expect(adminPage.getByRole('treeitem', { name: NEW_PAGE.name }).locator('div.status.tree-cell .deleted')).toBeVisible()
   })
   test('should be able to hard delete a page', async ({ adminPage }) => {
     await adminPage.getByRole('group').getByText(NEW_PAGE.name).click()
