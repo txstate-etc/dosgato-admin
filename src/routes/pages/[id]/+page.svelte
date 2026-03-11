@@ -20,6 +20,7 @@
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, schemaVersion, ChooserClient, type ActionPanelGroup, api, VersionHistory, TagClientByLink } from '$lib'
   import { statusIcon } from './helpers'
   import ScheduleHistoryView from './ScheduleHistoryView.svelte'
+  import SchedulePublishDialog from '../SchedulePublishDialog.svelte'
   import VersionView from './VersionView.svelte'
   import type { PageData } from './$types'
 
@@ -46,7 +47,8 @@
       // preview mode
       return [
         { label: 'Cancel Preview', icon: pencilIcon, onClick: () => { navigating = true; pageEditorStore.cancelPreview() } },
-        { label: 'Publish Page', icon: publishIcon, disabled: !$editorStore.page.permissions.publish, onClick: async () => { page = await pageEditorStore.publish() ?? page } }
+        { label: 'Publish Page', icon: publishIcon, disabled: !$editorStore.page.permissions.publish, onClick: async () => { page = await pageEditorStore.publish() ?? page } },
+        { label: 'Schedule Publish', icon: alarmFill, disabled: !$editorStore.page.permissions.schedulePublish && !$editorStore.page.permissions.scheduleUnpublish, onClick: () => { pageEditorStore.scheduleShowDialog() } }
       ]
     } else if (!selectedPath) {
       // editing mode, nothing selected
@@ -55,7 +57,7 @@
         actions: [
           { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
           { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.version.version === 0 },
-          ...(page.hasSchedules ? [{ label: 'Schedule History', icon: alarmFill, onClick: () => { showScheduleHistory = true } }] : [])
+          ...(page.hasSchedules ? [{ label: 'Schedule History', icon: alarmFill, onClick: () => pageEditorStore.scheduleShowHistory() }] : [])
         ]
       }
       return [previewGroup, editGroup]
@@ -289,7 +291,6 @@
   $: editorMaxWidth = allowEditorMaxWidth ? ((deviceWidths[resolvedDevice]?.width ?? 0) > 0 ? deviceWidths[resolvedDevice]?.width + 'px' : undefined) : undefined
 
   let addToTop: boolean = false
-  let showScheduleHistory = false
 </script>
 
 {#if $editorStore.previewing && ($editorStore.previewing.version.version !== $editorStore.page.version.version || $editorStore.previewing?.fromVersion)}
@@ -405,6 +406,10 @@
       <span>This content uses an unrecognized template. Please contact support for assistance.</span>
     {/if}
   </FormDialog>
+{:else if $editorStore.modal === 'editschedule'}
+  <SchedulePublishDialog {page} on:escape={cancelModal} on:saved={cancelModal} />
+{:else if $editorStore.modal === 'schedule'}
+  <ScheduleHistoryView {page} on:escape={cancelModal} />
 {:else if $editorStore.modal === 'versions'}
   {@const page = $editorStore.page}
   <VersionHistory dataId={page.id} preview={v => { navigating = true; pageEditorStore.previewVersion(v) }} compare={(v1, v2) => pageEditorStore.compareVersions(v1, v2)} history={api.getPageVersions(page.id)} on:escape={cancelModal} />
@@ -412,9 +417,6 @@
   <Dialog title="Are You Sure?" cancelText="Cancel" continueText="Restore" on:escape={() => pageEditorStore.cancelRestore()} on:continue={async () => await pageEditorStore.restoreVersion()}>
     Restoring will create a new "latest" version with all the content from this version. All existing versions will remain.
   </Dialog>
-{/if}
-{#if showScheduleHistory}
-  <ScheduleHistoryView pageId={page.id} on:escape={() => { showScheduleHistory = false }} />
 {/if}
 
 <style>

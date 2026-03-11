@@ -977,7 +977,7 @@ class API {
     return mutationForDialog(createScheduledPublish, { prefix: 'args', dataName: 'scheduledPublish' })
   }
 
-  async updateScheduledPublish (scheduledPublishId: string, args: { targetDate: string, recurrence?: { type: ScheduledPublishRecurrenceType, interval?: number, timezone?: string } | null }, validateOnly?: boolean) {
+  async updateScheduledPublish (scheduledPublishId: string, args: { action: ScheduledPublishAction, targetDate: string, recurrence?: { type: ScheduledPublishRecurrenceType, interval?: number, timezone?: string } | null }, validateOnly?: boolean) {
     const { updateScheduledPublish } = await this.query<{ updateScheduledPublish: MutationResponse & { scheduledPublish: ScheduledPublish } }>(UPDATE_SCHEDULED_PUBLISH, { scheduledPublishId, args, validateOnly })
     return mutationForDialog(updateScheduledPublish, { prefix: 'args', dataName: 'scheduledPublish' })
   }

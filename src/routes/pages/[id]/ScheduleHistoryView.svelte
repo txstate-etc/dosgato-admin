@@ -1,13 +1,15 @@
 <script lang="ts">
-  import { Dialog, Tooltip } from '@dosgato/dialog'
+  import { Button, Dialog, Tooltip } from '@dosgato/dialog'
   import { onMount } from 'svelte'
   import { api, dateStamp, ScheduledPublishStatus, ScheduledPublishAction, confirmationStore } from '$lib'
   import type { ScheduledPublish } from '$lib'
+  import SchedulePublishDialog from '../../pages/SchedulePublishDialog.svelte'
 
-  export let pageId: string
+  export let page: { id: string, permissions: { schedulePublish: boolean, scheduleUnpublish: boolean } }
 
   let schedules: ScheduledPublish[] = []
   let loading = true
+  let showEditDialog = false
   let currentPage = 0
   const pageSize = 15
 
@@ -16,7 +18,7 @@
   $: pagedSchedules = reversed.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
 
   onMount(async () => {
-    schedules = await api.getScheduledPublishes([pageId], [ScheduledPublishStatus.PENDING, ScheduledPublishStatus.COMPLETED, ScheduledPublishStatus.FAILED, ScheduledPublishStatus.CANCELLED])
+    schedules = await api.getScheduledPublishes([page.id], [ScheduledPublishStatus.PENDING, ScheduledPublishStatus.COMPLETED, ScheduledPublishStatus.FAILED, ScheduledPublishStatus.CANCELLED])
     loading = false
   })
 
@@ -45,8 +47,14 @@
   {#if loading}
     <p>Loading...</p>
   {:else if schedules.length === 0}
+    <div class="edit-schedule">
+      <Button compact on:click={() => { showEditDialog = true }}>Edit Schedule</Button>
+    </div>
     <p>No scheduled publishes found for this page.</p>
   {:else}
+    <div class="edit-schedule">
+      <Button compact on:click={() => { showEditDialog = true }}>Edit Schedule</Button>
+    </div>
     <table>
       <thead>
         <tr>
@@ -76,7 +84,7 @@
             <td>{schedule.updatedByUser.name}</td>
             <td>
               {#if schedule.status === ScheduledPublishStatus.PENDING && schedule.permissions.cancel}
-                <button type="button" class="cancel-btn" on:click={cancelSchedule(schedule)}>Cancel</button>
+                <Button compact destructive on:click={cancelSchedule(schedule)}>Cancel</Button>
               {/if}
             </td>
           </tr>
@@ -85,13 +93,17 @@
     </table>
     {#if totalPages > 1}
       <div class="pagination">
-        <button type="button" disabled={currentPage === 0} on:click={() => { currentPage-- }}>Previous</button>
+        <Button compact secondary disabled={currentPage === 0} on:click={() => { currentPage-- }}>Previous</Button>
         <span>Page {currentPage + 1} of {totalPages}</span>
-        <button type="button" disabled={currentPage >= totalPages - 1} on:click={() => { currentPage++ }}>Next</button>
+        <Button compact secondary disabled={currentPage >= totalPages - 1} on:click={() => { currentPage++ }}>Next</Button>
       </div>
     {/if}
   {/if}
 </Dialog>
+
+{#if showEditDialog}
+  <SchedulePublishDialog {page} on:escape={() => { showEditDialog = false }} on:saved={() => { showEditDialog = false }} />
+{/if}
 
 <style>
   table {
@@ -130,18 +142,6 @@
     background-color: #eeeeee;
     color: #616161;
   }
-  .cancel-btn {
-    cursor: pointer;
-    padding: 0.2em 0.6em;
-    border: 1px solid #c62828;
-    border-radius: 3px;
-    background: #fff;
-    color: #c62828;
-    font-size: 0.85em;
-  }
-  .cancel-btn:hover {
-    background: #fdecea;
-  }
   .pagination {
     display: flex;
     align-items: center;
@@ -149,15 +149,9 @@
     gap: 1em;
     margin-top: 1em;
   }
-  .pagination button {
-    cursor: pointer;
-    padding: 0.3em 0.8em;
-    border: 1px solid #999;
-    border-radius: 3px;
-    background: #f5f5f5;
-  }
-  .pagination button:disabled {
-    cursor: default;
-    opacity: 0.5;
+  .edit-schedule {
+    margin-top: -0.5em;
+    display: flex;
+    justify-content: flex-end;
   }
 </style>

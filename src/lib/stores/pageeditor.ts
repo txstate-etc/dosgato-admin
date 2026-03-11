@@ -25,7 +25,7 @@ export interface PageEditorVersionPreview {
 
 export interface EditorState {
   page: PageEditorPage
-  modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties' | 'versions'
+  modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties' | 'versions' | 'schedule' | 'editschedule'
   selectedPath?: string
   selectedLabel?: string
   selectedMaxReached?: boolean
@@ -265,6 +265,14 @@ class PageEditorStore extends Store<IPageEditorStore> {
 
   editPropertiesShowModal () {
     this.updateEditorState(editorState => ({ ...editorState, modal: 'properties', editing: { path: '', data: editorState.page.data, templateKey: editorState.page.data.templateKey }, creating: undefined }))
+  }
+
+  scheduleShowHistory () {
+    this.updateEditorState(editorState => ({ ...editorState, modal: 'schedule', editing: { path: '', data: editorState.page.data, templateKey: editorState.page.data.templateKey }, creating: undefined }))
+  }
+
+  scheduleShowDialog () {
+    this.updateEditorState(editorState => ({ ...editorState, modal: 'editschedule' }))
   }
 
   async editPropertiesSubmit (data: any, validateOnly?: boolean) {

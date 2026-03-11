@@ -47,6 +47,8 @@ template {
 permissions {
   update
   publish
+  schedulePublish
+  scheduleUnpublish
 }
 version {
   ${VERSION_DETAILS}
@@ -84,6 +86,8 @@ export interface PageEditorPage extends DialogPageProp {
   permissions: {
     update: boolean
     publish: boolean
+    schedulePublish: boolean
+    scheduleUnpublish: boolean
   }
   version: VersionDetails
   versions: { version: number, date: string, user: { name: string } }[]

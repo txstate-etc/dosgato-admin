@@ -4,9 +4,8 @@
   import { onMount } from 'svelte'
   import { unique } from 'txstate-utils'
   import { api, type ScheduledPublish, ScheduledPublishAction, ScheduledPublishStatus, ScheduledPublishRecurrenceType } from '$lib'
-  import type { TypedPageItem } from './+page.js'
 
-  export let page: TypedPageItem
+  export let page: { id: string, permissions: { schedulePublish: boolean, scheduleUnpublish: boolean } }
 
   let existingPublishSchedule: ScheduledPublish | undefined
   let existingUnpublishSchedule: ScheduledPublish | undefined
@@ -66,7 +65,7 @@
       const action: ScheduledPublishAction = state.includeSubpages ? ScheduledPublishAction.PUBLISH_WITH_SUBPAGES : ScheduledPublishAction.PUBLISH
       const recurrence = buildRecurrence(state)
       if (existingPublishSchedule) {
-        const resp = await api.updateScheduledPublish(existingPublishSchedule.id, { targetDate: state.publishDate, recurrence }, true)
+        const resp = await api.updateScheduledPublish(existingPublishSchedule.id, { action, targetDate: state.publishDate, recurrence }, true)
         messages.push(...resp.messages.map(m => ({ ...m, path: m.path === 'targetDate' ? 'publishDate' : m.path === 'recurrence.interval' ? 'recurrenceInterval' : m.path })))
       } else {
         const resp = await api.createScheduledPublish({ pageId: page.id, action, targetDate: state.publishDate, recurrence }, true)
@@ -75,9 +74,10 @@
     }
 
     if (state.unpublishDate) {
+      const action: ScheduledPublishAction = ScheduledPublishAction.UNPUBLISH
       const recurrence = buildRecurrence(state)
       if (existingUnpublishSchedule) {
-        const resp = await api.updateScheduledPublish(existingUnpublishSchedule.id, { targetDate: state.unpublishDate, recurrence }, true)
+        const resp = await api.updateScheduledPublish(existingUnpublishSchedule.id, { action, targetDate: state.unpublishDate, recurrence }, true)
         messages.push(...resp.messages.map(m => ({ ...m, path: m.path === 'targetDate' ? 'unpublishDate' : m.path === 'recurrence.interval' ? 'recurrenceInterval' : m.path })))
       } else {
         const resp = await api.createScheduledPublish({ pageId: page.id, action: ScheduledPublishAction.UNPUBLISH, targetDate: state.unpublishDate, recurrence }, true)
@@ -97,14 +97,14 @@
     if (state.publishDate) {
       const action: ScheduledPublishAction = state.includeSubpages ? ScheduledPublishAction.PUBLISH_WITH_SUBPAGES : ScheduledPublishAction.PUBLISH
       if (existingPublishSchedule) {
-        const resp = await api.updateScheduledPublish(existingPublishSchedule.id, { targetDate: state.publishDate, recurrence: recurrence ?? null })
+        const resp = await api.updateScheduledPublish(existingPublishSchedule.id, { action, targetDate: state.publishDate, recurrence })
         if (!resp.success) allSuccess = false
         messages.push(...resp.messages.map(m => ({ ...m, path: m.path === 'targetDate' ? 'publishDate' : m.path })))
       } else {
         let resp = await api.createScheduledPublish({ pageId: page.id, action, targetDate: state.publishDate, recurrence })
         // If create fails because schedule already exists, retry as update
         if (!resp.success && resp.data?.id) {
-          resp = await api.updateScheduledPublish(resp.data.id, { targetDate: state.publishDate, recurrence: recurrence ?? null })
+          resp = await api.updateScheduledPublish(resp.data.id, { action, targetDate: state.publishDate, recurrence })
         }
         if (!resp.success) allSuccess = false
         messages.push(...resp.messages.map(m => ({ ...m, path: m.path === 'targetDate' ? 'publishDate' : m.path })))
@@ -117,14 +117,15 @@
 
     // Handle unpublish schedule
     if (state.unpublishDate) {
+      const action = ScheduledPublishAction.UNPUBLISH
       if (existingUnpublishSchedule) {
-        const resp = await api.updateScheduledPublish(existingUnpublishSchedule.id, { targetDate: state.unpublishDate, recurrence: recurrence ?? null })
+        const resp = await api.updateScheduledPublish(existingUnpublishSchedule.id, { action, targetDate: state.unpublishDate })
         if (!resp.success) allSuccess = false
         messages.push(...resp.messages.map(m => ({ ...m, path: m.path === 'targetDate' ? 'unpublishDate' : m.path })))
       } else {
-        let resp = await api.createScheduledPublish({ pageId: page.id, action: ScheduledPublishAction.UNPUBLISH, targetDate: state.unpublishDate, recurrence })
+        let resp = await api.createScheduledPublish({ pageId: page.id, action: ScheduledPublishAction.UNPUBLISH, targetDate: state.unpublishDate })
         if (!resp.success && resp.data?.id) {
-          resp = await api.updateScheduledPublish(resp.data.id, { targetDate: state.unpublishDate, recurrence: recurrence ?? null })
+          resp = await api.updateScheduledPublish(resp.data.id, { action, targetDate: state.unpublishDate })
         }
         if (!resp.success) allSuccess = false
         messages.push(...resp.messages.map(m => ({ ...m, path: m.path === 'targetDate' ? 'unpublishDate' : m.path })))
@@ -153,10 +154,10 @@
     on:saved
     let:data>
     <FieldDateTime path='publishDate' label='Publish Date' conditional={canPublish} />
-    <FieldCheckbox path='includeSubpages' boxLabel='Include all child pages in scheduled publish' conditional={canPublish && !!data.publishDate} />
+    <FieldCheckbox path='includeSubpages' related boxLabel='Include subpages in scheduled publish' conditional={canPublish && !!data.publishDate} />
+    <FieldCheckbox path='hasRecurrence' related boxLabel='Repeat publish on a schedule' conditional={(canPublish && !!data.publishDate) || (canUnpublish && !!data.unpublishDate)} defaultValue={false} />
+    <FieldSelect path='recurrenceType' related label='Repeat' choices={recurrenceChoices} conditional={!!data.hasRecurrence} notNull defaultValue='DAY' />
+    <FieldNumber path='recurrenceInterval' related label={`Every how many ${data.recurrenceType?.toLowerCase() ?? 'day'}s?`} conditional={!!data.hasRecurrence} defaultValue={1} />
     <FieldDateTime path='unpublishDate' label='Unpublish Date' conditional={canUnpublish} />
-    <FieldCheckbox path='hasRecurrence' boxLabel='Repeat on a schedule' conditional={(canPublish && !!data.publishDate) || (canUnpublish && !!data.unpublishDate)} defaultValue={false} />
-    <FieldSelect path='recurrenceType' label='Repeat' choices={recurrenceChoices} conditional={!!data.hasRecurrence} notNull defaultValue='DAY' />
-    <FieldNumber path='recurrenceInterval' label={`Every how many ${data.recurrenceType?.toLowerCase() ?? 'day'}s?`} conditional={!!data.hasRecurrence} defaultValue={1} />
   </FormDialog>
 {/if}
