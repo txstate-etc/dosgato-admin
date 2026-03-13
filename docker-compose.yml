@@ -43,6 +43,7 @@ services:
         condition: service_healthy
   dosgato-resizer:
     image: registry.its.txstate.edu/dosgato-resizer:qual
+    attach: false
     environment:
       TZ: America/Chicago
       MYSQL_USER: dosgato
@@ -77,6 +78,7 @@ services:
   mysql:
     image: percona/percona-server:8.4
     command: --authentication_policy=caching_sha2_password
+    attach: false
     ports:
       - 3306:3306
     environment:
