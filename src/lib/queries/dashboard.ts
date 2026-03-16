@@ -3,10 +3,14 @@ export interface DashboardSite {
   id: string
   name: string
   url?: {
-    prefix?: string
+    host?: string
+    path?: string
   }
   launched: boolean
   launchState: LaunchState
+  pagetrees?: {
+    id: string
+  }[]
 }
 
 export const titleCaseAccess = {
@@ -25,10 +29,14 @@ export const GET_DASHBOARD_SITE_LIST = `
       id
       name
       url {
-        prefix
+        host
+        path
       }
       launched
       launchState
+      pagetrees {
+        id
+      }
     }
   }
 `
@@ -127,6 +135,9 @@ export interface DashboardSiteDetailRaw {
     created: string
     rootPage: {
       id: string
+      template: {
+        templateTheme?: string
+      }
     }
     pages: {
       id: string
@@ -189,6 +200,9 @@ export const GET_DASHBOARD_SITE_BY_ID = `
         type
         rootPage {
           id
+          template {
+            templateTheme
+          }
         }
         pages {
           id

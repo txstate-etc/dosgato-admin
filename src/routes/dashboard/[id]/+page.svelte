@@ -1,19 +1,16 @@
 <script lang="ts">
-  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, environmentConfig, getSiteIcon, SortableTable, toast, titleCaseAccess } from '$lib'
+  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, environmentConfig, getSiteIcon, SortableTable, toast, titleCaseAccess, ModalContextStore } from '$lib'
   import type { DashboardSiteDetailDisplay, DashboardSiteTeamMemberWithRole } from '$lib'
   import { Button, FieldSelect, FormDialog, Icon } from '@dosgato/dialog'
   import eye from '@iconify-icons/ph/eye-bold'
   import clipboard from '@iconify-icons/ph/clipboard-fill'
   import tree from '@iconify-icons/ph/tree-structure-bold'
   import exportIcon from '@iconify-icons/ph/export-bold'
-  import plusIcon from '@iconify-icons/ph/plus-circle-fill'
-  import teamIcon from '@iconify-icons/ph/users-three-fill'
   import editUserIcon from '@iconify-icons/ph/user-gear-fill'
   import trashIcon from '@iconify-icons/ph/trash-simple-fill'
   import infoIcon from '@iconify-icons/ph/info-fill'
   import { base } from '$app/paths'
   import { goto } from '$app/navigation'
-  import { ModalContextStore } from '$lib'
   import UserDetailDialog from './UserDetailDialog.svelte'
 
 
@@ -94,13 +91,17 @@
     <div class="bottom">
       <div class="stats">
         <dl>
-          <div class="full-width">
+          <div>
             <dt>Site Owner:</dt>
             <dd>{site.owner?.name ?? 'None'}</dd>
           </div>
           <div>
             <dt>Created:</dt>
             <dd>{site.createdAt}</dd>
+          </div>
+          <div>
+            <dt>Theme:</dt>
+            <dd>{site.pagetrees[0]?.rootPage?.template?.templateTheme ?? 'None Assigned'}</dd>
           </div>
           <div>
             <dt>Live Pages:</dt>
@@ -125,21 +126,30 @@
     </DetailPanelSection>
   </DetailPanel>
   <DetailPanel header="Team Members" headerColor="#E5D1BD">
-    <!-- Last Audit Timestamp-->
+    <DetailPanelSection>
+      <div class="team-details">
+        <!-- <div class="detail">
+          <div class="label">Last Team Audit:</div>
+          <div class="value">TBD</div>
+        </div> -->
+        <div class="detail">
+          <div class="label">Total Team Members:</div>
+          <div class="value">{site.team.length}</div>
+        </div>
+      </div>
      <!-- <div class="team-actions">
         <Button icon={plusIcon}>Add User</Button>
         <Button icon={teamIcon}>Audit Team</Button>
         <Button icon={exportIcon}>Export CSV</Button>
      </div> -->
-    <DetailPanelSection>
       {#if site.team.length}
       <SortableTable items={site.team} headers={[
-          { id: 'access', label: 'Access Level', get: 'access', sortable: true },
-          { id: 'name', label: 'Name', get: 'name', sortable: true },
-          { id: 'username', label: 'User ID', get: 'id' },
-          { id: 'lastlogin', label: 'Last Login', render: (item) => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true },
-          { id: 'details', label: 'Details', actions: [{ icon: infoIcon, label: 'Details', onClick: (user) => viewUserDetail(user.id) }] }
-        ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
+        { id: 'access', label: 'Access Level', get: 'access', sortable: true },
+        { id: 'name', label: 'Name', get: 'name', sortable: true },
+        { id: 'username', label: 'User ID', get: 'id' },
+        { id: 'lastlogin', label: 'Last Login', render: (item) => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true },
+        { id: 'details', label: 'Details', actions: [{ icon: infoIcon, label: 'Details', onClick: (user) => viewUserDetail(user.id) }] }
+      ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
       {:else}
         <p>No team members have been added to this site.</p>
       {/if}
@@ -149,11 +159,11 @@
     <DetailPanelSection>
       {#if site.auditRoles.length}
       <SortableTable items={site.auditRoles} headers={[
-          { id: 'role', label: 'Role', get: 'name', sortable: true, sortFunction: (item) => item.name },
-          { id: 'description', label: 'Description', get: 'description' },
-          { id: 'access', label: 'Access Level', render: (item) => item.access ? titleCaseAccess[item.access] : '' },
-          { id: 'users', label: 'Users', render: (item) => item.users.length, sortable: true, sortFunction: (item) => item.users.length }
-        ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
+        { id: 'role', label: 'Role Title', get: 'name', sortable: true, sortFunction: (item) => item.name },
+        { id: 'access', label: 'Access Level', render: (item) => item.access ? titleCaseAccess[item.access] : '' },
+        { id: 'description', label: 'Description', get: 'description' },
+        { id: 'users', label: 'Assignees', render: (item) => item.users.length, sortable: true, sortFunction: (item) => item.users.length }
+      ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
       {:else}
         <p>No roles have been associated with this site.</p>
       {/if}
@@ -164,12 +174,13 @@
       <p>Access to additional page trees is granted to all site Editors. Including all archives, sandboxes, and the live site (if published) there {site.pagetrees.length === 1 ? 'is 1 page tree' : `are ${site.pagetrees.length} page trees`} for this website. To remove a Page Tree, submit a Decommission Request.</p>
       <!-- link to information about page trees -->
        <SortableTable items={site.pagetrees} headers={[
-          { id: 'status', label: 'Status', render: (item) => { const type = getPagetreeStatus(item); const icon = getSiteIcon(site.launchState, item.type); console.log(icon); return `<div class="pagetree-status ${type.toLowerCase()}">${type}</div>`} },
-          { id: 'name', label: 'Page Tree', get: 'name' },
-          { id: 'pagecount', label: 'Pages', render: (item) => item.pages.length },
-          { id: 'lastedited', label: 'Last Edited', render: (item) => site.pagetreeLastModifiedById[item.id] ? dateStamp(site.pagetreeLastModifiedById[item.id].toISOString()) : '' },
-          { id: 'openinpages', label: 'Go to Page Tree', actions: [{ icon: tree, label: 'Open in Pages', onClick: (item) => { revealInPageTree(item.rootPage.id) } }] }
-        ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
+         { id: 'status', label: 'Status', render: (item) => { const type = getPagetreeStatus(item); const icon = getSiteIcon(site.launchState, item.type); return `<div class="pagetree-status ${type.toLowerCase()}">${type}</div>` } },
+         { id: 'name', label: 'Name', get: 'name' },
+         { id: 'pagecount', label: 'Pages', render: (item) => item.pages.length },
+         { id: 'theme', label: 'Theme', get: 'rootPage.template.templateTheme' },
+         { id: 'lastedited', label: 'Last Edited', render: (item) => site.pagetreeLastModifiedById[item.id] ? dateStamp(site.pagetreeLastModifiedById[item.id].toISOString()) : '' },
+         { id: 'openinpages', label: 'Go to Page Tree', actions: [{ icon: tree, label: 'Open in Pages', onClick: (item) => { revealInPageTree(item.rootPage.id) } }] }
+       ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
     </DetailPanelSection>
   </DetailPanel>
 </DetailPageContent>
@@ -269,22 +280,34 @@
     margin: 0;
   }
   .site-stats .bottom .stats dl div {
+    flex: 0 0 calc(33.333% - 2em);
     display: flex;
     gap: 0.5em;
   }
-  .site-stats .bottom .stats dl div.full-width {
-    flex: 1 1 100%;
-  }
   .site-stats .bottom .stats dl div dt {
     font-weight: 600;
+    white-space: nowrap;
   }
   .site-stats .bottom .stats dl div dd {
     margin: 0;
+    white-space: nowrap;
   }
   .bottom .secondary-actions {
     display: flex;
     gap: 1em;
     align-items: flex-start;
+  }
+  .team-details {
+    display: flex;
+    gap: 2em;
+    padding-block: 1em;
+  }
+  .team-details .detail {
+    display: flex;
+    gap: 0.5em;
+  }
+  .team-details .label {
+    font-weight: 600;
   }
   /* .team-actions {
     display: flex;
@@ -310,7 +333,7 @@
     color: #fff;
   }
   :global(.pagetree-status.sandbox) {
-    background-color: #E32849;
+    background-color: #B64600;
     color: #fff;
   }
 </style>
