@@ -1,11 +1,24 @@
 <script lang="ts">
-  import { ActionPanel, actionPanelStore, type DashboardSiteWithRoleSummary } from '$lib'
-  import { setContext } from 'svelte';
+
+  import { ActionPanel, type DashboardSiteWithRoleSummary } from '$lib'
+  import { onMount, onDestroy, setContext } from 'svelte'
+  import { dashboardSitesStore, filtered } from '$lib/stores/dashboardSitesStore'
   import DashboardSiteCard from './DashboardSiteCard.svelte'
   export let data: { sites: DashboardSiteWithRoleSummary[] }
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
+
+
+  onMount(() => {
+    dashboardSitesStore.setSites(data.sites)
+  })
+
+  onDestroy(() => {
+    dashboardSitesStore.reset()
+  })
+
+
 </script>
 
 <ActionPanel actions={[]} actionsTitle="Dashboard">
@@ -17,10 +30,38 @@
       </div>
       <div class="controls">
         <!-- Future controls can go here. Might want to use a store to manage the state of the controls and the sites showing -->
+        <div class="control-group">
+          <label>
+            Sort by
+            <select value={$dashboardSitesStore.sort} on:change={e => dashboardSitesStore.set({ ...$dashboardSitesStore, sort: e.target.value })}>
+              <option value="alpha">Alphabetical</option>
+              <option value="status">Status</option>
+              <option value="date">Date Added</option>
+            </select>
+          </label>
+          <label>
+            Filter by
+            <select value={$dashboardSitesStore.filter} on:change={e => dashboardSitesStore.set({ ...$dashboardSitesStore, filter: e.target.value })}>
+              <option value="all">All</option>
+              <optgroup label="Site Launch Status">
+                <option value="active">Active (live)</option>
+                <option value="prelaunch">Prelaunch</option>
+                <option value="inactive">Inactive</option>
+              </optgroup>
+              <optgroup label="My Access Level">
+                <option value="owner">Owner</option>
+                <option value="manager">Manager</option>
+                <option value="editor">Editor</option>
+                <option value="contributor">Contributor</option>
+                <option value="readonly">Read Only</option>
+              </optgroup>
+            </select>
+          </label>
+        </div>
       </div>
     </div>
     <ul class="sites">
-      {#each data.sites as site}
+      {#each $filtered as site}
         <li class="site-list-item"><DashboardSiteCard {site} /></li>
       {/each}
     </ul>
@@ -40,6 +81,10 @@
   .header .count {
     font-size: 0.75em;
     color: #767676;
+  }
+  .controls {
+    display: flex;
+    justify-content: flex-end;
   }
   .sites {
     display: flex;

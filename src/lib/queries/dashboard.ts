@@ -10,6 +10,7 @@ export interface DashboardSite {
   launchState: LaunchState
   pagetrees?: {
     id: string
+    created: string
   }[]
 }
 
@@ -36,6 +37,7 @@ export const GET_DASHBOARD_SITE_LIST = `
       launchState
       pagetrees {
         id
+        created
       }
     }
   }
