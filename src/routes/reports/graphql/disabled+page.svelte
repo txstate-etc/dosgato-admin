@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { Form, FieldGraphQLEditor, FieldTypeScriptEditor, FieldTextArea, Icon } from '@dosgato/dialog'
+  import { Form, FieldTextArea, Icon } from '@dosgato/dialog'
+  import { FieldGraphQLEditor, FieldTypeScriptEditor } from '@dosgato/dialog/editors'
   import arrowSquareOut from '@iconify-icons/ph/arrow-square-out'
   import arrowSquareIn from '@iconify-icons/ph/arrow-square-in'
   import trashIcon from '@iconify-icons/ph/trash'
