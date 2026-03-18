@@ -343,9 +343,6 @@
   .left-topbar {
     flex: 1;
   }
-  .right-topbar {
-    justify-content: flex-end;
-  }
   nav ul {
     padding: 0;
     margin: 0;
