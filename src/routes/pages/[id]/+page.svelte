@@ -37,9 +37,9 @@
     const previewGroup: ActionPanelGroup = {
       id: 'previewgroup',
       actions: [
-        { label: 'Preview', icon: eye, onClick: () => { navigating = true; pageEditorStore.previewVersion({ version: page.version.version, date: DateTime.fromISO(page.version.date), modifiedBy: page.version.user.name }) } },
+        { label: 'Preview', icon: eye, onClick: () => { navigating = true; pageEditorStore.previewVersion({ version: $pageStore.version.version, date: DateTime.fromISO($pageStore.version.date), modifiedBy: $pageStore.version.user.name }) } },
         { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${$editorStore.page.path}.html`), '_blank') } },
-        { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions({ version: page.versions[0].version, date: DateTime.fromISO(page.versions[0].date), modifiedBy: page.versions[0].user.name }, { version: page.version.version, date: DateTime.fromISO(page.version.date), modifiedBy: page.version.user.name }), disabled: !page.published || !page.hasUnpublishedChanges }
+        { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions({ version: $pageStore.versions[0].version, date: DateTime.fromISO($pageStore.versions[0].date), modifiedBy: $pageStore.versions[0].user.name }, { version: $pageStore.version.version, date: DateTime.fromISO($pageStore.version.date), modifiedBy: $pageStore.version.user.name }), disabled: !$pageStore.published || !$pageStore.hasUnpublishedChanges }
       ]
     }
 
@@ -47,7 +47,7 @@
       // preview mode
       return [
         { label: 'Cancel Preview', icon: pencilIcon, onClick: () => { navigating = true; pageEditorStore.cancelPreview() } },
-        { label: 'Publish Page', icon: publishIcon, disabled: !$editorStore.page.permissions.publish, onClick: async () => { page = await pageEditorStore.publish() ?? page } },
+        { label: 'Publish Page', icon: publishIcon, disabled: !$editorStore.page.permissions.publish, onClick: async () => await pageEditorStore.publish() },
         { label: 'Schedule Publish', icon: alarmFill, disabled: !$editorStore.page.permissions.schedulePublish && !$editorStore.page.permissions.scheduleUnpublish, onClick: () => { pageEditorStore.scheduleShowDialog() } }
       ]
     } else if (!selectedPath) {
@@ -56,8 +56,8 @@
         id: 'editinggroup',
         actions: [
           { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
-          { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: page.version.version === 0 },
-          ...(page.hasSchedules ? [{ label: 'Schedule History', icon: alarmFill, onClick: () => pageEditorStore.scheduleShowHistory() }] : [])
+          { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: $pageStore.version.version === 0 },
+          ...($pageStore.hasSchedules ? [{ label: 'Schedule History', icon: alarmFill, onClick: () => pageEditorStore.scheduleShowHistory() }] : [])
         ]
       }
       return [previewGroup, editGroup]
@@ -175,7 +175,6 @@
 
   async function refreshIframe () {
     iframe.src = iframe.src // force refresh the iframe
-    page = (await api.getEditorPage(page.id)) ?? page
   }
 
   function onAddComponentChooseTemplate (templateKey: string) {
@@ -301,7 +300,7 @@
     <VersionView version={$editorStore.previewing.version} sidebyside={!!$editorStore.previewing?.fromVersion} latestVersion={$editorStore.page.version.version} publishedVersion={$editorStore.page.versions[0]?.version} page={$editorStore.page} on:cancel={() => pageEditorStore.cancelPreview()} on:restore={e => pageEditorStore.initRestore(e.detail)}/>
   </div>
 {:else}
-  <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath, $editorStore.previewing, page)} on:returnfocus={onReturnFocus}>
+  <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath, $editorStore.previewing, $pageStore)} on:returnfocus={onReturnFocus}>
     <div class="page-bar"><span>{$editorStore.page.path}</span>
       {#if !$editorStore.previewing || allowEditorMaxWidth}
         <div class="page-bar-controls">
