@@ -19,6 +19,7 @@ test.describe('pagetemplate1 contents', () => {
       await expect(locateEditFrame(adminPage).getByText('Get healthy life and be happy!- author1').last()).toBeVisible()
     })
     test('should be able to add rich text', async ({ adminPage }) => {
+      await adminPage.getByRole('tab', { name: 'Standard' }).click()
       await adminPage.getByRole('button', { name: 'Rich Text' }).click()
       await adminPage.getByLabel('Title').fill('Rich Text Title')
       await adminPage.getByLabel('Rich Text').fill('Where is the rich text tool bars?')
