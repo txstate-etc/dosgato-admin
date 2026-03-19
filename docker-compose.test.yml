@@ -15,7 +15,8 @@ services:
       ADMIN_ALLOW_HOST_REGEX: 'proxy|ui'
   api:
     image: registry.its.txstate.edu/dosgato
-    attach: true
+    attach: false
+    pull_policy: always
     depends_on:
       mysql:
         condition: service_healthy
@@ -30,7 +31,8 @@ services:
       JWT_TRUSTED_ISSUERS: '[{ "iss": "unified-auth", "url": "http://fakeauth/jwks" }, { "iss": "dg-render", "secret": "rendertoken" }]'
   render:
     image: registry.its.txstate.edu/dosgato-render
-    attach: true
+    attach: false
+    pull_policy: always
     environment:
       NODE_ENV: development
       DOSGATO_RENDER_JWT_SECRET: rendertoken
@@ -38,6 +40,7 @@ services:
       DOSGATO_ADMIN_BASE: http://proxy/.admin
   fakeauth:
     image: registry.its.txstate.edu/unified-auth-stub:dev
+    pull_policy: always
     attach: false
   mysql:
     image: mariadb
