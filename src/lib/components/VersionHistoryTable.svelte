@@ -105,7 +105,7 @@
 {#if versions.length}
 <section use:resize={{ store }} class:small={$small}>
   <header>{title}</header>
-  <table class:compressDays>
+  <table class:compressDays><thead>
     <tr>
       <th class="checkbox">&nbsp;</th>
       <th class="date">Date</th>
@@ -118,6 +118,7 @@
       <th class="modified">{$small ? 'By' : 'Modified By'}</th>
       <th class="mark">Mark</th>
     </tr>
+  </thead><tbody>
     {#each versions as version, i (version.version)}
     {@const restored = /restored/i.test(version.comment)}
     {@const day = version.date.toLocal().toFormat('yyyyLLdd')}
@@ -167,7 +168,7 @@
       </td>
     </tr>
     {/each}
-  </table>
+  </tbody></table>
 </section>
   {#if hoverRow}
     {@const comment = versions[Number(hoverRow.getAttribute('data-idx'))]?.comment}

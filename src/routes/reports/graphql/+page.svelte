@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Form, FieldTextArea, Icon } from '@dosgato/dialog'
-  import { FieldGraphQLEditor, FieldTypeScriptEditor } from '@dosgato/dialog/editors'
   import arrowSquareOut from '@iconify-icons/ph/arrow-square-out'
   import arrowSquareIn from '@iconify-icons/ph/arrow-square-in'
   import trashIcon from '@iconify-icons/ph/trash'
@@ -10,7 +9,7 @@
   import { onMount } from 'svelte'
   import { api, toast } from '$lib'
   import { graphqlQueryToTypeScript } from './graphqlToType.js'
-  import { transpile, ScriptTarget, ModuleKind } from 'typescript'
+  import { transform } from 'sucrase'
 
   const STORAGE_PREFIX = 'graphql-report:'
   const ACTIVE_REPORT_KEY = 'graphql-report-active'
@@ -21,6 +20,8 @@
   })
 
   let schema: GraphQLSchema | undefined
+  let FieldGraphQLEditor: any
+  let FieldTypeScriptEditor: any
 
   const defaultQuery = '{ pages { name path } }'
 
@@ -146,7 +147,12 @@ return [
   }
 
   onMount(async () => {
-    schema = await schemaCache.get()
+    const [editors] = await Promise.all([
+      import('@dosgato/dialog/editors'),
+      schemaCache.get().then(s => { schema = s })
+    ])
+    FieldGraphQLEditor = editors.FieldGraphQLEditor
+    FieldTypeScriptEditor = editors.FieldTypeScriptEditor
   })
 
   async function run (formData: any) {
@@ -154,7 +160,7 @@ return [
     running = true
     try {
       const data = await api.query(formData.query)
-      const js = transpile(formData.transform, { target: ScriptTarget.ES2022, module: ModuleKind.ESNext })
+      const js = transform(formData.transform, { transforms: ['typescript'] }).code
       // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
       const fn = new Function('data', js)
       const rows: any[][] = fn(data)
@@ -221,14 +227,16 @@ return [
   <Form {preload} bind:store={reportStore} let:data>
     <FieldTextArea path="description" label="Description" rows={2} />
     {@const preamble = schema && data.query ? graphqlQueryToTypeScript(schema, data.query) : ''}
-    <div class="editors">
-      <div class="editor-section">
-        <FieldGraphQLEditor path="query" label="GraphQL Query" rows={15} {schema} />
+    {#if FieldGraphQLEditor && FieldTypeScriptEditor}
+      <div class="editors">
+        <div class="editor-section">
+          <svelte:component this={FieldGraphQLEditor} path="query" label="GraphQL Query" rows={15} {schema} />
+        </div>
+        <div class="editor-section">
+          <svelte:component this={FieldTypeScriptEditor} path="transform" label="Transform to CSV" rows={15} sandbox {preamble} />
+        </div>
       </div>
-      <div class="editor-section">
-        <FieldTypeScriptEditor path="transform" label="Transform to CSV" rows={15} sandbox {preamble} />
-      </div>
-    </div>
+    {/if}
     <div class="actions">
       <button type="button" on:click={async () => await run(data)} disabled={running || !data.query?.trim()}>
         {running ? 'Running...' : 'Run & Download CSV'}

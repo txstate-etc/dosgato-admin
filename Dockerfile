@@ -7,9 +7,9 @@ COPY package-lock.json ./
 COPY svelte.config.js ./
 COPY vite.config.js ./
 COPY tsconfig.json ./
+RUN npm ci
 COPY src src
 
-RUN npm ci
 RUN echo "export const schemaVersion = '$(date +"%Y%m%d%H%M%S")'" > src/lib/schemaversion.ts
 RUN npm run build
 
