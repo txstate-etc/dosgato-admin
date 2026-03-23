@@ -11,6 +11,10 @@ export interface DashboardSite {
   pagetrees?: {
     id: string
     created: string
+    pages: {
+      id: string
+      modifiedAt: string
+    }[]
   }[]
 }
 
@@ -38,6 +42,10 @@ export const GET_DASHBOARD_SITE_LIST = `
       pagetrees {
         id
         created
+        pages {
+          id
+          modifiedAt
+        }
       }
     }
   }

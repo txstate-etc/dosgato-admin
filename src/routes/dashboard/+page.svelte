@@ -35,8 +35,11 @@
             Sort by
             <select value={$dashboardSitesStore.sort} on:change={e => dashboardSitesStore.set({ ...$dashboardSitesStore, sort: e.target.value })}>
               <option value="alpha">Alphabetical</option>
+              <optgroup label="Date">
+                <option value="date-added">Date Added</option>
+                <option value="last-edited">Last Edited</option>
+              </optgroup>
               <option value="status">Status</option>
-              <option value="date">Date Added</option>
             </select>
           </label>
           <label>

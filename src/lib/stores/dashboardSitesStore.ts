@@ -44,7 +44,7 @@ export const filtered = derivedStore(dashboardSitesStore, (state) => {
   } else if (sort === 'status') {
     const statusOrder = { LAUNCHED: 1, PRELAUNCH: 2, DECOMMISSIONED: 3 }
     filtered.sort((a, b) => statusOrder[a.launchState] - statusOrder[b.launchState])
-  } else if (sort === 'date') {
+  } else if (sort === 'date-added') {
     // calculate the earliest pagetree creation date for each site and sort by that
     const siteDateMap = filtered.reduce<Record<string, Date>>((acc, site) => {
       const earliestDate = site.pagetrees?.reduce((earliest, pagetree) => {
@@ -55,6 +55,22 @@ export const filtered = derivedStore(dashboardSitesStore, (state) => {
       return acc
     }, {})
     filtered.sort((a, b) => siteDateMap[a.id].getTime() - siteDateMap[b.id].getTime())
+  } else if (sort === 'last-edited') {
+    // for each pagetree in each site, find the most recent modifiedAt date, then sort sites by that date
+    const siteDateMap = filtered.reduce<Record<string, Date>>((acc, site) => {
+      let latestDate = new Date(0)
+      site.pagetrees?.forEach(pagetree => {
+        pagetree.pages.forEach(page => {
+          const modifiedDate = new Date(page.modifiedAt)
+          if (modifiedDate > latestDate) {
+            latestDate = modifiedDate
+          }
+        })
+      })
+      acc[site.id] = latestDate
+      return acc
+    }, {})
+    filtered.sort((a, b) => siteDateMap[b.id].getTime() - siteDateMap[a.id].getTime())
   }
   return filtered
 })

@@ -53,6 +53,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
+    border-radius: 4px;
   }
   .site-card-header.launched {
     background-color: var(--dashboard-live-bg);
