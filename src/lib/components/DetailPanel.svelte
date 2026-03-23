@@ -60,7 +60,4 @@
   header button:disabled {
     color: #404040;
   }
-  .body {
-    background-color: #f4f4f4;
-  }
 </style>

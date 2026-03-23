@@ -47,9 +47,6 @@
     text-decoration: none;
     color: inherit;
     box-shadow: 4px 4px 0 0 #ddd;
-    --prelaunch-color: #B64600;
-    --launched-color: #006699;
-    --decommissioned-color: #595959;
   }
   .site-card-header {
     padding: 0.5em 1em 0;
@@ -58,22 +55,22 @@
     align-items: flex-end;
   }
   .site-card-header.launched {
-    background-color: #BFF3FD;
+    background-color: var(--dashboard-live-bg);
   }
   .site-card-header.launched .launch-state, .site-card-header.launched .pagetree-count {
-    color: var(--launched-color);
+    color: var(--dashboard-live-accent);
   }
   .site-card-header.prelaunch {
-    background-color: #FFE7CE;
+    background-color: var(--dashboard-sandbox-bg);
   }
   .site-card-header.prelaunch .launch-state, .site-card-header.prelaunch .pagetree-count {
-    color: var(--prelaunch-color);
+    color: var(--dashboard-sandbox-accent);
   }
   .site-card-header.decommissioned .launch-state, .site-card-header.decommissioned .pagetree-count {
-    color: var(--decommissioned-color);
+    color: var(--dashboard-archive-accent);
   }
   .site-card-header.decommissioned {
-    background-color: #EBEBEB;
+    background-color: var(--dashboard-archive-bg);
   }
   .site-card-header .left {
     min-height: 112px;
@@ -92,13 +89,13 @@
     font-size: 1em;
   }
   .site-card-header .top :global(.launched) {
-    color: var(--launched-color);
+    color: var(--dashboard-live-accent);
   }
   .site-card-header .top :global(.prelaunch svg path) {
-    fill: var(--prelaunch-color);
+    fill: var(--dashboard-sandbox-accent);
   }
   .site-card-header .top :global(.decommissioned) {
-    color: var(--decommissioned-color);
+    color: var(--dashboard-archive-accent);
   }
   .site-card-header .pagetree-count {
     font-size: 0.75em;
@@ -108,7 +105,7 @@
   .site-card-header .bottom {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
   }
   .site-card-details {
     padding: 1em;

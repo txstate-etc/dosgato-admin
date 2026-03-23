@@ -13,7 +13,7 @@
   import userCircleLight from '@iconify-icons/ph/user-circle-light'
   import userIcon from '@iconify-icons/ph/user-circle-fill'
   import usersIcon from '@iconify-icons/ph/users'
-  import gaugeIcon from '@iconify-icons/ph/gauge'
+  import gaugeIcon from '@iconify-icons/mdi/gauge'
   import { eq, PopupMenu, type PopupMenuItem, resize, ResizeStore, ScreenReaderOnly } from '@txstate-mws/svelte-components'
   import { onMount, setContext, tick } from 'svelte'
   import { isNotNull } from 'txstate-utils'
@@ -46,9 +46,7 @@
     void goto(e.detail.value)
   }
 
-  // TODO: Add dashboard back in when ready
   const profileItems: (PopupMenuItem & { icon?: IconOrSVG })[] = [
-    { value: `${base}/dashboard`, label: 'Dashboard', icon: gaugeIcon },
     ...(uiConfig.profileMenuLinks ?? []).map(link => ({
       value: link.url,
       label: link.label,
@@ -132,6 +130,7 @@
     Data: database,
     Sites: globe,
     Access: usersIcon,
+    Dashboard: gaugeIcon,
     More: bag
   }
 
@@ -140,6 +139,7 @@
     if ($globalStore.access.viewPageManager) items.push({ label: 'Pages', value: `${base}/pages` })
     if ($globalStore.access.viewAssetManager) items.push({ label: 'Assets', value: `${base}/assets` })
     if ($globalStore.access.viewDataManager) items.push({ label: 'Data', value: `${base}/data` })
+    items.push({ label: 'Dashboard', value: `${base}/dashboard` })
     if ($globalStore.access.viewSiteManager) items.push({ label: 'Sites', value: `${base}/sites` })
     if ($globalStore.access.viewRoleManager) items.push({ label: 'Access', value: `${base}/auth/users` })
     if ($globalStore.access.manageTemplates) items.push({ label: 'More', value: `${base}/settings/templates/pages` })
@@ -148,6 +148,7 @@
 
   function getNavLabel (path) {
     if (path.startsWith(`${base}/pages`)) return 'Pages'
+    else if (path.startsWith(`${base}/dashboard`)) return 'Dashboard'
     else if (path.startsWith(`${base}/assets`)) return 'Assets'
     else if (path.startsWith(`${base}/sites`)) return 'Sites'
     else if (path.startsWith(`${base}/auth`)) return 'Access'
@@ -230,6 +231,7 @@
           {#if $globalStore.access.viewPageManager}<li class:selected={$page.url.pathname.startsWith(`${base}/pages`)}><TopNavLink href="{base}/pages" icon={fileCode} label="Pages"/></li>{/if}
           {#if $globalStore.access.viewAssetManager}<li class:selected={$page.url.pathname.startsWith(`${base}/assets`)}><TopNavLink href="{base}/assets" icon={copySimple} label="Assets" /></li>{/if}
           {#if $globalStore.access.viewDataManager}<li class:selected={$page.url.pathname.startsWith(`${base}/data`)}><TopNavLink href="{base}/data" icon={database} label="Data" /></li>{/if}
+          <li class:selected={$page.url.pathname.startsWith(`${base}/dashboard`)}><TopNavLink href="{base}/dashboard" icon={gaugeIcon} label="Dashboard" /></li>
           {#if $globalStore.access.viewSiteManager}<li class="separator" class:selected={$page.url.pathname.startsWith(`${base}/sites`)}><TopNavLink href="{base}/sites" icon={globe} label="Sites" /></li>{/if}
           {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager} class:selected={$page.url.pathname.startsWith(`${base}/auth`)}><TopNavLink href="{base}/auth/users" icon={usersIcon} label="Access" /></li>{/if}
           {#if $globalStore.access.manageTemplates}<li class:selected={$page.url.pathname.startsWith(`${base}/settings`)}><TopNavLink href="{base}/settings/templates/pages" icon={bag} label="More" /></li>{/if}

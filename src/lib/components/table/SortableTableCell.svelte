@@ -9,9 +9,12 @@
   $: icon = typeof header.icon === 'function' ? header.icon(item) : header.icon
   $: actions = (typeof header.actions === 'function' ? header.actions(item) : header.actions)?.filter(a => { return a.allowed ? a.allowed(item) : true })
   const combineActions: boolean = isNotNull(header.combinedActionsLabel)
+
 </script>
 
-{#if header.render}
+{#if header.component}
+  <svelte:component this={header.component} {item} {header} />
+{:else if header.render}
   {@html header.render(item)}
 {:else if header.icon}
   <span class="icon"><Icon icon={icon?.icon} hiddenLabel={icon?.hiddenLabel} inline /></span>
@@ -25,7 +28,7 @@
   <div class="actions-container">
     {#each actions as action (action.label)}
       {@const hiddenLabel = action.hiddenLabel ? (typeof action.hiddenLabel === 'function' ? action.hiddenLabel(item) : action.hiddenLabel) : action.label}
-      <button type="button" on:click={async () => await action.onClick(item)} class="icon-button" class:combine={combineActions}>
+      <button type="button" on:click={async () => await action.onClick(item)} class="icon-button {action.class ?? ''}" class:combine={combineActions}>
         <div class="button-content">
           <span class="button-icon"><Icon icon={action.icon} {hiddenLabel} width="1.5em"/></span>
         </div>

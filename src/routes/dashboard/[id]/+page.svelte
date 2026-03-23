@@ -4,6 +4,7 @@
   import { Button, FieldSelect, FormDialog, Icon } from '@dosgato/dialog'
   import eye from '@iconify-icons/ph/eye-bold'
   import clipboard from '@iconify-icons/ph/clipboard-fill'
+  import list from '@iconify-icons/ph/list-bullets-bold'
   import tree from '@iconify-icons/ph/tree-structure-bold'
   import exportIcon from '@iconify-icons/ph/export-bold'
   import editUserIcon from '@iconify-icons/ph/user-gear-fill'
@@ -12,6 +13,7 @@
   import { base } from '$app/paths'
   import { goto } from '$app/navigation'
   import UserDetailDialog from './UserDetailDialog.svelte'
+  import StatusBadge from './StatusBadge.svelte'
 
 
   export let data: { site: DashboardSiteDetailDisplay }
@@ -30,7 +32,7 @@
   }
 
   function revealInPageTree (pageId: string) {
-    goto(`${base}/pages?selectedPage=${pageId}`)
+    void goto(`${base}/pages?selectedPage=${pageId}`)
   }
 
   async function onDownloadPageList (state) {
@@ -39,30 +41,22 @@
     }
     modalContext.reset()
     const pagetree = data.site.pagetrees.find(p => p.id === state.pagetree)
-    downloadPageList(state.pagetree, pagetree!.name, data.site.name)
+    await downloadPageList(state.pagetree, pagetree!.name, data.site.name)
     return { success: true, data: state, messages: [] }
   }
 
   let userDetailId: string | null = null
   let userDetail: DashboardSiteTeamMemberWithRole | null = null
-  async function viewUserDetail(userId: string) {
+  async function viewUserDetail (userId: string) {
     userDetailId = userId
     userDetail = site.teamMembersWithRolesById[userId]
     modalContext.setModal('userdetail', userId)
   }
 
-  function dismissUserDetail() {
+  function dismissUserDetail () {
     userDetailId = null
     userDetail = null
     modalContext.onModalEscape()
-  }
-
-  function getPagetreeStatus(item) {
-    let type = item.type
-    if (type === 'PRIMARY') {
-      type = site.launched ? 'LIVE' : 'SANDBOX'
-    }
-    return type
   }
 </script>
 
@@ -70,7 +64,7 @@
   <div class="site-stats">
     <div class="top" class:launched={site.launchState === 'LAUNCHED'} class:prelaunch={site.launchState === 'PRELAUNCH'} class:decommissioned={site.launchState === 'DECOMMISSIONED'}>
       <div class="basic-info">
-        <Icon {icon} width="1.75em" />
+        <Icon {icon} width="1.75em" class="state-icon"/>
         <div class="title-block">
           <h1 class="site-title">{site.name}</h1>
           <div class="url">
@@ -80,7 +74,7 @@
           <div class="site-actions">
             <Button type="button" on:click={() => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${site.rootPagePath}.html`), '_blank') }}><Icon icon={eye} /> Preview in New Window</Button>
             {#if site.launched}<Button type="button" on:click={onCopyURL}><Icon icon={clipboard} /> Copy Live URL</Button>{/if}
-            <Button type="button" on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}><Icon icon={tree} /> Reveal in Page Tree</Button>
+            <Button type="button" on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}><Icon icon={tree}/> Reveal in Page Tree</Button>
           </div>
         </div>
       </div>
@@ -120,12 +114,14 @@
     </div>
   </div>
   <!-- Audit Warning Panel -->
-   <DetailPanel header="Utilities" headerColor="#E5D1BD">
+   <!--
+   <DetailPanel header="Utilities" headerColor="#F5F1EE">
     <DetailPanelSection>
       <Button type="button" on:click={() => { modalContext.setModal('downloadcsv') }}><Icon icon={exportIcon} /> Download Page List</Button>
     </DetailPanelSection>
   </DetailPanel>
-  <DetailPanel header="Team Members" headerColor="#E5D1BD">
+-->
+  <DetailPanel header="Team Members" headerColor="#F5F1EE">
     <DetailPanelSection>
       <div class="team-details">
         <!-- <div class="detail">
@@ -148,14 +144,14 @@
         { id: 'name', label: 'Name', get: 'name', sortable: true },
         { id: 'username', label: 'User ID', get: 'id' },
         { id: 'lastlogin', label: 'Last Login', render: (item) => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true },
-        { id: 'details', label: 'Details', actions: [{ icon: infoIcon, label: 'Details', onClick: (user) => viewUserDetail(user.id) }] }
+        { id: 'details', label: 'Details', actions: [{ icon: infoIcon, class: 'user-detail', label: 'Details', onClick: async (user) => await viewUserDetail(user.id) }] }
       ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
       {:else}
         <p>No team members have been added to this site.</p>
       {/if}
     </DetailPanelSection>
   </DetailPanel>
-  <DetailPanel header="Role Management" headerColor="#E5D1BD">
+  <DetailPanel header="Role Management" headerColor="#F5F1EE">
     <DetailPanelSection>
       {#if site.auditRoles.length}
       <SortableTable items={site.auditRoles} headers={[
@@ -169,17 +165,17 @@
       {/if}
     </DetailPanelSection>
   </DetailPanel>
-  <DetailPanel header="Related Pagetrees" headerColor="#E5D1BD">
+  <DetailPanel header="Related Pagetrees" headerColor="#F5F1EE">
     <DetailPanelSection>
       <p>Access to additional page trees is granted to all site Editors. Including all archives, sandboxes, and the live site (if published) there {site.pagetrees.length === 1 ? 'is 1 page tree' : `are ${site.pagetrees.length} page trees`} for this website. To remove a Page Tree, submit a Decommission Request.</p>
       <!-- link to information about page trees -->
-       <SortableTable items={site.pagetrees} headers={[
-         { id: 'status', label: 'Status', render: (item) => { const type = getPagetreeStatus(item); const icon = getSiteIcon(site.launchState, item.type); return `<div class="pagetree-status ${type.toLowerCase()}">${type}</div>` } },
+       <SortableTable items={site.pagetrees.map(p => ({ ...p, launchState: site.launchState }))} headers={[
+         { id: 'status', label: 'Status', component: StatusBadge },
          { id: 'name', label: 'Name', get: 'name' },
          { id: 'pagecount', label: 'Pages', render: (item) => item.pages.length },
          { id: 'theme', label: 'Theme', get: 'rootPage.template.templateTheme' },
          { id: 'lastedited', label: 'Last Edited', render: (item) => site.pagetreeLastModifiedById[item.id] ? dateStamp(site.pagetreeLastModifiedById[item.id].toISOString()) : '' },
-         { id: 'openinpages', label: 'Go to Page Tree', actions: [{ icon: tree, label: 'Open in Pages', onClick: (item) => { revealInPageTree(item.rootPage.id) } }] }
+         { id: 'openinpages', label: 'Go to Page Tree', actions: [{ icon: list, class: 'open-pagetree', label: 'Open in Pages', onClick: (item) => { revealInPageTree(item.rootPage.id) } }] }
        ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
     </DetailPanelSection>
   </DetailPanel>
@@ -220,22 +216,22 @@
     font-weight: 600;
   }
   .site-stats .top.launched {
-    background-color: #BFF3FD;
+    background-color: var(--dashboard-live-bg);
   }
-  .site-stats .top.launched .launch-state {
-    color: #006699;
+  .site-stats .top.launched .launch-state, .site-stats .top.launched .basic-info :global(.state-icon) {
+    color: var(--dashboard-live-accent);
   }
   .site-stats .top.prelaunch {
-    background-color: #F9DCDE;
+    background-color: var(--dashboard-sandbox-bg);
   }
-  .site-stats .top.prelaunch .launch-state {
-    color: #E3284A;
+  .site-stats .top.prelaunch .launch-state, .site-stats .top.prelaunch .basic-info :global(svg.state-icon path) {
+    fill: var(--dashboard-sandbox-accent);
   }
   .site-stats .top.decommissioned {
-    background-color: #EBEBEB;
+    background-color: var(--dashboard-archive-bg);
   }
-  .site-stats .top.decommissioned .launch-state {
-    color: #808080;
+  .site-stats .top.decommissioned .launch-state, .site-stats .top.decommissioned .basic-info :global(.state-icon) {
+    color: var(--dashboard-archive-accent);
   }
   .site-stats .top .basic-info {
     display: flex;
@@ -256,7 +252,9 @@
     display: flex;
     gap: 0.5em;
     font-size: 0.9em;
-    color: #595959;
+  }
+  .site-stats .top .basic-info .url .label {
+    font-weight: 600;
   }
   .site-stats .top .basic-info .site-actions {
     padding-top: 0.5em;
@@ -297,6 +295,9 @@
     gap: 1em;
     align-items: flex-start;
   }
+  :global(button.user-detail .button-icon svg path) {
+    fill: #006699;
+  }
   .team-details {
     display: flex;
     gap: 2em;
@@ -314,26 +315,8 @@
     gap: 0.5em;
     padding: 2em 0 1em 1.5em;
   } */
-  :global(.pagetree-status) {
-    padding: 6px 8px;
-    border-radius: 8px;
-    width: 100px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.75em;
-    font-weight: 600;
-  }
-  :global(.pagetree-status.live) {
-    background-color: #BFF3FD;
-    color: #000;
-  }
-  :global(.pagetree-status.archive) {
-    background-color: #767676;
-    color: #fff;
-  }
-  :global(.pagetree-status.sandbox) {
-    background-color: #B64600;
-    color: #fff;
+
+  :global(button.open-pagetree .button-icon svg path) {
+    fill: #006699;
   }
 </style>
