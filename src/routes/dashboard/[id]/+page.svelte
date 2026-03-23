@@ -72,14 +72,11 @@
             <div class="value">{site.url?.prefix ?? 'None'}</div>
           </div>
           <div class="site-actions">
-            <Button type="button" on:click={() => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${site.rootPagePath}.html`), '_blank') }}><Icon icon={eye} /> Preview in New Window</Button>
+            <Button type="button" on:click={() => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${site.rootPagePath}.html`), '_blank') }}><Icon icon={eye} />Gato Preview</Button>
             {#if site.launched}<Button type="button" on:click={onCopyURL}><Icon icon={clipboard} /> Copy Live URL</Button>{/if}
             <Button type="button" on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}><Icon icon={tree}/> Reveal in Page Tree</Button>
           </div>
         </div>
-      </div>
-      <div>
-        <div class="launch-state">{site.launchState === 'LAUNCHED' ? 'LIVE' : site.launchState === 'PRELAUNCH' ? 'SANDBOX' : 'INACTIVE'}</div>
       </div>
     </div>
     <div class="bottom">
@@ -89,7 +86,7 @@
             <dt>Site Owner:</dt>
             <dd>{site.owner?.name ?? 'None'}</dd>
           </div>
-          <div>
+          <div class="created">
             <dt>Created:</dt>
             <dd>{site.createdAt}</dd>
           </div>
@@ -204,33 +201,25 @@
     margin-bottom: 2em;
   }
   .site-stats .top {
-    display: flex;
     gap: 1em;
     padding: 1em;
-  }
-  .site-stats .top .launch-state {
-    background-color: #fff;
-    padding: calc(8 / 12 * 1em) 1em;
-    border-radius: 4px;
-    font-size: 0.75em;
-    font-weight: 600;
   }
   .site-stats .top.launched {
     background-color: var(--dashboard-live-bg);
   }
-  .site-stats .top.launched .launch-state, .site-stats .top.launched .basic-info :global(.state-icon) {
+  .site-stats .top.launched .basic-info :global(.state-icon) {
     color: var(--dashboard-live-accent);
   }
   .site-stats .top.prelaunch {
     background-color: var(--dashboard-sandbox-bg);
   }
-  .site-stats .top.prelaunch .launch-state, .site-stats .top.prelaunch .basic-info :global(svg.state-icon path) {
+  .site-stats .top.prelaunch .basic-info :global(svg.state-icon path) {
     fill: var(--dashboard-sandbox-accent);
   }
   .site-stats .top.decommissioned {
     background-color: var(--dashboard-archive-bg);
   }
-  .site-stats .top.decommissioned .launch-state, .site-stats .top.decommissioned .basic-info :global(.state-icon) {
+  .site-stats .top.decommissioned .basic-info :global(.state-icon) {
     color: var(--dashboard-archive-accent);
   }
   .site-stats .top .basic-info {
@@ -318,5 +307,24 @@
 
   :global(button.open-pagetree .button-icon svg path) {
     fill: #006699;
+  }
+
+  @media screen and (max-width: 50em) {
+    .site-stats .top .basic-info {
+      flex-direction: column;
+    }
+    .site-stats .bottom {
+      flex-direction: column;
+    }
+    .site-stats .bottom .stats dl {
+      row-gap: 0.5em;
+    }
+    .site-stats .bottom .stats dl .created {
+      flex-basis: 100%;
+    }
+    .site-stats .bottom .secondary-actions {
+      flex-direction: column;
+      gap: 0.5em;
+    }
   }
 </style>
