@@ -121,4 +121,7 @@
   .site-card-details .label {
     font-weight: 600;
   }
+  .site-card-details .url .value {
+    overflow-wrap: anywhere; /* will try to break at a normal place if possible, but will break anywhere if needed to avoid overflow */
+  }
 </style>
