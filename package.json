@@ -1,6 +1,6 @@
 {
   "name": "dosgato-admin",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "scripts": {
     "prepublishOnly": "echo \"Do not publish this project.\"",
     "dev": "vite dev --host 0.0.0.0 --port 80",
@@ -23,7 +23,6 @@
     "@txstate-mws/svelte-forms": "^2.0.7",
     "@txstate-mws/svelte-store": "^1.0.6",
     "luxon": "^3.0.3",
-    "sucrase": "^3.35.1",
     "txstate-utils": "^1.8.11"
   },
   "devDependencies": {

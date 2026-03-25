@@ -1,27 +1,21 @@
 <script lang="ts">
   import { Form, FieldTextArea, Icon } from '@dosgato/dialog'
+  import { FieldGraphQLEditor, FieldTypeScriptEditor } from '@dosgato/dialog/editors'
   import arrowSquareOut from '@iconify-icons/ph/arrow-square-out'
   import arrowSquareIn from '@iconify-icons/ph/arrow-square-in'
   import trashIcon from '@iconify-icons/ph/trash'
   import type { FormStore } from '@txstate-mws/svelte-forms'
-  import { getIntrospectionQuery, buildClientSchema, type GraphQLSchema } from 'graphql'
-  import { Cache, csv, ensureString } from 'txstate-utils'
-  import { onMount } from 'svelte'
+  import { csv, ensureString } from 'txstate-utils'
+  import { transpile, ScriptTarget, ModuleKind } from 'typescript'
   import { api, toast } from '$lib'
+  import type { PageData } from './$types'
   import { graphqlQueryToTypeScript } from './graphqlToType.js'
-  import { transform } from 'sucrase'
+
+  export let data: PageData
+  $: ({ schema } = data)
 
   const STORAGE_PREFIX = 'graphql-report:'
   const ACTIVE_REPORT_KEY = 'graphql-report-active'
-
-  const schemaCache = new Cache(async () => {
-    const introspectionResult = await api.query(getIntrospectionQuery())
-    return buildClientSchema(introspectionResult)
-  })
-
-  let schema: GraphQLSchema | undefined
-  let FieldGraphQLEditor: any
-  let FieldTypeScriptEditor: any
 
   const defaultQuery = '{ pages { name path } }'
 
@@ -146,21 +140,13 @@ return [
     }
   }
 
-  onMount(async () => {
-    const [editors] = await Promise.all([
-      import('@dosgato/dialog/editors'),
-      schemaCache.get().then(s => { schema = s })
-    ])
-    FieldGraphQLEditor = editors.FieldGraphQLEditor
-    FieldTypeScriptEditor = editors.FieldTypeScriptEditor
-  })
 
   async function run (formData: any) {
     error = ''
     running = true
     try {
       const data = await api.query(formData.query)
-      const js = transform(formData.transform, { transforms: ['typescript'] }).code
+      const js = transpile(formData.transform, { target: ScriptTarget.ES2022, module: ModuleKind.ESNext })
       // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
       const fn = new Function('data', js)
       const rows: any[][] = fn(data)
@@ -227,16 +213,14 @@ return [
   <Form {preload} bind:store={reportStore} let:data>
     <FieldTextArea path="description" label="Description" rows={2} />
     {@const preamble = schema && data.query ? graphqlQueryToTypeScript(schema, data.query) : ''}
-    {#if FieldGraphQLEditor && FieldTypeScriptEditor}
-      <div class="editors">
-        <div class="editor-section">
-          <svelte:component this={FieldGraphQLEditor} path="query" label="GraphQL Query" rows={15} {schema} />
-        </div>
-        <div class="editor-section">
-          <svelte:component this={FieldTypeScriptEditor} path="transform" label="Transform to CSV" rows={15} sandbox {preamble} />
-        </div>
+    <div class="editors">
+      <div class="editor-section">
+        <FieldGraphQLEditor path="query" label="GraphQL Query" rows={15} {schema} />
       </div>
-    {/if}
+      <div class="editor-section">
+        <FieldTypeScriptEditor path="transform" label="Transform to CSV" rows={15} sandbox {preamble} />
+      </div>
+    </div>
     <div class="actions">
       <button type="button" on:click={async () => await run(data)} disabled={running || !data.query?.trim()}>
         {running ? 'Running...' : 'Run & Download CSV'}
