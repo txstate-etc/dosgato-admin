@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dateStamp, SortableTable, type DashboardSiteTeamMemberWithRole } from '$lib';
+  import { dateStamp, SortableTable, type DashboardSiteTeamMemberWithRole } from '$lib'
   import { Dialog } from '@dosgato/dialog'
   import { createEventDispatcher } from 'svelte'
 

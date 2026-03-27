@@ -56,16 +56,14 @@ export const filtered = derivedStore(dashboardSitesStore, (state) => {
     }, {})
     filtered.sort((a, b) => siteDateMap[a.id].getTime() - siteDateMap[b.id].getTime())
   } else if (sort === 'last-edited') {
-    // for each pagetree in each site, find the most recent modifiedAt date, then sort sites by that date
+    // for each site, find the most recently modified pagetree and sort by that
     const siteDateMap = filtered.reduce<Record<string, Date>>((acc, site) => {
       let latestDate = new Date(0)
       site.pagetrees?.forEach(pagetree => {
-        pagetree.pages.forEach(page => {
-          const modifiedDate = new Date(page.modifiedAt)
-          if (modifiedDate > latestDate) {
-            latestDate = modifiedDate
-          }
-        })
+        const modifiedDate = new Date(pagetree.modifiedAt)
+        if (modifiedDate > latestDate) {
+          latestDate = modifiedDate
+        }
       })
       acc[site.id] = latestDate
       return acc

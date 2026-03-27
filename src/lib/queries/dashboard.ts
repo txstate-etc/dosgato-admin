@@ -11,10 +11,7 @@ export interface DashboardSite {
   pagetrees?: {
     id: string
     created: string
-    pages: {
-      id: string
-      modifiedAt: string
-    }[]
+    modifiedAt: string
   }[]
 }
 
@@ -42,10 +39,7 @@ export const GET_DASHBOARD_SITE_LIST = `
       pagetrees {
         id
         created
-        pages {
-          id
-          modifiedAt
-        }
+        modifiedAt
       }
     }
   }
@@ -136,6 +130,9 @@ export interface DashboardSiteDetailRaw {
     rootPage: {
       id: string
       path: string
+      permissions: {
+        viewLatest: boolean
+      }
     }
   }
   pagetrees: {
@@ -149,10 +146,11 @@ export interface DashboardSiteDetailRaw {
         templateTheme?: string
       }
     }
-    pages: {
-      id: string
-      modifiedAt: string
-    }[]
+    permissions: {
+      viewPages: boolean
+    }
+    modifiedAt: string
+    pageCount
   }[]
   auditRoles: {
     id: string
@@ -201,6 +199,9 @@ export const GET_DASHBOARD_SITE_BY_ID = `
         rootPage {
           id
           path
+          permissions {
+            viewLatest
+          }
         }
       }
       pagetrees {
@@ -214,10 +215,11 @@ export const GET_DASHBOARD_SITE_BY_ID = `
             templateTheme
           }
         }
-        pages {
-          id
-          modifiedAt
+        permissions {
+          viewPages
         }
+        modifiedAt
+        pageCount
       }
       auditRoles {
         id
@@ -259,7 +261,7 @@ export interface DashboardSiteDetailDisplay extends Omit<DashboardSiteDetailRaw,
   totalPages: number
   publishedPages: number
   rootPagePath: string
-  rootPageId: string
+  rootPageId: string | undefined
   team: DashboardSiteTeamMember[]
   teamMembersWithRolesById: Record<string, DashboardSiteTeamMemberWithRole>
   pagetreeLastModifiedById: Record<string, Date>
@@ -317,10 +319,8 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
 
   const pagetreeLastModifiedById: Record<string, Date> = {}
   for (const pagetree of site.pagetrees) {
-    pagetreeLastModifiedById[pagetree.id] = pagetree.pages.reduce((latest, page) => {
-      const modifiedDate = new Date(page.modifiedAt)
-      return modifiedDate > latest ? modifiedDate : latest
-    }, new Date(pagetree.pages[0].modifiedAt))
+    const pagetreeModifiedDate = new Date(pagetree.modifiedAt)
+    pagetreeLastModifiedById[pagetree.id] = pagetreeModifiedDate
   }
 
   return {
@@ -329,7 +329,7 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
     totalPages: primaryPagetree.pages.length,
     publishedPages: primaryPagetree.pages.filter(page => page.live).length,
     rootPagePath: primaryPagetree.rootPage.path,
-    rootPageId: primaryPagetree.rootPage.id,
+    rootPageId: primaryPagetree.rootPage.permissions.viewLatest ? primaryPagetree.rootPage.id : undefined,
     team,
     teamMembersWithRolesById,
     pagetreeLastModifiedById

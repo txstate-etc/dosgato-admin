@@ -6,7 +6,9 @@
   import { Accordion } from '..'
   import Dropdown from './Dropdown.svelte'
   export let items: any[]
-  export let headers: SortableTableHeader[]
+  export let headers: (SortableTableHeader | undefined)[]
+  // Filter out undefined headers, make TypeScript narrow the result to SortableTableHeader[]
+  $: filteredHeaders = headers.filter((h): h is SortableTableHeader => !!h)
   export let cardedOnMobile = false
   export let mobileHeader: (item: any) => string = (item: any) => 'Row'
   export let emptyMessage = ''
@@ -20,7 +22,7 @@
       sortBy = undefined
       return
     }
-    const header = headers.find(h => h.id === sortColumn)
+    const header = filteredHeaders.find(h => h.id === sortColumn)
     if (!header) return
     const sort = header.sortFunction ?? header.id
     if (sortBy?.column === header.id) {
@@ -34,16 +36,16 @@
 </script>
 
 <div class="table-actions">
-  {#if headers.some(h => h.sortable)}
+  {#if filteredHeaders.some(h => h.sortable)}
     <div class="sort-table">
-      <Dropdown label="Sort by" options={headers.filter(h => h.sortable).map(h => ({ label: h.label, value: h.id }))} onSelect={(value) => { sortColumn = value; sortItems() }} />
+      <Dropdown label="Sort by" options={filteredHeaders.filter(h => h.sortable).map(h => ({ label: h.label, value: h.id }))} onSelect={(value) => { sortColumn = value; sortItems() }} />
     </div>
   {/if}
 </div>
 <table class:carded={cardedOnMobile}>
   <thead>
     <tr>
-      {#each headers as header (header.id) }
+      {#each filteredHeaders as header (header.id) }
         {#if header.hideHeader}
           <th style="{header.widthPercent ? `width: ${header.widthPercent}px` : ''}"><ScreenReaderOnly>{header.label}</ScreenReaderOnly></th>
         {:else}
@@ -57,7 +59,7 @@
   <tbody>
     {#each sortedItems as item (item.id)}
       <tr>
-        {#each headers as header (header.id)}
+        {#each filteredHeaders as header (header.id)}
           {#if header.actions?.length}
             <td use:eq>
               <SortableTableCell {item} {header}/>
@@ -70,7 +72,7 @@
         {/each}
       </tr>
     {:else}
-      <tr><td colspan={headers.length}>{emptyMessage}</td></tr>
+      <tr><td colspan={filteredHeaders.length}>{emptyMessage}</td></tr>
     {/each}
   </tbody>
 </table>
@@ -80,7 +82,7 @@
       <div class:background={idx % 2 === 0}>
         <Accordion title={mobileHeader(item)}>
           <dl>
-            {#each headers as header (header.id)}
+            {#each filteredHeaders as header (header.id)}
               {#if !header.actions}
                 <span>
                   <dt>{header.label}:</dt><dd><SortableTableCell {item} {header}/></dd>

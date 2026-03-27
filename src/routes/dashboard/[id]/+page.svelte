@@ -31,7 +31,8 @@
     }).catch(console.error)
   }
 
-  function revealInPageTree (pageId: string) {
+  function revealInPageTree (pageId?: string) {
+    if (!pageId) return
     void goto(`${base}/pages?selectedPage=${pageId}`)
   }
 
@@ -72,9 +73,13 @@
             <div class="value">{site.url?.prefix ?? 'None'}</div>
           </div>
           <div class="site-actions">
-            <Button type="button" on:click={() => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${site.rootPagePath}.html`), '_blank') }}><Icon icon={eye} />Gato Preview</Button>
+            {#if site.rootPageId}
+              <Button type="button" on:click={() => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${site.rootPagePath}.html`), '_blank') }}><Icon icon={eye} />Gato Preview</Button>
+            {/if}
             {#if site.launched}<Button type="button" on:click={onCopyURL}><Icon icon={clipboard} /> Copy Live URL</Button>{/if}
-            <Button type="button" on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}><Icon icon={tree}/> Reveal in Page Tree</Button>
+            {#if site.rootPageId}
+              <Button type="button" on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}><Icon icon={tree}/> Reveal in Page Tree</Button>
+            {/if}
           </div>
         </div>
       </div>
@@ -169,10 +174,10 @@
        <SortableTable items={site.pagetrees.map(p => ({ ...p, launchState: site.launchState }))} headers={[
          { id: 'status', label: 'Status', component: StatusBadge },
          { id: 'name', label: 'Name', get: 'name' },
-         { id: 'pagecount', label: 'Pages', render: (item) => item.pages.length },
+         { id: 'pagecount', label: 'Pages', render: (item) => item.pageCount },
          { id: 'theme', label: 'Theme', get: 'rootPage.template.templateTheme' },
          { id: 'lastedited', label: 'Last Edited', render: (item) => site.pagetreeLastModifiedById[item.id] ? dateStamp(site.pagetreeLastModifiedById[item.id].toISOString()) : '' },
-         { id: 'openinpages', label: 'Go to Page Tree', actions: [{ icon: list, class: 'open-pagetree', label: 'Open in Pages', onClick: (item) => { revealInPageTree(item.rootPage.id) } }] }
+         site.pagetrees.some(p => p.permissions.viewPages) ? { id: 'openinpages', label: 'Go to Page Tree', actions: [{ icon: list, allowed: (item) => item.permissions.viewPages, class: 'open-pagetree', label: 'Open in Pages', onClick: (item) => { revealInPageTree(item.rootPage.id) } }] } : undefined
        ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
     </DetailPanelSection>
   </DetailPanel>
