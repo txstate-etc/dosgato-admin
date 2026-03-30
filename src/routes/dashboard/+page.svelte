@@ -1,17 +1,52 @@
 <script lang="ts">
 
-  import { ActionPanel, type DashboardSiteWithRoleSummary } from '$lib'
-  import { onMount, onDestroy, setContext } from 'svelte'
+  import { ActionPanel, LoadIcon, api, titleCaseAccess, type DashboardSiteWithRoleSummary } from '$lib'
+  import { onDestroy, setContext } from 'svelte'
   import { dashboardSitesStore, filtered } from '$lib/stores/dashboardSitesStore'
   import DashboardSiteCard from './DashboardSiteCard.svelte'
+  import { unique } from 'txstate-utils'
   export let data: { sites: DashboardSiteWithRoleSummary[] }
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
+  async function fetchDashboardSites (): Promise<DashboardSiteWithRoleSummary[]> {
+    const currentUser = await api.getSelf()
+    if (!currentUser.me.id) return []
+    const [sites, user] = await Promise.all([
+      api.getDashboardSites(),
+      api.getDashboardUser(currentUser.me.id)
+    ])
+    const allSites = unique([...sites, ...user.sitesOwned, ...user.sitesManaged], 'id')
+    const userAccessBySite: Record<string, string[]> = allSites.reduce<Record<string, string[]>>((acc, site) => {
+      acc[site.id] = []
+      return acc
+    }, {})
+    for (const site of user.sitesOwned) {
+      userAccessBySite[site.id] = ['Owner']
+    }
+    for (const site of user.sitesManaged) {
+      if (!userAccessBySite[site.id]) {
+        userAccessBySite[site.id] = []
+      }
+      userAccessBySite[site.id].push('Manager')
+    }
 
-  onMount(() => {
-    dashboardSitesStore.setSites(data.sites)
+    for (const role of user.roles) {
+      // We are not interested in roles that are not associated with a particular site
+      if (!role.site?.id || !role.access) continue // TODO: what do we do if the role has no access level set. is there a default?
+      if (!userAccessBySite[role.site.id]) {
+        userAccessBySite[role.site.id] = []
+      }
+      userAccessBySite[role.site.id].push(role.access ? titleCaseAccess[role.access] : '')
+    }
+    return allSites.map(site => ({ ...site, roleSummary: userAccessBySite[site.id] })) as DashboardSiteWithRoleSummary[]
+  }
+
+  const sitesPromise = fetchDashboardSites()
+  sitesPromise.then(sites => {
+    data.sites = sites
+    dashboardSitesStore.setSites(sites)
   })
 
   onDestroy(() => {
@@ -26,7 +61,7 @@
     <div class="header">
       <div class="info">
         <div class="title">My Sites</div>
-        <div class="count">{data.sites.length} total sites</div>
+        <div class="count">{#await sitesPromise}&nbsp;{:then}{data.sites.length} total sites{/await}</div>
       </div>
       <div class="controls">
         <!-- Future controls can go here. Might want to use a store to manage the state of the controls and the sites showing -->
@@ -63,11 +98,17 @@
         </div>
       </div>
     </div>
-    <ul class="sites">
-      {#each $filtered as site}
-        <li class="site-list-item"><DashboardSiteCard {site} /></li>
-      {/each}
-    </ul>
+    {#await sitesPromise}
+      <div class="loading-container">
+        <LoadIcon size="3em" />
+      </div>
+    {:then}
+      <ul class="sites">
+        {#each $filtered as site}
+          <li class="site-list-item"><DashboardSiteCard {site} /></li>
+        {/each}
+      </ul>
+    {/await}
   </div>
 </ActionPanel>
 
@@ -88,6 +129,11 @@
   .controls {
     display: flex;
     justify-content: flex-end;
+  }
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    padding: 3em 0;
   }
   .sites {
     display: flex;
