@@ -7,6 +7,9 @@
   import { unique } from 'txstate-utils'
   export let data: { sites: DashboardSiteWithRoleSummary[] }
 
+  let availableRoles: Set<string> = new Set()
+  let availableLaunchStates: Set<string> = new Set()
+
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
@@ -47,6 +50,8 @@
   sitesPromise.then(sites => {
     data.sites = sites
     dashboardSitesStore.setSites(sites)
+    availableLaunchStates = new Set(sites.map(s => s.launchState))
+    availableRoles = new Set(sites.flatMap(s => s.roleSummary))
   })
 
   onDestroy(() => {
@@ -81,18 +86,22 @@
             Filter by
             <select value={$dashboardSitesStore.filter} on:change={e => dashboardSitesStore.set({ ...$dashboardSitesStore, filter: e.target.value })}>
               <option value="all">All</option>
-              <optgroup label="Site Launch Status">
-                <option value="active">Active (live)</option>
-                <option value="prelaunch">Prelaunch</option>
-                <option value="inactive">Inactive</option>
-              </optgroup>
-              <optgroup label="My Access Level">
-                <option value="owner">Owner</option>
-                <option value="manager">Manager</option>
-                <option value="editor">Editor</option>
-                <option value="contributor">Contributor</option>
-                <option value="readonly">Read Only</option>
-              </optgroup>
+              {#if availableLaunchStates.has('LAUNCHED') || availableLaunchStates.has('PRELAUNCH') || availableLaunchStates.has('DECOMMISSIONED')}
+                <optgroup label="Site Launch Status">
+                  {#if availableLaunchStates.has('LAUNCHED')}<option value="active">Active (live)</option>{/if}
+                  {#if availableLaunchStates.has('PRELAUNCH')}<option value="prelaunch">Prelaunch</option>{/if}
+                  {#if availableLaunchStates.has('DECOMMISSIONED')}<option value="inactive">Inactive</option>{/if}
+                </optgroup>
+              {/if}
+              {#if availableRoles.has('Owner') || availableRoles.has('Manager') || availableRoles.has('Editor') || availableRoles.has('Contributor') || availableRoles.has('Read-only')}
+                <optgroup label="My Access Level">
+                  {#if availableRoles.has('Owner')}<option value="owner">Owner</option>{/if}
+                  {#if availableRoles.has('Manager')}<option value="manager">Manager</option>{/if}
+                  {#if availableRoles.has('Editor')}<option value="editor">Editor</option>{/if}
+                  {#if availableRoles.has('Contributor')}<option value="contributor">Contributor</option>{/if}
+                  {#if availableRoles.has('Read-only')}<option value="readonly">Read Only</option>{/if}
+                </optgroup>
+              {/if}
             </select>
           </label>
         </div>
