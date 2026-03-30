@@ -85,6 +85,16 @@
 let filter = ''
 
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'id')
+
+  function handleResponsiveHeaders (treeWidth: number) {
+    if (treeWidth > 900) {
+      return ['name', 'description', 'site', 'access']
+    } else if (treeWidth > 600) {
+      return ['name', 'site', 'access']
+    } else  {
+      return ['name', 'site']
+    }
+  }
 </script>
 
 {#if filter.length}
@@ -95,11 +105,14 @@ let filter = ''
     <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
   </svelte:fragment>
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/roles/' + detail.id)} headers={[
-    { id: 'name', label: 'Name', get: 'name', icon: { icon: keyIcon } },
-    { id: 'description', label: 'Description', get: 'description' },
-    { id: 'site', label: 'Site', render: role => role.site?.id ? siteNamesById[role.site.id] : '' },
+    { id: 'name', label: 'Name', get: 'name', icon: { icon: keyIcon }, grow: 2 },
+    { id: 'description', label: 'Description', get: 'description', grow: 2 },
+    { id: 'site', label: 'Site', render: role => role.site?.id ? siteNamesById[role.site.id] : '', grow: 2 },
     { id: 'access', label: 'Access Level', get: 'access' }
-  ]} searchable='name' filter={filter} enableResize>
+  ]} searchable='name' filter={filter} enableResize responsiveHeaders={handleResponsiveHeaders}>
+    <svelte:fragment slot="empty">
+      No roles found. Try expanding your search?
+    </svelte:fragment>
   </Tree>
 </ActionPanel>
 {#if $modalContext.modal === 'addrole'}
