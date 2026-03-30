@@ -32,7 +32,7 @@
     {/if}
       <div class="url">
         <div class="label">Assigned URL:</div>
-        <div class="value">{site.url ? `${site.url.host}${site.url.path}` : 'None'}</div>
+        <div class="value">{site.url ? `${site.url.host}${(site.url.path ?? '').replace(/\/$/, '')}` : 'None'}</div>
       </div>
   </div>
 </a>
