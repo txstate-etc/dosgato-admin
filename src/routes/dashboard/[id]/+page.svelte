@@ -73,11 +73,11 @@
           </div>
           <div class="site-actions">
             {#if site.rootPageId}
-              <Button type="button" on:click={() => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${site.rootPagePath}.html`), '_blank') }}><Icon icon={eye} />Gato Preview</Button>
+              <Button type="button" icon={eye} on:click={() => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${site.rootPagePath}.html`), '_blank') }}>Gato Preview</Button>
             {/if}
-            {#if site.launched}<Button type="button" on:click={onCopyURL}><Icon icon={clipboard} /> Copy Live URL</Button>{/if}
+            {#if site.launched}<Button type="button" icon={clipboard} on:click={onCopyURL}>Copy Live URL</Button>{/if}
             {#if site.rootPageId}
-              <Button type="button" on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}><Icon icon={list}/> Reveal in Page Tree</Button>
+              <Button type="button" icon={list} on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}>Reveal in Page Tree</Button>
             {/if}
           </div>
         </div>
@@ -118,7 +118,7 @@
    <!--
    <DetailPanel header="Utilities" headerColor="#F5F1EE">
     <DetailPanelSection>
-      <Button type="button" on:click={() => { modalContext.setModal('downloadcsv') }}><Icon icon={exportIcon} /> Download Page List</Button>
+      <Button type="button" icon={exportIcon} on:click={() => { modalContext.setModal('downloadcsv') }}>Download Page List</Button>
     </DetailPanelSection>
   </DetailPanel>
 -->
@@ -154,7 +154,6 @@
   </DetailPanel>
   <DetailPanel header="Role Management" headerColor="#F5F1EE">
     <DetailPanelSection>
-      <p>All team members in your site have at least one role assigned. Standard Editor and Read-only roles can only be assigned by granting the related Access Level. </p>
       {#if site.auditRoles.length}
       <SortableTable items={site.auditRoles} headers={[
         { id: 'role', label: 'Role Title', get: 'name', sortable: true, sortFunction: (item) => item.name, mobileRole: 'title' },
