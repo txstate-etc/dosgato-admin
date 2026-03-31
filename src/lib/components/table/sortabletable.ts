@@ -27,4 +27,5 @@ export interface SortableTableHeader {
   actions?: SortableTableRowAction[] | ((item: any) => SortableTableRowAction[])
   combinedActionsLabel?: string
   widthPercent?: number
+  mobileRole?: 'title' | 'subtitle'
 }

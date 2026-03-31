@@ -2,9 +2,9 @@
   import type { SortableTableHeader } from './sortabletable'
   import SortableTableCell from './SortableTableCell.svelte'
   import { eq, ScreenReaderOnly } from '@txstate-mws/svelte-components'
-  import { isNotNull, sortby } from 'txstate-utils'
-  import { Accordion } from '..'
+  import { get, isNotNull, sortby } from 'txstate-utils'
   import Dropdown from './Dropdown.svelte'
+  import SortableTableAccordion from './SortableTableAccordion.svelte'
   export let items: any[]
   export let headers: (SortableTableHeader | undefined)[]
   // Filter out undefined headers, make TypeScript narrow the result to SortableTableHeader[]
@@ -77,32 +77,21 @@
   </tbody>
 </table>
 {#if cardedOnMobile}
+  {@const titleHeader = filteredHeaders.find(h => h.mobileRole === 'title')}
+  {@const subtitleHeaders = filteredHeaders.filter(h => h.mobileRole === 'subtitle')}
+  {@const bodyHeaders = filteredHeaders.filter(h => !h.mobileRole && !h.actions?.length)}
+  {@const actionHeaders = filteredHeaders.filter(h => h.actions?.length)}
   <div class="mobile-list" class:carded={cardedOnMobile}>
     {#each sortedItems as item, idx (item.id)}
+      {@const actions = actionHeaders.map(h => typeof h.actions === 'function' ? h.actions(item) : h.actions).filter(isNotNull).flat()}
       <div class:background={idx % 2 === 0}>
-        <Accordion title={mobileHeader(item)}>
-          <dl>
-            {#each filteredHeaders as header (header.id)}
-              {#if !header.actions}
-                <span>
-                  <dt>{header.label}:</dt><dd><SortableTableCell {item} {header}/></dd>
-                </span>
-              {/if}
-            {/each}
-          </dl>
-          {@const actions = headers.filter(h => h.actions?.length).map(h => h.actions).filter(isNotNull).flat().map(a => (typeof a === 'function') ? a(item) : a).flat() }
-          {#if actions.length}
-            <div class="actions">
-              {#each actions as action}
-                <button type="button" on:click={async () => await action.onClick(item)}>
-                  <div class="button-content">
-                    <span class="button-label">{action.label}</span>
-                  </div>
-                </button>
-              {/each}
-            </div>
-          {/if}
-        </Accordion>
+        <SortableTableAccordion
+          title={titleHeader?.render?.(item) ?? (titleHeader?.get ? get(item, titleHeader.get) : mobileHeader(item))}
+          {item}
+          {subtitleHeaders}
+          {bodyHeaders}
+          {actions}
+        />
       </div>
     {:else}
       {emptyMessage}
@@ -160,36 +149,5 @@
   }
   :global([data-eq~="500px"]) .mobile-list.carded {
     display: block;
-  }
-  .mobile-list div.background {
-    background-color: #e5e5e5;
-  }
-  dl {
-    display: flex;
-    flex-direction: column;
-  }
-  dl span {
-    padding: 0.5em 0;
-    border-bottom: 1px dashed #707070;
-    display: flex;
-    justify-content: space-between;
-  }
-  dt, dd {
-    display: inline;
-  }
-  .actions {
-    display: flex;
-    justify-content: center;
-  }
-  .actions button {
-    background-color: #501214;
-    color: #ffffff;
-    border: 0;
-    border-radius: 4px;
-    padding: 5px 10px;
-    cursor: pointer;
-  }
-  .actions button:not(:last-child) {
-    margin-right: 1.5em;
   }
 </style>

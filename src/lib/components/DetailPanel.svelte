@@ -31,7 +31,7 @@
 
 <style>
   .panel {
-    border: 2px solid black;
+    border: 2px solid #808080;
     border-radius: 4px;
   }
   header {
@@ -47,7 +47,7 @@
     padding: 0.5em 0;
   }
   header.useborder h2 {
-    border-bottom: 2px solid black;
+    border-bottom: 2px solid #808080;
   }
   header button {
     line-height: 1;

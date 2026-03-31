@@ -5,7 +5,6 @@
   import eye from '@iconify-icons/ph/eye-bold'
   import clipboard from '@iconify-icons/ph/clipboard-fill'
   import list from '@iconify-icons/ph/list-bullets-bold'
-  import tree from '@iconify-icons/ph/tree-structure-bold'
   import exportIcon from '@iconify-icons/ph/export-bold'
   import editUserIcon from '@iconify-icons/ph/user-gear-fill'
   import trashIcon from '@iconify-icons/ph/trash-simple-fill'
@@ -13,7 +12,7 @@
   import { base } from '$app/paths'
   import { goto } from '$app/navigation'
   import UserDetailDialog from './UserDetailDialog.svelte'
-  import StatusBadge from './StatusBadge.svelte'
+  import DashboardPagetreeTable from './DashboardPagetreeTable.svelte'
 
 
   export let data: { site: DashboardSiteDetailDisplay }
@@ -78,7 +77,7 @@
             {/if}
             {#if site.launched}<Button type="button" on:click={onCopyURL}><Icon icon={clipboard} /> Copy Live URL</Button>{/if}
             {#if site.rootPageId}
-              <Button type="button" on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}><Icon icon={tree}/> Reveal in Page Tree</Button>
+              <Button type="button" on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}><Icon icon={list}/> Reveal in Page Tree</Button>
             {/if}
           </div>
         </div>
@@ -142,12 +141,12 @@
      </div> -->
       {#if site.team.length}
       <SortableTable items={site.team} headers={[
-        { id: 'access', label: 'Access Level', get: 'access', sortable: true },
-        { id: 'name', label: 'Name', get: 'name', sortable: true },
+        { id: 'access', label: 'Access Level', get: 'access', sortable: true, mobileRole: 'subtitle' },
+        { id: 'name', label: 'Name', get: 'name', sortable: true, mobileRole: 'title' },
         { id: 'username', label: 'User ID', get: 'id' },
         { id: 'lastlogin', label: 'Last Login', render: (item) => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true },
         { id: 'details', label: 'Details', actions: [{ icon: infoIcon, class: 'user-detail', label: 'Details', onClick: async (user) => await viewUserDetail(user.id) }] }
-      ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
+      ]} cardedOnMobile={true} />
       {:else}
         <p>No team members have been added to this site.</p>
       {/if}
@@ -155,13 +154,14 @@
   </DetailPanel>
   <DetailPanel header="Role Management" headerColor="#F5F1EE">
     <DetailPanelSection>
+      <p>All team members in your site have at least one role assigned. Standard Editor and Read-only roles can only be assigned by granting the related Access Level. </p>
       {#if site.auditRoles.length}
       <SortableTable items={site.auditRoles} headers={[
-        { id: 'role', label: 'Role Title', get: 'name', sortable: true, sortFunction: (item) => item.name },
-        { id: 'access', label: 'Access Level', render: (item) => item.access ? titleCaseAccess[item.access] : '' },
+        { id: 'role', label: 'Role Title', get: 'name', sortable: true, sortFunction: (item) => item.name, mobileRole: 'title' },
+        { id: 'access', label: 'Access Level', render: (item) => item.access ? titleCaseAccess[item.access] : '', mobileRole: 'subtitle' },
         { id: 'description', label: 'Description', get: 'description' },
         { id: 'users', label: 'Assignees', render: (item) => item.users.length, sortable: true, sortFunction: (item) => item.users.length }
-      ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
+      ]} cardedOnMobile={true} />
       {:else}
         <p>No roles have been associated with this site.</p>
       {/if}
@@ -169,16 +169,19 @@
   </DetailPanel>
   <DetailPanel header="Related Pagetrees" headerColor="#F5F1EE">
     <DetailPanelSection>
-      <p>Access to additional page trees is granted to all site Editors. Including all archives, sandboxes, and the live site (if published) there {site.pagetrees.length === 1 ? 'is 1 page tree' : `are ${site.pagetrees.length} page trees`} for this website. To remove a Page Tree, submit a Decommission Request.</p>
+      <div class="pagetree-details">
+        <div class="detail">
+          <div class="label">Total Pagetrees:</div>
+          <div class="value">{site.pagetrees.length}</div>
+        </div>
+      </div>
       <!-- link to information about page trees -->
-       <SortableTable items={site.pagetrees.map(p => ({ ...p, launchState: site.launchState }))} headers={[
-         { id: 'status', label: 'Status', component: StatusBadge },
-         { id: 'name', label: 'Name', get: 'name' },
-         { id: 'pagecount', label: 'Pages', render: (item) => item.pageCount },
-         { id: 'theme', label: 'Theme', get: 'rootPage.template.templateTheme' },
-         { id: 'lastedited', label: 'Last Edited', render: (item) => site.pagetreeLastModifiedById[item.id] ? dateStamp(site.pagetreeLastModifiedById[item.id].toISOString()) : '' },
-         site.pagetrees.some(p => p.permissions.viewPages) ? { id: 'openinpages', label: 'Go to Page Tree', actions: [{ icon: list, allowed: (item) => item.permissions.viewPages, class: 'open-pagetree', label: 'Open in Pages', onClick: (item) => { revealInPageTree(item.rootPage.id) } }] } : undefined
-       ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
+       <DashboardPagetreeTable
+         pagetrees={site.pagetrees}
+         launchState={site.launchState}
+         pagetreeLastModifiedById={site.pagetreeLastModifiedById}
+         {revealInPageTree}
+       />
     </DetailPanelSection>
   </DetailPanel>
 </DetailPageContent>
@@ -292,16 +295,16 @@
   :global(button.user-detail .button-icon svg path) {
     fill: #006699;
   }
-  .team-details {
+  .team-details, .pagetree-details {
     display: flex;
     gap: 2em;
     padding-block: 1em;
   }
-  .team-details .detail {
+  .team-details .detail, .pagetree-details .detail {
     display: flex;
     gap: 0.5em;
   }
-  .team-details .label {
+  .team-details .label, .pagetree-details .label {
     font-weight: 600;
   }
   /* .team-actions {
@@ -309,10 +312,6 @@
     gap: 0.5em;
     padding: 2em 0 1em 1.5em;
   } */
-
-  :global(button.open-pagetree .button-icon svg path) {
-    fill: #006699;
-  }
 
   @media screen and (max-width: 50em) {
     .site-stats .top .basic-info {
