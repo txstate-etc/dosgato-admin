@@ -1171,7 +1171,7 @@ class API {
 
   async getDashboardSiteById (siteId: string) {
     const { sites } = await this.query<{ sites: DashboardSiteDetailRaw[] }>(GET_DASHBOARD_SITE_BY_ID, { siteId })
-    return apiSiteToDashboardSite(sites[0])
+    return sites[0]
   }
 
   async getPagePathById (pageId: string) {
