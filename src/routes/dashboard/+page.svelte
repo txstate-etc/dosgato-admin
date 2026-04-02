@@ -5,6 +5,12 @@
   import { dashboardSitesStore, filtered } from '$lib/stores/dashboardSitesStore'
   import DashboardSiteCard from './DashboardSiteCard.svelte'
   import { unique } from 'txstate-utils'
+  import browserIcon from '@iconify-icons/ph/browser-fill'
+  import usersIcon from '@iconify-icons/ph/users-three-fill'
+  import newsIcon from '@iconify-icons/ph/newspaper-fill'
+  import bulbIcon from '@iconify-icons/ph/lightbulb-fill'
+  import buoyIcon from '@iconify-icons/ph/lifebuoy-bold'
+  import bookIcon from '@iconify-icons/ph/book-fill'
   export let data: { sites: DashboardSiteWithRoleSummary[] }
 
   let availableRoles: Set<string> = new Set()
@@ -58,10 +64,29 @@
     dashboardSitesStore.reset()
   })
 
+  const actions = [
+    {
+      id: 'dashboard-things',
+      actions: [
+        { label: 'Manage Websites', icon: browserIcon, onClick: () => { window.location.href = 'https://gato.its.txst.edu/manage-website.html' } },
+        { label: 'Manage Users', icon: usersIcon, onClick: () => { window.location.href = 'https://gato.its.txst.edu/manage-user-access.html' } }
+      ]
+    },
+    {
+      id: 'gato-cms-resources',
+      actions: [
+        { label: 'What\'s New in Gato CMS', icon: newsIcon, onClick: () => { window.location.href = 'https://gato.its.txst.edu/whats-new.html' } },
+        { label: 'Submit a Feature Request', icon: bulbIcon, onClick: () => { window.location.href = 'https://gato.its.txst.edu/feature-request-form.html' } },
+        { label: 'Report a Problem', icon: buoyIcon, onClick: () => { window.location.href = 'https://gato.its.txst.edu/get-help.html' } },
+        { label: 'Self-Paced Training', icon: bookIcon, onClick: () => { window.location.href = 'https://canvas.txstate.edu/courses/2057568' } }
+      ]
+    }
+  ]
+
 
 </script>
 
-<ActionPanel actions={[]} actionsTitle="Dashboard">
+<ActionPanel actions={actions} actionsTitle="Dashboard">
   <div class="dashboard-container">
     <div class="header">
       <div class="info">
