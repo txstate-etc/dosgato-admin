@@ -23,6 +23,7 @@ export interface SubNavLink {
   label: string
   icon?: IconifyIcon
   closeable?: boolean
+  movable?: boolean
   onClose?: (link: this) => void
 }
 
@@ -36,7 +37,7 @@ class SubNavStore extends Store<ISubNavStore> {
       const current = v.sections[section]
       if (!current) return v
       let active = findIndex(current.links, l => l.href === link.href)
-      const linkToMove = current.links[active!] ?? { ...link, closeable: true }
+      const linkToMove = current.links[active!] ?? { ...link, closeable: true, movable: true }
       if (active == null || active >= current.maxItems) {
         active = Math.min(current.maxItems - 1, current.links.length)
       }
@@ -108,6 +109,38 @@ class SubNavStore extends Store<ISubNavStore> {
     const newHref = this.value.sections[this.value.active].links[this.value.sections[this.value.active].active].href
     oldlink.onClose?.(oldlink)
     return oldHref !== newHref ? newHref : undefined
+  }
+
+  move (fromIndex: number, toIndex: number) {
+    this.update(v => {
+      if (!v.active) return v
+      const current = v.sections[v.active]
+      if (!current) return v
+      const link = current.links[fromIndex]
+      if (!link?.movable) return v
+      if (fromIndex < 0 || fromIndex >= current.links.length) return v
+      if (toIndex < 0 || toIndex >= current.links.length) return v
+      if (fromIndex === toIndex) return v
+      if (!current.links[toIndex].movable) return v
+
+      const newLinks = current.links.filter((_, i) => i !== fromIndex)
+      newLinks.splice(toIndex, 0, link)
+
+      const activeLink = current.links[current.active]
+      const newActive = newLinks.indexOf(activeLink)
+
+      return {
+        ...v,
+        sections: {
+          ...v.sections,
+          [v.active]: {
+            ...current,
+            links: newLinks,
+            active: newActive >= 0 ? newActive : current.active
+          }
+        }
+      }
+    })
   }
 }
 

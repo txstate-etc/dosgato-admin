@@ -38,6 +38,91 @@
   let topNavListElement: HTMLUListElement
   let navbutton: HTMLButtonElement
   const subnavLinks: HTMLAnchorElement[] = []
+  let dragFromIndex: number | null = null
+  let dragOverIndex: number | null = null
+  let dropSide: 'left' | 'right' | null = null
+
+  function handleDragStart (index: number) {
+    return (e: DragEvent) => {
+      // initial position of the tab being dragged
+      dragFromIndex = index
+      e.dataTransfer!.effectAllowed = 'move'
+      e.dataTransfer!.setData('text/plain', String(index))
+    }
+  }
+
+  function handleDragOver (index: number) {
+    return (e: DragEvent) => {
+      if (dragFromIndex === null) return
+      const link = $currentSubNav!.links[index]
+      if (!link.movable) return
+      e.preventDefault()
+      e.dataTransfer!.dropEffect = 'move'
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+      const midpoint = rect.left + rect.width / 2
+      dropSide = e.clientX < midpoint ? 'left' : 'right'
+      dragOverIndex = index
+    }
+  }
+
+  function handleDragLeave (index: number) {
+    return (e: DragEvent) => {
+      const related = e.relatedTarget as HTMLElement | null
+      const currentTarget = e.currentTarget as HTMLElement
+      if (!related || !currentTarget.contains(related)) {
+        if (dragOverIndex === index) {
+          dragOverIndex = null
+          dropSide = null
+        }
+      }
+    }
+  }
+
+  function handleDrop (index: number) {
+    return (e: DragEvent) => {
+      e.preventDefault()
+      if (dragFromIndex === null || dragFromIndex === index) {
+        resetDragState()
+        return
+      }
+      let targetIndex = index
+      if (dropSide === 'right' && index < dragFromIndex) targetIndex = index + 1
+      if (dropSide === 'left' && index > dragFromIndex) targetIndex = index - 1
+      targetIndex = Math.max(0, Math.min(targetIndex, $currentSubNav!.links.length - 1))
+      subnavStore.move(dragFromIndex, targetIndex)
+      resetDragState()
+    }
+  }
+
+  function handleDragEnd () {
+    resetDragState()
+  }
+
+  function resetDragState () {
+    dragFromIndex = null
+    dragOverIndex = null
+    dropSide = null
+  }
+
+  let moveAnnouncement = ''
+
+  function handleSubnavKeydown (index: number) {
+    return async (e: KeyboardEvent) => {
+      if (!e.shiftKey || !e.metaKey) return
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+      const links = $currentSubNav?.links
+      if (!links || !links[index]?.movable) return
+      const targetIndex = e.key === 'ArrowLeft' ? index - 1 : index + 1
+      if (targetIndex < 0 || targetIndex >= Math.min(links.length, $currentSubNav!.maxItems)) return
+      if (!links[targetIndex]?.movable) return
+      e.preventDefault()
+      subnavStore.move(index, targetIndex)
+      await tick()
+      subnavLinks[targetIndex]?.focus()
+      moveAnnouncement = `${links[index].label} moved to position ${targetIndex + 1} of ${Math.min(links.length, $currentSubNav!.maxItems)}`
+    }
+  }
+
   $: subnavStore.setMaxItems(Math.floor(($subNavSize.clientWidth ?? 800) / 140))
   $: overflowItems = ($currentSubNav && $currentSubNav.links.length > $currentSubNav.maxItems)
     ? $currentSubNav.links.slice($currentSubNav.maxItems).map((l: { href: string, label: string }) => ({ value: l.href, label: l.label }))
@@ -285,8 +370,21 @@
         <ul use:resize={{ store: subNavSize }} style:background-color={environmentBackgroundColor ? `color-mix(in srgb, ${environmentBackgroundColor} 70%, black)` : undefined}>
           {#each $currentSubNav.links.slice(0, $currentSubNav.maxItems) as link, i}
             {@const selected = $page.url.pathname === link.href || (!$currentSubNav.links.some(l => l.href === $page.url.pathname) && $page.url.pathname.startsWith(link.href + (link.href.endsWith('/') ? '' : '/')))}
-            <li class:selected class:closeable={link.closeable} style:flex-shrink={Math.pow(Math.max(0.00000001, link.label.length - 12), 0.5)}>
-              <a bind:this={subnavLinks[i]} class:selected href={link.href}>{#if link.icon}<Icon icon={link.icon} inline/>{/if} {link.label}</a>
+            <li
+              class:selected
+              class:closeable={link.closeable}
+              class:dragging={dragFromIndex === i}
+              class:drop-left={dragOverIndex === i && dropSide === 'left' && dragFromIndex !== i}
+              class:drop-right={dragOverIndex === i && dropSide === 'right' && dragFromIndex !== i}
+              style:flex-shrink={Math.pow(Math.max(0.00000001, link.label.length - 12), 0.5)}
+              draggable={link.movable ? 'true' : 'false'}
+              on:dragstart={link.movable ? handleDragStart(i) : undefined}
+              on:dragover={handleDragOver(i)}
+              on:dragleave={handleDragLeave(i)}
+              on:drop={handleDrop(i)}
+              on:dragend={handleDragEnd}
+            >
+              <a bind:this={subnavLinks[i]} class:selected href={link.href} on:keydown={link.movable ? handleSubnavKeydown(i) : undefined}>{#if link.icon}<Icon icon={link.icon} inline/>{/if} {link.label}</a>
               {#if link.closeable}
                 <button type="button" class="reset" on:click={closeSubNav(i)}><Icon icon={closeThick} inline hiddenLabel="Close {link.label}" width="1.2em" /></button>
               {/if}
@@ -297,6 +395,7 @@
           {/if}
         </ul>
       </div>
+      <ScreenReaderOnly><div aria-live="assertive" aria-atomic="true">{moveAnnouncement}</div></ScreenReaderOnly>
     {/if}
   </nav>
   {#if overflowItems.length}<PopupMenu buttonelement={overflowbutton} items={overflowItems} value=".never" on:change={onOverflowChange}/>{/if}
@@ -466,6 +565,37 @@
   }
   .subnav li.selected a {
     height: 35px;
+  }
+  .subnav li[draggable="true"] {
+    cursor: grab;
+  }
+  .subnav li[draggable="true"]:active {
+    cursor: grabbing;
+  }
+  .subnav li.dragging {
+    opacity: 0.4;
+  }
+  .subnav li.drop-left::before {
+    content: '';
+    position: absolute;
+    left: -3px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: var(--dg-button-bg, #501214);
+    border-radius: 2px;
+    z-index: 1;
+  }
+  .subnav li.drop-right::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: var(--dg-button-bg, #501214);
+    border-radius: 2px;
+    z-index: 1;
   }
   .subnav button.reset {
     position: absolute;
