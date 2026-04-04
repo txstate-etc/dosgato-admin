@@ -604,10 +604,6 @@
     border-bottom: 1px dashed #707070;
     margin: 0;
   }
-  dl .dl-row span {
-    display: flex;
-    gap: 5px;
-  }
   span.label {
     font-weight: bold;
     padding-right: 0.5em;

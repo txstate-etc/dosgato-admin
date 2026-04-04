@@ -20,7 +20,7 @@ export interface EnvironmentConfig {
 
 class GlobalStore extends Store<IGlobalStore> {
   constructor () {
-    super({ access: {}, me: { firstname: '', lastname: '' }, toasts: [] })
+    super({ access: {}, me: { id: '', firstname: '', lastname: '' }, toasts: [] })
   }
 }
 

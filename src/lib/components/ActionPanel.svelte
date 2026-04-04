@@ -196,7 +196,7 @@
     left: 0.4em;
     right: auto;
   }
-  .action-panel[data-eq~="800px"] .actions header {
+  .action-panel:global([data-eq~="800px"]) .actions header {
     cursor: pointer;
   }
   :global(.action-panel[data-eq~="500px"]) .work {

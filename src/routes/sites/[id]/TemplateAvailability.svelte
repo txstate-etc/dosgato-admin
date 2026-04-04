@@ -80,7 +80,7 @@
     column-gap: 20%;
   }
 
-  [data-eq~="600px"] .wrapper .universal-templates {
+  :global([data-eq~="600px"]) .wrapper .universal-templates {
     display: flex;
     flex-direction: column;
   }

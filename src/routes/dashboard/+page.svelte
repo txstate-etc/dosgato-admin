@@ -98,7 +98,7 @@
         <div class="control-group">
           <label>
             Sort by
-            <select value={$dashboardSitesStore.sort} on:change={e => dashboardSitesStore.set({ ...$dashboardSitesStore, sort: e.target.value })}>
+            <select value={$dashboardSitesStore.sort} on:change={e => dashboardSitesStore.set({ ...$dashboardSitesStore, sort: e.currentTarget.value })}>
               <option value="alpha">Alphabetical</option>
               <optgroup label="Date">
                 <option value="date-added">Date Added</option>
@@ -109,7 +109,7 @@
           </label>
           <label>
             Filter by
-            <select value={$dashboardSitesStore.filter} on:change={e => dashboardSitesStore.set({ ...$dashboardSitesStore, filter: e.target.value })}>
+            <select value={$dashboardSitesStore.filter} on:change={e => dashboardSitesStore.set({ ...$dashboardSitesStore, filter: e.currentTarget.value })}>
               <option value="all">All</option>
               {#if availableLaunchStates.has('LAUNCHED') || availableLaunchStates.has('PRELAUNCH') || availableLaunchStates.has('DECOMMISSIONED')}
                 <optgroup label="Site Launch Status">
