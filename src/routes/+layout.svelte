@@ -395,7 +395,7 @@
           {/if}
         </ul>
       </div>
-      <ScreenReaderOnly><div aria-live="assertive" aria-atomic="true">{moveAnnouncement}</div></ScreenReaderOnly>
+      <ScreenReaderOnly arialive="assertive" ariaatomic>{moveAnnouncement}</ScreenReaderOnly>
     {/if}
   </nav>
   {#if overflowItems.length}<PopupMenu buttonelement={overflowbutton} items={overflowItems} value=".never" on:change={onOverflowChange}/>{/if}
