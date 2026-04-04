@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Button, Dialog, Tooltip } from '@dosgato/dialog'
   import { onMount } from 'svelte'
-  import { api, dateStamp, ScheduledPublishStatus, ScheduledPublishAction, confirmationStore } from '$lib'
+  import { api, dateStamp, ScheduledPublishStatus, ScheduledPublishAction, confirmationStore, uiLog } from '$lib'
   import type { ScheduledPublish } from '$lib'
   import SchedulePublishDialog from '../../pages/SchedulePublishDialog.svelte'
 
@@ -24,7 +24,7 @@
 
   function cancelSchedule (schedule: ScheduledPublish) {
     return async () => {
-      if (!await confirmationStore.confirm(`Are you sure you want to cancel this scheduled ${schedule.action === ScheduledPublishAction.PUBLISH || schedule.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES ? 'publish' : 'unpublish'}?`)) {
+      if (!await confirmationStore.confirm({ title: 'Cancel Scheduled ' + (schedule.action === ScheduledPublishAction.UNPUBLISH ? 'Unpublish' : 'Publish'), body: `Are you sure you want to cancel this scheduled ${schedule.action === ScheduledPublishAction.PUBLISH || schedule.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES ? 'publish' : 'unpublish'}?` })) {
         return
       }
       const resp = await api.cancelScheduledPublish(schedule.id)

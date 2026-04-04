@@ -421,7 +421,11 @@
     cancelText={$confirmationStore.noText}
     on:continue={() => confirmationStore.onConfirm()}
     on:escape={() => confirmationStore.onCancel()}>
-    {$confirmationStore.content}
+    {#if $confirmationStore.html}
+      {@html $confirmationStore.body}
+    {:else}
+      <div class="confirmation-body">{$confirmationStore.body}</div>
+    {/if}
   </Dialog>
 {/if}
 
@@ -644,6 +648,10 @@
 
   .profile-compact {
     display: none;
+  }
+
+  .confirmation-body {
+    white-space: pre-line;
   }
 
   :global(.login-status[aria-expanded="true"]), :global(.login-status[aria-expanded="true"]):hover {
