@@ -4,7 +4,7 @@
   import deleteIcon from '@iconify-icons/ph/trash'
   import { Dialog, FieldText, FieldMultiselect, FieldSelect, FormDialog } from '@dosgato/dialog'
   import { base } from '$app/paths'
-  import { api, BackButton, DetailList, DetailPanel, DetailPanelSection, messageForDialog, StyledList, type RoleListRole, type UserListUser, ModalContextStore } from '$lib'
+  import { api, BackButton, DetailList, DetailPanel, DetailPanelSection, messageForDialog, StyledList, type RoleListRole, type UserListUser, uiLog } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   import DetailPageContent from '$lib/components/DetailPageContent.svelte'
@@ -14,7 +14,7 @@
   let allRoles: RoleListRole[]
 
   type Modals = 'editbasic' | 'addmembers' | 'removegroupmember' | 'addrole' | 'removerole'
-  const modalContext = new ModalContextStore<Modals>(undefined, () => $store.group.id)
+  let modal: Modals | undefined
 
   const panelHeaderColor = '#007096'
 
@@ -23,10 +23,12 @@
   $: supergroupIds = $store.group.supergroups.map(g => g.id)
   $: directRoleIds = $store.group.directRoles.map(r => r.id)
 
+  function modalTarget () {
+    return $store.group.name ?? $store.group.id  }
 
   async function onEditBasic (state) {
     const resp = await api.editGroup($store.group.id, state.name)
-    modalContext.logModalResponse(resp, $store.group.id)
+    uiLog.log({ eventType: 'GroupDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: modalTarget() })
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ path: m.arg, type: m.type, message: m.message })),
@@ -48,12 +50,12 @@
 
   async function openAddUsersDialog () {
     allUsers ??= await api.getUserList({ enabled: true })
-    modalContext.setModal('addmembers')
+    openModal('addmembers')
   }
 
   async function onAddMembers (state) {
     const resp = await api.setGroupUsers($store.group.id, state.users)
-    modalContext.logModalResponse(resp, $store.group.id)
+    uiLog.log({ eventType: 'GroupDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: modalTarget() })
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
@@ -65,13 +67,13 @@
 
   function onClickRemoveGroupMember (id: string) {
     groupMemberRemovingId = id
-    modalContext.setModal('removegroupmember')
+    openModal('removegroupmember')
   }
 
   async function onRemoveGroupMember (state) {
     if (!groupMemberRemovingId) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Something went wrong' }], data: state }
     const resp = await api.removeMemberFromGroup($store.group.id, groupMemberRemovingId)
-    modalContext.logModalResponse(resp, $store.group.id, { memberId: groupMemberRemovingId })
+    uiLog.log({ eventType: 'GroupDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: modalTarget(), additionalProperties: { userId: groupMemberRemovingId } })
     if (resp.success) {
       groupMemberRemovingId = undefined
       onSaved()
@@ -92,12 +94,12 @@
 
   async function openAddRoleDialog () {
     allRoles ??= await api.getRoleList()
-    modalContext.setModal('addrole')
+    openModal('addrole')
   }
 
   async function onAddRole (state) {
     const resp = await api.addRoleToGroups(state.role, [$store.group.id])
-    modalContext.logModalResponse(resp, $store.group.id, { roleId: state.role })
+    uiLog.log({ eventType: 'GroupDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: modalTarget(), additionalProperties: { role: allRoles?.find(r => r.id === state.role)?.name ?? state.role } })
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
@@ -109,13 +111,13 @@
 
   function onClickRemoveRole (id: string) {
     roleRemovingId = id
-    modalContext.setModal('removerole')
+    openModal('removerole')
   }
 
   async function onRemoveRole (state) {
     if (!roleRemovingId) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Something went wrong' }], data: state }
     const resp = await api.removeRoleFromGroup(roleRemovingId, $store.group.id)
-    modalContext.logModalResponse(resp, $store.group.id, { roleId: roleRemovingId })
+    uiLog.log({ eventType: 'GroupDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: modalTarget(), additionalProperties: { role: $store.group.directRoles.find(r => r.id === roleRemovingId)?.name ?? roleRemovingId } })
     if (resp.success) {
       roleRemovingId = undefined
       onSaved()
@@ -123,9 +125,19 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: undefined }
   }
 
+  function onModalEscape () {
+    uiLog.log({ eventType: 'GroupDetailPage-modal-' + modal, action: 'Cancel', target: modalTarget() })
+    modal = undefined
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: 'GroupDetailPage-modal-' + m, action: 'Open', target: modalTarget() })
+    modal = m
+  }
+
   function onSaved () {
     void store.refresh($store.group.id)
-    modalContext.reset()
+    modal = undefined
   }
 </script>
 
@@ -133,7 +145,7 @@
   <BackButton destination="group list" url={`${base}/auth/groups/`}/>
   <div class="panel-grid">
     <div class="vertical-group">
-      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={{ icon: pencilIcon, hiddenLabel: 'Edit group name', onClick: () => modalContext.setModal('editbasic') }}>
+      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={{ icon: pencilIcon, hiddenLabel: 'Edit group name', onClick: () => openModal('editbasic') }}>
         <DetailPanelSection>
           <DetailList records={{ Name: $store.group.name }}/>
         </DetailPanelSection>
@@ -212,23 +224,23 @@
 
 </DetailPageContent>
 
-{#if $modalContext.modal === 'editbasic'}
+{#if modal === 'editbasic'}
   <FormDialog
     submit={onEditBasic}
     validate={validateBasic}
     name='editbasicinfo'
     title= {'Edit Group'}
     preload={{ name: $store.group.name }}
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onSaved}>
     <FieldText path='name' label='Group Name' required></FieldText>
   </FormDialog>
-{:else if $modalContext.modal === 'addmembers'}
+{:else if modal === 'addmembers'}
   <FormDialog
     submit={onAddMembers}
     name="addmembers"
     title={`Add Members to Group ${$store.group.name}`}
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onSaved}
     preload={{ users: $store.group.directMembers.map(u => u.id) }}>
     <FieldMultiselect
@@ -236,32 +248,32 @@
       label='Add Members'
       getOptions={searchUsersForMembers}/>
   </FormDialog>
-{:else if $modalContext.modal === 'removegroupmember'}
+{:else if modal === 'removegroupmember'}
   <Dialog
     title="Remove Group Member"
     continueText="Remove"
     cancelText="Cancel"
     on:continue={onRemoveGroupMember}
-    on:escape={() => { modalContext.onModalEscape(); groupMemberRemovingId = undefined }}>
+    on:escape={() => { onModalEscape(); groupMemberRemovingId = undefined }}>
     Remove this member from group {$store.group.name}?
   </Dialog>
-{:else if $modalContext.modal === 'addrole'}
+{:else if modal === 'addrole'}
   <FormDialog
     submit={onAddRole}
     name="addroles"
     title={`Assign Role to Group ${$store.group.name}`}
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onSaved}
     preload={{ roles: $store.group.directRoles.map(r => r.id) }}>
     <FieldSelect path='role' label='Role' choices={allRoles.filter(r => !directRoleIds.includes(r.id)).map(r => ({ label: r.name, value: r.id }))}/>
   </FormDialog>
-{:else if $modalContext.modal === 'removerole'}
+{:else if modal === 'removerole'}
   <Dialog
     title="Remove Role"
     continueText="Remove"
     cancelText="Cancel"
     on:continue={onRemoveRole}
-    on:escape={() => { modalContext.onModalEscape(); roleRemovingId = undefined }}>
+    on:escape={() => { onModalEscape(); roleRemovingId = undefined }}>
     Remove this role from group {$store.group.name}?
   </Dialog>
 {/if}

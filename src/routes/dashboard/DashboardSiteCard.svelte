@@ -7,7 +7,7 @@
   const icon = getSiteIcon(site.launchState, 'PRIMARY')
 </script>
 
-<a class="site-card" href={`${base}/dashboard/${site.id}`} on:click={() => uiLog.log({ eventType: 'DashboardSiteCard', action: 'ClickSiteCard' }, site.id)}>
+<a class="site-card" href={`${base}/dashboard/${site.id}`} on:click={() => uiLog.log({ eventType: 'DashboardSiteCard', action: 'ClickSiteCard', target: site.name })}>
   <div class="site-card-header" class:launched={site.launchState === 'LAUNCHED'} class:prelaunch={site.launchState === 'PRELAUNCH'} class:decommissioned={site.launchState === 'DECOMMISSIONED'}>
     <div class="left">
       <div class="top">

@@ -66,9 +66,10 @@
         data,
         ratio => { uploadProgress = ratio }
       )
+      const fileCount = uploadList.length
       uploadList = []
       uploadError = undefined
-      dispatch('saved')
+      dispatch('saved', { fileCount })
     } catch (e: any) {
       uploadError = e.message
     } finally {

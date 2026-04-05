@@ -6,7 +6,7 @@
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, ModalContextStore, SearchInput, actionPanelStore } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, SearchInput, actionPanelStore } from '$lib'
   import { isNotBlank } from 'txstate-utils';
 
   export let data: { siteOptions: { value: string, label: string }[] }
@@ -27,7 +27,7 @@
   }
 
   type Modals = 'addrole' | 'deleterole'
-  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
+  let modal: Modals | undefined
 
   type TypedRoleItem = TypedTreeItem<RoleListRole>
   async function fetchChildren (role?: TypedRoleItem) {
@@ -39,14 +39,14 @@
 
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [
-      { label: 'Add Role', icon: plusIcon, disabled: false, onClick: () => modalContext.setModal('addrole') }
+      { label: 'Add Role', icon: plusIcon, disabled: false, onClick: () => openModal('addrole') }
     ]
     return actions
   }
 
   function singleactions (role: TypedRoleItem) {
     const actions: ActionPanelAction[] = [
-      { label: 'Delete', icon: deleteOutline, disabled: !role.permissions.delete, onClick: () => modalContext.setModal('deleterole') }
+      { label: 'Delete', icon: deleteOutline, disabled: !role.permissions.delete, onClick: () => openModal('deleterole') }
     ]
     return actions
   }
@@ -58,7 +58,7 @@
 
   async function onAddRole (state) {
     const resp = await api.addRole(state)
-    modalContext.logModalResponse(resp, resp.role?.name)
+    uiLog.log({ eventType: 'RolesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: resp.role?.name })
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
@@ -72,19 +72,29 @@
 
   function onCompleteAddRole () {
     void store.refresh()
-    modalContext.reset()
+    modal = undefined
   }
 
   async function onDeleteRole () {
     const resp = await api.deleteRole($store.selectedItems[0].id)
-    modalContext.logModalResponse(resp, actionPanelTarget.target)
+    uiLog.log({ eventType: 'RolesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
     if (resp.success) void store.refresh()
-    modalContext.reset()
+    modal = undefined
+  }
+
+  function onModalEscape () {
+    uiLog.log({ eventType: 'RolesPage-modal-' + modal, action: 'Cancel', target: actionPanelTarget.target })
+    modal = undefined
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: 'RolesPage-modal-' + m, action: 'Open', target: actionPanelTarget.target })
+    modal = m
   }
 
 let filter = ''
 
-  $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'id')
+  $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
 
   function handleResponsiveHeaders (treeWidth: number) {
     if (treeWidth > 900) {
@@ -115,13 +125,13 @@ let filter = ''
     </svelte:fragment>
   </Tree>
 </ActionPanel>
-{#if $modalContext.modal === 'addrole'}
+{#if modal === 'addrole'}
   <FormDialog
     submit={onAddRole}
     validate={validateAddRole}
     title='Add Role'
     name='addrole'
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onCompleteAddRole}
     let:data>
     <FieldText path='name' label='Name' required />
@@ -133,12 +143,12 @@ let filter = ''
       { value: 'READONLY', label: 'Read Only' }
     ]} helptext="A summary of the access level this role provides. Once the role is created, you need to assign rules to it to define what users with this role can do." />
   </FormDialog>
-{:else if $modalContext.modal === 'deleterole'}
+{:else if modal === 'deleterole'}
   <Dialog
     title='Delete Role'
     continueText='Delete'
     cancelText='Cancel'
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:continue={onDeleteRole}>
     {`Delete ${$store.selectedItems[0].name} role?`}
   </Dialog>

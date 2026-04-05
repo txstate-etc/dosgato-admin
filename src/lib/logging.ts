@@ -1,23 +1,39 @@
 import type { ITreeStore } from '@dosgato/dialog'
-import type { BaseEvent } from '@dosgato/templating'
+import type { UserEvent } from '@dosgato/templating'
 import { environmentConfig } from './stores'
+import { isNotEmpty } from 'txstate-utils'
 
-/** Rather than determining contextual properties of `UserEvent`s when doing each logging call we're
- * instantiating a global InteractionLogger class that can have its `screen` and `logger` properties
- * set by the pages and screens that have components that make use of the logger. */
+/** A UserEvent without `screen` — callers provide everything else and `uiLog.log()`
+ * fills in `screen` from the current SvelteKit route automatically. */
+export type LogEvent = Omit<UserEvent, 'screen'>
+
+/** Global singleton for logging user interaction events. `screen` is set reactively
+ * in +layout.svelte from `$page.route.id`, and `logger` is set from
+ * `uiConfig.uiInteractionsLogger` (or falls back to console.log). Components call
+ * `uiLog.log()` for normal events or `uiLog.logRaw()` when they need full control. */
 class InteractionLogger {
   screen: string | undefined
   logger: (...args: any[]) => void
 
-  log (info: BaseEvent, target?: string) {
-    // Don't log anything if we've been asked to log without a screen defined to give context.
+  /** Log a user interaction event. Adds `screen` from the current route and delegates
+   * to the configured logger. Silently drops events if `screen` has not been set yet
+   * (e.g. during initial server-side render). */
+  log (event: LogEvent) {
     if (!this.screen) return
-    const logInfo = { ...info, screen: this.screen, ...(target && { target }) }
-    this.logger(logInfo, environmentConfig)
+    this.logRaw({ ...event, screen: this.screen })
   }
 
-  // Thinking we should move this function to general utilities.
-  /** Convenience function for handling how to get a target from a TreeStore by prop-name. */
+  /** Log a fully formed UserEvent, bypassing automatic `screen` injection. Used for
+   * navigation events where the originating screen has already changed by the time
+   * the event is recorded. */
+  logRaw (event: UserEvent) {
+    const { additionalProperties, ...rest } = event
+    this.logger({ ...rest, ...(isNotEmpty(additionalProperties) && { additionalProperties }) }, environmentConfig)
+  }
+
+  /** Get a human-readable target from a TreeStore's selection. Returns the named
+   * property of the single selected item, or `'multiple'` if more than one item
+   * is selected. Returns `undefined` if nothing is selected. */
   targetFromTreeStore (state: ITreeStore<any>, prop: string) {
     return state.selectedItems.length > 1 ? 'multiple' : state.selectedItems[0]?.[prop]
   }

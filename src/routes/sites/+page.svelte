@@ -9,7 +9,7 @@
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog, ModalContextStore, LaunchState, SearchInput, actionPanelStore } from '$lib'
+  import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog, LaunchState, SearchInput, actionPanelStore } from '$lib'
   import { buildAuditCSV } from './audit'
 
   type TypedSiteItem = TypedTreeItem<SiteListSite>
@@ -27,7 +27,7 @@
   }
 
   type Modals = 'addsite' | 'deletesite' | 'restoresite'
-  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
+  let modal: Modals | undefined
 
   async function fetchChildren (site?: TypedSiteItem) {
     if (site) return []
@@ -45,7 +45,7 @@
     // because very few people will be able to do that. We don't want everyone who can see a subset of the site list to be able to
     // see all sites information.
     return [
-      { label: 'Add Site', icon: plusIcon, disabled: !$globalStore.access.createSites, onClick: () => modalContext.setModal('addsite', 'CreateWithPageDialog') },
+      { label: 'Add Site', icon: plusIcon, disabled: !$globalStore.access.createSites, onClick: () => openModal('addsite') },
       { label: 'Download CSV', icon: downloadIcon, disabled: !$globalStore.access.createSites, onClick: async () => await downloadSitesAudit() }
     ]
   }
@@ -53,9 +53,9 @@
   function singleActions (item: TypedSiteItem) {
     const actions: ActionPanelAction[] = []
     if (item.deleted) {
-      actions.push({ label: 'Undelete', icon: deleteRestore, disabled: !item.permissions.undelete, onClick: () => modalContext.setModal('restoresite') })
+      actions.push({ label: 'Undelete', icon: deleteRestore, disabled: !item.permissions.undelete, onClick: () => openModal('restoresite') })
     } else {
-      actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('deletesite') })
+      actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => openModal('deletesite') })
     }
     return actions
   }
@@ -73,7 +73,7 @@
 
   async function onCreateSite (state: CreateWithPageState) {
     const resp = await api.addSite(state.name!, state.templateKey, state.data)
-    modalContext.logModalResponse(resp, state.name, { templateKey: state.templateKey })
+    uiLog.log({ eventType: 'SitesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: state.name, additionalProperties: { templateKey: state.templateKey } })
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
@@ -83,20 +83,19 @@
 
   function onCreateSiteComplete () {
     void store.refresh()
-    modalContext.reset()
+    modal = undefined
   }
 
   async function onDeleteSite () {
     const resp = await api.deleteSite($store.selectedItems[0].id)
-    modalContext.logModalResponse(resp, $store.selectedItems[0].id)
+    uiLog.log({ eventType: 'SitesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.selectedItems[0].name })
     if (resp.success) void store.refresh()
-    modalContext.reset()
+    modal = undefined
   }
 
   async function onRestoreSite () {
-    // TODO
-    // - Implement Function and update modalContext.log... statement to pass response of api.restoreSite instead of success=false.
-    modalContext.logModalResponse({ success: false }, $store.selectedItems[0].id)
+    // TODO: Implement and update uiLog.log()
+    uiLog.log({ eventType: 'SitesPage-modal-' + modal, action: 'Failed', target: $store.selectedItems[0].name })
   }
 
   async function downloadSitesAudit () {
@@ -105,6 +104,16 @@
     j.download = 'siteaudit_' + Date.now() + '.csv'
     j.href = URL.createObjectURL(new Blob([sitesCSV]))
     j.click()
+  }
+
+  function onModalEscape () {
+    uiLog.log({ eventType: 'SitesPage-modal-' + modal, action: 'Cancel', target: actionPanelTarget.target })
+    modal = undefined
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: 'SitesPage-modal-' + m, action: 'Open', target: actionPanelTarget.target })
+    modal = m
   }
 
   let filter = ''
@@ -138,33 +147,34 @@
   ]} {searchable} filter={filter} enableResize responsiveHeaders={handleResponsiveHeaders}>
   </Tree>
 </ActionPanel>
-{#if $modalContext.modal === 'addsite'}
+{#if modal === 'addsite'}
   <CreateWithPageDialog
     title='Create Site'
     propertyDialogTitle= 'Root Page Properties'
     submit={onCreateSite}
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     validate={validateCreateSite}
     templateChoices={data.pageTemplateChoices}
+    logTarget={actionPanelTarget.target}
     on:saved={onCreateSiteComplete}
     creatingSite={true}
   />
-{:else if $modalContext.modal === 'deletesite'}
+{:else if modal === 'deletesite'}
   <Dialog
     title='Delete Site'
     continueText='Delete Site'
     cancelText='Cancel'
     on:continue={onDeleteSite}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     {`Are you sure you want to delete ${$store.selectedItems[0].name}?`}
   </Dialog>
-{:else if $modalContext.modal === 'restoresite'}
+{:else if modal === 'restoresite'}
   <Dialog
     title='Restore Site'
     continueText='Restore Site'
     cancelText='Cancel'
     on:continue={onRestoreSite}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     {`Restore ${$store.selectedItems[0].name}?`}
   </Dialog>
 {/if}

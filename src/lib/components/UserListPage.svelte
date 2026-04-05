@@ -9,19 +9,18 @@
   import downloadIcon from '@iconify-icons/ph/download-simple'
   import { PopupMenu, type PopupMenuItem } from '@txstate-mws/svelte-components'
   import type { FormStore } from '@txstate-mws/svelte-forms'
-  import { derivedStore } from '@txstate-mws/svelte-store'
   import { setContext, tick } from 'svelte'
   import { csv, intersect, isBlank, isNull, pick, rescue, sleep, sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, ModalContextStore, uiLog, UserTrainingsChooser, SearchInput, actionPanelStore } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, uiLog, UserTrainingsChooser, SearchInput, actionPanelStore } from '$lib'
 
   export let system: boolean
   export let trainings: { id: string, name: string, lcName: string }[]
 
   type TypedUserItem = TypedTreeItem<UserListUser>
 
-  const actionPanelTarget: { target: string | undefined } = { target: 'UserListPage' }
+  const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   let searchInput: HTMLInputElement
@@ -32,8 +31,8 @@
   }
 
   type Modals = 'create' | 'disable' | 'enable'
-  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
-  const creatingStore = derivedStore(modalContext, mc => mc.modal === 'create')
+  let modal: Modals | undefined
+  $: creating = modal === 'create'
 
   async function fetchChildren (user?: TypedUserItem) {
     if (user) return []
@@ -53,8 +52,8 @@
     const actions: ActionPanelAction[] = [
       { label: 'Edit', icon: pencilIcon, disabled: !user.permissions.update, onClick: async () => await goto(base + '/auth/users/' + user.id) }
     ]
-    if (user.disabled) actions.push({ id: 'enabledisable', label: 'Enable', icon: accountCheck, disabled: !user.permissions.disable, onClick: () => modalContext.setModal('enable') })
-    else actions.push({ id: 'enabledisable', label: 'Disable', icon: accountCancel, disabled: !user.permissions.disable, onClick: () => modalContext.setModal('disable') })
+    if (user.disabled) actions.push({ id: 'enabledisable', label: 'Enable', icon: accountCheck, disabled: !user.permissions.disable, onClick: () => openModal('enable') })
+    else actions.push({ id: 'enabledisable', label: 'Disable', icon: accountCancel, disabled: !user.permissions.disable, onClick: () => openModal('disable') })
     return actions
   }
 
@@ -66,27 +65,31 @@
   }
 
   const emptyactions: ActionPanelAction[] = [
-    { label: 'Create', icon: accountPlus, disabled: !$globalStore.access.createUsers, onClick: () => modalContext.setModal('create') }
+    { label: 'Create', icon: accountPlus, disabled: !$globalStore.access.createUsers, onClick: () => openModal('create') }
   ]
   if (!system) emptyactions.push({ label: 'Download CSV', icon: downloadIcon, disabled: !$globalStore.access.createUsers, onClick: () => { void downloadUserEmails() } })
 
   async function onDisable () {
     const resp = await api.disableUsers($store.selectedItems.map(u => u.id))
-    modalContext.logModalResponse(resp, actionPanelTarget.target, { id: uiLog.targetFromTreeStore($store, 'id') })
+    for (const u of $store.selectedItems) {
+      uiLog.log({ eventType: 'UserListPage-modal-disable', action: resp.success ? 'Success' : 'Failed', target: u.id })
+    }
     if (resp.success) void store.refresh()
-    modalContext.reset()
+    modal = undefined
   }
 
   async function onEnable () {
     const resp = await api.enableUsers($store.selectedItems.map(u => u.id))
-    modalContext.logModalResponse(resp, actionPanelTarget.target, { id: uiLog.targetFromTreeStore($store, 'id') })
+    for (const u of $store.selectedItems) {
+      uiLog.log({ eventType: 'UserListPage-modal-enable', action: resp.success ? 'Success' : 'Failed', target: u.id })
+    }
     if (resp.success) void store.refresh()
-    modalContext.reset()
+    modal = undefined
   }
 
   async function onCreate (data: CreateUserInput) {
     const resp = await api.createUser({ ...data, system })
-    modalContext.logModalResponse(resp, actionPanelTarget.target, { id: resp.user?.id })
+    uiLog.log({ eventType: 'UserListPage-modal-create', action: resp.success ? 'Success' : 'Failed', target: resp.user?.id ?? data.userId })
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
@@ -107,7 +110,7 @@
   }
 
   function onCreateComplete () {
-    modalContext.reset()
+    modal = undefined
     void store.refresh()
   }
 
@@ -140,7 +143,7 @@
     createItems = ret.map(u => ({ label: `${u.firstname} ${u.lastname} (${u.login})`, value: u.login, full: u }))
   }
   async function reactToCreationModal (..._: any) {
-    if ($creatingStore) {
+    if (creating) {
       if (system) return
       hideEmptyText = true
       await tick()
@@ -156,7 +159,7 @@
       createStore = undefined
     }
   }
-  $: reactToCreationModal($creatingStore).catch(console.error)
+  $: reactToCreationModal(creating).catch(console.error)
   function onCreateMenuSelection (e: CustomEvent) {
     createStore!.setData({ ...$createStore!.data, userId: e.detail.full.login, ...pick(e.detail.full, 'firstname', 'lastname', 'email') }).catch(console.error)
   }
@@ -220,10 +223,19 @@
 
   let filter = ''
 
+  function onModalEscape () {
+    uiLog.log({ eventType: `UserListPage-modal-${modal}`, action: 'Cancel', target: uiLog.targetFromTreeStore($store, 'id') })
+    modal = undefined
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: `UserListPage-modal-${m}`, action: 'Open', target: uiLog.targetFromTreeStore($store, 'id') })
+    modal = m
+  }
+
   $: actions = $store.selected.size ? ($store.selected.size === 1 ? singleactions($store.selectedItems[0]) : multiactions($store.selectedItems)) : emptyactions
 
-  // TODO: Get with Rachel on what we want the target to be here. Probably don't want it to be the user. Do we want IDs in the logs??? I think yes but can that bite us?
-  // $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'id')
+  $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'id')
 </script>
 
 {#if filter}
@@ -239,26 +251,26 @@
     { id: 'roles', label: 'Roles', render: renderRoles, grow: 5 }
   ]} searchable={['id', 'firstname', 'lastname']} {filter} enableResize responsiveHeaders={handleResponsiveHeaders}/>
 </ActionPanel>
-{#if $modalContext.modal === 'disable'}
+{#if modal === 'disable'}
   <Dialog
     title={`Disable ${$store.selectedItems[0].name} (${$store.selectedItems[0].id})${$store.selectedItems.length > 1 ? ` and ${$store.selectedItems.length - 1} more` : ''}`}
     continueText="Disable User{$store.selectedItems.length > 1 ? 's' : ''}"
     cancelText="Cancel"
     on:continue={onDisable}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     Are you sure you want to disable {#if $store.selectedItems.length > 1}{$store.selectedItems.length} users{:else}this user{/if}? They will be unable to log in, but their roles will be preserved so that they can be re-enabled with minimal work.
   </Dialog>
-{:else if $modalContext.modal === 'enable'}
+{:else if modal === 'enable'}
   <Dialog
     title={`Enable ${$store.selectedItems[0].name} (${$store.selectedItems[0].id})${$store.selectedItems.length > 1 ? ` and ${$store.selectedItems.length - 1} more` : ''}`}
     continueText="Enable User{$store.selectedItems.length > 1 ? 's' : ''}"
     cancelText="Cancel"
     on:continue={onEnable}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     Are you sure you want to enable {#if $store.selectedItems.length > 1}{$store.selectedItems.length} users{:else}this user{/if}? They will be able to log in again and will have all the same roles as when they were disabled.
   </Dialog>
-{:else if $modalContext.modal === 'create'}
-  <FormDialog bind:store={createStore} title="Create User" submit={onCreate} validate={onCreateValidate} on:escape={modalContext.onModalEscape} on:saved={onCreateComplete}>
+{:else if modal === 'create'}
+  <FormDialog bind:store={createStore} title="Create User" submit={onCreate} validate={onCreateValidate} on:escape={onModalEscape} on:saved={onCreateComplete}>
     <FieldText bind:inputelement={loginElement} path="userId" label="Login"></FieldText>
     {#if !system}
       <FieldText bind:inputelement={firstnameElement} path="firstname" label="First Name"></FieldText>

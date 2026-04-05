@@ -32,7 +32,7 @@
   import {
     api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig,
     UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog,
-    ModalContextStore, getSiteIcon, SearchInput, CreateWithPageDialog, findInTreeIconSVG, actionPanelStore,
+    getSiteIcon, SearchInput, CreateWithPageDialog, findInTreeIconSVG, actionPanelStore,
     tagClientBySiteId, tagIndicatorIconSVG, globalStore, ScheduledPublishAction
   } from '$lib'
   import { _store as store, _searchStore as searchStore, _pagesStore as pagesStore, type TypedPageItem } from './+page.js'
@@ -51,7 +51,17 @@
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   type Modals = 'addpage' | 'deletepage' | 'renamepage' | 'changetemplate' | 'duplicatepage' | 'copiedpage' | 'publishpages' | 'publishwithsubpages' | 'unpublishpages' | 'publishdelete' | 'undeletepage' | 'undeletewithsubpages' | 'import' | 'tagpage' | 'schedulepublish'
-  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
+  let modal: Modals | undefined
+
+  function onModalEscape () {
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: 'Cancel', target: actionPanelTarget.target })
+    modal = undefined
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: 'PagesPage-modal-' + m, action: 'Open', target: actionPanelTarget.target })
+    modal = m
+  }
 
   function onFilter (e: CustomEvent<string>) {
     if (isBlank(e.detail)) {
@@ -86,8 +96,8 @@
     const editAction = { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: async () => await goto(base + '/pages/' + page.id) }
     const previewAction = { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${page.path}.html`), '_blank') } }
     const showVersionsAction = { label: 'Show Versions', icon: historyIcon, onClick: async () => await goto(base + '/pages/' + page.id + '#versions') }
-    const publishAction = { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => modalContext.setModal('publishpages') }
-    const unpublishAction = { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => modalContext.setModal('unpublishpages') }
+    const publishAction = { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => openModal('publishpages') }
+    const unpublishAction = { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => openModal('unpublishpages') }
     const exportAction = { label: 'Export', icon: exportIcon, disabled: false, onClick: async () => await api.download(`${environmentConfig.renderBase}/.page/${page.id}`) }
     if ($pagesStore.showsearch) {
       return [{
@@ -110,7 +120,7 @@
     if (page.deleteState === DeleteState.NOTDELETED) createDestroy.actions.push({ label: 'Delete Page', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { void countPages('deletepage') } })
     else if (page.deleteState === DeleteState.MARKEDFORDELETE) {
       createDestroy.actions.push(
-        { label: 'Restore Page', icon: deleteRestore, disabled: !page.permissions.undelete, onClick: () => modalContext.setModal('undeletepage') },
+        { label: 'Restore Page', icon: deleteRestore, disabled: !page.permissions.undelete, onClick: () => openModal('undeletepage') },
         { label: 'Restore incl. Subpages', icon: deleteRestore, disabled: !page.permissions.undelete || !page.hasChildren, onClick: () => { void countPages('undeletewithsubpages') } },
         { label: 'Finalize Deletion', icon: deleteOutline, disabled: !page.permissions.delete, onClick: () => { void countPages('publishdelete') } }
       )
@@ -120,8 +130,8 @@
       id: 'simple',
       actions: [
         editAction,
-        { label: 'Rename', icon: renameIcon, disabled: !page.permissions.move, onClick: () => modalContext.setModal('renamepage') },
-        { label: 'Apply Page Tags', icon: tag, disabled: !page.permissions.update, onClick: () => modalContext.setModal('tagpage') },
+        { label: 'Rename', icon: renameIcon, disabled: !page.permissions.move, onClick: () => openModal('renamepage') },
+        { label: 'Apply Page Tags', icon: tag, disabled: !page.permissions.update, onClick: () => openModal('tagpage') },
         { label: 'Change Template', icon: layout, disabled: !page.permissions.update, onClick: onClickTemplateChange },
         previewAction,
         showVersionsAction
@@ -131,7 +141,7 @@
     const movement: ActionPanelGroup = {
       id: 'movement',
       actions: [
-        { label: 'Duplicate', icon: duplicateIcon, disabled: !page.parent?.permissions.create, onClick: () => modalContext.setModal('duplicatepage') }
+        { label: 'Duplicate', icon: duplicateIcon, disabled: !page.parent?.permissions.create, onClick: () => openModal('duplicatepage') }
       ]
     }
 
@@ -158,8 +168,8 @@
 
     publishing.actions.push(
       publishAction,
-      { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => modalContext.setModal('publishwithsubpages'), class: 'pubsubpages' },
-      { label: 'Scheduled Publish', icon: alarmFill, disabled: !page.permissions.schedulePublish && !page.permissions.scheduleUnpublish, onClick: () => modalContext.setModal('schedulepublish') },
+      { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => openModal('publishwithsubpages'), class: 'pubsubpages' },
+      { label: 'Scheduled Publish', icon: alarmFill, disabled: !page.permissions.schedulePublish && !page.permissions.scheduleUnpublish, onClick: () => openModal('schedulepublish') },
       unpublishAction
     )
 
@@ -168,7 +178,7 @@
       actions: [
         exportAction,
         { label: 'Export w/ Subpages', icon: exportWithSubpagesIcon, disabled: false, onClick: async () => await api.download(`${environmentConfig.renderBase}/.page/${page.id}?withSubpages=1`) },
-        { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => modalContext.setModal('import') }
+        { label: 'Import', icon: importIcon, disabled: !page.permissions.create, onClick: () => openModal('import') }
       ]
     }
     return [createDestroy, simple, movement, publishing, exportimport]
@@ -176,7 +186,7 @@
   function multipageactions (pages: TypedPageItem[]) {
     if (!pages?.length) return []
     const actions: ActionPanelAction[] = []
-    actions.push({ label: 'Apply Page Tags (Bulk)', icon: tag, disabled: !pages.every(p => p.permissions.update), onClick: () => modalContext.setModal('tagpage') })
+    actions.push({ label: 'Apply Page Tags (Bulk)', icon: tag, disabled: !pages.every(p => p.permissions.update), onClick: () => openModal('tagpage') })
     if (pages.every(p => p.deleteState === DeleteState.NOTDELETED)) {
       actions.push({ label: 'Delete Pages', icon: deleteOutline, disabled: pages.some(p => !p.permissions.delete), onClick: () => { void countPages('deletepage') } })
     }
@@ -185,8 +195,8 @@
       actions.push({ label: 'Finalize Deletion', icon: deleteOutline, disabled: pages.some(p => !p.permissions.delete), onClick: () => { void countPages('publishdelete') } })
     }
     const publishActions: ActionPanelAction[] = [
-      { label: 'Publish', icon: publishIcon, disabled: pages.some(p => !p.permissions.publish), onClick: () => modalContext.setModal('publishpages') },
-      { label: 'Unpublish', icon: publishOffIcon, disabled: pages.some(p => !p.permissions.unpublish), onClick: () => modalContext.setModal('unpublishpages') }
+      { label: 'Publish', icon: publishIcon, disabled: pages.some(p => !p.permissions.publish), onClick: () => openModal('publishpages') },
+      { label: 'Unpublish', icon: publishOffIcon, disabled: pages.some(p => !p.permissions.unpublish), onClick: () => openModal('unpublishpages') }
     ]
     actions.push(...publishActions)
     if ($store.copied.size) {
@@ -204,7 +214,7 @@
 
   async function onClickAddPage () {
     availableTemplates = await api.getTemplatesByPage($activeStore.selectedItems[0].id)
-    modalContext.setModal('addpage')
+    openModal('addpage')
   }
 
   async function validateAddPage (state: CreateWithPageState) {
@@ -214,7 +224,7 @@
 
   async function onAddPage (state: CreateWithPageState) {
     const resp = await api.createPage(state.name!, state.templateKey, state.data, $activeStore.selectedItems[0].id, false, false)
-    modalContext.logModalResponse(resp, actionPanelTarget.target, { name: state.name, templateKey: state.templateKey })
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target, additionalProperties: { name: state.name, templateKey: state.templateKey } })
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
@@ -224,7 +234,7 @@
 
   async function onAddPageComplete () {
     availableTemplates = []
-    modalContext.reset()
+    modal = undefined
     await store.openAndRefresh($activeStore.selectedItems[0])
   }
 
@@ -235,7 +245,7 @@
 
   async function onRenamePage (state: { name: string }) {
     const resp = await api.renamePage($activeStore.selectedItems[0].id, state.name)
-    modalContext.logModalResponse(resp, $activeStore.selectedItems[0].id, { oldName: $activeStore.selectedItems[0].name, newName: state.name })
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $activeStore.selectedItems[0].id, additionalProperties: { oldName: $activeStore.selectedItems[0].name, newName: state.name } })
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
@@ -245,7 +255,7 @@
 
   function onRenamePageComplete () {
     void store.refresh()
-    modalContext.reset()
+    modal = undefined
   }
 
   async function onTagPage (state: { tags: string[], tagChildren?: boolean }) {
@@ -259,89 +269,89 @@
 
   function onTagPageComplete () {
     void store.refresh()
-    modalContext.reset()
+    modal = undefined
   }
 
   async function onDuplicatePage () {
     const resp = await api.duplicatePage($activeStore.selectedItems[0].id, $activeStore.selectedItems[0].parent!.id)
-    modalContext.logModalResponse(resp, $activeStore.selectedItems[0].id, { parentId: $activeStore.selectedItems[0].parent!.id })
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $activeStore.selectedItems[0].id, additionalProperties: { parentId: $activeStore.selectedItems[0].parent!.id } })
     if (resp.success) {
       void store.refresh()
-      modalContext.reset()
+      modal = undefined
     }
   }
 
   async function onPublishPages () {
     const resp = await api.publishPages($activeStore.selectedItems.map(d => d.id), false)
-    modalContext.logModalResponse(resp, actionPanelTarget.target)
-    modalContext.reset()
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
+    modal = undefined
     if (resp.success) await store.refresh()
   }
 
   async function onPublishPagesWithSubpages () {
     const resp = await api.publishPages($activeStore.selectedItems.map(d => d.id), true)
-    modalContext.logModalResponse(resp, actionPanelTarget.target)
-    modalContext.reset()
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
+    modal = undefined
     if (resp.success) await store.refresh()
   }
 
   async function onUnpublishPages () {
     const resp = await api.unpublishPages($activeStore.selectedItems.map(d => d.id))
-    modalContext.logModalResponse(resp, actionPanelTarget.target)
-    modalContext.reset()
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
+    modal = undefined
     if (resp.success) await store.refresh()
   }
 
   let pagesToDeleteCount: number | undefined = undefined
-  async function countPages (modal: Modals) {
+  async function countPages (m: Modals) {
     pagesToDeleteCount = await api.getDeletePageCount($activeStore.selectedItems.map(page => page.id))
-    modalContext.setModal(modal)
+    openModal(m)
   }
 
   async function onDeletePage () {
     const resp = await api.deletePages($activeStore.selectedItems.map(page => page.id))
-    modalContext.logModalResponse(resp, actionPanelTarget.target)
-    modalContext.reset()
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
+    modal = undefined
     pagesToDeleteCount = undefined
     if (resp.success) await store.refresh()
   }
 
   async function onPublishDeletion () {
     const resp = await api.publishDeletion($activeStore.selectedItems.map(page => page.id))
-    modalContext.logModalResponse(resp, actionPanelTarget.target)
-    modalContext.reset()
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
+    modal = undefined
     pagesToDeleteCount = undefined
     if (resp.success) await store.refresh()
   }
 
   async function onUndeletePage () {
     const resp = await api.undeletePages([$activeStore.selectedItems[0].id])
-    modalContext.logModalResponse(resp, actionPanelTarget.target)
-    modalContext.reset()
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
+    modal = undefined
     if (resp.success) await store.refresh()
   }
 
   async function onUndeletePageWithChildren () {
     const resp = await api.undeletePages($activeStore.selectedItems.map(page => page.id), true)
-    modalContext.logModalResponse(resp, actionPanelTarget.target)
-    modalContext.reset()
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
+    modal = undefined
     pagesToDeleteCount = undefined
     if (resp.success) await store.refresh()
   }
 
   async function onImportSaved () {
-    modalContext.logModalResponse({ success: true }, actionPanelTarget.target)
-    modalContext.reset()
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: 'Success', target: actionPanelTarget.target })
+    modal = undefined
     await store.openAndRefresh($activeStore.selectedItems[0])
   }
 
   async function onClickTemplateChange () {
     availableTemplates = await api.getTemplatesByPage($activeStore.selectedItems[0].id)
-    modalContext.setModal('changetemplate')
+    openModal('changetemplate')
   }
   async function onChangeTemplateSubmit (data: { templateKey: string }) {
     const resp = await api.changeTemplate($activeStore.selectedItems[0].id, data.templateKey)
-    modalContext.logModalResponse(resp, actionPanelTarget.target, { templateKey: data.templateKey })
+    uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target, additionalProperties: { templateKey: data.templateKey } })
     return resp
   }
   async function validateChangeTemplate (data: { templateKey: string }) {
@@ -349,13 +359,13 @@
     return resp.messages
   }
   async function onChangeTemplateSaved () {
-    modalContext.reset()
+    modal = undefined
     await store.refresh($activeStore.selectedItems[0].parent)
   }
 
   function onSchedulePublishComplete () {
     void store.refresh()
-    modalContext.reset()
+    modal = undefined
   }
 
   function scheduleTooltip (schedules: { action: string, targetDate: string }[]) {
@@ -468,27 +478,28 @@
   />
   {/if}
 </ActionPanel>
-{#if $modalContext.modal === 'addpage'}
+{#if modal === 'addpage'}
   <CreateWithPageDialog
     submit={onAddPage}
     validate={validateAddPage}
     title="Add New Page"
     pagetreeId={$activeStore.selectedItems[0].pagetree.id}
     templateChoices={availableTemplates}
-    on:escape={modalContext.onModalEscape}
+    logTarget={actionPanelTarget.target}
+    on:escape={onModalEscape}
     on:saved={onAddPageComplete}/>
-{:else if $modalContext.modal === 'renamepage'}
+{:else if modal === 'renamepage'}
   <FormDialog
     submit={onRenamePage}
     validate={validateRename}
     name='renamepage'
     title='Rename Page'
     preload={{ name: $activeStore.selectedItems[0].name }}
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onRenamePageComplete}>
     <FieldText path='name' label='Name' required />
   </FormDialog>
-{:else if $modalContext.modal === 'tagpage'}
+{:else if modal === 'tagpage'}
   {#await getTagsAndTagsDataroots() then [tags, dataroots]}
     <FormDialog
       tagClient={tagClientBySiteId}
@@ -496,7 +507,7 @@
       name='tagpage'
       title={`Apply Page Tags${$activeStore.selected.size > 1 ? ' (Bulk)' : ''}`}
       preload={{ tags }}
-      on:escape={modalContext.onModalEscape}
+      on:escape={onModalEscape}
       on:saved={onTagPageComplete} let:data>
       <p class="tag-info">Use tags to apply metadata to your pages, improving organization, searchability, and SEO.</p>
       <FieldTagPicker path='tags' label='Tag Selector' target={$activeStore.selectedItems[0].site.id} helptext="Tap the field below to open dropdown or begin typing to search for tags." showTitleInDialog extradescid={$activeStore.selected.size > 1 ? 'multpagetagwarning' : ''}/>
@@ -526,107 +537,107 @@
       {/if}
     </FormDialog>
   {/await}
-{:else if $modalContext.modal === 'changetemplate'}
+{:else if modal === 'changetemplate'}
   <FormDialog
     submit={onChangeTemplateSubmit}
     validate={validateChangeTemplate}
     title='Change Page Template'
     preload={{ templateKey: $activeStore.selectedItems[0].template?.key }}
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onChangeTemplateSaved}>
     <FieldSelect notNull path="templateKey" choices={availableTemplates} />
   </FormDialog>
-{:else if $modalContext.modal === 'duplicatepage'}
+{:else if modal === 'duplicatepage'}
   <Dialog
     title={`Duplicate Page${$activeStore.selectedItems[0].hasChildren ? 's' : ''}`}
     continueText='Duplicate'
     cancelText='Cancel'
     on:continue={onDuplicatePage}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     Duplicate this page and all of its subpages?
   </Dialog>
-{:else if $modalContext.modal === 'copiedpage'}
+{:else if modal === 'copiedpage'}
   <Dialog
     title='Copy'
-    on:continue={modalContext.onModalEscape}>
+    on:continue={() => { uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: 'Cancel', target: actionPanelTarget.target }); modal = undefined }}>
     Copied page {$activeStore.selectedItems[0].name}
   </Dialog>
-{:else if $modalContext.modal === 'publishpages'}
+{:else if modal === 'publishpages'}
   <Dialog
     title='Publish'
     continueText='Publish'
     cancelText='Cancel'
     on:continue={onPublishPages}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     Publish {`${$activeStore.selectedItems.length} page${$activeStore.selectedItems.length > 1 ? 's' : ''}?`}
   </Dialog>
-{:else if $modalContext.modal === 'publishwithsubpages'}
+{:else if modal === 'publishwithsubpages'}
   <Dialog
     title='Publish With Subpages'
     continueText='Publish'
     cancelText='Cancel'
     on:continue={onPublishPagesWithSubpages}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     Publish {`${$activeStore.selectedItems.length} page${$activeStore.selectedItems.length > 1 ? 's' : ''} and ${$activeStore.selectedItems.length > 1 ? 'their' : 'its'} subpages?`}
   </Dialog>
-{:else if $modalContext.modal === 'unpublishpages'}
+{:else if modal === 'unpublishpages'}
   <Dialog
     title='Unpublish'
     continueText='Unpublish'
     cancelText='Cancel'
     on:continue={onUnpublishPages}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     Unpublish {`${$activeStore.selectedItems.length} page${$activeStore.selectedItems.length > 1 ? 's' : ''} and ${$activeStore.selectedItems.length > 1 ? 'their' : 'its'} subpages?`}
   </Dialog>
-{:else if $modalContext.modal === 'deletepage'}
+{:else if modal === 'deletepage'}
   <Dialog
     title='Delete'
     continueText='Delete'
     cancelText='Cancel'
     on:continue={onDeletePage}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     <DialogWarning text={`You are about to delete ${pagesToDeleteCount} pages. Deleted pages will no longer be visible on your live site.`}/>
   </Dialog>
-{:else if $modalContext.modal === 'publishdelete'}
+{:else if modal === 'publishdelete'}
   <Dialog
     title='Publish Deletion'
     continueText='Delete'
     cancelText='Cancel'
     on:continue={onPublishDeletion}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     <DialogWarning text={`You are about to finalize the deletion of ${pagesToDeleteCount} pages. You will no longer see these pages in your site.`}/>
   </Dialog>
-{:else if $modalContext.modal === 'undeletepage'}
+{:else if modal === 'undeletepage'}
   <Dialog
     title='Restore Deleted Page'
     continueText='Restore'
     cancelText='Cancel'
     on:continue={onUndeletePage}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     Restore this deleted page?
   </Dialog>
-{:else if $modalContext.modal === 'undeletewithsubpages'}
+{:else if modal === 'undeletewithsubpages'}
   <Dialog
     title='Restore Deleted Pages'
     continueText='Restore'
     cancelText='Cancel'
     on:continue={onUndeletePageWithChildren}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     Restore {pagesToDeleteCount} pages?
   </Dialog>
-{:else if $modalContext.modal === 'import' && $activeStore.selectedItems[0]}
+{:else if modal === 'import' && $activeStore.selectedItems[0]}
   <UploadUI
     title="Import page into {$activeStore.selectedItems[0].path}"
     uploadPath="{environmentConfig.apiBase}/pages/{$activeStore.selectedItems[0].id}"
     mimeWhitelist={['application/json', 'application/x-gzip', 'application/gzip']}
     maxFiles={1}
     helptext="Uploaded file must be a Gato .json or .json.gz export file."
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onImportSaved} />
-{:else if $modalContext.modal === 'schedulepublish'}
+{:else if modal === 'schedulepublish'}
   <SchedulePublishDialog
     page={$activeStore.selectedItems[0]}
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onSchedulePublishComplete} />
 {/if}
 

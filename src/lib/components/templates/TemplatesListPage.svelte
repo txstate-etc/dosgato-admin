@@ -1,6 +1,6 @@
 <script lang="ts">
   import { titleCase } from 'txstate-utils'
-  import { ActionPanel, actionPanelStore, api, ModalContextStore, SearchInput, templateRegistry, uiLog, type ActionPanelAction, type TemplateListTemplateArea, type TemplateListTemplateWithAreas } from '$lib'
+  import { ActionPanel, actionPanelStore, api, SearchInput, templateRegistry, uiLog, type ActionPanelAction, type TemplateListTemplateArea, type TemplateListTemplateWithAreas } from '$lib'
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
@@ -28,25 +28,35 @@
   }
 
   type Modals = 'setuniversal' | 'setrestricted'
-  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
+  let modal: Modals | undefined
 
   function singleactions (template: TreeTemplate | TreeTemplateArea) {
     if (type === 'data' || template.type === 'area') return []
     const actions: ActionPanelAction[] = []
-    if (template.universal) actions.push({ id: 'universalrestricted', label: 'Set Restricted', disabled: !template.permissions.setUniversal, onClick: () => modalContext.setModal('setrestricted'), icon: earthOffIcon })
-    else actions.push({ id: 'universalrestricted', label: 'Set Universal', disabled: !template.permissions.setUniversal, onClick: () => modalContext.setModal('setuniversal'), icon: earthIcon })
+    if (template.universal) actions.push({ id: 'universalrestricted', label: 'Set Restricted', disabled: !template.permissions.setUniversal, onClick: () => openModal('setrestricted'), icon: earthOffIcon })
+    else actions.push({ id: 'universalrestricted', label: 'Set Universal', disabled: !template.permissions.setUniversal, onClick: () => openModal('setuniversal'), icon: earthIcon })
     return actions
   }
 
   async function setUniversal (universal) {
     if ($store.selectedItems[0].type === 'template') {
       const resp = await api.setTemplateUniversal($store.selectedItems[0].key, universal)
-      modalContext.logModalResponse(resp, $store.selectedItems[0].key, { universal })
+      uiLog.log({ eventType: 'TemplatesListPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.selectedItems[0].key, additionalProperties: { universal } })
       if (resp.success) {
         void store.refresh()
-        modalContext.reset()
+        modal = undefined
       }
     }
+  }
+
+  function onModalEscape () {
+    uiLog.log({ eventType: 'TemplatesListPage-modal-' + modal, action: 'Cancel', target: actionPanelTarget.target })
+    modal = undefined
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: 'TemplatesListPage-modal-' + m, action: 'Open', target: actionPanelTarget.target })
+    modal = m
   }
 
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
@@ -76,12 +86,12 @@
   </svelte:fragment>
   <Tree singleSelect {store} on:choose={({ detail }) => { if (detail.type === 'template') void goto(base + '/settings/templates/' + detail.id) }} headers={treeHeaders} enableResize responsiveHeaders={handleResponsiveHeaders} searchable={['name', 'id']} {filter} />
 </ActionPanel>
-{#if $modalContext.modal === 'setuniversal'}
-  <Dialog title="Make Template Universal" cancelText="Cancel" continueText="Set Universal" on:escape={modalContext.onModalEscape} on:continue={async () => await setUniversal(true)}>
+{#if modal === 'setuniversal'}
+  <Dialog title="Make Template Universal" cancelText="Cancel" continueText="Set Universal" on:escape={onModalEscape} on:continue={async () => await setUniversal(true)}>
     <span>{`Making the ${$store.selectedItems[0].name} template universal will allow it to be used on all sites and pagetrees.`}</span>
   </Dialog>
-{:else if $modalContext.modal === 'setrestricted'}
-  <Dialog title="Restrict Template Usage" cancelText="Cancel" continueText="Restrict" on:escape={modalContext.onModalEscape} on:continue={async () => await setUniversal(false)}>
+{:else if modal === 'setrestricted'}
+  <Dialog title="Restrict Template Usage" cancelText="Cancel" continueText="Restrict" on:escape={onModalEscape} on:continue={async () => await setUniversal(false)}>
     <span>Restricted templates must be improved for usage on individual sites and/or pagetrees. Proceed?</span>
   </Dialog>
 {/if}

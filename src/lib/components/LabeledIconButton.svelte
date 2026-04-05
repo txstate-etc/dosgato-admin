@@ -11,9 +11,11 @@
 
   const dispatch = createEventDispatcher()
   const { getTarget } = getContext<any>('LabeledIconButtonTarget')
+  const getSection: (() => string | undefined) | undefined = getContext('LogSection')
 
   function logInteraction () {
-    uiLog.log({ eventType: 'LabeledIconButton', action: label }, getTarget())
+    const section = getSection?.()
+    uiLog.log({ eventType: 'LabeledIconButton', action: label, target: getTarget() ?? label, ...(section && { section }) })
     dispatch('click')
   }
 

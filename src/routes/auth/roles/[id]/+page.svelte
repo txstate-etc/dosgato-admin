@@ -13,7 +13,7 @@
   import accountGroup from '@iconify-icons/ph/users-three-light'
   import { isNotBlank, unique } from 'txstate-utils'
   import { base } from '$app/paths'
-  import { api, DetailPanel, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog, BackButton, DetailPanelSection, Accordion, DetailPageContent, DetailList, type DetailPanelButton, type UserListUser, type GroupListGroup, ModalContextStore, type TemplateListTemplate } from '$lib'
+  import { api, DetailPanel, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog, BackButton, DetailPanelSection, Accordion, DetailPageContent, DetailList, type DetailPanelButton, type UserListUser, type GroupListGroup, uiLog, type TemplateListTemplate } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
@@ -35,7 +35,7 @@
   type Modals = 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' | 'assignrole' |
   'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | 'assigntogroup' | 'unassignfromgroup' |
   'addsiterule' | 'editsiterule' | 'addtemplaterule' | 'assigntouser' | 'unassignfromuser' | 'addeditorrule' | 'addadminrule'
-  const modalContext = new ModalContextStore<Modals>()
+  let modal: Modals | undefined
 
   const panelHeaderColor = '#C2BCD2'
 
@@ -92,7 +92,7 @@
 
   async function onEditBasic (state) {
     const resp = await api.editRole($store.role.id, state)
-    modalContext.logModalResponse(resp, $store.role.id, { name: state.name, description: state.description, siteId: state.siteId })
+    uiLog.log({ eventType: 'RoleDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.role.name, additionalProperties: { name: state.name, description: state.description, siteId: state.siteId } })
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
@@ -113,7 +113,7 @@
       }
     }
     const resp = await api.assignRoleToUsers($store.role.id, state.userIds)
-    modalContext.logModalResponse(resp, $store.role.id, { userIds: state.userIds })
+    uiLog.log({ eventType: 'RoleDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.role.name, additionalProperties: { users: state.userIds.join(', ') } })
     return { ...resp, data: state }
   }
 
@@ -126,24 +126,24 @@
       }
     }
     const resp = await api.addRoleToGroups($store.role.id, state.groupIds)
-    modalContext.logModalResponse(resp, $store.role.id, { groupIds: state.groupIds })
+    uiLog.log({ eventType: 'RoleDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.role.name, additionalProperties: { groups: state.groupIds.map(id => groups.find(g => g.id === id)?.name ?? id).join(', ') } })
     return { ...resp, data: state, messages: resp.messages.map(m => ({ ...m, path: m.arg })) }
   }
 
   function onClickUnassign (id: string, name: string) {
     store.setUserRemoving(id, name)
-    modalContext.setModal('unassignfromuser', name)
+    openModal('unassignfromuser')
   }
 
   function onClickUnassignGroup (id: string, name: string) {
     store.setGroupRemoving(id, name)
-    modalContext.setModal('unassignfromgroup', name)
+    openModal('unassignfromgroup')
   }
 
   async function onUnassign (state) {
     if (!$store.userRemoving) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Please select a user to remove.' }], data: state }
     const resp = await api.removeRoleFromUser($store.role.id, $store.userRemoving.id)
-    modalContext.logModalResponse(resp, $store.role.id, { userId: $store.userRemoving.id })
+    uiLog.log({ eventType: 'RoleDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.role.name, additionalProperties: { userId: $store.userRemoving.id } })
     if (resp.success) {
       store.resetUserRemoving()
       onSaved()
@@ -154,7 +154,7 @@
   async function onUnassignGroup (state) {
     if (!$store.groupRemoving) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Please select a group to remove.' }], data: state }
     const resp = await api.removeRoleFromGroup($store.role.id, $store.groupRemoving.id)
-    modalContext.logModalResponse(resp, $store.role.id, { groupId: $store.groupRemoving.id })
+    uiLog.log({ eventType: 'RoleDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.role.name, additionalProperties: { group: $store.groupRemoving.name } })
     if (resp.success) {
       store.resetGroupRemoving()
       onSaved()
@@ -163,7 +163,7 @@
   }
 
   function onSaved () {
-    modalContext.reset()
+    modal = undefined
     void store.refresh($store.role.id)
   }
 
@@ -171,38 +171,47 @@
     if (!$store.editing) return
     const editingType = $store.editing.type.toLocaleUpperCase() as 'GLOBAL' | 'SITE' | 'PAGE' | 'TEMPLATE' | 'ASSET' | 'DATA'
     const resp = await api.removeRule($store.editing.id, editingType)
-    modalContext.logModalResponse(resp, $store.editing.id, { type: editingType })
+    uiLog.log({ eventType: 'RoleDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.role.name, additionalProperties: { type: editingType } })
     if (resp.success) {
       void store.refresh($store.role.id)
     }
     store.resetRuleEditing()
-    modalContext.reset()
+    modal = undefined
   }
 
   function onClickDelete (ruleId, ruleType) {
     store.setRuleEditing(ruleId, ruleType)
-    modalContext.setModal('deleterule', `${ruleType}-${ruleId}`)
+    openModal('deleterule')
   }
 
   function onClickEdit (ruleId, ruleType, rule) {
     store.setRuleEditing(ruleId, ruleType, rule)
-    const targetDesc = `${ruleType}-${ruleId}`
     if (ruleType === 'asset') {
-      modalContext.setModal('editassetrule', targetDesc)
+      openModal('editassetrule')
     } else if (ruleType === 'data') {
-      modalContext.setModal('editdatarule', targetDesc)
+      openModal('editdatarule')
     } else if (ruleType === 'global') {
-      modalContext.setModal('editglobalrule', targetDesc)
+      openModal('editglobalrule')
     } else if (ruleType === 'page') {
-      modalContext.setModal('editpagerule', targetDesc)
+      openModal('editpagerule')
     } else if (ruleType === 'site') {
-      modalContext.setModal('editsiterule', targetDesc)
+      openModal('editsiterule')
     }
   }
 
+  function onModalEscape () {
+    uiLog.log({ eventType: 'RoleDetailPage-modal-' + modal, action: 'Cancel', target: $store.role.name })
+    modal = undefined
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: 'RoleDetailPage-modal-' + m, action: 'Open', target: $store.role.name })
+    modal = m
+  }
+
   const basicInfoButtons: DetailPanelButton[] = []
-  if ($store.role.permissions.rename) basicInfoButtons.push({ icon: pencilIcon, onClick: () => modalContext.setModal('editbasic', $store.role.id), hiddenLabel: 'Edit Basic Information' })
-  if ($store.role.permissions.assign) basicInfoButtons.push({ icon: plusIcon, onClick: () => modalContext.setModal('assignrole', $store.role.id), hiddenLabel: 'Add role to user or group' })
+  if ($store.role.permissions.rename) basicInfoButtons.push({ icon: pencilIcon, onClick: () => openModal('editbasic'), hiddenLabel: 'Edit Basic Information' })
+  if ($store.role.permissions.assign) basicInfoButtons.push({ icon: plusIcon, onClick: () => openModal('assignrole'), hiddenLabel: 'Add role to user or group' })
 </script>
 
 <DetailPageContent>
@@ -255,7 +264,7 @@
       </DetailPanelSection>
     </DetailPanel>
 
-    <DetailPanel header="Editor Permissions" headerColor={panelHeaderColor} button={{ hiddenLabel: 'Add Editor Permissions', icon: plusIcon, onClick: () => modalContext.setModal('addeditorrule', 'Dialog') }}>
+    <DetailPanel header="Editor Permissions" headerColor={panelHeaderColor} button={{ hiddenLabel: 'Add Editor Permissions', icon: plusIcon, onClick: () => openModal('addeditorrule') }}>
       <div class="desktop-layout">
         <DetailPanelSection>
           <h3>Page Rules</h3>
@@ -299,7 +308,7 @@
       </div>
     </DetailPanel>
 
-    <DetailPanel header="Administrator Permissions" headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => modalContext.setModal('addadminrule', 'Dialog'), hiddenLabel: 'Add Administrator Permissions' }}>
+    <DetailPanel header="Administrator Permissions" headerColor={panelHeaderColor} button={{ icon: plusIcon, onClick: () => openModal('addadminrule'), hiddenLabel: 'Add Administrator Permissions' }}>
       <div class="desktop-layout">
         <DetailPanelSection>
           <h3>Site Rules</h3>
@@ -333,7 +342,7 @@
     </DetailPanel>
   </div>
 </DetailPageContent>
-{#if $modalContext.modal === 'editbasic'}
+{#if modal === 'editbasic'}
   <FormDialog
     submit={onEditBasic}
     validate={validateBasic}
@@ -341,7 +350,7 @@
     title='Edit Role'
     preload={{ name: $store.role.name, description: $store.role.description, siteId: $store.role.site?.id, access: $store.role.access }}
     let:data
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onSaved}>
     <FieldText path='name' label="Name" required/>
     <FieldText path='description' label="Description" maxlength={200} />
@@ -352,139 +361,139 @@
       { value: 'READONLY', label: 'Read Only' }
     ]} required conditional={isNotBlank(data.siteId)} helptext="A summary of the access level this role provides. Rules must be created to define what users with this role can do." />
   </FormDialog>
-{:else if $modalContext.modal === 'assignrole'}
-  <Dialog title="Assign Role" on:escape={modalContext.onModalEscape} continueText="Cancel" on:continue={modalContext.onModalEscape}>
+{:else if modal === 'assignrole'}
+  <Dialog title="Assign Role" on:escape={onModalEscape} continueText="Cancel" on:continue={onModalEscape}>
     <div class="button-container">
-      <button type="button" on:click={() => modalContext.setModal('assigntouser', $store.role.id)}>
+      <button type="button" on:click={() => openModal('assigntouser')}>
         <Icon icon={accountIcon} width="60%"/><br>Assign to User
       </button>
-      <button type="button" on:click={() => modalContext.setModal('assigntogroup', $store.role.id)}>
+      <button type="button" on:click={() => openModal('assigntogroup')}>
         <Icon icon={accountGroup} width="60%"/><br>Assign to Group
       </button>
     </div>
   </Dialog>
-{:else if $modalContext.modal === 'assigntouser'}
+{:else if modal === 'assigntouser'}
   <FormDialog
     submit={onAssignRoleToUser}
     name='assigntouser'
     title='Assign Role to Users'
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onSaved}>
     <FieldMultiselect path="userIds" label=Users getOptions={searchUsers} lookupByValue={lookupUserByValue} helptext={`This role is already assigned to ${$store.role.directUsers.length} users.`}/>
   </FormDialog>
-{:else if $modalContext.modal === 'assigntogroup'}
+{:else if modal === 'assigntogroup'}
   <FormDialog
     title="Assign Role to Group"
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onSaved}
     submit={onAssignRoleToGroup}>
     <FieldMultiselect required path='groupIds' label='Groups' getOptions={searchGroups} lookupByValue={lookupGroupByValue} helptext={`This role is already assigned to ${$store.role.directGroups.length} groups.`}/>
   </FormDialog>
-{:else if $modalContext.modal === 'unassignfromuser'}
+{:else if modal === 'unassignfromuser'}
   <Dialog
   title={'Remove Role from User'}
   continueText='Unassign'
   cancelText='Cancel'
   on:continue={onUnassign}
-  on:escape={modalContext.onModalEscape}>
+  on:escape={onModalEscape}>
   {`Are you sure you want to remove the ${$store.role.name} role from user ${$store.userRemoving?.id}?`}
   </Dialog>
-{:else if $modalContext.modal === 'unassignfromgroup'}
+{:else if modal === 'unassignfromgroup'}
   <Dialog
   title={'Remove Role from Group'}
   continueText='Unassign'
   cancelText='Cancel'
   on:continue={onUnassignGroup}
-  on:escape={modalContext.onModalEscape}>
+  on:escape={onModalEscape}>
   {`Are you sure you want to remove the ${$store.role.name} role from group ${$store.groupRemoving?.name}?`}
   </Dialog>
-{:else if $modalContext.modal === 'addeditorrule'}
-  <Dialog title="Add Editor Permissions" on:escape={modalContext.onModalEscape} continueText="Cancel" on:continue={modalContext.onModalEscape}>
+{:else if modal === 'addeditorrule'}
+  <Dialog title="Add Editor Permissions" on:escape={onModalEscape} continueText="Cancel" on:continue={onModalEscape}>
     <div class="button-container">
-      <button type="button" on:click={() => modalContext.setModal('addpagerule', 'PageRuleDialog')}>
+      <button type="button" on:click={() => openModal('addpagerule')}>
         <Icon icon={fileCodeLight} width="60%"/><br>Add Page Rule
       </button>
-      <button type="button" on:click={() => modalContext.setModal('addassetrule', 'AssetRuleDialog')}>
+      <button type="button" on:click={() => openModal('addassetrule')}>
         <Icon icon={copySimpleLight} width="60%"/><br>Add Asset Rule
       </button>
-      <button type="button" on:click={() => modalContext.setModal('adddatarule', 'DataRuleDialog')}>
+      <button type="button" on:click={() => openModal('adddatarule')}>
         <Icon icon={databaseLight} width="60%"/><br>Add Data Rule
       </button>
     </div>
   </Dialog>
-{:else if $modalContext.modal === 'addadminrule'}
-<Dialog title="Add Administrator Permissions" on:escape={modalContext.onModalEscape} continueText="Cancel" on:continue={modalContext.onModalEscape}>
+{:else if modal === 'addadminrule'}
+<Dialog title="Add Administrator Permissions" on:escape={onModalEscape} continueText="Cancel" on:continue={onModalEscape}>
   <div class="button-container">
-    <button type="button" on:click={() => modalContext.setModal('addsiterule', 'SiteRuleDialog')}>
+    <button type="button" on:click={() => openModal('addsiterule')}>
       <Icon icon={appWindowLight} width="60%"/><br>Add Site Rule
     </button>
-    <button type="button" on:click={() => modalContext.setModal('addglobalrule', 'GlobalRuleDialog')}>
+    <button type="button" on:click={() => openModal('addglobalrule')}>
       <Icon icon={globeLight} width="60%"/><br>Add Global Rule
     </button>
-    <button type="button" on:click={() => modalContext.setModal('addtemplaterule', 'TemplateRuleDialog')}>
+    <button type="button" on:click={() => openModal('addtemplaterule')}>
       <Icon icon={boundingBoxLight} width="60%"/><br>Add Template Rule
     </button>
   </div>
 </Dialog>
-{:else if $modalContext.modal === 'addassetrule'}
-  <AssetRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={modalContext.onModalEscape} on:saved={onSaved}/>
-{:else if $modalContext.modal === 'editassetrule'}
+{:else if modal === 'addassetrule'}
+  <AssetRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={onModalEscape} on:saved={onSaved}/>
+{:else if modal === 'editassetrule'}
   <AssetRuleDialog
     roleId={$store.role.id}
     ruleId={$store.editing?.id}
     siteChoices={siteOptions}
     on:saved={onSaved}
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id } : {} }/>
-{:else if $modalContext.modal === 'adddatarule'}
-  <DataRuleDialog roleId={$store.role.id} siteChoices={siteOptions} templateChoices={dataTemplateOptions} on:escape={modalContext.onModalEscape} on:saved={onSaved}/>
-{:else if $modalContext.modal === 'editdatarule'}
+{:else if modal === 'adddatarule'}
+  <DataRuleDialog roleId={$store.role.id} siteChoices={siteOptions} templateChoices={dataTemplateOptions} on:escape={onModalEscape} on:saved={onSaved}/>
+{:else if modal === 'editdatarule'}
     <DataRuleDialog
       roleId={$store.role.id}
       ruleId={$store.editing?.id}
       siteChoices={siteOptions}
       templateChoices={dataTemplateOptions}
-      on:escape={modalContext.onModalEscape}
+      on:escape={onModalEscape}
       on:saved={onSaved}
       preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id, templateId: $store.editing.data.template?.key } : {} }/>
-{:else if $modalContext.modal === 'addglobalrule'}
-    <GlobalRuleDialog roleId={$store.role.id} on:escape={modalContext.onModalEscape} on:saved={onSaved}/>
-{:else if $modalContext.modal === 'editglobalrule'}
+{:else if modal === 'addglobalrule'}
+    <GlobalRuleDialog roleId={$store.role.id} on:escape={onModalEscape} on:saved={onSaved}/>
+{:else if modal === 'editglobalrule'}
     <GlobalRuleDialog
       roleId={$store.role.id}
       ruleId={$store.editing?.id}
-      on:escape={modalContext.onModalEscape}
+      on:escape={onModalEscape}
       on:saved={onSaved}
       preload={$store.editing ? $store.editing.data : {} }/>
-{:else if $modalContext.modal === 'addpagerule'}
-  <PageRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={modalContext.onModalEscape} on:saved={onSaved}/>
-{:else if $modalContext.modal === 'editpagerule'}
+{:else if modal === 'addpagerule'}
+  <PageRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={onModalEscape} on:saved={onSaved}/>
+{:else if modal === 'editpagerule'}
   <PageRuleDialog
     roleId={$store.role.id}
     ruleId={$store.editing?.id}
     siteChoices={siteOptions}
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onSaved}
     preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id } : {} }/>
-{:else if $modalContext.modal === 'addsiterule'}
-  <SiteRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={modalContext.onModalEscape} on:saved={onSaved}/>
-{:else if $modalContext.modal === 'editsiterule'}
+{:else if modal === 'addsiterule'}
+  <SiteRuleDialog roleId={$store.role.id} siteChoices={siteOptions} on:escape={onModalEscape} on:saved={onSaved}/>
+{:else if modal === 'editsiterule'}
   <SiteRuleDialog
     roleId={$store.role.id}
     ruleId={$store.editing?.id}
     siteChoices={siteOptions}
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:saved={onSaved}
     preload={$store.editing ? { ...$store.editing.data, siteId: $store.editing.data.site?.id } : undefined }/>
-{:else if $modalContext.modal === 'addtemplaterule'}
-  <TemplateRuleDialog roleId={$store.role.id} on:escape={modalContext.onModalEscape} on:saved={onSaved} templateChoices={templates.map(t => ({ label: t.name, value: t.key }))}/>
-{:else if $modalContext.modal === 'deleterule'}
+{:else if modal === 'addtemplaterule'}
+  <TemplateRuleDialog roleId={$store.role.id} on:escape={onModalEscape} on:saved={onSaved} templateChoices={templates.map(t => ({ label: t.name, value: t.key }))}/>
+{:else if modal === 'deleterule'}
   <Dialog
   title={'Delete Rule'}
   continueText='Delete'
   cancelText='Cancel'
   on:continue={onDeleteRule}
-  on:escape={modalContext.onModalEscape}>
+  on:escape={onModalEscape}>
   {`Are you sure you want to delete this ${$store.editing?.type} rule?`}
   </Dialog>
 {/if}

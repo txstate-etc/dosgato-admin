@@ -17,7 +17,7 @@
   import treeStructure from '@iconify-icons/ph/tree-structure'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, actionPanelStore, dateStamp, dateStampShort, DeleteState, uiLog, ModalContextStore, SearchInput, DetailList, findInTreeIconSVG } from '$lib'
+  import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, actionPanelStore, dateStamp, dateStampShort, DeleteState, uiLog, SearchInput, DetailList, findInTreeIconSVG } from '$lib'
   import { _store as store, _searchStore as searchStore, _assetsStore as assetsStore, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem, type TypedAssetItem } from './+page'
   import { setContext, tick } from 'svelte'
   import { htmlEncode, isBlank, isNotBlank, isNotNull, isNull } from 'txstate-utils'
@@ -28,7 +28,7 @@
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   type Modals = 'upload' | 'create' | 'rename' | 'renameAsset' | 'delete' | 'finalizeDelete' | 'restore'
-  const modalContext = new ModalContextStore<Modals>(undefined, () => actionPanelTarget.target)
+  let modal: Modals | undefined
 
   let selectedFolder: TypedAssetFolderItem | undefined
   let selectedAsset: TypedAssetItem | undefined
@@ -73,11 +73,11 @@
         { label: 'Download', icon: download, onClick: () => { void api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } }
       ]
       if (item.deleteState === DeleteState.NOTDELETED) {
-        actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('delete') })
+        actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => openModal('delete') })
       } else {
         actions.push(
-          { label: 'Restore', icon: deleteRestore, disabled: !item.permissions.undelete, onClick: () => modalContext.setModal('restore') },
-          { label: 'Finalize Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('finalizeDelete') }
+          { label: 'Restore', icon: deleteRestore, disabled: !item.permissions.undelete, onClick: () => openModal('restore') },
+          { label: 'Finalize Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => openModal('finalizeDelete') }
         )
       }
       return actions
@@ -86,13 +86,13 @@
       ? [
           { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: async () => await goto(base + '/assets/' + item.id) },
           { label: 'Download', icon: download, onClick: () => { void api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } },
-          { label: 'Rename Asset', icon: renameIcon, disabled: !item.permissions.update, onClick: () => { selectedAsset = item as TypedAssetItem; modalContext.setModal('renameAsset') } }
+          { label: 'Rename Asset', icon: renameIcon, disabled: !item.permissions.update, onClick: () => { selectedAsset = item as TypedAssetItem; openModal('renameAsset') } }
         ]
       : [
-          { label: 'Upload', icon: uploadIcon, disabled: !item.permissions.create, onClick: () => { modalContext.setModal('upload'); selectedFolder = item as TypedAssetFolderItem } },
+          { label: 'Upload', icon: uploadIcon, disabled: !item.permissions.create, onClick: () => { openModal('upload'); selectedFolder = item as TypedAssetFolderItem } },
           { label: 'Download', icon: download, onClick: async () => await api.download(`${environmentConfig.renderBase}/.asset/zip/${item.gqlId}/${item.name}.zip`) },
-          { label: 'Rename Folder', icon: renameIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { modalContext.setModal('rename'); selectedFolder = item as TypedAssetFolderItem } },
-          { label: 'Create Folder', icon: folderPlus, disabled: !item.permissions.create, onClick: () => { modalContext.setModal('create'); selectedFolder = item as TypedAssetFolderItem } }
+          { label: 'Rename Folder', icon: renameIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { openModal('rename'); selectedFolder = item as TypedAssetFolderItem } },
+          { label: 'Create Folder', icon: folderPlus, disabled: !item.permissions.create, onClick: () => { openModal('create'); selectedFolder = item as TypedAssetFolderItem } }
         ]
     if ($store.copied.size) {
       actions.push(
@@ -107,11 +107,11 @@
     }
     // TODO: Do we want to log these store based actions here or log from the TreeStore API(store.paste())?
     if (item.deleteState === DeleteState.NOTDELETED) {
-      actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('delete') })
+      actions.push({ label: 'Delete', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => openModal('delete') })
     } else {
       actions.push(
-        { label: 'Restore', icon: deleteRestore, disabled: !item.permissions.undelete, onClick: () => modalContext.setModal('restore') },
-        { label: 'Finalize Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => modalContext.setModal('finalizeDelete') }
+        { label: 'Restore', icon: deleteRestore, disabled: !item.permissions.undelete, onClick: () => openModal('restore') },
+        { label: 'Finalize Deletion', icon: deleteOutline, disabled: !item.permissions.delete, onClick: () => openModal('finalizeDelete') }
       )
     }
     return actions
@@ -128,31 +128,38 @@
         { label: 'Copy', icon: contentCopy, disabled: !store.copyEligible(), onClick: () => store.copy() }
       )
     }
-    actions.push({ label: 'Delete', icon: deleteOutline, onClick: () => modalContext.setModal('delete'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.NOTDELETED) })
-    actions.push({ label: 'Restore', icon: deleteRestore, onClick: () => modalContext.setModal('restore'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.MARKEDFORDELETE) })
-    actions.push({ label: 'Finalize Deletion', icon: deleteOutline, onClick: () => modalContext.setModal('finalizeDelete'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.MARKEDFORDELETE) })
+    actions.push({ label: 'Delete', icon: deleteOutline, onClick: () => openModal('delete'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.NOTDELETED) })
+    actions.push({ label: 'Restore', icon: deleteRestore, onClick: () => openModal('restore'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.MARKEDFORDELETE) })
+    actions.push({ label: 'Finalize Deletion', icon: deleteOutline, onClick: () => openModal('finalizeDelete'), disabled: items.some(i => i.kind === 'folder' || i.deleteState !== DeleteState.MARKEDFORDELETE) })
     return actions
   }
 
-  async function onChildSaved () {
-    modalContext.reset()
+  async function onChildSaved (e?: CustomEvent<{ fileCount: number }>) {
+    uiLog.log({ eventType: 'AssetsPage-modal-' + modal, action: 'Success', target: selectedFolder?.path, ...(e?.detail?.fileCount != null && { additionalProperties: { fileCount: String(e.detail.fileCount) } }) })
+    modal = undefined
     await store.openAndRefresh(selectedFolder!)
     selectedFolder = undefined
   }
   async function onSelfSaved () {
-    modalContext.reset()
+    modal = undefined
     if (selectedFolder?.parent) await store.openAndRefresh(selectedFolder.parent)
     selectedFolder = undefined
   }
   function onModalEscape () {
-    modalContext.onModalEscape()
+    uiLog.log({ eventType: 'AssetsPage-modal-' + modal, action: 'Cancel', target: actionPanelTarget.target })
+    modal = undefined
     selectedFolder = undefined
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: 'AssetsPage-modal-' + m, action: 'Open', target: actionPanelTarget.target })
+    modal = m
   }
 
   async function onCreateSubmit (data: CreateAssetFolderInput) {
     if (!selectedFolder) return { success: false, messages: [], data }
     const resp = await api.createAssetFolder({ ...data, parentId: selectedFolder.gqlId })
-    modalContext.logModalResponse(resp, resp.assetFolder?.path, { parentId: selectedFolder.gqlId })
+    uiLog.log({ eventType: 'AssetsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: resp.assetFolder?.path, additionalProperties: { parentId: selectedFolder.gqlId } })
     return mutationForDialog(resp, { prefix: 'args', dataName: 'assetFolder' })
   }
 
@@ -170,7 +177,7 @@
   async function onRenameSubmit (data: { name: string }) {
     if (!selectedFolder) return { success: false, messages: [], data }
     const resp = await api.renameAssetFolder(selectedFolder.gqlId, data.name)
-    modalContext.logModalResponse(resp, selectedFolder.path, { oldName: selectedFolder.name, newName: resp.assetFolder?.name })
+    uiLog.log({ eventType: 'AssetsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: selectedFolder.path, additionalProperties: { oldName: selectedFolder.name, newName: resp.assetFolder?.name } })
     return mutationForDialog(resp, { dataName: 'assetFolder' })
   }
 
@@ -182,11 +189,11 @@
   async function onRenameAssetSubmit (data: { name: string }) {
     if (!selectedAsset) return { success: false, messages: [], data }
     const resp = await api.renameAsset(selectedAsset.id, data.name)
-    modalContext.logModalResponse(resp, selectedAsset.path, { oldName: selectedAsset.name, newName: resp.asset?.name })
+    uiLog.log({ eventType: 'AssetsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: selectedAsset.path, additionalProperties: { oldName: selectedAsset.name, newName: resp.asset?.name } })
     return mutationForDialog(resp, { dataName: 'asset' })
   }
   async function onRenameAssetSaved () {
-    modalContext.reset()
+    modal = undefined
     if (selectedAsset?.parent) await store.openAndRefresh(selectedAsset.parent)
     selectedAsset = undefined
   }
@@ -199,45 +206,45 @@
     let resp
     if ($activeStore.selectedItems[0].kind === 'asset') {
       resp = await api.deleteAssets($activeStore.selectedItems.map(a => a.id))
-      modalContext.logModalResponse(resp, $activeStore.selectedItems.map(a => a.path).join(', '))
+      uiLog.log({ eventType: 'AssetsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $activeStore.selectedItems.map(a => a.path).join(', ') })
     } else {
       resp = await api.deleteAssetFolder($activeStore.selectedItems[0].gqlId)
-      modalContext.logModalResponse(resp, $activeStore.selectedItems[0].path)
+      uiLog.log({ eventType: 'AssetsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $activeStore.selectedItems[0].path })
     }
     if (resp.success) {
       void activeStore.refresh()
     }
-    modalContext.reset()
+    modal = undefined
   }
 
   async function onFinalizeDelete () {
     let resp
     if ($activeStore.selectedItems[0].kind === 'asset') {
       resp = await api.finalizeDeleteAssets($activeStore.selectedItems.map(a => a.id))
-      modalContext.logModalResponse(resp, $activeStore.selectedItems.map(a => a.id).join(', '))
+      uiLog.log({ eventType: 'AssetsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $activeStore.selectedItems.map(a => a.id).join(', ') })
     } else {
       resp = await api.finalizeDeleteAssetFolder($activeStore.selectedItems[0].gqlId)
-      modalContext.logModalResponse(resp, $activeStore.selectedItems[0].gqlId)
+      uiLog.log({ eventType: 'AssetsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $activeStore.selectedItems[0].gqlId })
     }
     if (resp.success) {
       void activeStore.refresh()
     }
-    modalContext.reset()
+    modal = undefined
   }
 
   async function onRestore () {
     let resp
     if ($activeStore.selectedItems[0].kind === 'asset') {
       resp = await api.undeleteAssets($activeStore.selectedItems.map(a => a.id))
-      modalContext.logModalResponse(resp, $activeStore.selectedItems.map(a => a.id).join(', '))
+      uiLog.log({ eventType: 'AssetsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $activeStore.selectedItems.map(a => a.id).join(', ') })
     } else {
       resp = await api.undeleteAssetFolder($activeStore.selectedItems[0].gqlId)
-      modalContext.logModalResponse(resp, $activeStore.selectedItems[0].gqlId)
+      uiLog.log({ eventType: 'AssetsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $activeStore.selectedItems[0].gqlId })
     }
     if (resp.success) {
       void activeStore.refresh()
     }
-    modalContext.reset()
+    modal = undefined
   }
 
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'path')
@@ -308,21 +315,21 @@
     {/if}
   </svelte:fragment>
 </ActionPanel>
-{#if $modalContext.modal === 'upload' && selectedFolder}
+{#if modal === 'upload' && selectedFolder}
   <UploadUI title="Upload Files to {selectedFolder.path}" uploadPath="{environmentConfig.apiBase}/assets/{selectedFolder.gqlId}" on:escape={onModalEscape} on:saved={onChildSaved} />
-{:else if $modalContext.modal === 'create' && selectedFolder}
+{:else if modal === 'create' && selectedFolder}
   <FormDialog title="Create Folder beneath {selectedFolder.path}" on:escape={onModalEscape} submit={onCreateSubmit} validate={onCreateValidate} on:saved={onChildSaved}>
     <FieldText path="name" label="Name" required />
   </FormDialog>
-{:else if $modalContext.modal === 'rename' && selectedFolder}
+{:else if modal === 'rename' && selectedFolder}
   <FormDialog title="Rename Folder {selectedFolder.path}" preload={{ name: selectedFolder.name }} on:escape={onModalEscape} submit={onRenameSubmit} validate={onRenameValidate} on:saved={onSelfSaved}>
     <FieldText path="name" label="Name" required />
   </FormDialog>
-{:else if $modalContext.modal === 'renameAsset' && selectedAsset}
+{:else if modal === 'renameAsset' && selectedAsset}
   <FormDialog title="Rename Asset {selectedAsset.name}" preload={{ name: selectedAsset.name }} on:escape={onModalEscape} submit={onRenameAssetSubmit} validate={onRenameAssetValidate} on:saved={onRenameAssetSaved}>
     <FieldText path="name" label="Name" required />
   </FormDialog>
-{:else if $modalContext.modal === 'delete' }
+{:else if modal === 'delete' }
   <Dialog title={`Delete ${$activeStore.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onDelete} on:escape={onModalEscape}>
     {#if $activeStore.selectedItems[0].kind === 'asset'}
       {`Delete ${$activeStore.selectedItems.length} asset${$activeStore.selectedItems.length === 1 ? '' : 's'}?`}
@@ -330,7 +337,7 @@
       Delete this asset folder? All contents will be marked for deletion.
     {/if}
   </Dialog>
-{:else if $modalContext.modal === 'finalizeDelete'}
+{:else if modal === 'finalizeDelete'}
   <Dialog title={`Delete ${$activeStore.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Delete' cancelText='Cancel' on:continue={onFinalizeDelete} on:escape={onModalEscape}>
     {#if $activeStore.selectedItems[0].kind === 'asset'}
     {`Delete ${$activeStore.selectedItems.length} asset${$activeStore.selectedItems.length === 1 ? '' : 's'}?`}
@@ -338,7 +345,7 @@
       Delete this asset folder and its contents?
     {/if}
   </Dialog>
-{:else if $modalContext.modal === 'restore'}
+{:else if modal === 'restore'}
   <Dialog title={`Restore ${$activeStore.selectedItems[0].kind === 'asset' ? 'Assets' : 'Folder'}`} continueText='Restore' cancelText='Cancel' on:continue={onRestore} on:escape={onModalEscape}>
     {#if $activeStore.selectedItems[0].kind === 'asset'}
     {`Restore ${$activeStore.selectedItems.length} asset${$activeStore.selectedItems.length === 1 ? '' : 's'}?`}

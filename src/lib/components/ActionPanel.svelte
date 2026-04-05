@@ -19,10 +19,12 @@
   }
   const dispatch = createEventDispatcher()
   const { getTarget } = getContext<any>('ActionPanelTarget')
+  const getSection: (() => string | undefined) | undefined = getContext('LogSection')
 
   function onAction (action: ActionPanelAction) {
     return () => {
-      uiLog.log({ eventType: 'ActionPanel', action: action.label, ...(action.hiddenLabel && { additionalProperties: { hiddenLabel: action.hiddenLabel } }) }, getTarget())
+      const section = getSection?.()
+      uiLog.log({ eventType: 'ActionPanel', action: action.label, target: getTarget(), ...(section && { section }), ...(action.hiddenLabel && { additionalProperties: { hiddenLabel: action.hiddenLabel } }) })
       void action.onClick()
     }
   }

@@ -81,5 +81,13 @@ export const uiConfig: UIConfig = {
   },
   profileMenuLinks: [
     { label: 'Support', url: 'https://www.google.com', icon: lifeBuoy }
-  ]
+  ],
+  uiInteractionsLogger (event, environmentConfig) {
+    const token = sessionStorage.getItem('token') ?? ''
+    fetch(`${environmentConfig.apiBase}/userEvents`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(event)
+    }).catch(console.error)
+  }
 }

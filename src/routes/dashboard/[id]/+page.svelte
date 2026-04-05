@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, environmentConfig, getSiteIcon, SortableTable, toast, titleCaseAccess, ModalContextStore } from '$lib'
+  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, environmentConfig, getSiteIcon, SortableTable, toast, titleCaseAccess, uiLog } from '$lib'
   import type { DashboardSiteDetailDisplay, DashboardSiteTeamMemberWithRole } from '$lib'
   import { Button, FieldSelect, FormDialog, Icon } from '@dosgato/dialog'
   import eye from '@iconify-icons/ph/eye-bold'
@@ -21,7 +21,7 @@
   $: icon = getSiteIcon(site.launchState, 'PRIMARY')
 
   type Modals = 'downloadcsv' | 'userdetail'
-  const modalContext = new ModalContextStore<Modals>()
+  let modal: Modals | undefined
 
   function onCopyURL (e: MouseEvent) {
     if (!site.url?.prefix) return
@@ -39,10 +39,15 @@
     if (!state.pagetree) {
       return { success: false, data: {}, messages: [] }
     }
-    modalContext.reset()
+    modal = undefined
     const pagetree = data.site.pagetrees.find(p => p.id === state.pagetree)
     await downloadPageList(state.pagetree, pagetree!.name, data.site.name)
     return { success: true, data: state, messages: [] }
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: 'DashboardDetailPage-modal-' + m, action: 'Open', target: site.name })
+    modal = m
   }
 
   let userDetailId: string | null = null
@@ -50,13 +55,14 @@
   async function viewUserDetail (userId: string) {
     userDetailId = userId
     userDetail = site.teamMembersWithRolesById[userId]
-    modalContext.setModal('userdetail', userId)
+    openModal('userdetail')
   }
 
   function dismissUserDetail () {
     userDetailId = null
     userDetail = null
-    modalContext.onModalEscape()
+    uiLog.log({ eventType: 'DashboardDetailPage-modal-' + modal, action: 'Cancel', target: site.name })
+    modal = undefined
   }
 </script>
 
@@ -118,7 +124,7 @@
    <!--
    <DetailPanel header="Utilities" headerColor="#F5F1EE">
     <DetailPanelSection>
-      <Button type="button" icon={exportIcon} on:click={() => { modalContext.setModal('downloadcsv') }}>Download Page List</Button>
+      <Button type="button" icon={exportIcon} on:click={() => openModal('downloadcsv')}>Download Page List</Button>
     </DetailPanelSection>
   </DetailPanel>
 -->
@@ -184,15 +190,15 @@
     </DetailPanelSection>
   </DetailPanel>
 </DetailPageContent>
-{#if $modalContext.modal === 'downloadcsv'}
+{#if modal === 'downloadcsv'}
   <FormDialog
       name='downloadcsv'
       title='Download Page List'
-      on:escape={modalContext.onModalEscape}
+      on:escape={() => { uiLog.log({ eventType: 'DashboardDetailPage-modal-' + modal, action: 'Cancel', target: site.name }); modal = undefined }}
       submit={onDownloadPageList}>
       <FieldSelect path='pagetree' label='Pagetree' choices={data.site.pagetrees.map(p => ({ label: p.name, value: p.id }))} required/>
     </FormDialog>
-{:else if $modalContext.modal === 'userdetail'}
+{:else if modal === 'userdetail'}
     <UserDetailDialog siteName={site.name} userDetail={userDetail} on:dismiss={dismissUserDetail}/>
 {/if}
 

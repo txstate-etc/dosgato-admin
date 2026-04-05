@@ -145,7 +145,7 @@
   function onProfileChange (e: any) {
     const item = e.detail as PopupMenuItem
     if (!item) return
-    uiLog.log({ eventType: 'ProfileMenu', action: item.label ?? item.value }, item.value)
+    uiLog.log({ eventType: 'ProfileMenu', action: item.label ?? item.value, target: item.value })
     if (item.value === 'Logout') {
       const token = sessionStorage.getItem('token')
       if (token) {
@@ -169,7 +169,7 @@
   function closeSubNav (i: number) {
     return () => {
       const identifiers = subnavStore.getActiveIdentifiers(i)
-      uiLog.log({ eventType: 'SubNav', action: 'Close Tab', additionalProperties: { label: identifiers?.label } }, identifiers?.href)
+      uiLog.log({ eventType: 'SubNav', action: 'Close Tab', target: identifiers?.href, additionalProperties: { label: identifiers?.label } })
       const href = subnavStore.close(i)
       if (href) void goto(href)
     }
@@ -202,8 +202,17 @@
       const selectedSubNavLink = subnavLinks.find(link => link.classList.contains('selected')) ?? subnavLinks[0]
       selectedSubNavLink.focus()
     }
-    // Making a direct call to logger since after we navigate our uiLog.screen will be the target, not the originating screen.
-    uiLog.logger({ eventType: 'navigation', action: nav.type.toString(), screen: nav.from?.url?.pathname, target: nav.to?.url?.pathname }, environmentConfig)
+    // Making a direct call to logRaw since after we navigate our uiLog.screen will be the target, not the originating screen.
+    uiLog.logRaw({
+      eventType: 'navigation',
+      action: nav.type.toString(),
+      screen: nav.to?.route?.id ?? nav.to?.url?.pathname ?? 'unknown',
+      target: nav.to?.url?.pathname,
+      additionalProperties: {
+        from: nav.from?.url?.pathname,
+        fromRoute: nav.from?.route?.id ?? undefined
+      }
+    })
   })
 
   const labeledIconButtonTarget: { target: string | undefined } = { target: 'Profile-PopupMenu' }
@@ -341,7 +350,7 @@
       <div class="profile-compact">
         <LabeledIconButton label="Profile" bind:buttonelement icon={userCircleLight} />
       </div>
-      <button type="button" bind:this={profileelement} class="login-status reset" on:click={() => { uiLog.log({ eventType: 'button', action: 'LoginStatus' }, 'Login-PopupMenu') }} aria-expanded={false}>
+      <button type="button" bind:this={profileelement} class="login-status reset" on:click={() => { uiLog.log({ eventType: 'button', action: 'LoginStatus', target: 'Login-PopupMenu' }) }} aria-expanded={false}>
         <Icon icon={userIcon} inline width="1.5em"/>
         {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}<ScreenReaderOnly>Application Actions</ScreenReaderOnly>
       </button>

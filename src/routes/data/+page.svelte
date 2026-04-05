@@ -12,7 +12,7 @@
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   function logInteraction (action: string, target: string) {
-    uiLog.log({ eventType: 'DataTemplatesMenu', action }, target)
+    uiLog.log({ eventType: 'DataTemplatesMenu', action, target })
   }
 </script>
 
@@ -23,7 +23,7 @@
         {@const tmpl = templateRegistry.getTemplate(template.key)}
         {#if tmpl}
           <a href={`${base}/data/${template.key}`}
-           on:click={() => logInteraction(template.name, `${base}/data/${template.key}`)} >
+           on:click={() => logInteraction(template.name, template.key)} >
             <Icon icon={tmpl.icon ?? cubeOutline} height="50%"/>
             <div class="template-name">{template.name}</div>
           </a>

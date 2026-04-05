@@ -1,7 +1,7 @@
 import type { AnyItem, ChooserType, Client, Folder, Page, Source } from '@dosgato/dialog'
 import type { AssetFolderLink, LinkDefinition } from '@dosgato/templating'
 import { Cache, isNotBlank, isNotNull, sortby, stringify } from 'txstate-utils'
-import { api, environmentConfig, uploadWithProgress } from '$lib'
+import { api, environmentConfig, uiLog, uploadWithProgress } from '$lib'
 import { base } from '$app/paths'
 
 const pagetreeInfoCache = new Cache(async (id: string) => {
@@ -112,12 +112,18 @@ export class ChooserClient implements Client {
     for (let i = 0; i < files.length; i++) {
       data.append('file' + String(i), files[i])
     }
-    await uploadWithProgress(
-      `${environmentConfig.apiBase}/assets/${(folder as any).originalId}`,
-      { Authorization: `Bearer ${api.token!}` },
-      data,
-      progress
-    )
+    try {
+      await uploadWithProgress(
+        `${environmentConfig.apiBase}/assets/${(folder as any).originalId}`,
+        { Authorization: `Bearer ${api.token!}` },
+        data,
+        progress
+      )
+      uiLog.log({ eventType: 'ChooserClient-upload', action: 'Success', target: folder.path, additionalProperties: { fileCount: String(files.length) } })
+    } catch (e) {
+      uiLog.log({ eventType: 'ChooserClient-upload', action: 'Failed', target: folder.path, additionalProperties: { fileCount: String(files.length) } })
+      throw e
+    }
     return undefined
   }
 

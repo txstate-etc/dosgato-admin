@@ -8,7 +8,7 @@
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { csv, isBlank, keyby, titleCase } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, ModalContextStore, DetailList, LaunchState, Accordion, downloadPageList } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, DetailList, LaunchState, Accordion, downloadPageList, uiLog } from '$lib'
   import { base } from '$app/paths'
   import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
@@ -24,7 +24,7 @@
 
   type Modals = 'editbasic' | 'editsitemanagement' | 'editlaunch' | 'addcomment' | 'addpagetree' | 'editpagetree' | 'deletepagetree' | 'authorizetemplate' |
   'promotepagetree' | 'archivepagetree' | 'edittemplates' | 'addpagetemplates' | 'addcomponenttemplates' | 'deletetemplateauth' | 'downloadcsv'
-  const modalContext = new ModalContextStore<Modals>(undefined, () => $store.site.name)
+  let modal: Modals | undefined
 
   $: authorizedPageTemplateKeys = new Set($store.pageTemplates.map(t => t.key))
   $: authorizedComponentTemplateKeys = new Set($store.componentTemplates.map(t => t.key))
@@ -49,10 +49,10 @@
 
   async function onAddComment (state) {
     const resp = await api.addSiteComment($store.site.id, state.comment)
-    modalContext.logModalResponse(resp, $store.site.id, { comment: state.comment })
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { comment: state.comment } })
     if (resp.success) {
       void store.refresh($store.site.id)
-      modalContext.reset()
+      modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
@@ -68,30 +68,30 @@
 
   async function onRenameSite (state) {
     const resp = await api.renameSite($store.site.id, state.name, false)
-    modalContext.logModalResponse(resp, $store.site.id, { oldName: $store.site.name, newName: state.name })
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { oldName: $store.site.name, newName: state.name } })
     if (resp.success) {
       void store.refresh($store.site.id)
-      modalContext.reset()
+      modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
   async function onEditSiteManagement (state) {
     const resp = await api.updateSiteManagement($store.site.id, state.organization, state.owner, state.managers)
-    modalContext.logModalResponse(resp, $store.site.id, { organization: state.organization, owner: state.owner, managers: state.managers })
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { organization: state.organization, owner: state.owner, managers: state.managers } })
     if (resp.success) {
       void store.refresh($store.site.id)
-      modalContext.reset()
+      modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
   }
 
   async function onSetLaunchURL (state) {
     const resp = await api.setLaunchURL($store.site.id, state.host, state.path, state.enabled)
-    modalContext.logModalResponse(resp, $store.site.id, { host: state.host, path: state.path, enabled: state.enabled })
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { host: state.host, path: state.path, enabled: state.enabled } })
     if (resp.success) {
       void store.refresh($store.site.id)
-      modalContext.reset()
+      modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
@@ -103,7 +103,7 @@
 
   async function onAddPagetree (state: CreateWithPageState) {
     const resp = await api.addPagetree($store.site.id, state.templateKey, state.data)
-    modalContext.logModalResponse(resp, $store.site.id, { templateKey: state.templateKey })
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { templateKey: state.templateKey } })
     return {
       success: resp.success,
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
@@ -113,12 +113,12 @@
 
   function onAddPagetreeComplete () {
     void store.refresh($store.site.id)
-    modalContext.reset()
+    modal = undefined
   }
 
   async function onClickEditPagetree (id, name) {
     store.setPagetreeEditing(id, name)
-    modalContext.setModal('editpagetree')
+    openModal('editpagetree')
   }
 
   async function onRenamePagetree (state) {
@@ -127,18 +127,18 @@
       return { success: false, messages: [error], data: state }
     }
     const resp = await api.updatePagetree($store.editingPagetree.id, state.name)
-    modalContext.logModalResponse(resp, $store.editingPagetree.id, { oldName: $store.editingPagetree.name, newName: state.name })
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.editingPagetree.name, additionalProperties: { oldName: $store.editingPagetree.name, newName: state.name } })
     if (resp.success) {
       void store.refresh($store.site.id)
       store.cancelEditPagetree()
-      modalContext.reset()
+      modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
   async function onClickDeletePagetree (id, name) {
     store.setPagetreeEditing(id, name)
-    modalContext.setModal('deletepagetree')
+    openModal('deletepagetree')
   }
 
   async function onDeletePagetree () {
@@ -147,18 +147,18 @@
       return { success: false, messages: [error], data: {} }
     }
     const resp = await api.deletePagetree($store.editingPagetree.id)
-    modalContext.logModalResponse(resp, $store.editingPagetree.id)
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.editingPagetree.name })
     if (resp.success) {
       void store.refresh($store.site.id)
       store.cancelEditPagetree()
-      modalContext.reset()
+      modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
   async function onClickPromotePagetree (id, name) {
     store.setPagetreeEditing(id, name)
-    modalContext.setModal('promotepagetree')
+    openModal('promotepagetree')
   }
 
   async function onPromotePagetree () {
@@ -167,18 +167,18 @@
       return { success: false, messages: [error], data: {} }
     }
     const resp = await api.promotePagetree($store.editingPagetree.id)
-    modalContext.logModalResponse(resp, $store.editingPagetree.id)
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.editingPagetree.name })
     if (resp.success) {
       void store.refresh($store.site.id)
       store.cancelEditPagetree()
-      modalContext.reset()
+      modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
   async function onClickArchivePagetree (id, name) {
     store.setPagetreeEditing(id, name)
-    modalContext.setModal('archivepagetree')
+    openModal('archivepagetree')
   }
 
   async function onArchivePagetree () {
@@ -187,11 +187,11 @@
       return { success: false, messages: [error], data: {} }
     }
     const resp = await api.archivePagetree($store.editingPagetree.id)
-    modalContext.logModalResponse(resp, $store.editingPagetree.id)
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.editingPagetree.name })
     if (resp.success) {
       void store.refresh($store.site.id)
       store.cancelEditPagetree()
-      modalContext.reset()
+      modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
@@ -199,7 +199,7 @@
   function onClickAuthorizeTemplate (e) {
     const { key, name } = e.detail.template
     store.setTemplateAuthEditing(key, name, [])
-    modalContext.setModal('authorizetemplate')
+    openModal('authorizetemplate')
   }
 
   async function authorizeTemplate (state) {
@@ -210,19 +210,19 @@
     if (state.pagetrees.length === 0) {
       // no pagetrees selected, authorize template at site level
       const resp = await api.authorizeTemplateForSite($store.templateAuthEditing.key, $store.site.id)
-      modalContext.logModalResponse(resp, $store.site.id, { templateKey: $store.templateAuthEditing.key })
+      uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { templateKey: $store.templateAuthEditing.key } })
       if (resp.success) {
         void store.refresh($store.site.id)
-        modalContext.reset()
+        modal = undefined
       }
       return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
     } else {
       const resp = await api.authorizeTemplateForPagetrees($store.templateAuthEditing.key, state.pagetrees)
-      modalContext.logModalResponse(resp, state.pagetrees, { templateKey: $store.templateAuthEditing.key })
+      uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { templateKey: $store.templateAuthEditing.key } })
       if (resp.success) {
         void store.refresh($store.site.id)
         store.cancelEditTemplateAuth()
-        modalContext.reset()
+        modal = undefined
       }
       return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
     }
@@ -232,7 +232,7 @@
     const { key, name, pagetrees } = e.detail.template
     const pagetreesByName = keyby($store.site.pagetrees, 'name')
     store.setTemplateAuthEditing(key, name, pagetrees.map((p: string) => pagetreesByName[p].id))
-    modalContext.setModal('edittemplates')
+    openModal('edittemplates')
   }
 
   async function onEditTemplateAuthorizations (state) {
@@ -243,15 +243,15 @@
     let resp
     if (state.pagetrees.length === 0) {
       resp = await api.authorizeTemplateForSite($store.templateAuthEditing.key, $store.site.id)
-      modalContext.logModalResponse(resp, $store.site.id, { templateKey: $store.templateAuthEditing.key })
+      uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { templateKey: $store.templateAuthEditing.key } })
     } else {
       resp = await api.authorizeTemplateForPagetrees($store.templateAuthEditing.key, state.pagetrees)
-      modalContext.logModalResponse(resp, state.pagetrees, { templateKey: $store.templateAuthEditing.key })
+      uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { templateKey: $store.templateAuthEditing.key } })
     }
     if (resp.success) {
       void store.refresh($store.site.id)
       store.cancelEditTemplateAuth()
-      modalContext.reset()
+      modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
@@ -260,7 +260,7 @@
     const { key, name, pagetrees } = e.detail.template
     const pagetreesByName = keyby($store.site.pagetrees, 'name')
     store.setTemplateAuthEditing(key, name, pagetrees.map((p: string) => pagetreesByName[p].id))
-    modalContext.setModal('deletetemplateauth')
+    openModal('deletetemplateauth')
   }
 
   async function onDeleteTemplateAuthorization () {
@@ -269,11 +269,11 @@
       return { success: false, messages: [error], data: {} }
     }
     const resp = await api.deauthorizeTemplate($store.templateAuthEditing.key, $store.site.id)
-    modalContext.logModalResponse(resp, $store.site.id, { templateKey: $store.templateAuthEditing.key })
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { templateKey: $store.templateAuthEditing.key } })
     if (resp.success) {
       void store.refresh($store.site.id)
       store.cancelEditTemplateAuth()
-      modalContext.reset()
+      modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
@@ -304,11 +304,21 @@
     j.click()
   }
 
+  function onModalEscape () {
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: 'Cancel', target: $store.site.name })
+    modal = undefined
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + m, action: 'Open', target: $store.site.name })
+    modal = m
+  }
+
   async function onDownloadPageList (state) {
     if (!state.pagetree) {
       return { success: false, data: {}, messages: [] }
     }
-    modalContext.reset()
+    modal = undefined
     const pagetree = $store.site.pagetrees.find(p => p.id === state.pagetree)
     downloadPageList(state.pagetree, pagetree!.name, $store.site.name)
     return { success: true, data: state, messages: [] }
@@ -317,7 +327,7 @@
 
 <DetailPageContent>
   <div class="button-container">
-    <button type="button" on:click={() => { modalContext.setModal('downloadcsv') }}>
+    <button type="button" on:click={() => openModal('downloadcsv')}>
       <Icon icon={exportIcon} />
       <span>Download CSV</span>
     </button>
@@ -331,7 +341,7 @@
               <div class="dl-row">
                 <span><span class="label">Name:</span><span>{$store.site.name}</span></span>
                 {#if $store.site.permissions.rename}
-                  <button type="button" on:click={() => { modalContext.setModal('editbasic') }}>
+                  <button type="button" on:click={() => openModal('editbasic')}>
                     <Icon icon={pencilIcon} hiddenLabel="Edit basic information" width="1.3em" inline/>
                   </button>
                 {/if}
@@ -339,7 +349,7 @@
               <div class="dl-row">
                 <span><span class="label">URL:</span><span>{$store.site.url ? $store.site.url.prefix : 'This site is not launched.'}</span></span>
                 {#if $store.site.permissions.launch}
-                  <button type="button" on:click={() => { modalContext.setModal('editlaunch') }}>
+                  <button type="button" on:click={() => openModal('editlaunch')}>
                     <Icon icon={pencilIcon} hiddenLabel="Edit URL or launch site" inline width="1.3em"/>
                   </button>
                 {/if}
@@ -355,7 +365,7 @@
           <div class="detail-area-head">
             <h3>Site Management</h3>
             {#if $store.site.permissions.manageGovernance}
-              <button type="button" on:click={() => { modalContext.setModal('editsitemanagement') }}>
+              <button type="button" on:click={() => openModal('editsitemanagement')}>
                 <Icon icon={pencilIcon} hiddenLabel="Edit site management" inline width="1.3em"/>
               </button>
             {/if}
@@ -367,7 +377,7 @@
           }} />
         </DetailPanelSection>
       </DetailPanel>
-      <DetailPanel header='Site Stages' headerColor={panelHeaderColor} button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => modalContext.setModal('addpagetree') } : undefined}>
+      <DetailPanel header='Site Stages' headerColor={panelHeaderColor} button={$store.site.permissions.manageState ? { icon: plusIcon, hiddenLabel: 'add page tree', onClick: () => openModal('addpagetree') } : undefined}>
         <DetailPanelSection>
           <SortableTable items={$store.site.pagetrees} headers={[
             { id: 'name', label: 'Name', get: 'name', widthPercent: 65 },
@@ -377,7 +387,7 @@
         </DetailPanelSection>
       </DetailPanel>
       <div class="audit-panel">
-        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} mayAddComments={$store.site.permissions.manageGovernance} on:addauditcomment={() => { modalContext.setModal('addcomment') } } on:downloadaudit={async () => await downloadComments() }/>
+        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} mayAddComments={$store.site.permissions.manageGovernance} on:addauditcomment={() => openModal('addcomment') } on:downloadaudit={async () => await downloadComments() }/>
       </div>
     </div>
     <div class="vertical-group">
@@ -449,52 +459,52 @@
         </div>
       </DetailPanel>
       <div class="audit-panel mobile">
-        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} mayAddComments={$store.site.permissions.manageGovernance} on:addauditcomment={() => { modalContext.setModal('addcomment') } }/>
+        <AuditPanel headerColor={panelHeaderColor} comments={$store.site.comments} mayAddComments={$store.site.permissions.manageGovernance} on:addauditcomment={() => openModal('addcomment') }/>
       </div>
     </div>
   </div>
 </DetailPageContent>
-{#if $modalContext.modal === 'addcomment'}
+{#if modal === 'addcomment'}
   <FormDialog
     submit={onAddComment}
     name='addcomment'
     title='Add Comment'
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     <FieldText path='comment' label='Comment'/>
   </FormDialog>
-{:else if $modalContext.modal === 'editbasic'}
+{:else if modal === 'editbasic'}
   <FormDialog
     submit={onRenameSite}
     validate={validateBasicInfo}
     name='editbasic'
     title='Rename Site'
     preload={{ name: $store.site.name }}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     <FieldText path='name' label='Name' required/>
   </FormDialog>
-{:else if $modalContext.modal === 'editsitemanagement'}
+{:else if modal === 'editsitemanagement'}
   <FormDialog
     submit={onEditSiteManagement}
     name='editsitemanagement'
     title="Edit Site Management"
     preload={{ organization: $store.site.organization?.id, owner: $store.site.owner?.id, managers: $store.site.managers?.map(m => m.id) }}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     <FieldSelect path='organization' label='Organization' choices={data.organizations.map(o => ({ label: o.name, value: o.id }))}/>
     <FieldAutocomplete path='owner' label='Site Owner' placeholder='Please Select' choices={data.users.map(u => ({ label: `${u.name} (${u.id})`, value: u.id }))}/>
     <FieldMultiselect path='managers' label='Site Managers' getOptions={searchUsers}/>
   </FormDialog>
-{:else if $modalContext.modal === 'editlaunch'}
+{:else if modal === 'editlaunch'}
   <FormDialog
     submit={onSetLaunchURL}
     name='editlaunch'
     title='Set Public URL'
     preload={{ host: $store.site.url?.host ?? '', path: $store.site.url?.path ?? '', enabled: $store.site.launchState }}
-    on:escape={modalContext.onModalEscape} let:data>
+    on:escape={onModalEscape} let:data>
     <FieldText path='host' label='Host'/>
     <FieldText path='path' label='Path'/>
     <FieldSelect path="enabled" label="Launch Status" notNull choices={[{ label: 'Pre-launch', value: LaunchState.PRELAUNCH }, { label: 'Launched', value: LaunchState.LAUNCHED, disabled: isBlank(data.host) }, { label: 'Decommissioned', value: LaunchState.DECOMMISSIONED }]}/>
   </FormDialog>
-{:else if $modalContext.modal === 'addpagetree'}
+{:else if modal === 'addpagetree'}
   <CreateWithPageDialog
     submit={onAddPagetree}
     validate={validateAddPagetree}
@@ -502,29 +512,30 @@
     propertyDialogTitle= 'Root Page Properties'
     addName={false}
     templateChoices={data.allPageTemplates.map(t => ({ label: t.name, value: t.key }))}
-    on:escape={modalContext.onModalEscape}
+    logTarget={$store.site.name}
+    on:escape={onModalEscape}
     on:saved={onAddPagetreeComplete}/>
-{:else if $modalContext.modal === 'editpagetree'}
+{:else if modal === 'editpagetree'}
   <FormDialog
     name="editpagetree"
     title="Rename Pagetree"
     submit={onRenamePagetree}
     preload={{ name: $store.editingPagetree?.name }}
-    on:escape={() => { store.cancelEditPagetree(); modalContext.onModalEscape() }}>
+    on:escape={() => { store.cancelEditPagetree(); onModalEscape() }}>
     <FieldText path="name" label="Name" required/>
   </FormDialog>
-{:else if $modalContext.modal === 'deletepagetree'}
+{:else if modal === 'deletepagetree'}
   <Dialog
-    on:escape={() => { store.cancelEditPagetree(); modalContext.onModalEscape() }}
+    on:escape={() => { store.cancelEditPagetree(); onModalEscape() }}
     continueText="Delete"
     cancelText="Cancel"
     title="Delete Pagetree"
     on:continue={onDeletePagetree}>
   Delete this pagetree?
   </Dialog>
-{:else if $modalContext.modal === 'promotepagetree'}
+{:else if modal === 'promotepagetree'}
   <Dialog
-    on:escape={() => { store.cancelEditPagetree(); modalContext.onModalEscape() }}
+    on:escape={() => { store.cancelEditPagetree(); onModalEscape() }}
     continueText="Promote"
     cancelText="Cancel"
     title="Promote Pagetree"
@@ -536,37 +547,37 @@
       be launched until it has a URL and is set to be live." />
     {/if}
   </Dialog>
-{:else if $modalContext.modal === 'archivepagetree'}
+{:else if modal === 'archivepagetree'}
   <Dialog
-    on:escape={() => { store.cancelEditPagetree(); modalContext.onModalEscape() }}
+    on:escape={() => { store.cancelEditPagetree(); onModalEscape() }}
     continueText="Archive"
     cancelText="Cancel"
     title="Archive Pagetree"
     on:continue={onArchivePagetree}>
     Archive this pagetree?
   </Dialog>
-{:else if $modalContext.modal === 'authorizetemplate'}
+{:else if modal === 'authorizetemplate'}
   <FormDialog
     name="authorizetemplate"
     title="Authorize Template"
-    on:escape={() => { store.cancelEditTemplateAuth(); modalContext.onModalEscape() }}
+    on:escape={() => { store.cancelEditTemplateAuth(); onModalEscape() }}
     submit={authorizeTemplate}>
     <div>Authorize for use in specific pagetrees, or leave blank to authorize for all pagetrees in the site.</div>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
   </FormDialog>
-{:else if $modalContext.modal === 'edittemplates'}
+{:else if modal === 'edittemplates'}
   <FormDialog
     name='edittemplates'
     title='Edit Authorized Pagetrees'
-    on:escape={() => { store.cancelEditTemplateAuth(); modalContext.onModalEscape() }}
+    on:escape={() => { store.cancelEditTemplateAuth(); onModalEscape() }}
     validate={async () => { return [] }}
     preload={{ pagetrees: $store.templateAuthEditing?.pagetrees ?? [] }}
     submit={onEditTemplateAuthorizations}>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees} lookupByValue={lookupPagetreeByValue}/>
   </FormDialog>
-{:else if $modalContext.modal === 'deletetemplateauth'}
+{:else if modal === 'deletetemplateauth'}
   <Dialog
-    on:escape={() => { store.cancelEditTemplateAuth(); modalContext.onModalEscape() }}
+    on:escape={() => { store.cancelEditTemplateAuth(); onModalEscape() }}
     continueText="Remove"
     cancelText="Cancel"
     title="Remove Template Authorization"
@@ -574,11 +585,11 @@
     Are you sure you want to remove this template from the authorized templates? Existing content will remain
     but editors will no longer be able to use this template on this site or any pagetrees in this site.
   </Dialog>
-{:else if $modalContext.modal === 'downloadcsv'}
+{:else if modal === 'downloadcsv'}
   <FormDialog
     name='downloadcsv'
     title='Download Page List'
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     submit={onDownloadPageList}>
     <FieldSelect path='pagetree' label='Pagetree' choices={$store.site.pagetrees.map(p => ({ label: p.name, value: p.id }))} required/>
   </FormDialog>

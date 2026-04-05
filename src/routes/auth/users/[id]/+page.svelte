@@ -7,7 +7,7 @@
   import { DateTime } from 'luxon'
   import { sortby } from 'txstate-utils'
   import { base } from '$app/paths'
-  import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type GroupListGroup, type RoleListRole, BackButton, ModalContextStore, UserTrainingsChooser } from '$lib'
+  import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type GroupListGroup, type RoleListRole, BackButton, uiLog, UserTrainingsChooser } from '$lib'
   import { _store as store } from './+page'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
   import { uiConfig } from '../../../../local'
@@ -15,9 +15,11 @@
   export let data: { allGroups: GroupListGroup[], allRoles: RoleListRole[], allTrainings: { id: string, name: string, lcName: string }[] }
 
   type Modals = 'editbasic' | 'editgroups' | 'editroles' | 'removefromgroup' | 'removerole'
-  const modalContext = new ModalContextStore<Modals>()
+  let modal: Modals | undefined
 
   const panelHeaderColor = '#BCD2CA'
+  $: groupNamesById = Object.fromEntries(data.allGroups.map(g => [g.id, g.name]))
+  $: roleNamesById = Object.fromEntries(data.allRoles.map(r => [r.id, r.name]))
 
   $: allUserGroups = [...$store.user.directGroups, ...$store.user.indirectGroups]
 
@@ -33,7 +35,7 @@
 
   function onSaved () {
     void store.refresh($store.user.id)
-    modalContext.reset()
+    modal = undefined
   }
 
   function getIndirectRoleGroup (role) {
@@ -45,9 +47,9 @@
 
   async function onEditBasic (state) {
     const resp = await api.updateUserInfo($store.user.id, state)
-    modalContext.logModalResponse(resp, $store.user.id)
+    uiLog.log({ eventType: 'UserDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.user.id })
     if (resp.success) void store.refresh($store.user.id)
-    modalContext.reset()
+    modal = undefined
     return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
   }
 
@@ -67,16 +69,16 @@
   }
 
   async function lookupGroupByValue (val: string) {
-    const group = data.allGroups.find(g => g.id === val)
-    if (group) return { label: group.name, value: group.id }
+    const name = groupNamesById[val]
+    if (name) return { label: name, value: val }
   }
 
   async function onAddGroups (state) {
     const resp = await api.setUserGroups($store.user.id, state.groups)
-    modalContext.logModalResponse(resp, $store.user.id, { groups: state.groups })
+    uiLog.log({ eventType: 'UserDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.user.id, additionalProperties: { groups: state.groups.map((id: string) => groupNamesById[id] ?? id).join(', ') } })
     if (resp.success) {
       void store.refresh($store.user.id)
-      modalContext.reset()
+      modal = undefined
     }
     return {
       success: resp.success,
@@ -92,8 +94,8 @@
   }
 
   async function lookupRoleByValue (val: string) {
-    const role = data.allRoles.find(r => r.id === val)
-    if (role) return { label: role.name, value: role.id }
+    const name = roleNamesById[val]
+    if (name) return { label: name, value: val }
   }
 
   async function onAddRoles (state: { roleIds: string[] }) {
@@ -105,10 +107,10 @@
       }
     }
     const resp = await api.addRolesToUser(state.roleIds, $store.user.id)
-    modalContext.logModalResponse(resp, $store.user.id, { roles: state.roleIds.join(',') })
+    uiLog.log({ eventType: 'UserDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.user.id, additionalProperties: { roles: state.roleIds.map(id => roleNamesById[id] ?? id).join(', ') } })
     if (resp.success) {
       void store.refresh($store.user.id)
-      modalContext.reset()
+      modal = undefined
     }
     return { ...resp, data: state }
   }
@@ -116,7 +118,7 @@
   async function onRemoveRole (state) {
     if (!$store.roleRemoving) return
     const resp = await api.removeRoleFromUser($store.roleRemoving.id, $store.user.id)
-    modalContext.logModalResponse(resp, $store.user.id, { role: $store.roleRemoving.id })
+    uiLog.log({ eventType: 'UserDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.user.id, additionalProperties: { roles: $store.roleRemoving.name } })
     if (resp.success) {
       store.resetRoleRemoving()
       onSaved()
@@ -127,7 +129,7 @@
   async function onRemoveFromGroup (state) {
     if (!$store.groupRemoving) return
     const resp = await api.removeUserFromGroup($store.user.id, $store.groupRemoving.id)
-    modalContext.logModalResponse(resp, $store.user.id, { group: $store.groupRemoving.id })
+    uiLog.log({ eventType: 'UserDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.user.id, additionalProperties: { groups: $store.groupRemoving.name } })
     if (resp.success) {
       store.resetGroupRemoving()
       onSaved()
@@ -137,12 +139,22 @@
 
   function onClickRemoveGroup (groupId, groupName) {
     store.setGroupRemoving(groupId, groupName)
-    modalContext.setModal('removefromgroup', groupName)
+    openModal('removefromgroup')
   }
 
   function onClickRemoveRole (roleId, roleName) {
     store.setRoleRemoving(roleId, roleName)
-    modalContext.setModal('removerole', roleName)
+    openModal('removerole')
+  }
+
+  function onModalEscape () {
+    uiLog.log({ eventType: 'UserDetailPage-modal-' + modal, action: 'Cancel', target: $store.user.id })
+    modal = undefined
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: 'UserDetailPage-modal-' + m, action: 'Open', target: $store.user.id })
+    modal = m
   }
 </script>
 
@@ -152,7 +164,7 @@
 
   <div class="panel-grid">
     <div class="grid-item">
-      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? [{ icon: pencilIcon, hiddenLabel: 'Edit Basic Information', onClick: () => modalContext.setModal('editbasic', $store.user.id) }, { icon: plusIcon, hiddenLabel: `Add ${$store.user.name} to groups`, onClick: () => modalContext.setModal('editgroups', $store.user.id) }] : undefined}>
+      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={$store.user.permissions.update ? [{ icon: pencilIcon, hiddenLabel: 'Edit Basic Information', onClick: () => openModal('editbasic') }, { icon: plusIcon, hiddenLabel: `Add ${$store.user.name} to groups`, onClick: () => openModal('editgroups') }] : undefined}>
         <DetailPanelSection>
           <DetailList records={{
             'First Name': $store.user.system ? ' ' : $store.user.firstname,
@@ -199,7 +211,7 @@
     </div>
 
     <div class="grid-item">
-      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, hiddenLabel: `Assign roles to ${$store.user.name}`, onClick: () => modalContext.setModal('editroles', $store.user.id) } : undefined}>
+      <DetailPanel header='Roles' headerColor={panelHeaderColor} button={data.allRoles.some(r => r.permissions.assign) ? { icon: plusIcon, hiddenLabel: `Assign roles to ${$store.user.name}`, onClick: () => openModal('editroles') } : undefined}>
         <DetailPanelSection>
           {#if $store.user.directRoles.length}
             <SortableTable items = {sortby($store.user.directRoles, 'name')}
@@ -239,14 +251,14 @@
   </div>
 </DetailPageContent>
 
-{#if $modalContext.modal === 'editbasic'}
+{#if modal === 'editbasic'}
   <FormDialog
     submit={onEditBasic}
     validate={validateBasicInfo}
     name='editbasicinfo'
     title= {`Edit ${$store.user.id}`}
     preload={{ firstname: $store.user.firstname, lastname: $store.user.lastname, email: $store.user.email, trainings: $store.user.trainings.map(t => t.id) }}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     {#if !$store.user.system}
       <FieldText path='firstname' label='First Name' required={true}/>
     {/if}
@@ -254,13 +266,13 @@
     <FieldText path='email' label='Email' required={true}/>
     <UserTrainingsChooser trainings={data.allTrainings} />
   </FormDialog>
-{:else if $modalContext.modal === 'editgroups'}
+{:else if modal === 'editgroups'}
   <FormDialog
     submit={onAddGroups}
     name='editgroups'
     title={`Edit groups for ${$store.user.id}`}
     preload={{ groups: $store.user.directGroups.map(g => g.id) }}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     <FieldMultiselect
       path='groups'
       label='Add Groups'
@@ -268,30 +280,30 @@
       lookupByValue={lookupGroupByValue}
     />
   </FormDialog>
-{:else if $modalContext.modal === 'removefromgroup'}
+{:else if modal === 'removefromgroup'}
   <Dialog
     title='Remove from Group'
     continueText='Remove'
     cancelText='Cancel'
     on:continue={onRemoveFromGroup}
-    on:escape={() => { modalContext.onModalEscape(); $store.groupRemoving = undefined }}>
+    on:escape={() => { onModalEscape(); $store.groupRemoving = undefined }}>
     Remove user {$store.user.id} from group {$store.groupRemoving?.name ?? ''}?
   </Dialog>
-{:else if $modalContext.modal === 'removerole'}
+{:else if modal === 'removerole'}
   <Dialog
     title='Remove Role'
     continueText='Remove'
     cancelText='Cancel'
     on:continue={onRemoveRole}
-    on:escape={() => { modalContext.onModalEscape(); $store.roleRemoving = undefined }}>
+    on:escape={() => { onModalEscape(); $store.roleRemoving = undefined }}>
     Remove role {$store.roleRemoving?.name ?? ''} from user {$store.user.id}?
   </Dialog>
-{:else if $modalContext.modal === 'editroles'}
+{:else if modal === 'editroles'}
   <FormDialog
     submit={onAddRoles}
     name='editroles'
     title={`Edit roles for ${$store.user.id}`}
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     <FieldMultiselect
       path='roleIds'
       label='Add More Roles'

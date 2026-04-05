@@ -2,13 +2,17 @@
   import { uiLog } from '$lib'
   import { Icon } from '@dosgato/dialog'
   import type { IconifyIcon } from '@iconify/svelte'
+  import { getContext } from 'svelte'
 
   export let href: string
   export let label: string
   export let icon: IconifyIcon
 
+  const getSection: (() => string | undefined) | undefined = getContext('LogSection')
+
   function logInteraction () {
-    uiLog.log({ eventType: 'TopNavLink', action: label }, href)
+    const section = getSection?.()
+    uiLog.log({ eventType: 'TopNavLink', action: label, target: href, ...(section && { section }) })
   }
 </script>
 

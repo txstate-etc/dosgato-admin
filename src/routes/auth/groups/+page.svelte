@@ -6,14 +6,13 @@
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { base } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog, ModalContextStore, uiLog, actionPanelStore } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog, uiLog, actionPanelStore } from '$lib'
 
-  // TODO: Need to get with Rachel on what we want defined for target in this screen's context.
-  const actionPanelTarget: { target: string | undefined } = { target: 'AuthGroupsPage' }
-  setContext('ActionPanelTarget', { getTarget: () => uiLog.targetFromTreeStore($store, 'id') })
+  const actionPanelTarget: { target: string | undefined } = { target: undefined }
+  setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
 
   type Modals = 'addgroup' | 'deletegroup'
-  const modalContext = new ModalContextStore<Modals>(undefined, () => modalContext.targetDescriptor ?? actionPanelTarget.target)
+  let modal: Modals | undefined
 
   type TypedGroupItem = TypedTreeItem<GroupListGroup>
 
@@ -24,15 +23,15 @@
 
   function noneselectedactions () {
     const actions: ActionPanelAction[] = [
-      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => modalContext.setModal('addgroup', 'FormDialog') }
+      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => openModal('addgroup') }
     ]
     return actions
   }
 
   function singleactions (user: TypedGroupItem) {
     const actions: ActionPanelAction[] = [
-      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => modalContext.setModal('addgroup', 'FormDialog') },
-      { label: 'Delete', icon: accountMultipleRemoveOutline, disabled: false, onClick: () => modalContext.setModal('deletegroup', $store.selectedItems[0].name) }
+      { label: 'Add Group', icon: accountMultiplePlusOutline, disabled: false, onClick: () => openModal('addgroup') },
+      { label: 'Delete', icon: accountMultipleRemoveOutline, disabled: false, onClick: () => openModal('deletegroup') }
     ]
     return actions
   }
@@ -43,10 +42,10 @@
   async function onAddGroup (state) {
     const parentId: string | undefined = $store.selectedItems.length ? $store.selectedItems[0].id : undefined
     const resp = await api.addGroup(state.name, parentId)
-    modalContext.logModalResponse(resp, resp.group?.name, parentId ? { parentId } : undefined)
+    uiLog.log({ eventType: 'GroupsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.selectedItems[0]?.name, additionalProperties: { name: resp.group?.name ?? state.name } })
     if (resp.success) {
       void store.refresh()
-      modalContext.reset()
+      modal = undefined
     }
     return {
       success: resp.success,
@@ -66,10 +65,22 @@
 
   async function onDeleteGroup () {
     const resp = await api.deleteGroup($store.selectedItems[0].id)
-    modalContext.logModalResponse(resp, modalContext.target())
+    uiLog.log({ eventType: 'GroupsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.selectedItems[0]?.name })
     if (resp.success) void store.refresh()
-    modalContext.reset()
+    modal = undefined
   }
+
+  function onModalEscape () {
+    uiLog.log({ eventType: 'GroupsPage-modal-' + modal, action: 'Cancel', target: actionPanelTarget.target })
+    modal = undefined
+  }
+
+  function openModal (m: Modals) {
+    uiLog.log({ eventType: 'GroupsPage-modal-' + m, action: 'Open', target: actionPanelTarget.target })
+    modal = m
+  }
+
+  $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
 
   function handleResponsiveHeaders (treeWidth: number) {
     if (treeWidth > 500) {
@@ -87,21 +98,21 @@
     { id: 'roles', label: 'Roles', render: item => (item.roles.map(r => r.name)).join(', '), grow: 3 }
   ]} enableResize responsiveHeaders={handleResponsiveHeaders}/>
 </ActionPanel>
-{#if $modalContext.modal === 'addgroup'}
+{#if modal === 'addgroup'}
   <FormDialog
     submit={onAddGroup}
     validate={validateAddGroup}
     title='Add Group'
     name='addgroup'
-    on:escape={modalContext.onModalEscape}>
+    on:escape={onModalEscape}>
     <FieldText path='name' label='Group Name' required></FieldText>
   </FormDialog>
-{:else if $modalContext.modal === 'deletegroup' }
+{:else if modal === 'deletegroup' }
   <Dialog
     title='Delete Group'
     continueText='Delete'
     cancelText='Cancel'
-    on:escape={modalContext.onModalEscape}
+    on:escape={onModalEscape}
     on:continue={onDeleteGroup}>
     Delete {$store.selectedItems[0].name} {$store.selectedItems[0].subgroups.length ? 'and its subgroups?' : '?'}
   </Dialog>

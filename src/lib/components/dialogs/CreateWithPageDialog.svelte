@@ -4,7 +4,7 @@ Two dialogs in sequence used to create a page.
 This component is also used when creating a site or pagetree, both of which require creating a root page.
 -->
 <script lang="ts">
-  import { ChooserClient, ModalContextStore, environmentConfig, templateRegistry } from '$lib'
+  import { ChooserClient, environmentConfig, templateRegistry, uiLog } from '$lib'
   import { Dialog, FieldHidden, FieldSelect, FieldText, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { type SubmitResponse, type Feedback, FormStore, SubForm, MessageType } from '@txstate-mws/svelte-forms'
@@ -27,10 +27,10 @@ This component is also used when creating a site or pagetree, both of which requ
   /** whether or not to add a name field to the first dialog. true when adding sites and pages, false when adding pagetrees because their root page name defaults to the site name */
   export let addName: boolean = true
   export let creatingSite: boolean = false
-
-  const targetName = 'addpage-modal'
+  /** The path or name of the parent item this page is being created under, used as the log target. */
+  export let logTarget: string | undefined
   type Modals = 'addpage-name' | 'addpage-properties'
-  const modalContext = new ModalContextStore<Modals>('addpage-name', () => targetName)
+  let modal: Modals | undefined = 'addpage-name'
 
   let nameDialogData: { name?: string, templateKey: string } | undefined = undefined
 
@@ -40,11 +40,11 @@ This component is also used when creating a site or pagetree, both of which requ
   async function submitWrapper (state: CreateWithPageState) {
     if (!state.templateKey) {
       const resp = await submit(state, false)
-      modalContext.logModalResponse(resp, targetName, { name: state.name, templateKey: state.templateKey })
+      uiLog.log({ eventType: 'CreateWithPageDialog-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: logTarget, additionalProperties: { name: state.name, templateKey: state.templateKey } })
       return resp
     }
     const resp = await submit({ ...state, data: { ...state.data, areas: templateRegistry.getTemplate(state.templateKey)?.genDefaultContent({ ...state.data, templateKey: state.templateKey }) } }, false)
-    modalContext.logModalResponse(resp, targetName, { name: state.name, templateKey: state.templateKey })
+    uiLog.log({ eventType: 'CreateWithPageDialog-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: logTarget, additionalProperties: { name: state.name, templateKey: state.templateKey } })
     return resp
   }
   async function validateWrapper (state: CreateWithPageState) {
@@ -53,7 +53,8 @@ This component is also used when creating a site or pagetree, both of which requ
   }
   function onEscape () {
     store.reset()
-    modalContext.onModalEscape()
+    uiLog.log({ eventType: 'CreateWithPageDialog-modal-' + modal, action: 'Cancel', target: logTarget })
+    modal = undefined
     nameDialogData = undefined
     dispatch('escape')
   }
@@ -67,12 +68,12 @@ This component is also used when creating a site or pagetree, both of which requ
     } else {
       nameDialogData = state
     }
-    modalContext.logModalResponse(ret, targetName, { name: state.name, templateKey: state.templateKey })
+    uiLog.log({ eventType: 'CreateWithPageDialog-modal-' + modal, action: ret.success ? 'Success' : 'Failed', target: logTarget, additionalProperties: { name: state.name, templateKey: state.templateKey } })
     return ret
   }
 
   function onNameAndTemplateComplete () {
-    modalContext.setModal('addpage-properties')
+    modal = 'addpage-properties'
   }
 
   async function validateNameAndTemplate (state: CreateWithPageState) {
@@ -81,14 +82,14 @@ This component is also used when creating a site or pagetree, both of which requ
   }
 </script>
 
-{#if $modalContext.modal === 'addpage-name'}
+{#if modal === 'addpage-name'}
   <FormDialog {chooserClient} {title} submit={onSaveNameAndTemplate} validate={validateNameAndTemplate} on:escape={onEscape} on:saved={onNameAndTemplateComplete}>
     {#if addName}
       <FieldText path='name' label={creatingSite ? 'Name' : 'URL Slug'} required/>
     {/if}
   <FieldSelect path='templateKey' label={`${creatingSite ? 'Root' : ''} Page Template`} placeholder='Select' choices={templateChoices} required/>
   </FormDialog>
-{:else if $modalContext.modal === 'addpage-properties' && nameDialogData}
+{:else if modal === 'addpage-properties' && nameDialogData}
   {@const template = templateRegistry.getTemplate(nameDialogData.templateKey)}
   {#if template?.dialog}
     <FormDialog {chooserClient} title={propertyDialogTitle} submit={submitWrapper} validate={validateWrapper} {store} on:escape={onEscape} on:saved let:data>
