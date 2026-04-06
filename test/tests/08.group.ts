@@ -37,6 +37,7 @@ test.describe('group list', () => {
   test('should be able to add a subgroup', async ({ adminPage }) => {
     await adminPage.getByRole('treeitem').getByText(NEW_GROUP.name, { exact: true }).click()
     await addGroup(adminPage, `${NEW_GROUP.name}-subgroup`)
+    await expect(adminPage.getByRole('treeitem').filter({ hasText: NEW_GROUP.name }).first()).toHaveAttribute('aria-expanded', 'false')
     await adminPage.getByRole('treeitem').getByText(NEW_GROUP.name, { exact: true }).click()
     await expect(adminPage.getByRole('treeitem').getByText(`${NEW_GROUP.name}-subgroup`, { exact: true })).toBeVisible()
   })

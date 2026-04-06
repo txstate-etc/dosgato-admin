@@ -38,6 +38,7 @@ test.describe('basic', () => {
     await adminPage.getByRole('button', { name: 'Save' }).click()
     await editFrame.getByRole('button', { name: /Delete Panel Component/ }).first().click()
     await adminPage.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true }).click()
+    await expect(editFrame.getByRole('button', { name: /Delete Panel Component/ })).toHaveCount(0)
     await editFrame.getByRole('button', { name: /Delete Column Layout/ }).first().click()
     await adminPage.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true }).click()
   })
