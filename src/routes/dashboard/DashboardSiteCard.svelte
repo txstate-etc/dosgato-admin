@@ -20,7 +20,7 @@
       </div>
     </div>
     <div class="status">
-      <div class="launch-state">{site.launchState === 'LAUNCHED' ? 'LIVE' : site.launchState === 'PRELAUNCH' ? 'SANDBOX' : 'INACTIVE'}</div>
+      <div class="launch-state">{site.launchState === 'LAUNCHED' ? 'ACTIVE' : site.launchState === 'PRELAUNCH' ? 'PRELAUNCH' : 'INACTIVE'}</div>
     </div>
   </div>
   <div class="site-card-details">
@@ -47,6 +47,11 @@
     text-decoration: none;
     color: inherit;
     box-shadow: 4px 4px 0 0 #ddd;
+    transition: all 0.1s ease;
+  }
+  .site-card:hover {
+    box-shadow: none;
+    border-width: 2px;
   }
   .site-card-header {
     padding: 0.5em 1em 0;

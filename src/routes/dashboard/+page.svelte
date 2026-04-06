@@ -99,12 +99,18 @@
           <label>
             Sort by
             <select value={$dashboardSitesStore.sort} on:change={e => dashboardSitesStore.set({ ...$dashboardSitesStore, sort: e.currentTarget.value })}>
-              <option value="alpha">Alphabetical</option>
-              <optgroup label="Date">
-                <option value="date-added">Date Added</option>
-                <option value="last-edited">Last Edited</option>
+              <optgroup label="Alphabetical">
+                <option value="alpha-asc">Ascending (A-Z)</option>
+                <option value="alpha-desc">Descending (Z-A)</option>
               </optgroup>
-              <option value="status">Status</option>
+              <optgroup label="Date site created">
+                <option value="creation-desc">Descending (newest - oldest)</option>
+                <option value="creation-asc">Ascending (oldest - newest)</option>
+              </optgroup>
+              <optgroup label="Pages last edited">
+                <option value="last-edited-desc">Descending (newest - oldest)</option>
+                <option value="last-edited-asc">Ascending (oldest - newest)</option>
+              </optgroup>
             </select>
           </label>
           <label>
@@ -148,21 +154,43 @@
 
 <style>
   .dashboard-container {
-    padding: 1em;
     display: flex;
     flex-direction: column;
-    gap: 1em;
+    position: relative;
+    container-type: inline-size;
+  }
+  .controls {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .control-group {
+    display: flex;
+    gap: 0.5em;
+  }
+  @container (max-width: 500px) {
+    .controls {
+      justify-content: flex-start;
+    }
+    .control-group {
+      flex-direction: column;
+    }
+  }
+  .header {
+    background-color: #757575;
+    padding: 1em;
+    color: #fff;
+    position: sticky;
+    top: 0;
+    width: 100%;
+  }
+  .header .info {
+    margin-bottom: 1em;
   }
   .header .title {
     font-size: 1.3em;
   }
   .header .count {
     font-size: 0.75em;
-    color: #767676;
-  }
-  .controls {
-    display: flex;
-    justify-content: flex-end;
   }
   .loading-container {
     display: flex;
@@ -170,24 +198,21 @@
     padding: 3em 0;
   }
   .sites {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 1em;
     list-style: none;
-    padding: 0;
+    padding: 1em;
     margin: 0;
   }
-  .sites .site-list-item {
-    flex: 0 1 calc(33.3333% - 1em);
-  }
   @media screen and (max-width: 64em) {
-    .sites .site-list-item {
-      flex: 1 1 calc(50% - 1em);
+    .sites {
+      grid-template-columns: 1fr 1fr;
     }
   }
   @media screen and (max-width: 50em) {
-    .sites .site-list-item {
-      flex: 1 1 100%;
+    .sites {
+      grid-template-columns: 1fr;
     }
   }
 </style>

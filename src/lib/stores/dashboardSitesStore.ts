@@ -9,7 +9,7 @@ interface IDashboardSitesStore {
 
 export class DashboardSitesStore extends Store<IDashboardSitesStore> {
   constructor () {
-    super({ sites: [], sort: 'alpha', filter: 'all' })
+    super({ sites: [], sort: 'alpha-asc', filter: 'all' })
   }
 
   setSites (sites: DashboardSiteWithRoleSummary[]) {
@@ -17,8 +17,32 @@ export class DashboardSitesStore extends Store<IDashboardSitesStore> {
   }
 
   reset () {
-    this.set({ sites: [], sort: 'alpha', filter: 'all' })
+    this.set({ sites: [], sort: 'alpha-asc', filter: 'all' })
   }
+}
+
+function earliestCreationDate (site: DashboardSiteWithRoleSummary) {
+  return site.pagetrees?.reduce((earliest, pagetree) => {
+    const createdDate = new Date(pagetree.created)
+    return createdDate < earliest ? createdDate : earliest
+  }, new Date(site.pagetrees[0].created)) ?? new Date()
+}
+
+function latestModifiedDate (site: DashboardSiteWithRoleSummary) {
+  let latest = new Date(0)
+  site.pagetrees?.forEach(pagetree => {
+    const modifiedDate = new Date(pagetree.modifiedAt)
+    if (modifiedDate > latest) latest = modifiedDate
+  })
+  return latest
+}
+
+function sortByDate (sites: DashboardSiteWithRoleSummary[], dateFn: (site: DashboardSiteWithRoleSummary) => Date, ascending: boolean) {
+  const dateMap = new Map(sites.map(site => [site.id, dateFn(site)]))
+  sites.sort((a, b) => {
+    const diff = dateMap.get(a.id)!.getTime() - dateMap.get(b.id)!.getTime()
+    return ascending ? diff : -diff
+  })
 }
 
 export const dashboardSitesStore = new DashboardSitesStore()
@@ -39,36 +63,14 @@ export const filtered = derivedStore(dashboardSitesStore, (state) => {
     })
   }
   // sorting
-  if (sort === 'alpha') {
+  if (sort === 'alpha-asc') {
     filtered.sort((a, b) => a.name.localeCompare(b.name))
-  } else if (sort === 'status') {
-    const statusOrder = { LAUNCHED: 1, PRELAUNCH: 2, DECOMMISSIONED: 3 }
-    filtered.sort((a, b) => statusOrder[a.launchState] - statusOrder[b.launchState])
-  } else if (sort === 'date-added') {
-    // calculate the earliest pagetree creation date for each site and sort by that
-    const siteDateMap = filtered.reduce<Record<string, Date>>((acc, site) => {
-      const earliestDate = site.pagetrees?.reduce((earliest, pagetree) => {
-        const createdDate = new Date(pagetree.created)
-        return createdDate < earliest ? createdDate : earliest
-      }, new Date(site.pagetrees[0].created)) ?? new Date()
-      acc[site.id] = earliestDate
-      return acc
-    }, {})
-    filtered.sort((a, b) => siteDateMap[a.id].getTime() - siteDateMap[b.id].getTime())
-  } else if (sort === 'last-edited') {
-    // for each site, find the most recently modified pagetree and sort by that
-    const siteDateMap = filtered.reduce<Record<string, Date>>((acc, site) => {
-      let latestDate = new Date(0)
-      site.pagetrees?.forEach(pagetree => {
-        const modifiedDate = new Date(pagetree.modifiedAt)
-        if (modifiedDate > latestDate) {
-          latestDate = modifiedDate
-        }
-      })
-      acc[site.id] = latestDate
-      return acc
-    }, {})
-    filtered.sort((a, b) => siteDateMap[b.id].getTime() - siteDateMap[a.id].getTime())
+  } else if (sort === 'alpha-desc') {
+    filtered.sort((a, b) => b.name.localeCompare(a.name))
+  } else if (sort === 'creation-desc' || sort === 'creation-asc') {
+    sortByDate(filtered, earliestCreationDate, sort === 'creation-asc')
+  } else if (sort === 'last-edited-desc' || sort === 'last-edited-asc') {
+    sortByDate(filtered, latestModifiedDate, sort === 'last-edited-asc')
   }
   return filtered
 })
