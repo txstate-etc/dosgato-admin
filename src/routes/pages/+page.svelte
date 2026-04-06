@@ -435,7 +435,20 @@
           { label: 'Name', id: 'name', grow: 4.5, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) }), render: item => `<div class="page-name">${item.name}<div class="page-path">${item.path.split('/').slice(0, -1).join('/')}</div></div><button class="reset search-find-in-tree" type="button" tabindex="-1" onclick="window.dgPagesFindInPageTree(this, event)" data-path="${htmlEncode(item.path)}">${findInTreeIconSVG}<span>Find in page tree</span></button>` },
           { label: 'Title', id: 'title', grow: 3, get: 'title' },
           { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
-          { label: 'Status', id: 'status', fixed: '4em', icon: item => ({ icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' }), class: item => item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
+          {
+            label: 'Status',
+            id: 'status',
+            fixed: '4em',
+            icon: item => [
+              { icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', class: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
+                ...(item.schedules?.length
+                  ? [{ icon: alarmFill, label: 'Schedule', tooltip: scheduleTooltip(item.schedules), class: 'scheduled' }]
+                  : itemAncestors(item).some(a => a.schedules?.some(s => s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES))
+                    ? [{ icon: alarmFill, label: 'Has scheduled actions via an ancestor', class: 'scheduled subpage' }]
+                    : []
+                )
+            ]
+          },
           { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
           { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
         ]}
