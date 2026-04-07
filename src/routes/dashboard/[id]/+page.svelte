@@ -10,10 +10,12 @@
   import editUserIcon from '@iconify-icons/ph/user-gear-fill'
   import trashIcon from '@iconify-icons/ph/trash-simple-fill'
   import infoIcon from '@iconify-icons/ph/info-fill'
+  import linkOutIcon from '@iconify-icons/ph/arrow-square-out-bold'
   import { base } from '$app/paths'
   import { goto } from '$app/navigation'
   import UserDetailDialog from './UserDetailDialog.svelte'
   import DashboardPagetreeTable from './DashboardPagetreeTable.svelte'
+  import { uiConfig } from '../../../local'
 
 
   export let data: { site: DashboardSiteDetailDisplay }
@@ -84,7 +86,7 @@
             {/if}
             {#if site.launched}<Button type="button" icon={clipboard} on:click={onCopyURL}>Copy Live URL</Button>{/if}
             {#if site.rootPageId}
-              <Button type="button" icon={treeStructure} on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}>Reveal in Page Tree</Button>
+              <Button type="button" icon={treeStructure} on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}>Go to Page Tree</Button>
             {/if}
           </div>
         </div>
@@ -116,8 +118,8 @@
         </dl>
       </div>
       <div class="secondary-actions">
-        <Button secondary icon={editUserIcon}>Update Website Management</Button>
-        {#if site.permissions.audit}<Button secondary icon={trashIcon}>Request Site Decommission</Button>{/if}
+        {#if uiConfig?.dashboardActions?.updateWebsiteManagementUrl}<Button secondary icon={editUserIcon} on:click={() => window.open(uiConfig.dashboardActions.updateWebsiteManagementUrl, '_blank')}>Update Website Management</Button>{/if}
+        {#if site.permissions.audit && uiConfig?.dashboardActions?.requestSiteDecommissionUrl}<Button secondary icon={trashIcon} on:click={() => window.open(uiConfig.dashboardActions.requestSiteDecommissionUrl, '_blank')}>Request Site Decommission</Button>{/if}
       </div>
     </div>
   </div>
@@ -141,6 +143,12 @@
           <div class="value">{site.team.length}</div>
         </div>
       </div>
+      {#if uiConfig?.dashboardActions?.defineAccessLevelUrl}
+        <a class="dashboard-link with-icon" href="{uiConfig.dashboardActions.defineAccessLevelUrl}" target="_blank">
+          <span>What are access levels?</span>
+          <Icon icon={linkOutIcon} width="1.2em" />
+        </a>
+      {/if}
      <!-- <div class="team-actions">
         <Button icon={plusIcon}>Add User</Button>
         <Button icon={teamIcon}>Audit Team</Button>
@@ -161,7 +169,13 @@
   </DetailPanel>
   <DetailPanel header="Role Management" headerColor="#F5F1EE">
     <DetailPanelSection>
-      <p>All team members in your site should have at least one role assigned. To add or remove roles, or update existing role permissions, contact Support.</p>
+      <p>All team members in your site should have at least one role assigned. To add or remove roles, or update existing role permissions, contact {#if uiConfig?.dashboardActions?.contactSupportUrl}<a class="dashboard-link" href="{uiConfig.dashboardActions.contactSupportUrl}">Support</a>{:else}Support{/if}.</p>
+      {#if uiConfig?.dashboardActions?.defineRolesUrl}
+        <a class="dashboard-link with-icon" href="{uiConfig.dashboardActions.defineRolesUrl}" target="_blank">
+          <span>What are roles?</span>
+          <Icon icon={linkOutIcon} width="1.2em" />
+        </a>
+      {/if}
       {#if site.auditRoles.length}
       <SortableTable items={site.auditRoles} headers={[
         { id: 'role', label: 'Role Title', get: 'name', sortable: true, sortFunction: (item) => item.name, mobileRole: 'title' },
@@ -174,14 +188,20 @@
       {/if}
     </DetailPanelSection>
   </DetailPanel>
-  <DetailPanel header="Related Pagetrees" headerColor="#F5F1EE">
+  <DetailPanel header="Related Page Trees" headerColor="#F5F1EE">
     <DetailPanelSection>
       <div class="pagetree-details">
         <div class="detail">
-          <div class="label">Total Pagetrees:</div>
+          <div class="label">Total Page Trees:</div>
           <div class="value">{site.pagetrees.length}</div>
         </div>
       </div>
+      {#if uiConfig?.dashboardActions?.definePagetreeUrl}
+        <a class="dashboard-link with-icon" href="{uiConfig.dashboardActions.definePagetreeUrl}" target="_blank">
+          <span>What is a page tree?</span>
+          <Icon icon={linkOutIcon} width="1.2em" />
+        </a>
+      {/if}
       <!-- link to information about page trees -->
        <DashboardPagetreeTable
          pagetrees={site.pagetrees}
@@ -298,6 +318,16 @@
     display: flex;
     gap: 1em;
     align-items: flex-start;
+  }
+  .dashboard-link {
+    color: var(--dg-link-color, #006699);
+  }
+  .dashboard-link.with-icon {
+    display: inline-flex;
+    gap: 0.25em;
+    align-items: center;
+    font-weight: 700;
+    margin-bottom: 1.1em;
   }
   :global(button.user-detail) {
     padding: 0.3em 0.5em;

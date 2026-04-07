@@ -89,5 +89,13 @@ export const uiConfig: UIConfig = {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(event)
     }).catch(console.error)
+  },
+  dashboardActions: {
+    contactSupportUrl: 'https://www.example.com',
+    defineAccessLevelUrl: 'https://www.example.com',
+    definePagetreeUrl: 'https://www.example.com',
+    defineRolesUrl: 'https://www.example.com',
+    requestSiteDecommissionUrl: 'https://www.example.com',
+    updateWebsiteManagementUrl: 'https://www.example.com'
   }
 }
