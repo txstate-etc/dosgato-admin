@@ -5,6 +5,7 @@
   import { Icon, Button } from '@dosgato/dialog'
   import { eq } from '@txstate-mws/svelte-components'
   import list from '@iconify-icons/ph/list-bullets-bold'
+  import treeStructure from '@iconify-icons/ph/tree-structure-bold'
   import downIcon from '@iconify-icons/ph/caret-down-bold'
   import upIcon from '@iconify-icons/ph/caret-up-bold'
   import lockIcon from '@iconify-icons/ph/lock-simple-fill'
@@ -66,7 +67,7 @@
           {#if showActionColumn}
             <td>
               {#if pt.permissions.viewPages}
-                <Button on:click={() => revealInPageTree(pt.rootPage.id)} class="open-pagetree"><Icon icon={list} hiddenLabel="Open in Pages"/></Button>
+                <Button on:click={() => revealInPageTree(pt.rootPage.id)} class="open-pagetree"><Icon icon={treeStructure} hiddenLabel="Open in Pages"/></Button>
               {/if}
             </td>
           {/if}
@@ -121,7 +122,7 @@
               <div class="actions">
                 <button type="button" on:click={() => revealInPageTree(pt.rootPage.id)}>
                   <div class="button-content">
-                    <Icon icon={list} width="1.5em" class="open-pagetree" />
+                    <Icon icon={treeStructure} width="1.5em" class="open-pagetree" />
                     <span class="button-label">Go to Pagetree</span>
                   </div>
                 </button>

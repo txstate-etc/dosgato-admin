@@ -5,6 +5,7 @@
   import eye from '@iconify-icons/ph/eye-bold'
   import clipboard from '@iconify-icons/ph/clipboard-fill'
   import list from '@iconify-icons/ph/list-bullets-bold'
+  import treeStructure from '@iconify-icons/ph/tree-structure'
   import exportIcon from '@iconify-icons/ph/export-bold'
   import editUserIcon from '@iconify-icons/ph/user-gear-fill'
   import trashIcon from '@iconify-icons/ph/trash-simple-fill'
@@ -83,7 +84,7 @@
             {/if}
             {#if site.launched}<Button type="button" icon={clipboard} on:click={onCopyURL}>Copy Live URL</Button>{/if}
             {#if site.rootPageId}
-              <Button type="button" icon={list} on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}>Reveal in Page Tree</Button>
+              <Button type="button" icon={treeStructure} on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}>Reveal in Page Tree</Button>
             {/if}
           </div>
         </div>
@@ -160,6 +161,7 @@
   </DetailPanel>
   <DetailPanel header="Role Management" headerColor="#F5F1EE">
     <DetailPanelSection>
+      <p>All team members in your site should have at least one role assigned. To add or remove roles, or update existing role permissions, contact Support.</p>
       {#if site.auditRoles.length}
       <SortableTable items={site.auditRoles} headers={[
         { id: 'role', label: 'Role Title', get: 'name', sortable: true, sortFunction: (item) => item.name, mobileRole: 'title' },
@@ -297,8 +299,19 @@
     gap: 1em;
     align-items: flex-start;
   }
+  :global(button.user-detail) {
+    padding: 0.3em 0.5em;
+    border: 0;
+    border-radius: 0.25em;
+  }
+  :global(button.user-detail:hover) {
+    background-color: var(--dg-button-bg, #501214);
+  }
   :global(button.user-detail .button-icon svg path) {
     fill: #006699;
+  }
+  :global(button.user-detail:hover .button-icon svg path) {
+    fill: #ffffff;
   }
   .team-details, .pagetree-details {
     display: flex;
