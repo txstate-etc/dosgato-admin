@@ -7,12 +7,15 @@ export async function loginAs (page: Page, netid: string) {
   await username.pressSequentially(netid)
   const submit = page.getByRole('button', { name: 'login' })
   await submit.click()
-  await page.waitForURL(/^http:\/\/proxy\/\.admin\/pages$/)
+  await page.waitForURL(/^http:\/\/proxy\/\.admin\/(pages|dashboard)$/)
 }
 
 type MyFixtures = {
   adminPage: Page
   editorPage: Page
+  ownerPage: Page
+  managerPage: Page
+  dbEditorPage: Page
 }
 
 export const test = base.extend<{}, MyFixtures>({
@@ -28,6 +31,27 @@ export const test = base.extend<{}, MyFixtures>({
     const editorPage = await context.newPage()
     await loginAs(editorPage, 'ed01')
     await use(editorPage)
+    await context.close()
+  }, { scope: 'worker' }],
+  ownerPage: [async ({ browser }, use) =>{
+    const context = await browser.newContext()
+    const ownerPage = await context.newPage()
+    await loginAs(ownerPage, 'db_owner')
+    await use(ownerPage)
+    await context.close()
+  }, { scope: 'worker' }],
+  managerPage: [async ({ browser }, use) =>{
+    const context = await browser.newContext()
+    const managerPage = await context.newPage()
+    await loginAs(managerPage, 'db_manager1')
+    await use(managerPage)
+    await context.close()
+  }, { scope: 'worker' }],
+  dbEditorPage: [async ({ browser }, use) =>{
+    const context = await browser.newContext()
+    const dbEditorPage = await context.newPage()
+    await loginAs(dbEditorPage, 'db_editor1')
+    await use(dbEditorPage)
     await context.close()
   }, { scope: 'worker' }]
 })

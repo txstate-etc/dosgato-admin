@@ -91,7 +91,7 @@
     <div class="header">
       <div class="info">
         <div class="title">My Sites</div>
-        <div class="count">{#await sitesPromise}&nbsp;{:then}{data.sites.length} total sites{/await}</div>
+        <div class="count">{#await sitesPromise}&nbsp;{:then}{data.sites.length} {data.sites.length === 1 ? 'site' : 'total sites'}{/await}</div>
       </div>
       <div class="controls">
         <!-- Future controls can go here. Might want to use a store to manage the state of the controls and the sites showing -->
