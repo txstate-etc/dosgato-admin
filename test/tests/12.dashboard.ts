@@ -3,6 +3,7 @@ import { Page } from '@playwright/test'
 
 interface ButtonsShown {
   pagesTopNav: boolean
+  gatoPreview: boolean
   goToPagetree: boolean
   updateSiteManagement: boolean
   requestDecom: boolean
@@ -18,7 +19,8 @@ interface ButtonsShown {
 
 async function testButtonVisibility (page: Page, userButtons: ButtonsShown) {
   await expect(page.getByRole('link', { name: 'Pages' }))[userButtons.pagesTopNav ? 'toBeVisible' : 'toBeHidden']()
-  await expect(page.getByRole('button', { name: 'Gato Preview' })).toBeHidden() // this test site is not live
+  await expect(page.getByRole('button', { name: 'Gato Preview' }))[userButtons.gatoPreview ? 'toBeVisible' : 'toBeHidden']()
+  await expect(page.getByRole('button', { name: 'Copy Live URL' })).toBeHidden() // hidden because this test site is not live
   await expect(page.getByRole('button', { name: 'Go To Page Tree' }))[userButtons.goToPagetree ? 'toBeVisible' : 'toBeHidden']()
   await expect(page.getByRole('button', { name: 'Update Website Management' }))[userButtons.updateSiteManagement ? 'toBeVisible' : 'toBeHidden']()
   await expect(page.getByRole('button', { name: 'Request Site Decommission' }))[userButtons.requestDecom ? 'toBeVisible' : 'toBeHidden']()
@@ -52,6 +54,7 @@ test.describe('dashboard', () => {
     await ownerPage.locator('a.site-card').filter({ hasText: 'dashboard-test' }).click()
     const buttonVisiblity: ButtonsShown = {
       pagesTopNav: false,
+      gatoPreview: false,
       goToPagetree: false,
       updateSiteManagement: true,
       requestDecom: true,
@@ -79,6 +82,7 @@ test.describe('dashboard', () => {
     await managerPage.locator('a.site-card').filter({ hasText: 'dashboard-test' }).click()
     const buttonVisiblity: ButtonsShown = {
       pagesTopNav: false,
+      gatoPreview: false,
       goToPagetree: false,
       updateSiteManagement: true,
       requestDecom: true,
@@ -106,6 +110,7 @@ test.describe('dashboard', () => {
     await dbEditorPage.locator('a.site-card').filter({ hasText: 'dashboard-test' }).click()
     const buttonVisiblity: ButtonsShown = {
       pagesTopNav: true,
+      gatoPreview: true,
       goToPagetree: true,
       updateSiteManagement: true,
       requestDecom: false,
