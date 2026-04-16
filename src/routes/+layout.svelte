@@ -108,7 +108,7 @@
 
   function handleSubnavKeydown (index: number) {
     return async (e: KeyboardEvent) => {
-      if (!e.shiftKey || !e.metaKey) return
+      if (!e.shiftKey || (!e.metaKey && !e.ctrlKey)) return
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
       const links = $currentSubNav?.links
       if (!links || !links[index]?.movable) return
