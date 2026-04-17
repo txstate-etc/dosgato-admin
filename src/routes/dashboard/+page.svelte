@@ -68,17 +68,17 @@
     {
       id: 'dashboard-things',
       actions: [
-        { label: 'Manage Websites', icon: browserIcon, onClick: () => { window.location.href = 'https://gato.its.txst.edu/manage-website.html' } },
-        { label: 'Manage Users', icon: usersIcon, onClick: () => { window.location.href = 'https://gato.its.txst.edu/manage-user-access.html' } }
+        { label: 'Manage Websites', icon: browserIcon, onClick: () => { window.open('https://gato.its.txst.edu/manage-website.html', '_blank') } },
+        { label: 'Manage Users', icon: usersIcon, onClick: () => { window.open('https://gato.its.txst.edu/manage-user-access.html', '_blank') } }
       ]
     },
     {
       id: 'gato-cms-resources',
       actions: [
-        { label: 'What\'s New in Gato CMS', icon: newsIcon, onClick: () => { window.location.href = 'https://gato.its.txst.edu/whats-new.html' } },
-        { label: 'Submit a Feature Request', icon: bulbIcon, onClick: () => { window.location.href = 'https://gato.its.txst.edu/feature-request-form.html' } },
-        { label: 'Report a Problem', icon: buoyIcon, onClick: () => { window.location.href = 'https://gato.its.txst.edu/get-help.html' } },
-        { label: 'Self-Paced Training', icon: bookIcon, onClick: () => { window.location.href = 'https://canvas.txstate.edu/courses/2057568' } }
+        { label: 'What\'s New in Gato CMS', icon: newsIcon, onClick: () => { window.open('https://gato.its.txst.edu/whats-new.html', '_blank') } },
+        { label: 'Submit a Feature Request', icon: bulbIcon, onClick: () => { window.open('https://gato.its.txst.edu/feature-request-form.html', '_blank') } },
+        { label: 'Report a Problem', icon: buoyIcon, onClick: () => { window.open('https://gato.its.txst.edu/get-help.html', '_blank') } },
+        { label: 'Self-Paced Training', icon: bookIcon, onClick: () => { window.open('https://canvas.txstate.edu/courses/2057568', '_blank') } }
       ]
     }
   ]
