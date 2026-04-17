@@ -153,11 +153,11 @@
     on:escape
     on:saved
     let:data>
-    <FieldDateTime path='publishDate' label='Publish Date' conditional={canPublish} />
+    <FieldDateTime clearable path='publishDate' label='Publish Date' conditional={canPublish} />
     <FieldCheckbox path='includeSubpages' related boxLabel='Include subpages in scheduled publish' conditional={canPublish && !!data.publishDate} />
     <FieldCheckbox path='hasRecurrence' related boxLabel='Repeat publish on a schedule' conditional={(canPublish && !!data.publishDate) || (canUnpublish && !!data.unpublishDate)} defaultValue={false} />
     <FieldHidden path='recurrenceType' conditional={!!data.hasRecurrence} value={ScheduledPublishRecurrenceType.WEEK} />
     <FieldSelect path='recurrenceInterval' related number label='Repeat' choices={recurrenceChoices} conditional={!!data.hasRecurrence} notNull defaultValue={1} />
-    <FieldDateTime path='unpublishDate' label='Unpublish Date' conditional={canUnpublish} />
+    <FieldDateTime clearable path='unpublishDate' label='Unpublish Date' conditional={canUnpublish} />
   </FormDialog>
 {/if}
