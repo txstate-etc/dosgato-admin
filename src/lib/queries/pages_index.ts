@@ -36,8 +36,7 @@ permissions {
   delete
   undelete
   unpublish
-  schedulePublish
-  scheduleUnpublish
+  scheduleEdit
 }
 site {
   id
@@ -89,8 +88,7 @@ export interface TreePage {
     delete: boolean
     undelete: boolean
     unpublish: boolean
-    schedulePublish: boolean
-    scheduleUnpublish: boolean
+    scheduleEdit: boolean
   }
   site: {
     id: string

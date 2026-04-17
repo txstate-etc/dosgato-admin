@@ -169,7 +169,7 @@
     publishing.actions.push(
       publishAction,
       { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => openModal('publishwithsubpages'), class: 'pubsubpages' },
-      { label: 'Scheduled Publish', icon: alarmFill, disabled: !page.permissions.schedulePublish && !page.permissions.scheduleUnpublish, onClick: () => openModal('schedulepublish') },
+      { label: 'Scheduled Publish', icon: alarmFill, disabled: !page.permissions.scheduleEdit, onClick: () => openModal('schedulepublish') },
       unpublishAction
     )
 
