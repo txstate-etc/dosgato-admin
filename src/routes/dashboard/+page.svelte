@@ -182,9 +182,9 @@
     position: sticky;
     top: 0;
     width: 100%;
-  }
-  .header .info {
-    margin-bottom: 1em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   .header .title {
     font-size: 1.3em;
@@ -206,6 +206,11 @@
     margin: 0;
   }
   @media screen and (max-width: 64em) {
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1em;
+    }
     .sites {
       grid-template-columns: 1fr 1fr;
     }

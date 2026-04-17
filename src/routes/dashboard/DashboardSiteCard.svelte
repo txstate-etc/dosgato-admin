@@ -16,7 +16,7 @@
       </div>
       <div class="bottom">
         <div class="site-name">{site.name}</div>
-        <div class="pagetree-count">{site.pagetrees?.length ?? 0} pagetree{site.pagetrees?.length === 1 ? '' : 's'}</div>
+        <div class="pagetree-count">{site.pagetrees?.length ?? 0} page tree{site.pagetrees?.length === 1 ? '' : 's'}</div>
       </div>
     </div>
     <div class="status">
