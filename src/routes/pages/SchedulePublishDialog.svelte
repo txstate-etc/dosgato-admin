@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FieldCheckbox, FieldDateTime, FieldNumber, FieldSelect, FormDialog } from '@dosgato/dialog'
+  import { FieldCheckbox, FieldDateTime, FieldHidden, FieldSelect, FormDialog } from '@dosgato/dialog'
   import type { Feedback, SubmitResponse } from '@txstate-mws/svelte-forms'
   import { onMount } from 'svelte'
   import { unique } from 'txstate-utils'
@@ -24,9 +24,9 @@
   }
 
   const recurrenceChoices = [
-    { label: 'Daily', value: ScheduledPublishRecurrenceType.DAY },
-    { label: 'Weekly', value: ScheduledPublishRecurrenceType.WEEK },
-    { label: 'Monthly', value: ScheduledPublishRecurrenceType.MONTH }
+    { label: 'Every Week', value: 1 },
+    { label: 'Every Two Weeks', value: 2 },
+    { label: 'Every Four Weeks', value: 4 }
   ]
 
   function buildRecurrence (state: SchedulePublishState) {
@@ -156,8 +156,8 @@
     <FieldDateTime path='publishDate' label='Publish Date' conditional={canPublish} />
     <FieldCheckbox path='includeSubpages' related boxLabel='Include subpages in scheduled publish' conditional={canPublish && !!data.publishDate} />
     <FieldCheckbox path='hasRecurrence' related boxLabel='Repeat publish on a schedule' conditional={(canPublish && !!data.publishDate) || (canUnpublish && !!data.unpublishDate)} defaultValue={false} />
-    <FieldSelect path='recurrenceType' related label='Repeat' choices={recurrenceChoices} conditional={!!data.hasRecurrence} notNull defaultValue='DAY' />
-    <FieldNumber path='recurrenceInterval' related label={`Every how many ${data.recurrenceType?.toLowerCase() ?? 'day'}s?`} conditional={!!data.hasRecurrence} defaultValue={1} />
+    <FieldHidden path='recurrenceType' conditional={!!data.hasRecurrence} value={ScheduledPublishRecurrenceType.WEEK} />
+    <FieldSelect path='recurrenceInterval' related number label='Repeat' choices={recurrenceChoices} conditional={!!data.hasRecurrence} notNull defaultValue={1} />
     <FieldDateTime path='unpublishDate' label='Unpublish Date' conditional={canUnpublish} />
   </FormDialog>
 {/if}
