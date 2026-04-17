@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FieldCheckbox, FieldDateTime, FieldHidden, FieldSelect, FormDialog } from '@dosgato/dialog'
+  import { FieldCheckbox, FieldDateTime, FieldHidden, FieldSelect, FormDialog, FormPreamble } from '@dosgato/dialog'
   import type { Feedback, SubmitResponse } from '@txstate-mws/svelte-forms'
   import { onMount } from 'svelte'
   import { unique } from 'txstate-utils'
@@ -153,11 +153,12 @@
     on:escape
     on:saved
     let:data>
-    <FieldDateTime clearable path='publishDate' label='Publish Date' conditional={canPublish} />
+    <FormPreamble>If the team member who scheduled a page to be published is removed or otherwise loses access to the site, the publish will be cancelled. If you hit Save, you become the scheduler.</FormPreamble>
+    <FieldDateTime clearable path='publishDate' label='Publish Date' conditional={canPublish} helptext={data.publishDate ? 'To remove this scheduled publish, clear this field and hit Save.' : 'The page will be published on the scheduled date and time.'}/>
     <FieldCheckbox path='includeSubpages' related boxLabel='Include subpages in scheduled publish' conditional={canPublish && !!data.publishDate} />
     <FieldCheckbox path='hasRecurrence' related boxLabel='Repeat publish on a schedule' conditional={(canPublish && !!data.publishDate) || (canUnpublish && !!data.unpublishDate)} defaultValue={false} />
     <FieldHidden path='recurrenceType' conditional={!!data.hasRecurrence} value={ScheduledPublishRecurrenceType.WEEK} />
     <FieldSelect path='recurrenceInterval' related number label='Repeat' choices={recurrenceChoices} conditional={!!data.hasRecurrence} notNull defaultValue={1} />
-    <FieldDateTime clearable path='unpublishDate' label='Unpublish Date' conditional={canUnpublish} />
+    <FieldDateTime clearable path='unpublishDate' label='Unpublish Date' conditional={canUnpublish} helptext={data.unpublishDate ? 'To remove this scheduled unpublish, clear this field and hit Save.' : 'The page and its subpages will be unpublished on the selected date and time.'} />
   </FormDialog>
 {/if}
