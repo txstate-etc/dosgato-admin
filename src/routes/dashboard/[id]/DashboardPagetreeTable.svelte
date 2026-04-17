@@ -4,21 +4,32 @@
   import { dateStamp } from '$lib'
   import { Icon, Button } from '@dosgato/dialog'
   import { eq } from '@txstate-mws/svelte-components'
-  import list from '@iconify-icons/ph/list-bullets-bold'
+  import browserIcon from '@iconify-icons/ph/browser-bold'
+  import hammerIcon from '@iconify-icons/ph/hammer-bold'
+  import archiveIcon from '@iconify-icons/ph/archive-bold'
   import treeStructure from '@iconify-icons/ph/tree-structure-bold'
   import downIcon from '@iconify-icons/ph/caret-down-bold'
   import upIcon from '@iconify-icons/ph/caret-up-bold'
   import lockIcon from '@iconify-icons/ph/lock-simple-fill'
-  import StatusBadge from './StatusBadge.svelte'
-
   interface PagetreeItem {
     id: string
     name: string
     type: string
     pageCount: number
     rootPage: { id: string, template: { templateTheme?: string } }
+    pages: { id: string }[]
     permissions: { viewPages: boolean }
     locked?: boolean
+  }
+
+  function getStatus (type: string, launchState: string) {
+    if (type === 'PRIMARY') {
+      if (launchState === 'LAUNCHED') return { state: 'LIVE', icon: browserIcon }
+      if (launchState === 'PRELAUNCH') return { state: 'SANDBOX', icon: hammerIcon }
+    } else if (type === 'SANDBOX') {
+      return { state: 'SANDBOX', icon: hammerIcon }
+    }
+    return { state: 'ARCHIVED', icon: archiveIcon }
   }
 
   export let pagetrees: PagetreeItem[]
@@ -41,8 +52,9 @@
       <tr>
         <th>Status</th>
         <th>Name</th>
-        <th>Pages</th>
         <th>Theme</th>
+        <th>Live Pages</th>
+        <th>Total Pages</th>
         <th>Last Edited</th>
         {#if showActionColumn}
           <th>Go to Page Tree</th>
@@ -52,7 +64,7 @@
     <tbody>
       {#each pagetrees as pt (pt.id)}
         <tr>
-          <td><StatusBadge item={{ type: pt.type, launchState }} /></td>
+          <td><span class="pagetree-status"><Icon icon={getStatus(pt.type, launchState).icon} width="1.2em" />{getStatus(pt.type, launchState).state}</span></td>
           <td>
             <span class="name-cell">
               {pt.name}
@@ -61,8 +73,9 @@
               {/if}
             </span>
           </td>
-          <td>{pt.pageCount}</td>
           <td>{pt.rootPage?.template?.templateTheme ?? ''}</td>
+          <td>{pt.pages.length}</td>
+          <td>{pt.pageCount}</td>
           <td>{pagetreeLastModifiedById[pt.id] ? dateStamp(pagetreeLastModifiedById[pt.id].toISOString()) : ''}</td>
           {#if showActionColumn}
             <td>
@@ -83,7 +96,7 @@
         <div class="header" class:open={openPanels[pt.id]}>
           <button type="button" on:click={() => togglePanel(pt.id)} aria-expanded={!!openPanels[pt.id]} aria-controls={bodyId}>
             <div class="header-content">
-              <StatusBadge item={{ type: pt.type, launchState }} />
+              <span class="pagetree-status"><Icon icon={getStatus(pt.type, launchState).icon} width="1.2em" />{getStatus(pt.type, launchState).state}</span>
               <span class="title">{pt.name}</span>
             </div>
             <div class="header-controls">
@@ -106,12 +119,16 @@
             {/if}
             <dl>
               <span>
-                <dt>Pages:</dt>
-                <dd>{pt.pageCount}</dd>
-              </span>
-              <span>
                 <dt>Theme:</dt>
                 <dd>{pt.rootPage?.template?.templateTheme ?? ''}</dd>
+              </span>
+              <span>
+                <dt>Live Pages:</dt>
+                <dd>{pt.pages.length}</dd>
+              </span>
+              <span>
+                <dt>Total Pages:</dt>
+                <dd>{pt.pageCount}</dd>
               </span>
               <span>
                 <dt>Last Edited:</dt>
@@ -314,5 +331,13 @@
   }
   .actions :global(svg path) {
     fill: #006699;
+  }
+
+  .pagetree-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 400;
   }
 </style>

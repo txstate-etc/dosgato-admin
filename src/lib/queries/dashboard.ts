@@ -15,7 +15,7 @@ export interface DashboardSite {
   }[]
 }
 
-export const titleCaseAccess = {
+export const titleCaseAccess: Record<string, string> = {
   EDITOR: 'Editor',
   CONTRIBUTOR: 'Contributor',
   READONLY: 'Read-only'
@@ -150,7 +150,10 @@ export interface DashboardSiteDetailRaw {
       viewPages: boolean
     }
     modifiedAt: string
-    pageCount
+    pageCount: number
+    pages: {
+      id: string
+    }[]
   }[]
   auditRoles: {
     id: string
@@ -220,6 +223,9 @@ export const GET_DASHBOARD_SITE_BY_ID = `
         }
         modifiedAt
         pageCount
+        pages (filter: { live: true }) {
+          id
+        }
       }
       auditRoles {
         id
@@ -290,7 +296,7 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
 
   // Add audit role users and their access
   for (const role of site.auditRoles) {
-    const access = role.access ? titleCaseAccess[role.access] : ''
+    const access = titleCaseAccess[role.access] ?? ''
     for (const user of role.users) {
       teamMembersById[user.id] = user
       const accessSet = accessByUserId.get(user.id) ?? new Set()
@@ -312,7 +318,7 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
       roles: site.auditRoles.filter(role => role.users.some(u => u.id === user.id)).map(role => ({
         name: role.name,
         description: role.description,
-        access: role.access ? titleCaseAccess[role.access] : ''
+        access: titleCaseAccess[role.access] ?? ''
       }))
     }
   }

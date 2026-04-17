@@ -103,13 +103,9 @@
             <dt>Created:</dt>
             <dd>{site.createdAt}</dd>
           </div>
-          <div>
-            <dt>Theme:</dt>
-            <dd>{site.pagetrees[0]?.rootPage?.template?.templateTheme ?? 'None Assigned'}</dd>
-          </div>
-          <div>
-            <dt>Live Pages:</dt>
-            <dd>{site.publishedPages}</dd>
+          <div class="status">
+            <dt>Site Status:</dt>
+            <dd>{site.launchState === 'LAUNCHED' ? 'Active' : site.launchState === 'PRELAUNCH' ? 'Prelaunch' : 'Inactive'}</dd>
           </div>
           <div>
             <dt>Total Pages:</dt>
@@ -118,8 +114,8 @@
         </dl>
       </div>
       <div class="secondary-actions">
-        {#if uiConfig?.dashboardActions?.updateWebsiteManagementUrl}<Button secondary icon={editUserIcon} on:click={() => window.open(uiConfig.dashboardActions.updateWebsiteManagementUrl, '_blank')}>Update Website Management</Button>{/if}
-        {#if site.permissions.audit && uiConfig?.dashboardActions?.requestSiteDecommissionUrl}<Button secondary icon={trashIcon} on:click={() => window.open(uiConfig.dashboardActions.requestSiteDecommissionUrl, '_blank')}>Request Site Decommission</Button>{/if}
+        {#if uiConfig?.dashboardActions?.updateWebsiteManagementUrl}<Button secondary icon={editUserIcon} on:click={() => window.open(uiConfig.dashboardActions?.updateWebsiteManagementUrl, '_blank')}>Update Website Management</Button>{/if}
+        {#if site.permissions.audit && uiConfig?.dashboardActions?.requestSiteDecommissionUrl}<Button secondary icon={trashIcon} on:click={() => window.open(uiConfig.dashboardActions?.requestSiteDecommissionUrl, '_blank')}>Request Site Decommission</Button>{/if}
       </div>
     </div>
   </div>
