@@ -176,7 +176,7 @@
             'Inactive Since': $store.user.disabledAt ? DateTime.fromISO($store.user.disabledAt).toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) : ''
           }} />
         </DetailPanelSection>
-        <DetailPanelSection hasBackground addTopBorder>
+        <DetailPanelSection hasBackground addTopBorder lastSection>
           <Accordion title="Group Memberships">
             {#if $store.user.directGroups.length}
               <SortableTable items={$store.user.directGroups}

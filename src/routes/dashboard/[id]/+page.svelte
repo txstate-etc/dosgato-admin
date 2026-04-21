@@ -11,6 +11,7 @@
   import trashIcon from '@iconify-icons/ph/trash-simple-fill'
   import infoIcon from '@iconify-icons/ph/info-fill'
   import linkOutIcon from '@iconify-icons/ph/arrow-square-out-bold'
+  import teamSettingsIcon from '@iconify-icons/ph/user-gear-fill'
   import { base } from '$app/paths'
   import { goto } from '$app/navigation'
   import UserDetailDialog from './UserDetailDialog.svelte'
@@ -127,7 +128,7 @@
     </DetailPanelSection>
   </DetailPanel>
 -->
-  <DetailPanel header="Team Members" headerColor="#F5F1EE">
+  <DetailPanel header="Team Members" headerColor="#F5F1EE" collapsible>
     <DetailPanelSection>
       <div class="team-details">
         <!-- <div class="detail">
@@ -145,11 +146,13 @@
           <Icon icon={linkOutIcon} width="1.2em" />
         </a>
       {/if}
-     <!-- <div class="team-actions">
-        <Button icon={plusIcon}>Add User</Button>
+     <div class="team-actions">
+        <!-- <Button icon={plusIcon}>Add User</Button>
         <Button icon={teamIcon}>Audit Team</Button>
-        <Button icon={exportIcon}>Export CSV</Button>
-     </div> -->
+        <Button icon={exportIcon}>Export CSV</Button> -->
+        <!-- TODO: TEMPORARY UNTIL ACTIONS AVAILABLE IN GATO -->
+        <Button icon={teamSettingsIcon} on:click={ () => { window.open('https://gato.its.txst.edu/manage-user-access/update-access-form.html', '_blank')} } >Update Team Member Access</Button>
+     </div>
       {#if site.team.length}
       <SortableTable items={site.team} headers={[
         { id: 'access', label: 'Access Level', get: 'access', sortable: true, mobileRole: 'subtitle' },
@@ -163,7 +166,7 @@
       {/if}
     </DetailPanelSection>
   </DetailPanel>
-  <DetailPanel header="Role Management" headerColor="#F5F1EE">
+  <DetailPanel header="Role Management" headerColor="#F5F1EE" collapsible>
     <DetailPanelSection>
       <p>All team members in your site should have at least one role assigned. To add or remove roles, or update existing role permissions, contact {#if uiConfig?.dashboardActions?.contactSupportUrl}<a class="dashboard-link" href="{uiConfig.dashboardActions.contactSupportUrl}">Support</a>{:else}Support{/if}.</p>
       {#if uiConfig?.dashboardActions?.defineRolesUrl}
@@ -184,7 +187,7 @@
       {/if}
     </DetailPanelSection>
   </DetailPanel>
-  <DetailPanel header="Related Page Trees" headerColor="#F5F1EE">
+  <DetailPanel header="Related Page Trees" headerColor="#F5F1EE" collapsible>
     <DetailPanelSection>
       <div class="pagetree-details">
         <div class="detail">
@@ -227,13 +230,15 @@
   .site-stats {
     display: flex;
     flex-direction: column;
-    border: 2px solid #808080;
-    border-radius: 4px;
+    border: 1px solid #808080;
+    border-radius: 8px;
     margin-bottom: 2em;
   }
   .site-stats .top {
     gap: 1em;
     padding: 1em;
+    border-top-right-radius: 8px;
+    border-top-left-radius: 8px;
   }
   .site-stats .top.launched {
     background-color: var(--dashboard-live-bg);
@@ -326,9 +331,12 @@
     margin-bottom: 1.1em;
   }
   :global(button.user-detail) {
-    padding: 0.3em 0.5em;
+    padding: 0.1em 0.5em;
     border: 0;
     border-radius: 0.25em;
+  }
+  :global(button.user-detail .button-icon) {
+    display: flex;
   }
   :global(button.user-detail:hover) {
     background-color: var(--dg-button-bg, #501214);
