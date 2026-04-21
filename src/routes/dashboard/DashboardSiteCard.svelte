@@ -47,11 +47,11 @@
     text-decoration: none;
     color: inherit;
     box-shadow: 4px 4px 0 0 #ddd;
-    transition: all 0.1s ease;
+    transition: all 0.2s ease;
   }
   .site-card:hover {
     box-shadow: none;
-    border-width: 2px;
+    transform: translate(3px, 3px);
   }
   .site-card-header {
     padding: 0.5em 1em 0;
@@ -59,6 +59,7 @@
     justify-content: space-between;
     align-items: flex-end;
     border-radius: 4px;
+    transition: all 0.2s ease;
   }
   .site-card-header.launched {
     background-color: var(--dashboard-live-bg);
@@ -77,6 +78,15 @@
   }
   .site-card-header.decommissioned {
     background-color: var(--dashboard-archive-bg);
+  }
+  .site-card:hover .site-card-header.launched {
+    background-color: color-mix(in srgb, var(--dashboard-live-bg) 95%, #000 5%);
+  }
+  .site-card:hover .site-card-header.prelaunch {
+    background-color: color-mix(in srgb, var(--dashboard-sandbox-bg) 95%, #000 5%);
+  }
+  .site-card:hover .site-card-header.decommissioned {
+    background-color: color-mix(in srgb, var(--dashboard-archive-bg) 95%, #000 5%);
   }
   .site-card-header .left {
     min-height: 112px;
