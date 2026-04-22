@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { FieldCheckbox, FieldDateTime, FieldHidden, FieldSelect, FormDialog, FormPreamble } from '@dosgato/dialog'
+  import { Button, FieldCheckbox, FieldDateTime, FieldHidden, FieldSelect, FormDialog, FormPreamble, Tab, Tabs, Tooltip } from '@dosgato/dialog'
   import type { Feedback, SubmitResponse } from '@txstate-mws/svelte-forms'
+  import { DateTime } from 'luxon'
   import { onMount } from 'svelte'
   import { unique } from 'txstate-utils'
-  import { api, type ScheduledPublish, ScheduledPublishAction, ScheduledPublishStatus, ScheduledPublishRecurrenceType } from '$lib'
+  import { api, dateStamp, type ScheduledPublish, ScheduledPublishAction, ScheduledPublishStatus, ScheduledPublishRecurrenceType, toast } from '$lib'
 
   export let page: { id: string, permissions: { schedulePublish: boolean, scheduleUnpublish: boolean } }
 
@@ -13,6 +14,18 @@
   let canUnpublish = false
   let loading = true
   let preload: SchedulePublishState | undefined
+  let allSchedules: ScheduledPublish[] = []
+  let currentPage = 0
+  const pageSize = 15
+
+  $: reversedHistory = allSchedules.toReversed()
+  $: totalPages = Math.max(1, Math.ceil(reversedHistory.length / pageSize))
+  $: pagedSchedules = reversedHistory.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+
+  const tabs = [
+    { name: 'General' },
+    { name: 'History' }
+  ]
 
   interface SchedulePublishState {
     publishDate: string | null
@@ -38,10 +51,26 @@
     }
   }
 
+  function formatAction (action: ScheduledPublishAction) {
+    return {
+      [ScheduledPublishAction.PUBLISH]: 'Publish',
+      [ScheduledPublishAction.PUBLISH_WITH_SUBPAGES]: 'Publish w/ Subpages',
+      [ScheduledPublishAction.UNPUBLISH]: 'Unpublish'
+    }[action]
+  }
+
+  function onSaved (e: CustomEvent<SchedulePublishState>) {
+    if (!e.detail.publishDate) return
+    const dt = DateTime.fromISO(e.detail.publishDate)
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    toast(`Scheduled to publish on ${dateStamp(dt)} (${tz}).`, 'success')
+  }
+
   onMount(async () => {
-    const schedules = await api.getScheduledPublishes([page.id], [ScheduledPublishStatus.PENDING])
-    existingPublishSchedule = schedules.find(s => s.action === ScheduledPublishAction.PUBLISH || s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES)
-    existingUnpublishSchedule = schedules.find(s => s.action === ScheduledPublishAction.UNPUBLISH)
+    allSchedules = await api.getScheduledPublishes([page.id], [ScheduledPublishStatus.PENDING, ScheduledPublishStatus.COMPLETED, ScheduledPublishStatus.FAILED, ScheduledPublishStatus.CANCELLED])
+    const pendingSchedules = allSchedules.filter(s => s.status === ScheduledPublishStatus.PENDING)
+    existingPublishSchedule = pendingSchedules.find(s => s.action === ScheduledPublishAction.PUBLISH || s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES)
+    existingUnpublishSchedule = pendingSchedules.find(s => s.action === ScheduledPublishAction.UNPUBLISH)
 
     canPublish = page.permissions.schedulePublish || !!existingPublishSchedule?.permissions.edit
     canUnpublish = page.permissions.scheduleUnpublish || !!existingUnpublishSchedule?.permissions.edit
@@ -149,16 +178,117 @@
     {submit}
     {validate}
     title='Schedule Publish/Unpublish'
+    size='normal'
     preload={preload}
     on:escape
     on:saved
+    on:saved={onSaved}
     let:data>
-    <FormPreamble>If the team member who scheduled a page to be published is removed or otherwise loses access to the site, the publish will be cancelled. If you hit Save, you become the scheduler.</FormPreamble>
-    <FieldDateTime clearable path='publishDate' label='Publish Date' conditional={canPublish} helptext={data.publishDate ? 'To remove this scheduled publish, clear this field and hit Save.' : 'The page will be published on the scheduled date and time.'}/>
-    <FieldCheckbox path='includeSubpages' related boxLabel='Include subpages in scheduled publish' conditional={canPublish && !!data.publishDate} />
-    <FieldCheckbox path='hasRecurrence' related boxLabel='Repeat publish on a schedule' conditional={(canPublish && !!data.publishDate) || (canUnpublish && !!data.unpublishDate)} defaultValue={false} />
-    <FieldHidden path='recurrenceType' conditional={!!data.hasRecurrence} value={ScheduledPublishRecurrenceType.WEEK} />
-    <FieldSelect path='recurrenceInterval' related number label='Repeat' choices={recurrenceChoices} conditional={!!data.hasRecurrence} notNull defaultValue={1} />
-    <FieldDateTime clearable path='unpublishDate' label='Unpublish Date' conditional={canUnpublish} helptext={data.unpublishDate ? 'To remove this scheduled unpublish, clear this field and hit Save.' : 'The page and its subpages will be unpublished on the selected date and time.'} />
+    <Tabs {tabs}>
+      <Tab name="General">
+        <FormPreamble>If the team member scheduling this page to be published is removed or otherwise loses access to the Gato site, the scheduled action will not occur.<br><br>
+        To remove a previously scheduled publish, clear the related date and time field, then save this window.</FormPreamble>
+        <FieldDateTime clearable path='publishDate' label='Publish Date' conditional={canPublish} helptext="Time automatically adjusts to your browser's timezone ({new Date().toLocaleTimeString('en-us', { timeZoneName: 'short' }).split(' ').pop()})."/>
+        <FieldCheckbox path='includeSubpages' related boxLabel='Include all subpages in scheduled publish' conditional={canPublish && !!data.publishDate} />
+        <FieldCheckbox path='hasRecurrence' related boxLabel='Set recurring publish' conditional={(canPublish && !!data.publishDate) || (canUnpublish && !!data.unpublishDate)} defaultValue={false} />
+        <FieldHidden path='recurrenceType' conditional={!!data.hasRecurrence} value={ScheduledPublishRecurrenceType.WEEK} />
+        <FieldSelect path='recurrenceInterval' related number label='Repeat' choices={recurrenceChoices} conditional={!!data.hasRecurrence} notNull defaultValue={1} />
+        <FieldDateTime clearable path='unpublishDate' label='Unpublish Date' conditional={canUnpublish} helptext="The page and its subpages will be unpublished on the selected date and time." />
+      </Tab>
+      <Tab name="History">
+        {#if allSchedules.length === 0}
+          <p>No scheduled publishes found for this page.</p>
+        {:else}
+          <table>
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Modified</th>
+                <th>By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each pagedSchedules as schedule (schedule.id)}
+                <tr class="status-{schedule.status.toLowerCase()}">
+                  <td>{formatAction(schedule.action)}</td>
+                  <td>{dateStamp(schedule.targetDate)}</td>
+                  <td>
+                    {#if schedule.error}
+                      <Tooltip tip={schedule.error} bottom>
+                        <span class="status-badge {schedule.status.toLowerCase()}">{schedule.status}</span>
+                      </Tooltip>
+                    {:else}
+                      <span class="status-badge {schedule.status.toLowerCase()}">{schedule.status}</span>
+                    {/if}
+                  </td>
+                  <td>{dateStamp(schedule.updatedAt)}</td>
+                  <td>{schedule.updatedByUser.name}</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+          {#if totalPages > 1}
+            <div class="pagination">
+              <Button compact secondary disabled={currentPage === 0} on:click={() => { currentPage-- }}>Previous</Button>
+              <span>Page {currentPage + 1} of {totalPages}</span>
+              <Button compact secondary disabled={currentPage >= totalPages - 1} on:click={() => { currentPage++ }}>Next</Button>
+            </div>
+          {/if}
+        {/if}
+      </Tab>
+    </Tabs>
   </FormDialog>
 {/if}
+
+<style>
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6em 5px;
+  }
+  tr {
+    background-image: linear-gradient(to right, #666 50%, transparent 0);
+    background-position: bottom;
+    background-repeat: repeat-x;
+    background-size: 8px 1px;
+  }
+  th {
+    font-weight: 600;
+    border-bottom: 2px solid #999;
+  }
+  .status-badge {
+    padding: 0.15em 4px;
+    border-radius: 3px;
+    font-size: 0.85em;
+    font-weight: 500;
+  }
+  .status-badge.pending {
+    background-color: #e6f4ea;
+    color: #1e7e34;
+  }
+  .status-badge.completed {
+    background-color: #e3f2fd;
+    color: #1565c0;
+  }
+  .status-badge.failed {
+    background-color: #fdecea;
+    color: #c62828;
+  }
+  .status-badge.cancelled {
+    background-color: #eeeeee;
+    color: #616161;
+  }
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+    margin-top: 1em;
+  }
+</style>

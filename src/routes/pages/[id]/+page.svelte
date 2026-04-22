@@ -19,7 +19,6 @@
   import { get, isNotNull, keyby, printIf, titleCase } from 'txstate-utils'
   import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, schemaVersion, ChooserClient, type ActionPanelGroup, api, VersionHistory, TagClientByLink } from '$lib'
   import { statusIcon } from './helpers'
-  import ScheduleHistoryView from './ScheduleHistoryView.svelte'
   import SchedulePublishDialog from '../SchedulePublishDialog.svelte'
   import VersionView from './VersionView.svelte'
   import type { PageData } from './$types'
@@ -57,7 +56,7 @@
         actions: [
           { label: 'Edit Page Properties', disabled: !editable, icon: pencilIcon, onClick: () => pageEditorStore.editPropertiesShowModal() },
           { label: 'Show Versions', icon: historyIcon, onClick: () => pageEditorStore.versionsShowModal(), disabled: $pageStore.version.version === 0 },
-          ...($pageStore.hasSchedules ? [{ label: 'Schedule History', icon: alarmFill, onClick: () => pageEditorStore.scheduleShowHistory() }] : [])
+          ...($pageStore.hasSchedules ? [{ label: 'Schedule Publish', icon: alarmFill, onClick: () => pageEditorStore.scheduleShowDialog() }] : [])
         ]
       }
       return [previewGroup, editGroup]
@@ -407,8 +406,6 @@
   </FormDialog>
 {:else if $editorStore.modal === 'editschedule'}
   <SchedulePublishDialog {page} on:escape={cancelModal} on:saved={cancelModal} />
-{:else if $editorStore.modal === 'schedule'}
-  <ScheduleHistoryView {page} on:escape={cancelModal} />
 {:else if $editorStore.modal === 'versions'}
   {@const page = $editorStore.page}
   <VersionHistory dataId={page.id} preview={v => { navigating = true; pageEditorStore.previewVersion(v) }} compare={(v1, v2) => pageEditorStore.compareVersions(v1, v2)} history={api.getPageVersions(page.id)} on:escape={cancelModal} />

@@ -64,7 +64,7 @@ export interface MutationResponse {
 
 export class Loader<T> {
   protected ids: Set<string>
-  protected resolves: Record<string, ((v: unknown) => void)[]>
+  protected resolves: Record<string, ((v: T) => void)[]>
   protected rejects: Record<string, ((reason?: any) => void)[]>
   protected timer: any
 
@@ -120,8 +120,8 @@ function validateRequired <T = any> (data: any, requiredFields: string[]) {
 
 class API {
   public token?: string
-  public fetch: (info: RequestInfo, init?: RequestInit) => Promise<Response>
-  protected savedConfig: Record<string, string>
+  public fetch!: (info: RequestInfo, init?: RequestInit) => Promise<Response>
+  protected savedConfig!: Record<string, string>
   protected pageChildrenLoader = new Loader(async ids => await this.getSubPagesBatch(ids), page => page.id)
   protected assetFolderChildrenLoader = new Loader(async ids => await this.getSubFoldersAndAssetsBatch(ids), folder => folder.id)
   protected ready!: () => void

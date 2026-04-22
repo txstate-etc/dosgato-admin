@@ -25,7 +25,7 @@ export interface PageEditorVersionPreview {
 
 export interface EditorState {
   page: PageEditorPage
-  modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties' | 'versions' | 'schedule' | 'editschedule'
+  modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties' | 'versions' | 'editschedule'
   selectedPath?: string
   selectedLabel?: string
   selectedMaxReached?: boolean
@@ -270,11 +270,6 @@ class PageEditorStore extends Store<IPageEditorStore> {
   editPropertiesShowModal () {
     this.updateEditorState(editorState => ({ ...editorState, modal: 'properties', editing: { path: '', data: editorState.page.data, templateKey: editorState.page.data.templateKey }, creating: undefined }))
     this.logActionShown('Edit Properties')
-  }
-
-  scheduleShowHistory () {
-    this.updateEditorState(editorState => ({ ...editorState, modal: 'schedule', editing: { path: '', data: editorState.page.data, templateKey: editorState.page.data.templateKey }, creating: undefined }))
-    this.logActionShown('Schedule History')
   }
 
   scheduleShowDialog () {
