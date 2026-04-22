@@ -61,7 +61,7 @@
 
   function onSaved (e: CustomEvent<SchedulePublishState>) {
     if (!e.detail.publishDate) return
-    const dt = DateTime.fromISO(e.detail.publishDate)
+    const dt = DateTime.fromJSDate(new Date(e.detail.publishDate))
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
     toast(`Scheduled to publish on ${dateStamp(dt)} (${tz}).`, 'success')
   }
