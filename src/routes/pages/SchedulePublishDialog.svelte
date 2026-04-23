@@ -5,6 +5,7 @@
   import { onMount } from 'svelte'
   import { unique } from 'txstate-utils'
   import { api, dateStamp, type ScheduledPublish, ScheduledPublishAction, ScheduledPublishStatus, ScheduledPublishRecurrenceType, toast } from '$lib'
+    import DismissableWarning from '$lib/components/DismissableWarning.svelte';
 
   export let page: { id: string, permissions: { schedulePublish: boolean, scheduleUnpublish: boolean } }
 
@@ -14,6 +15,7 @@
   let canUnpublish = false
   let loading = true
   let preload: SchedulePublishState | undefined
+  let showPermissionWarning = false
   let historySchedules: ScheduledPublish[] | undefined
   let currentPage = 1
   let finalPage = 1
@@ -81,7 +83,7 @@
     canPublish = page.permissions.schedulePublish || !!existingPublishSchedule?.permissions.edit
     canUnpublish = page.permissions.scheduleUnpublish || !!existingUnpublishSchedule?.permissions.edit
     const existingRecurrence = existingPublishSchedule?.recurrence ?? existingUnpublishSchedule?.recurrence
-
+    showPermissionWarning = !!existingPublishSchedule?.actionNotPermitted || !!existingUnpublishSchedule?.actionNotPermitted
     preload = {
       publishDate: existingPublishSchedule?.targetDate ?? null,
       includeSubpages: existingPublishSchedule?.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES,
@@ -194,7 +196,8 @@
       <Tab name="General">
         <FormPreamble>If the team member scheduling this page to be published is removed or otherwise loses access to the Gato site, the scheduled action will not occur.<br><br>
         To remove a previously scheduled publish, clear the related date and time field, then save this window.</FormPreamble>
-        <FieldDateTime clearable path='publishDate' label='Publish Date' conditional={canPublish} helptext="Time automatically adjusts to your browser's timezone ({new Date().toLocaleTimeString('en-us', { timeZoneName: 'short' }).split(' ').pop()})."/>
+        <DismissableWarning message="The scheduled publish or unpublish will not occur without an account to own the action. Reactivate the scheduled action(s) by saving the window. To remove the scheduled action entirely, clear the field and save the window." open={showPermissionWarning} dismissable={false} />
+        <FieldDateTime clearable path='publishDate' label='Publish Date' conditional={canPublish} helptext="Time automatically adjusts to your browser's timezone ({DateTime.local().toFormat('ZZZZ')})."/>
         <FieldCheckbox path='includeSubpages' related boxLabel='Include all subpages in scheduled publish' conditional={canPublish && !!data.publishDate} />
         <FieldCheckbox path='hasRecurrence' related boxLabel='Set recurring publish' conditional={(canPublish && !!data.publishDate) || (canUnpublish && !!data.unpublishDate)} defaultValue={false} />
         <FieldHidden path='recurrenceType' conditional={!!data.hasRecurrence} value={ScheduledPublishRecurrenceType.WEEK} />
@@ -221,7 +224,7 @@
               {#each historySchedules as schedule (schedule.id)}
                 <tr class="status-{schedule.status.toLowerCase()}">
                   <td>{formatAction(schedule.action)}</td>
-                  <td>{dateStamp(schedule.targetDate)}</td>
+                  <td>{dateStamp(schedule.targetDate, { includeTz: true })}</td>
                   <td>
                     {#if schedule.error}
                       <Tooltip tip={schedule.error} bottom>

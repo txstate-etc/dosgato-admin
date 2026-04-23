@@ -310,6 +310,7 @@ export interface ScheduledPublish {
   page: { id: string }
   createdByUser: { id: string, name: string }
   updatedByUser: { id: string, name: string }
+  actionNotPermitted: boolean
   permissions: {
     edit: boolean
     cancel: boolean
@@ -332,6 +333,7 @@ const scheduledPublishDetails = `
   page { id }
   createdByUser { id name }
   updatedByUser { id name }
+  actionNotPermitted
   permissions {
     edit
     cancel

@@ -47,9 +47,9 @@ export async function uploadWithProgress (url: URL | string, headers: Record<str
   })
 }
 
-export function dateStamp (dt: string | Date | DateTime) {
+export function dateStamp (dt: string | Date | DateTime, opts?: { includeTz?: boolean }) {
   const luxdt = typeof dt === 'string' ? DateTime.fromISO(dt) : (dt instanceof Date ? DateTime.fromJSDate(dt) : dt)
-  return luxdt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())
+  return luxdt.toFormat('LLL d yyyy h:mma').replace(/(AM|PM)$/, v => v.toLocaleLowerCase()) + (opts?.includeTz ? ' ' + luxdt.toFormat('ZZZZ') : '')
 }
 
 export function dateStampShort (dt: string | Date | DateTime) {
