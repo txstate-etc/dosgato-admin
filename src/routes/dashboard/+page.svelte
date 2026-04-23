@@ -185,6 +185,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    z-index: 1;
   }
   .header .title {
     font-size: 1.3em;
