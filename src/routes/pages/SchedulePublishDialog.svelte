@@ -14,13 +14,10 @@
   let canUnpublish = false
   let loading = true
   let preload: SchedulePublishState | undefined
-  let allSchedules: ScheduledPublish[] = []
-  let currentPage = 0
-  const pageSize = 15
-
-  $: reversedHistory = allSchedules.toReversed()
-  $: totalPages = Math.max(1, Math.ceil(reversedHistory.length / pageSize))
-  $: pagedSchedules = reversedHistory.slice(currentPage * pageSize, (currentPage + 1) * pageSize)
+  let historySchedules: ScheduledPublish[] | undefined
+  let currentPage = 1
+  let finalPage = 1
+  const perPage = 20
 
   const tabs = [
     { name: 'General' },
@@ -66,11 +63,20 @@
     toast(`Scheduled to publish on ${dateStamp(dt)} (${tz}).`, 'success')
   }
 
+  async function loadHistory (p: number) {
+    historySchedules = undefined
+    currentPage = p
+    const resp = await api.getScheduledPublishes([page.id], [ScheduledPublishStatus.PENDING, ScheduledPublishStatus.COMPLETED, ScheduledPublishStatus.FAILED, ScheduledPublishStatus.CANCELLED], { page: p, perPage })
+    historySchedules = resp.scheduledPublishes
+    finalPage = resp.finalPage
+  }
+
   onMount(async () => {
-    allSchedules = await api.getScheduledPublishes([page.id], [ScheduledPublishStatus.PENDING, ScheduledPublishStatus.COMPLETED, ScheduledPublishStatus.FAILED, ScheduledPublishStatus.CANCELLED])
-    const pendingSchedules = allSchedules.filter(s => s.status === ScheduledPublishStatus.PENDING)
-    existingPublishSchedule = pendingSchedules.find(s => s.action === ScheduledPublishAction.PUBLISH || s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES)
-    existingUnpublishSchedule = pendingSchedules.find(s => s.action === ScheduledPublishAction.UNPUBLISH)
+    const { scheduledPublishes: pending } = await api.getScheduledPublishes([page.id], [ScheduledPublishStatus.PENDING])
+    void loadHistory(1)
+
+    existingPublishSchedule = pending.find(s => s.action === ScheduledPublishAction.PUBLISH || s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES)
+    existingUnpublishSchedule = pending.find(s => s.action === ScheduledPublishAction.UNPUBLISH)
 
     canPublish = page.permissions.schedulePublish || !!existingPublishSchedule?.permissions.edit
     canUnpublish = page.permissions.scheduleUnpublish || !!existingUnpublishSchedule?.permissions.edit
@@ -196,7 +202,9 @@
         <FieldDateTime clearable path='unpublishDate' label='Unpublish Date' conditional={canUnpublish} helptext="The page and its subpages will be unpublished on the selected date and time." />
       </Tab>
       <Tab name="History">
-        {#if allSchedules.length === 0}
+        {#if historySchedules == null}
+          <p>Loading...</p>
+        {:else if historySchedules.length === 0}
           <p>No scheduled publishes found for this page.</p>
         {:else}
           <table>
@@ -210,7 +218,7 @@
               </tr>
             </thead>
             <tbody>
-              {#each pagedSchedules as schedule (schedule.id)}
+              {#each historySchedules as schedule (schedule.id)}
                 <tr class="status-{schedule.status.toLowerCase()}">
                   <td>{formatAction(schedule.action)}</td>
                   <td>{dateStamp(schedule.targetDate)}</td>
@@ -229,11 +237,11 @@
               {/each}
             </tbody>
           </table>
-          {#if totalPages > 1}
+          {#if finalPage > 1}
             <div class="pagination">
-              <Button compact secondary disabled={currentPage === 0} on:click={() => { currentPage-- }}>Previous</Button>
-              <span>Page {currentPage + 1} of {totalPages}</span>
-              <Button compact secondary disabled={currentPage >= totalPages - 1} on:click={() => { currentPage++ }}>Next</Button>
+              <Button compact secondary disabled={currentPage <= 1} on:click={() => loadHistory(currentPage - 1)}>Previous</Button>
+              <span>Page {currentPage} of {finalPage}</span>
+              <Button compact secondary disabled={currentPage >= finalPage} on:click={() => loadHistory(currentPage + 1)}>Next</Button>
             </div>
           {/if}
         {/if}

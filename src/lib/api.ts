@@ -967,9 +967,9 @@ class API {
     return unpublishPages
   }
 
-  async getScheduledPublishes (pageIds: string[], statuses?: ScheduledPublishStatus[]) {
-    const { scheduledPublishes } = await this.query<{ scheduledPublishes: ScheduledPublish[] }>(GET_SCHEDULED_PUBLISHES, { filter: { pageIds, statuses } })
-    return scheduledPublishes
+  async getScheduledPublishes (pageIds: string[], statuses?: ScheduledPublishStatus[], pagination?: { page: number, perPage: number }) {
+    const { scheduledPublishes, pageInfo } = await this.query<{ scheduledPublishes: ScheduledPublish[], pageInfo: { scheduledPublishes: { finalPage: number } } }>(GET_SCHEDULED_PUBLISHES, { filter: { pageIds, statuses }, pagination })
+    return { scheduledPublishes, finalPage: pageInfo.scheduledPublishes.finalPage }
   }
 
   async createScheduledPublish (args: { pageId: string, action: ScheduledPublishAction, targetDate: string, recurrence?: { type: ScheduledPublishRecurrenceType, interval?: number, timezone?: string } }, validateOnly?: boolean) {

@@ -339,9 +339,14 @@ const scheduledPublishDetails = `
 `
 
 export const GET_SCHEDULED_PUBLISHES = `
-  query getScheduledPublishes ($filter: ScheduledPublishFilter) {
-    scheduledPublishes (filter: $filter) {
+  query getScheduledPublishes ($filter: ScheduledPublishFilter, $pagination: Pagination) {
+    scheduledPublishes (filter: $filter, pagination: $pagination) {
       ${scheduledPublishDetails}
+    }
+    pageInfo {
+      scheduledPublishes {
+        finalPage
+      }
     }
   }
 `
