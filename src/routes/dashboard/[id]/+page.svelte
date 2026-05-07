@@ -116,7 +116,7 @@
       </div>
       <div class="secondary-actions">
         {#if uiConfig?.dashboardActions?.updateWebsiteManagementUrl}<Button secondary icon={editUserIcon} on:click={() => window.open(uiConfig.dashboardActions?.updateWebsiteManagementUrl, '_blank')}>Update Website Management</Button>{/if}
-        {#if site.permissions.audit && uiConfig?.dashboardActions?.requestSiteDecommissionUrl}<Button secondary icon={trashIcon} on:click={() => window.open(uiConfig.dashboardActions?.requestSiteDecommissionUrl, '_blank')}>Request Site Decommission</Button>{/if}
+        {#if site.launchState !== 'DECOMMISSIONED' && site.permissions.audit && uiConfig?.dashboardActions?.requestSiteDecommissionUrl}<Button secondary icon={trashIcon} on:click={() => window.open(uiConfig.dashboardActions?.requestSiteDecommissionUrl, '_blank')}>Request Site Decommission</Button>{/if}
       </div>
     </div>
   </div>
