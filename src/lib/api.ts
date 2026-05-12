@@ -987,7 +987,7 @@ class API {
     return mutationForDialog(cancelScheduledPublish, { prefix: 'args', dataName: 'scheduledPublish' })
   }
 
-  async getDeletePageCount (pageIds: string[]) {
+  async getPageWithDescendantsCount (pageIds: string[]) {
     const { pages } = await this.query<{ pages: PageWithDescendants[] }>(GET_PAGES_AND_DESCENDANTS, { pageIds })
     const ids: string[] = []
     for (const p of pages) {

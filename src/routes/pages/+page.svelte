@@ -33,7 +33,7 @@
     api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig,
     UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog,
     getSiteIcon, SearchInput, CreateWithPageDialog, findInTreeIconSVG, actionPanelStore,
-    tagClientBySiteId, tagIndicatorIconSVG, globalStore, ScheduledPublishAction
+    tagClientBySiteId, tagIndicatorIcon, globalStore, ScheduledPublishAction
   } from '$lib'
   import { _store as store, _searchStore as searchStore, _pagesStore as pagesStore, type TypedPageItem } from './+page.js'
   import { publishWithSubpagesIcon } from './publishwithsubpagesicon'
@@ -56,6 +56,7 @@
   function onModalEscape () {
     uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: 'Cancel', target: actionPanelTarget.target })
     modal = undefined
+    pagesToTakeActionOn = undefined
   }
 
   function openModal (m: Modals) {
@@ -97,7 +98,7 @@
     const previewAction = { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${page.path}.html`), '_blank') } }
     const showVersionsAction = { label: 'Show Versions', icon: historyIcon, onClick: async () => await goto(base + '/pages/' + page.id + '#versions') }
     const publishAction = { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => openModal('publishpages') }
-    const unpublishAction = { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => openModal('unpublishpages') }
+    const unpublishAction = { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => { void countPages('unpublishpages') } }
     const exportAction = { label: 'Export', icon: exportIcon, disabled: false, onClick: async () => await api.download(`${environmentConfig.renderBase}/.page/${page.id}`) }
     if ($pagesStore.showsearch) {
       return [{
@@ -168,7 +169,7 @@
 
     publishing.actions.push(
       publishAction,
-      { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => openModal('publishwithsubpages'), class: 'pubsubpages' },
+      { label: 'Publish w/ Subpages', icon: publishWithSubpagesIcon, disabled: !page.permissions.publish || !page.hasChildren, onClick: () => { void countPages('publishwithsubpages') }, class: 'pubsubpages' },
       { label: 'Scheduled Publish', icon: alarmFill, disabled: !page.permissions.scheduleEdit, onClick: () => openModal('schedulepublish') },
       unpublishAction
     )
@@ -196,7 +197,7 @@
     }
     const publishActions: ActionPanelAction[] = [
       { label: 'Publish', icon: publishIcon, disabled: pages.some(p => !p.permissions.publish), onClick: () => openModal('publishpages') },
-      { label: 'Unpublish', icon: publishOffIcon, disabled: pages.some(p => !p.permissions.unpublish), onClick: () => openModal('unpublishpages') }
+      { label: 'Unpublish', icon: publishOffIcon, disabled: pages.some(p => !p.permissions.unpublish), onClick: () => { void countPages('unpublishpages') } }
     ]
     actions.push(...publishActions)
     if ($store.copied.size) {
@@ -292,6 +293,7 @@
     const resp = await api.publishPages($activeStore.selectedItems.map(d => d.id), true)
     uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
     modal = undefined
+    pagesToTakeActionOn = undefined
     if (resp.success) await store.refresh()
   }
 
@@ -299,12 +301,13 @@
     const resp = await api.unpublishPages($activeStore.selectedItems.map(d => d.id))
     uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
     modal = undefined
+    pagesToTakeActionOn = undefined
     if (resp.success) await store.refresh()
   }
 
-  let pagesToDeleteCount: number | undefined = undefined
+  let pagesToTakeActionOn: number | undefined = undefined
   async function countPages (m: Modals) {
-    pagesToDeleteCount = await api.getDeletePageCount($activeStore.selectedItems.map(page => page.id))
+    pagesToTakeActionOn = await api.getPageWithDescendantsCount($activeStore.selectedItems.map(page => page.id))
     openModal(m)
   }
 
@@ -312,7 +315,7 @@
     const resp = await api.deletePages($activeStore.selectedItems.map(page => page.id))
     uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
     modal = undefined
-    pagesToDeleteCount = undefined
+    pagesToTakeActionOn = undefined
     if (resp.success) await store.refresh()
   }
 
@@ -320,7 +323,7 @@
     const resp = await api.publishDeletion($activeStore.selectedItems.map(page => page.id))
     uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
     modal = undefined
-    pagesToDeleteCount = undefined
+    pagesToTakeActionOn = undefined
     if (resp.success) await store.refresh()
   }
 
@@ -335,7 +338,7 @@
     const resp = await api.undeletePages($activeStore.selectedItems.map(page => page.id), true)
     uiLog.log({ eventType: 'PagesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
     modal = undefined
-    pagesToDeleteCount = undefined
+    pagesToTakeActionOn = undefined
     if (resp.success) await store.refresh()
   }
 
@@ -373,6 +376,10 @@
       const action = s.action === 'UNPUBLISH' ? 'Unpublish' : 'Publish'
       return `${action}: ${dateStamp(s.targetDate)}`
     }).join('\n')
+  }
+
+  function tagTooltip (userTags: { name: string, group: { title: string } }[]) {
+    return userTags.map(t => `${t.group.title}: ${t.name}`).join('\n')
   }
 
   function itemAncestors (item: TypedPageItem) {
@@ -440,7 +447,7 @@
             id: 'status',
             fixed: '4em',
             icon: item => [
-              { icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', class: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
+              { icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', class: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', tooltip: item.deleteState === DeleteState.NOTDELETED ? item.status : 'Page is deleted' },
                 ...(item.schedules?.length
                   ? [{ icon: alarmFill, label: 'Schedule', tooltip: scheduleTooltip(item.schedules), class: 'scheduled' }]
                   : itemAncestors(item).some(a => a.schedules?.some(s => s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES))
@@ -468,7 +475,10 @@
   {:else}
   <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}
     headers={[
-      { label: 'Path', id: 'name', grow: 4, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) }), render: item => `<div class="page-name">${item.name}</div>${item.userTags?.length ? `<div class="tag-indicator">${tagIndicatorIconSVG}<span class="sr-only">has page tags</span></div>` : ''}` },
+      { label: 'Path', id: 'name', grow: 4, icon: item => [
+          { icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) },
+          ...(item.userTags?.length ? [{ icon: tagIndicatorIcon, trailing: true, label: 'has page tags', tooltip: tagTooltip(item.userTags), class: 'tag-indicator' }] : [])
+        ], render: item => `<div class="page-name">${item.name}</div>` },
       { label: 'Title', id: 'title', grow: 3, get: 'title' },
       { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
       {
@@ -476,7 +486,7 @@
         id: 'status',
         fixed: '6em',
         icon: item => [
-          { icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', class: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' },
+          { icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', class: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', tooltip: item.deleteState === DeleteState.NOTDELETED ? item.status : 'Page is deleted' },
           ...(item.schedules?.length
             ? [{ icon: alarmFill, label: 'Schedule', tooltip: scheduleTooltip(item.schedules), class: 'scheduled' }]
             : itemAncestors(item).some(a => a.schedules?.some(s => s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES))
@@ -591,7 +601,7 @@
     cancelText='Cancel'
     on:continue={onPublishPagesWithSubpages}
     on:escape={onModalEscape}>
-    Publish {`${$activeStore.selectedItems.length} page${$activeStore.selectedItems.length > 1 ? 's' : ''} and ${$activeStore.selectedItems.length > 1 ? 'their' : 'its'} subpages?`}
+    Publish {`${pagesToTakeActionOn} page${(pagesToTakeActionOn ?? 0) > 1 ? 's' : ''}?`}
   </Dialog>
 {:else if modal === 'unpublishpages'}
   <Dialog
@@ -600,7 +610,7 @@
     cancelText='Cancel'
     on:continue={onUnpublishPages}
     on:escape={onModalEscape}>
-    Unpublish {`${$activeStore.selectedItems.length} page${$activeStore.selectedItems.length > 1 ? 's' : ''} and ${$activeStore.selectedItems.length > 1 ? 'their' : 'its'} subpages?`}
+    Unpublish {`${pagesToTakeActionOn} page${(pagesToTakeActionOn ?? 0) > 1 ? 's' : ''}?`}
   </Dialog>
 {:else if modal === 'deletepage'}
   <Dialog
@@ -609,7 +619,7 @@
     cancelText='Cancel'
     on:continue={onDeletePage}
     on:escape={onModalEscape}>
-    <DialogWarning text={`You are about to delete ${pagesToDeleteCount} pages. Deleted pages will no longer be visible on your live site.`}/>
+    <DialogWarning text={`You are about to delete ${pagesToTakeActionOn} pages. Deleted pages will no longer be visible on your live site.`}/>
   </Dialog>
 {:else if modal === 'publishdelete'}
   <Dialog
@@ -618,7 +628,7 @@
     cancelText='Cancel'
     on:continue={onPublishDeletion}
     on:escape={onModalEscape}>
-    <DialogWarning text={`You are about to finalize the deletion of ${pagesToDeleteCount} pages. You will no longer see these pages in your site.`}/>
+    <DialogWarning text={`You are about to finalize the deletion of ${pagesToTakeActionOn} pages. You will no longer see these pages in your site.`}/>
   </Dialog>
 {:else if modal === 'undeletepage'}
   <Dialog
@@ -636,7 +646,7 @@
     cancelText='Cancel'
     on:continue={onUndeletePageWithChildren}
     on:escape={onModalEscape}>
-    Restore {pagesToDeleteCount} pages?
+    Restore {pagesToTakeActionOn} pages?
   </Dialog>
 {:else if modal === 'import' && $activeStore.selectedItems[0]}
   <UploadUI
@@ -655,13 +665,17 @@
 {/if}
 
 <style>
+  :global(.tree-cell.name .page-name) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
   :global(.tree-node[tabindex="0"]) :global(.page-name) {
     word-wrap: break-word;
     white-space: normal;
-  }
-
-  :global(.tag-indicator) {
-    margin-left: 1.5em;
   }
 
   :global(.manage-tags) {
@@ -684,5 +698,12 @@
   }
   :global(button.manage-tags) {
     margin-bottom: 2em;
+  }
+
+  :global(.tree-cell.status .icon.published .tooltip-wrapper .tooltip) {
+    color: #446100;
+  }
+  :global(.tree-cell.status .icon.modified .tooltip-wrapper .tooltip) {
+    color: #755200;
   }
 </style>

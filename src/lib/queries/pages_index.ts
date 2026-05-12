@@ -46,6 +46,11 @@ site {
 }
 userTags (includeInternal: true) {
   id
+  name
+  group {
+    name
+    title
+  }
 }
 `
 
@@ -100,6 +105,11 @@ export interface TreePage {
   }
   userTags: {
     id: string
+    name: string
+    group: {
+      name: string
+      title: string
+    }
   }[]
 }
 
