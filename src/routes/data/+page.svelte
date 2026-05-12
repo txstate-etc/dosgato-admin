@@ -41,21 +41,9 @@
   }
   .template-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-gap: 3em 3em;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-gap: 1.5em;
     place-content: center center;
-    grid-auto-rows: 1fr;
-  }
-  :global([data-eq~="800px"]) .template-grid {
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 2em 2em;
-  }
-  :global([data-eq~="250px"]) .template-grid {
-    grid-template-columns: 1fr;
-    grid-gap: 1em;
-  }
-  :global([data-eq~="800px"]) .template-grid a {
-    padding: 1em 0;
   }
   .template-grid a {
     background-color: transparent;
@@ -66,7 +54,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2em 0;
+    aspect-ratio: 1 / 1;
     text-decoration: none;
   }
   .template-grid a:hover {
