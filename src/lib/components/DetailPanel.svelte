@@ -58,8 +58,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 0em 1.5em;
-    border-top-right-radius: 8px;
-    border-top-left-radius: 8px;
+    border-top-right-radius: 7px;
+    border-top-left-radius: 7px;
   }
   header h2 {
     font-size: 1.3em;
@@ -86,7 +86,7 @@
     color: #404040;
   }
   header.collapsed {
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
   }
 </style>

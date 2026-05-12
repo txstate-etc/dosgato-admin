@@ -144,22 +144,41 @@
 <DetailPageContent>
   <BackButton destination="group list" url={`${base}/auth/groups/`}/>
   <div class="panel-grid">
-    <div class="vertical-group">
-      <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={{ icon: pencilIcon, hiddenLabel: 'Edit group name', onClick: () => openModal('editbasic') }}>
+    <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={{ icon: pencilIcon, hiddenLabel: 'Edit group name', onClick: () => openModal('editbasic') }}>
+      <DetailPanelSection>
+        <DetailList records={{ Name: $store.group.name }}/>
+      </DetailPanelSection>
+      {#if $store.group.subgroups.length}
         <DetailPanelSection>
-          <DetailList records={{ Name: $store.group.name }}/>
+          <SortableTable items={$store.group.subgroups}
+            headers={[
+              { id: 'name', label: 'Subgroup', render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>`, sortable: true },
+              { id: 'parents', label: 'Subgroup parent', render: (item) => item.parents.map(g => g.name).join(', ') }
+            ]}/>
         </DetailPanelSection>
-        {#if $store.group.subgroups.length}
-          <DetailPanelSection>
-            <SortableTable items={$store.group.subgroups}
+      {/if}
+    </DetailPanel>
+    <DetailPanel header='Members' headerColor={panelHeaderColor} button={{ icon: plusIcon, hiddenLabel: `Add members to ${$store.group.name}`, onClick: async () => await openAddUsersDialog() }} >
+        <DetailPanelSection>
+          {#if $store.group.directMembers.length}
+            <SortableTable items={$store.group.directMembers}
               headers={[
-                { id: 'name', label: 'Subgroup', render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>`, sortable: true },
-                { id: 'parents', label: 'Subgroup parent', render: (item) => item.parents.map(g => g.name).join(', ') }
+                { id: 'name', label: 'Member names', render: (item) => `<a href="${base}/auth/users/${item.id}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a> `, sortable: true, sortFunction: (item) => item.lastname },
+                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickRemoveGroupMember(item.id) }] }
               ]}/>
-          </DetailPanelSection>
-        {/if}
+          {:else}
+            <span>This group has no directly assigned members.</span>
+          {/if}
+          {#if $store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id)).length}
+          <SortableTable items={$store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id))}
+                  headers={[
+                    { id: 'name', label: 'Inherited members', render: (item) => `<a href="${base}/auth/users/${item.id}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a>`, sortable: true, sortFunction: (item) => item.lastname },
+                    { id: 'remove', label: 'From group', render: (item) => getMemberDirectGroup(item.groups) }
+                  ]}/>
+          {/if}
+        </DetailPanelSection>
       </DetailPanel>
-
+    <div class="flex-group">
       <DetailPanel header='Roles' headerColor={panelHeaderColor} button={{ icon: plusIcon, hiddenLabel: `Add role to ${$store.group.name}`, onClick: () => { void openAddRoleDialog() } } }>
         <DetailPanelSection>
           {#if $store.group.directRoles.length}
@@ -180,7 +199,6 @@
           {/if}
         </DetailPanelSection>
       </DetailPanel>
-
       {#if Object.keys($store.sites).length}
         <DetailPanel header='Sites' headerColor={panelHeaderColor}>
           <DetailPanelSection>
@@ -197,28 +215,6 @@
           </DetailPanelSection>
         </DetailPanel>
       {/if}
-    </div>
-    <div>
-      <DetailPanel header='Members' headerColor={panelHeaderColor} button={{ icon: plusIcon, hiddenLabel: `Add members to ${$store.group.name}`, onClick: async () => await openAddUsersDialog() }} >
-        <DetailPanelSection>
-          {#if $store.group.directMembers.length}
-            <SortableTable items={$store.group.directMembers}
-              headers={[
-                { id: 'name', label: 'Member names', render: (item) => `<a href="${base}/auth/users/${item.id}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a> `, sortable: true, sortFunction: (item) => item.lastname },
-                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickRemoveGroupMember(item.id) }] }
-              ]}/>
-          {:else}
-            <span>This group has no directly assigned members.</span>
-          {/if}
-          {#if $store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id)).length}
-          <SortableTable items={$store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id))}
-                  headers={[
-                    { id: 'name', label: 'Inherited members', render: (item) => `<a href="${base}/auth/users/${item.id}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a>`, sortable: true, sortFunction: (item) => item.lastname },
-                    { id: 'remove', label: 'From group', render: (item) => getMemberDirectGroup(item.groups) }
-                  ]}/>
-          {/if}
-        </DetailPanelSection>
-      </DetailPanel>
     </div>
   </div>
 
@@ -279,17 +275,21 @@
 {/if}
 <style>
   .panel-grid {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
+    display: flex;
+    flex-direction: column;
     gap: 1em;
   }
-  .vertical-group {
-    display: grid;
-    grid-template-columns: 1fr;
+  .flex-group {
+    display: flex;
+    flex-direction: row;
     gap: 1em;
   }
-  :global([data-eq~="800px"]) .panel-grid {
-    grid-template-columns: 1fr;
+  .flex-group > :global(*) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  :global([data-eq~="800px"]) .panel-grid .flex-group {
+    flex-direction: column;
   }
   :global(span.inactive) {
     text-decoration: line-through;
