@@ -118,14 +118,14 @@
 
   let filter = ''
 
-  function searchable (itm: TypedSiteItem) {
+  function searchable (itm: SiteListSite) {
     return [itm.name, itm.url?.prefix ?? '']
   }
   $: actionPanelTarget.target = uiLog.targetFromTreeStore($store, 'name')
 
   function handleResponsiveHeaders (treeWidth: number) {
     if (treeWidth > 500) {
-      return ['name', 'url', 'organization', 'owner']
+      return ['name', 'url', 'launchstate', 'organization', 'owner']
     } else {
       return ['name', 'organization']
     }
@@ -142,6 +142,7 @@
   <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/sites/' + detail.id)} headers={[
     { id: 'name', label: 'Site Name', get: 'name', grow: 10, icon: { icon: globeLight } },
     { id: 'url', label: 'URL', grow: 10, render: (site) => `<span class="${site.launchState === LaunchState.LAUNCHED ? '' : 'not-live'}">${site.url?.prefix ?? ''}</span>` },
+    { id: 'launchstate', label: 'Launch State', render: (site) => site.launchState === 'LAUNCHED' ? 'Live' : (site.launchState === 'PRELAUNCH' ? 'Prelaunch' : 'Inactive'), grow: 5},
     { id: 'organization', label: 'Organization', get: 'organization.name', grow: 8 },
     { id: 'owner', label: 'Owner', render: renderOwner, grow: 7 }
   ]} {searchable} filter={filter} enableResize responsiveHeaders={handleResponsiveHeaders}>
