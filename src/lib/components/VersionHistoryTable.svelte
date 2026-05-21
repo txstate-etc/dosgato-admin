@@ -43,22 +43,42 @@
 
   const showing: Record<string, boolean> = {}
   const expandables: Record<string, HTMLElement> = {}
+  const monthShowing: Record<string, boolean> = {}
+  const yearShowing: Record<string, boolean> = {}
+  const monthExpandables: Record<string, HTMLElement> = {}
+  const yearExpandables: Record<string, HTMLElement> = {}
 
   $: isMarkedTable = title === 'Marked Versions'
   let keepers: Record<string, HistoryVersion> = {}
   let dayCount: Record<string, number> = {}
+  let boundaryMonth = ''
+  let boundaryYear = ''
   function reactToVersions (..._: any[]) {
     keepers = {}
     dayCount = {}
+    boundaryMonth = ''
+    boundaryYear = ''
     if (!compressDays) return
+    let uniqueDays = 0
     for (const v of versions) {
       const day = v.date.toLocal().toFormat('yyyyLLdd')
-      dayCount[day] ??= 0
-      dayCount[day]++
+      const month = v.date.toLocal().toFormat('yyyyLL')
+      const year = v.date.toLocal().toFormat('yyyy')
+      const firstSeenDay = dayCount[day] == null
+      dayCount[day] = (dayCount[day] ?? 0) + 1
       if (!keepers[day] || v.tags.includes('published') || (!keepers[day].tags.includes('published') && v.marked && !keepers[day].marked)) keepers[day] = v
+      if (!firstSeenDay) continue
+      uniqueDays++
+      if (uniqueDays === 10) { boundaryMonth = month; boundaryYear = year }
     }
   }
   $: reactToVersions(versions, compressDays)
+
+  function tierOf (month: string, year: string): 'recent' | 'month' | 'year' {
+    if (boundaryMonth === '' || month >= boundaryMonth) return 'recent'
+    if (year === boundaryYear) return 'month'
+    return 'year'
+  }
 
   function onSelect (version: number) {
     return (e: CustomEvent) => {
@@ -97,6 +117,18 @@
     expandables[day].focus()
   }
 
+  async function toggleMonth (month: string) {
+    monthShowing[month] = !monthShowing[month]
+    await tick()
+    monthExpandables[month]?.focus()
+  }
+
+  async function toggleYear (year: string) {
+    yearShowing[year] = !yearShowing[year]
+    await tick()
+    yearExpandables[year]?.focus()
+  }
+
   const checkboxid = randomid()
   const store = new ResizeStore()
   const small = derivedStore(store, sz => (sz?.clientWidth ?? 1000) < 500)
@@ -122,10 +154,40 @@
     {#each versions as version, i (version.version)}
     {@const restored = /restored/i.test(version.comment)}
     {@const day = version.date.toLocal().toFormat('yyyyLLdd')}
-    {@const lastday = i === 0 ? undefined : versions[i - 1].date.toLocal().toFormat('yyyyLLdd')}
+    {@const month = version.date.toLocal().toFormat('yyyyLL')}
+    {@const year = version.date.toLocal().toFormat('yyyy')}
+    {@const prev = i === 0 ? undefined : versions[i - 1]}
+    {@const lastday = prev?.date.toLocal().toFormat('yyyyLLdd')}
+    {@const prevMonth = prev?.date.toLocal().toFormat('yyyyLL')}
+    {@const prevYear = prev?.date.toLocal().toFormat('yyyy')}
+    {@const tier = tierOf(month, year)}
+    {@const prevTier = prev ? tierOf(prevMonth!, prevYear!) : undefined}
+    {@const ancestorsOpen = tier === 'recent' || (tier === 'month' && monthShowing[month]) || (tier === 'year' && yearShowing[year] && monthShowing[month])}
     {@const showsDate = (keepers[day]?.version === version.version && !showing[day]) || (showing[day] && lastday !== day)}
-    {@const hidden = compressDays && !showsDate && !showing[day]}
+    {@const hidden = compressDays && (!ancestorsOpen || (!showsDate && !showing[day]))}
     {@const expandable = dayCount[day] > 1 && showsDate}
+    {#if compressDays && tier === 'year' && year !== prevYear}
+    <tr class="tier-header year">
+      <td><span class="sr-only">No Data</span></td>
+      <td colspan="5">
+        <button type="button" class="reset" bind:this={yearExpandables[year]} on:click={() => toggleYear(year)}>
+          {year}
+          <Icon icon={yearShowing[year] ? caretDown : caretRight} inline hiddenLabel="{yearShowing[year] ? 'Hide' : 'Show'} versions from {year}" />
+        </button>
+      </td>
+    </tr>
+    {/if}
+    {#if compressDays && (tier === 'month' || tier === 'year') && (month !== prevMonth || tier !== prevTier)}
+    <tr class="tier-header month" class:hidden={tier === 'year' && !yearShowing[year]}>
+    <td><span class="sr-only">No Data</span></td>
+      <td colspan="5">
+        <button type="button" class="reset" bind:this={monthExpandables[month]} on:click={() => toggleMonth(month)}>
+          {DateTime.fromFormat(month, 'yyyyLL').toFormat('LLLL yyyy')}
+          <Icon icon={monthShowing[month] ? caretDown : caretRight} inline hiddenLabel="{monthShowing[month] ? 'Hide' : 'Show'} versions from {DateTime.fromFormat(month, 'yyyyLL').toFormat('LLLL yyyy')}" />
+        </button>
+      </td>
+    </tr>
+    {/if}
     <tr on:mouseenter={function () { hoverRow = this }} on:mouseleave={() => { hoverRow = undefined }} data-idx={i} class:hidden>
       <td class="checkbox"><Checkbox name="version-compare-{version.version}" value={selected.has(version.version)} disabled={selected.has(version.version) && selectedInTitle.get(version.version) !== title} onChange={onSelect(version.version)} id={checkboxid} /><label for={checkboxid}><ScreenReaderOnly>Select for Preview/Compare</ScreenReaderOnly></label></td>
       <td class="date" class:expandable on:click={async () => { if (expandable) await toggleExpanded(day) }}>
@@ -257,5 +319,8 @@
     margin-top: 1px;
     color: #222222;
     font-size: 0.9em;
+  }
+  .tier-header {
+    font-weight: 500;
   }
 </style>
