@@ -22,6 +22,7 @@
   let uploadLocked = false
   let uploadProgress = 0
   let uploadError: string | undefined
+  let abortFn: (() => void) | undefined
 
   let tooManyFiles = false
 
@@ -60,25 +61,38 @@
         data.append('file' + i, uploadList[i])
       }
 
-      await uploadWithProgress(
+      const { promise, abort } = uploadWithProgress(
         uploadPath,
         { Authorization: `Bearer ${api.token}` },
         data,
         ratio => { uploadProgress = ratio }
       )
+      abortFn = abort
+      await promise
       const fileCount = uploadList.length
       uploadList = []
       uploadError = undefined
       dispatch('saved', { fileCount })
     } catch (e: any) {
+      if (e?.aborted) {
+        uploadList = []
+        uploadError = undefined
+        dispatch('escape')
+        return
+      }
       uploadError = e.message
     } finally {
       uploadLocked = false
+      abortFn = undefined
     }
   }
 
   function onUploadEscape () {
-    if (!uploadLocked && escapable) {
+    if (uploadLocked) {
+      if (abortFn && escapable) abortFn()
+      return
+    }
+    if (escapable) {
       uploadList = []
       uploadError = undefined
       dispatch('escape')

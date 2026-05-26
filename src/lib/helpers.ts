@@ -28,23 +28,30 @@ export function ensureRequiredNotNull (data: any, requiredFields: string[]) {
   return messages
 }
 
-export async function uploadWithProgress (url: URL | string, headers: Record<string, string>, formData: FormData, progress: (ratio: number) => void) {
-  return await new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest()
+export function uploadWithProgress (url: URL | string, headers: Record<string, string>, formData: FormData, progress: (ratio: number) => void): { promise: Promise<number>, abort: () => void } {
+  const request = new XMLHttpRequest()
+  const promise = new Promise<number>((resolve, reject) => {
     request.open('POST', url)
     for (const [key, val] of Object.entries(headers)) request.setRequestHeader(key, val)
     request.upload.addEventListener('progress', e => progress(e.loaded / e.total))
 
     // request finished
-    request.addEventListener('load', e => {
+    request.addEventListener('load', () => {
       if (request.status >= 400) reject(new Error(request.responseText))
       else resolve(request.status)
     })
 
-    request.addEventListener('error', e => reject(new Error('An error occurred during transfer. Upload not completed.')))
+    request.addEventListener('error', () => reject(new Error('An error occurred during transfer. Upload not completed.')))
+
+    request.addEventListener('abort', () => {
+      const err: any = new Error('aborted')
+      err.aborted = true
+      reject(err)
+    })
 
     request.send(formData)
   })
+  return { promise, abort: () => request.abort() }
 }
 
 export function dateStamp (dt: string | Date | DateTime, opts?: { includeTz?: boolean }) {
