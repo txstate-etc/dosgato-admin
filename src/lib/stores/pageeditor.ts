@@ -25,7 +25,7 @@ export interface PageEditorVersionPreview {
 
 export interface EditorState {
   page: PageEditorPage
-  modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties' | 'versions' | 'editschedule'
+  modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties' | 'versions' | 'editschedule' | 'viewURL'
   selectedPath?: string
   selectedLabel?: string
   selectedMaxReached?: boolean
@@ -293,6 +293,11 @@ class PageEditorStore extends Store<IPageEditorStore> {
   versionsShowModal () {
     this.logActionShown('Show Versions')
     this.updateEditorState(editorState => ({ ...editorState, modal: 'versions' }))
+  }
+
+  viewURLShowModal () {
+    this.logActionShown('View URL')
+    this.updateEditorState(editorState => ({ ...editorState, modal: 'viewURL' }))
   }
 
   async moveComponent (from: string, to: string) {

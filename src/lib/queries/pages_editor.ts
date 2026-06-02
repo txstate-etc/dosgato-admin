@@ -41,6 +41,11 @@ pagetree {
   id
   type
 }
+site {
+  id
+  name
+  url { prefix }
+}
 template {
   name
 }
@@ -79,6 +84,11 @@ export interface PageEditorPage extends DialogPageProp {
   pagetree: {
     id: string
     type: string
+  }
+  site: {
+    id: string
+    name: string
+    url?: { prefix: string }
   }
   template?: {
     name: string

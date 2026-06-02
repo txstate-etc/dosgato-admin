@@ -3,6 +3,7 @@
   import { base } from '$app/paths'
   import { Checkbox, Dialog, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
   import type { UITemplate } from '@dosgato/templating'
+  import clipboardFill from '@iconify-icons/ph/clipboard-fill'
   import clipboardText from '@iconify-icons/ph/clipboard-text'
   import copyIcon from '@iconify-icons/ph/copy'
   import copySimple from '@iconify-icons/ph/copy-simple'
@@ -17,7 +18,7 @@
   import { DateTime } from 'luxon'
   import { onMount, setContext } from 'svelte'
   import { get, isNotNull, keyby, printIf, titleCase } from 'txstate-utils'
-  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, schemaVersion, ChooserClient, type ActionPanelGroup, api, VersionHistory, TagClientByLink } from '$lib'
+  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, schemaVersion, ChooserClient, type ActionPanelGroup, api, VersionHistory, TagClientByLink, toast } from '$lib'
   import { statusIcon } from './helpers'
   import SchedulePublishDialog from '../SchedulePublishDialog.svelte'
   import VersionView from './VersionView.svelte'
@@ -289,6 +290,17 @@
   $: editorMaxWidth = allowEditorMaxWidth ? ((deviceWidths[resolvedDevice]?.width ?? 0) > 0 ? deviceWidths[resolvedDevice]?.width + 'px' : undefined) : undefined
 
   let addToTop: boolean = false
+
+  $: previewURL = `${environmentConfig.renderBase}/.preview/latest${$pageStore.path}.html`
+  $: showLiveURL = $pageStore.site.url?.prefix && $pageStore.pagetree.type !== 'ARCHIVE'
+  $: liveURL = showLiveURL ? `${$pageStore.site.url!.prefix.replace(/\/$/, '')}${$pageStore.path.replace('/' + $pageStore.site.name, '')}` : undefined
+
+  async function copyURL (url: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(url)
+      toast(`Copied ${label} to clipboard.`, 'success')
+    } catch (e) { console.error(e) }
+  }
 </script>
 
 {#if $editorStore.previewing && ($editorStore.previewing.version.version !== $editorStore.page.version.version || $editorStore.previewing?.fromVersion)}
@@ -313,6 +325,7 @@
                   </button>
                 {/if}
               {/each}
+              <button id="btn-view-url" type="button" class="user-button" on:click={() => pageEditorStore.viewURLShowModal()}>View URL</button>
             </div>
           {/if}
           {#if allowEditorMaxWidth}
@@ -412,6 +425,38 @@
 {:else if $editorStore.restoreVersion != null}
   <Dialog title="Are You Sure?" cancelText="Cancel" continueText="Restore" on:escape={() => pageEditorStore.cancelRestore()} on:continue={async () => await pageEditorStore.restoreVersion()}>
     Restoring will create a new "latest" version with all the content from this version. All existing versions will remain.
+  </Dialog>
+{:else if $editorStore.modal === 'viewURL'}
+  <Dialog title="Page URL" on:escape={cancelModal} continueText="Close" on:continue={cancelModal}>
+    <div class="url-row">
+      <div class="url-label">Preview URL</div>
+      <div class="url-value-row">
+        <div class="url-value">{previewURL}</div>
+        <button type="button" class="url-copy" on:click={() => copyURL(previewURL, 'Preview URL')}>
+          <Icon icon={clipboardFill} hiddenLabel="Copy Preview URL" inline />
+          Copy
+        </button>
+      </div>
+    </div>
+    {#if liveURL}
+      <div class="url-row">
+        <div class="url-label">Live URL</div>
+        <div class="url-value-row">
+          <div class="url-value">{liveURL}</div>
+          <button type="button" class="url-copy" on:click={() => copyURL(liveURL, 'Live URL')}>
+            <Icon icon={clipboardFill} hiddenLabel="Copy Live URL" inline />
+            Copy
+          </button>
+        </div>
+        {#if $pageStore.pagetree.type === 'SANDBOX'}
+          <div class="url-warning">This URL will not lead to a live page yet because this page is in a sandbox.</div>
+        {:else if !$pageStore.published}
+          <div class="url-warning">This URL will not lead to a live page until the page is published.</div>
+        {/if}
+      </div>
+    {:else if $pageStore.pagetree.type !== 'ARCHIVE'}
+      <div class="url-row no-url">No live URL has been entered for this site.</div>
+    {/if}
   </Dialog>
 {/if}
 
@@ -558,6 +603,54 @@
   }
   .status.unpublished {
     color: var(--dosgato-red, #9a3332);
+  }
+  .url-row {
+    margin-bottom: 1em;
+  }
+  .url-row:last-child {
+    margin-bottom: 0;
+  }
+  .url-label {
+    font-weight: 600;
+    margin-bottom: 0.25em;
+  }
+  .url-value-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5em;
+  }
+  .url-value {
+    flex: 1;
+    padding: 0.4em 0.6em;
+    background-color: #f2f2f2;
+    border: 1px solid #cccccc;
+    border-radius: 2px;
+    word-break: break-all;
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+  .url-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.3em 0.7em;
+    border: 1px solid #757575;
+    border-radius: 2px;
+    background-color: #ebebeb;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .url-copy:hover {
+    background-color: #d6d6d6;
+  }
+  .url-warning {
+    margin-top: 0.4em;
+    font-size: 0.9em;
+    color: var(--dosgato-red, #9a3332);
+  }
+  .url-row.no-url {
+    font-style: italic;
+    color: #595959;
   }
   .version-preview {
     display: flex;
