@@ -12,6 +12,8 @@ import { pageTemplate3 } from './pagetemplate3.js'
 import { pageTemplate4 } from './pagetemplate4.js'
 import { richText } from './richtext.js'
 import { HorizontalRule } from './horizontalrule.js'
+import { teamTemplate } from './team.js'
+import { teamMemberTemplate } from './teammember.js'
 import { textImage } from './textimage.js'
 import AssetDialog from './AssetDialog.svelte'
 import { columnLayoutComponentTemplate } from './columnlayout.js'
@@ -37,6 +39,8 @@ export const uiConfig: UIConfig = {
     songTemplate,
     textImage,
     columnLayoutComponentTemplate,
+    teamTemplate,
+    teamMemberTemplate,
     { templateKey: 'documents', dialog: DocumentsDialog }
   ],
   login: {
