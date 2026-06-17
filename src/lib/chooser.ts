@@ -113,12 +113,13 @@ export class ChooserClient implements Client {
       data.append('file' + String(i), files[i])
     }
     try {
-      await uploadWithProgress(
+      const { promise } = uploadWithProgress(
         `${environmentConfig.apiBase}/assets/${(folder as any).originalId}`,
         { Authorization: `Bearer ${api.token!}` },
         data,
         progress
       )
+      await promise
       uiLog.log({ eventType: 'ChooserClient-upload', action: 'Success', target: folder.path, additionalProperties: { fileCount: String(files.length) } })
     } catch (e) {
       uiLog.log({ eventType: 'ChooserClient-upload', action: 'Failed', target: folder.path, additionalProperties: { fileCount: String(files.length) } })
