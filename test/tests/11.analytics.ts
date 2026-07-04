@@ -7,25 +7,43 @@ interface UserEvent {
   action: string
   screen: string
   target?: string
-  section?: string
   additionalProperties?: Record<string, string | undefined>
 }
 
 const API_BASE = process.env.API_BASE ?? 'http://proxy/.api'
 
+/** page.request shares cookies with the browser but the admin app keeps its JWT in
+ * sessionStorage, so we read it out of the page and send it as a Bearer header —
+ * the API requires authentication on every route, including GET /userEvents. */
 async function getUserEvents (page: Page): Promise<UserEvent[]> {
-  const resp = await page.request.get(`${API_BASE}/userEvents`)
+  const token = await page.evaluate(() => sessionStorage.getItem('token'))
+  const resp = await page.request.get(`${API_BASE}/userEvents`, { headers: { Authorization: `Bearer ${token}` } })
+  expect(resp.status(), 'expected an authenticated 200 from GET /userEvents').toBe(200)
   return await resp.json()
 }
 
+/** The analytics plugin queues events server-side and only flushes every 5 seconds,
+ * so we poll until the event we're looking for shows up. */
+async function findUserEvent (page: Page, description: string, predicate: (e: UserEvent) => boolean): Promise<UserEvent> {
+  let found: UserEvent | undefined
+  await expect(async () => {
+    const events = await getUserEvents(page)
+    found = events.find(predicate)
+    expect(found, description).toBeDefined()
+  }).toPass({ timeout: 15000 })
+  return found!
+}
+
 test.describe('analytics', () => {
+  test.beforeEach(async () => {
+    test.setTimeout(60000)
+  })
+
   test('navigating to pages screen logs a navigation event', async ({ adminPage }) => {
     await loadAdminPages(adminPage)
-    const events = await getUserEvents(adminPage)
-    const navToPages = events.find(e => e.eventType === 'navigation' && e.target?.includes('/pages'))
-    expect(navToPages, 'expected a navigation event targeting /pages').toBeDefined()
-    expect(navToPages!.action).toBeTruthy()
-    expect(navToPages!.screen).toBeTruthy()
+    const navToPages = await findUserEvent(adminPage, 'expected a navigation event targeting /pages', e => e.eventType === 'navigation' && (e.target?.includes('/pages') ?? false))
+    expect(navToPages.action).toBeTruthy()
+    expect(navToPages.screen).toBeTruthy()
   })
 
   test('clicking Edit on a page logs an ActionPanel event and navigation', async ({ adminPage }) => {
@@ -35,22 +53,21 @@ test.describe('analytics', () => {
     await adminPage.getByRole('button', { name: 'Edit' }).click()
     await adminPage.waitForURL(/\/pages\//)
 
-    const events = await getUserEvents(adminPage)
+    const actionPanelEvent = await findUserEvent(adminPage, 'expected an ActionPanel Edit event on /pages', e => e.eventType === 'ActionPanel' && e.action === 'Edit' && e.screen === '/pages')
+    expect(actionPanelEvent.target).toBeTruthy()
 
-    const actionPanelEvent = events.find(e => e.eventType === 'ActionPanel' && e.action === 'Edit' && e.screen === '/pages')
-    expect(actionPanelEvent, 'expected an ActionPanel Edit event on /pages').toBeDefined()
-    expect(actionPanelEvent!.target).toBeTruthy()
-
-    const navEvent = events.find(e => e.eventType === 'navigation' && e.target?.includes('/pages/'))
-    expect(navEvent, 'expected a navigation event to a page editor URL').toBeDefined()
+    await findUserEvent(adminPage, 'expected a navigation event to a page editor URL', e => e.eventType === 'navigation' && (e.target?.includes('/pages/') ?? false))
   })
 
   test('all logged events have required UserEvent fields', async ({ adminPage }) => {
     await loadAdminPages(adminPage)
     await expandSite(adminPage, 'site1')
 
-    const events = await getUserEvents(adminPage)
-    expect(events.length).toBeGreaterThan(0)
+    let events: UserEvent[] = []
+    await expect(async () => {
+      events = await getUserEvents(adminPage)
+      expect(events.length).toBeGreaterThan(0)
+    }).toPass({ timeout: 15000 })
     for (const event of events) {
       expect(event.eventType, `event missing eventType: ${JSON.stringify(event)}`).toBeTruthy()
       expect(event.action, `event missing action: ${JSON.stringify(event)}`).toBeTruthy()
@@ -73,20 +90,12 @@ test.describe('analytics', () => {
     await adminPage.getByRole('alertdialog').getByRole('button', { name: 'Enable User' }).click()
     await expect(adminPage.getByRole('button', { name: 'Disable' })).toBeVisible()
 
-    const events = await getUserEvents(adminPage)
+    const disableOpen = await findUserEvent(adminPage, 'expected an Open event for the disable modal', e => e.eventType === 'UserListPage-modal-disable' && e.action === 'Open')
+    expect(disableOpen.screen).toBe('/auth/users')
 
-    const disableOpen = events.find(e => e.eventType === 'UserListPage-modal-disable' && e.action === 'Open')
-    expect(disableOpen, 'expected an Open event for the disable modal').toBeDefined()
-    expect(disableOpen!.screen).toBe('/auth/users')
-
-    const disableSuccess = events.find(e => e.eventType === 'UserListPage-modal-disable' && e.action === 'Success' && e.target === login)
-    expect(disableSuccess, 'expected a Success event for the disable modal').toBeDefined()
-
-    const enableOpen = events.find(e => e.eventType === 'UserListPage-modal-enable' && e.action === 'Open')
-    expect(enableOpen, 'expected an Open event for the enable modal').toBeDefined()
-
-    const enableSuccess = events.find(e => e.eventType === 'UserListPage-modal-enable' && e.action === 'Success' && e.target === login)
-    expect(enableSuccess, 'expected a Success event for the enable modal').toBeDefined()
+    await findUserEvent(adminPage, 'expected a Success event for the disable modal', e => e.eventType === 'UserListPage-modal-disable' && e.action === 'Success' && e.target === login)
+    await findUserEvent(adminPage, 'expected an Open event for the enable modal', e => e.eventType === 'UserListPage-modal-enable' && e.action === 'Open')
+    await findUserEvent(adminPage, 'expected a Success event for the enable modal', e => e.eventType === 'UserListPage-modal-enable' && e.action === 'Success' && e.target === login)
   })
 
   test('adding a component to a page logs Add Component and addComponent Success', async ({ adminPage }) => {
@@ -101,17 +110,13 @@ test.describe('analytics', () => {
     await adminPage.getByLabel('Title *').fill('analytics-test')
     await adminPage.getByRole('button', { name: 'Save' }).click()
 
-    const events = await getUserEvents(adminPage)
+    const addShown = await findUserEvent(adminPage, 'expected an Add Component event from PageEditor', e => e.eventType === 'PageEditor' && e.action === 'Add Component')
+    expect(addShown.screen).toContain('/pages/')
+    expect(addShown.target).toBeTruthy()
 
-    const addShown = events.find(e => e.eventType === 'PageEditor' && e.action === 'Add Component')
-    expect(addShown, 'expected an Add Component event from PageEditor').toBeDefined()
-    expect(addShown!.screen).toContain('/pages/')
-    expect(addShown!.target).toBeTruthy()
-
-    const addSuccess = events.find(e => e.eventType === 'PageEditor-modal-addComponent' && e.action === 'Success')
-    expect(addSuccess, 'expected a Success event for addComponent modal').toBeDefined()
-    expect(addSuccess!.target).toBeTruthy()
-    expect(addSuccess!.additionalProperties?.templateKey).toBeTruthy()
+    const addSuccess = await findUserEvent(adminPage, 'expected a Success event for addComponent modal', e => e.eventType === 'PageEditor-modal-addComponent' && e.action === 'Success')
+    expect(addSuccess.target).toBeTruthy()
+    expect(addSuccess.additionalProperties?.templateKey).toBeTruthy()
 
     // Clean up
     await editFrame.getByRole('button', { name: /Delete Column Layout/ }).first().click()

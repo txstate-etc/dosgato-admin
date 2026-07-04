@@ -88,10 +88,10 @@ export const uiConfig: UIConfig = {
   ],
   uiInteractionsLogger (event, environmentConfig) {
     const token = sessionStorage.getItem('token') ?? ''
-    fetch(`${environmentConfig.apiBase}/userEvents`, {
+    fetch(`${environmentConfig.apiBase}/analytics`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(event)
+      body: JSON.stringify([event])
     }).catch(console.error)
   },
   dashboardActions: {
