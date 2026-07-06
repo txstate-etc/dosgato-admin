@@ -5,16 +5,16 @@
   import deleteOutline from '@iconify-icons/mdi/delete-outline'
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, SearchInput, actionPanelStore } from '$lib'
-  import { isNotBlank } from 'txstate-utils';
+  import { isNotBlank } from 'txstate-utils'
 
   export let data: { siteOptions: { value: string, label: string }[] }
   const { siteOptions } = data
-  const siteNamesById: Record<string, string> = siteOptions.reduce((acc, site) => {
+  const siteNamesById = siteOptions.reduce<Record<string, string>>((acc, site) => {
     acc[site.value] = site.label
     return acc
-  }, {} as Record<string, string>)
+  }, {})
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
@@ -64,8 +64,8 @@
       messages: messageForDialog(resp.messages, ''),
       data: resp.success
         ? {
-            name: resp.role!.name
-          }
+          name: resp.role!.name
+        }
         : undefined
     }
   }
@@ -101,7 +101,7 @@ let filter = ''
       return ['name', 'description', 'site', 'access']
     } else if (treeWidth > 600) {
       return ['name', 'site', 'access']
-    } else  {
+    } else {
       return ['name', 'site']
     }
   }
@@ -114,7 +114,7 @@ let filter = ''
   <svelte:fragment slot="abovePanel" let:panelHidden>
     <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
   </svelte:fragment>
-  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/roles/' + detail.id)} headers={[
+  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(resolve('/auth/roles/[id]', { id: detail.id }))} headers={[
     { id: 'name', label: 'Name', get: 'name', icon: { icon: keyIcon }, grow: 2 },
     { id: 'description', label: 'Description', get: 'description', grow: 2 },
     { id: 'site', label: 'Site', render: role => role.site?.id ? siteNamesById[role.site.id] : '', grow: 2 },

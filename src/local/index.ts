@@ -18,7 +18,6 @@ import { textImage } from './textimage.js'
 import AssetDialog from './AssetDialog.svelte'
 import { columnLayoutComponentTemplate } from './columnlayout.js'
 import DocumentsDialog from './DocumentsDialog.svelte'
-import { base } from '$app/paths'
 import lifeBuoy from '@iconify-icons/ph/lifebuoy'
 import { songTemplate } from './song.js'
 

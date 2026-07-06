@@ -9,7 +9,7 @@
     "test": "playwright test",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
-    "lint": "eslint --ignore-path .gitignore ."
+    "lint": "eslint --concurrency auto ."
   },
   "dependencies": {
     "@dosgato/dialog": "^1.6.9",
@@ -26,17 +26,19 @@
     "txstate-utils": "^1.8.11"
   },
   "devDependencies": {
+    "@eslint/compat": "^2.0.3",
+    "@stylistic/eslint-plugin": "^5.0.0",
     "@sveltejs/adapter-static": "^3.0.0",
     "@sveltejs/kit": "^2.5.24",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@types/luxon": "^3.0.1",
-    "@types/node": "^24.0.0",
-    "eslint-config-standard-with-typescript": "^43.0.0",
+    "@types/node": "^26.0.0",
+    "eslint-config-love": "^154.0.0",
     "eslint-plugin-svelte": "^3.0.0",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",
     "tslib": "^2.3.1",
-    "typescript": "^5.0.4",
+    "typescript": "^6.0.3",
     "vite": "^8.0.0"
   },
   "type": "module"

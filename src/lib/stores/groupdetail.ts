@@ -37,7 +37,7 @@ export class GroupDetailStore extends Store<IGroupDetailStore> {
       }
     }
 
-    for (const site in rulesBySite) {
+    for (const site of Object.keys(rulesBySite)) {
       groupAccessBySite[site] = getSiteAccess(rulesBySite[site])
     }
     let sitesArray: { id: string, name: string, permissions: string[] }[] = []

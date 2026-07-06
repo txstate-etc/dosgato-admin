@@ -5,7 +5,7 @@
   import upIcon from '@iconify-icons/ph/caret-up'
   import { Icon } from '@dosgato/dialog'
   import { eq } from '@txstate-mws/svelte-components'
-  let showPanel: boolean = false
+  let showPanel = false
   const bodyId: string = randomid()
   export let title
 </script>

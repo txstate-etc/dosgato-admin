@@ -1,7 +1,8 @@
 <script lang="ts">
   import { Icon } from '@dosgato/dialog'
   import arrowLeft from '@iconify-icons/mdi/arrow-left'
-  export let url: string
+  import type { ResolvedPathname } from '$app/types'
+  export let url: ResolvedPathname
   export let destination: string
 </script>
 
@@ -25,4 +26,3 @@
     margin-left: 0.5em;
   }
 </style>
-

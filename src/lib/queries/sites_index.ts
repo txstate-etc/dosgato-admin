@@ -1,4 +1,4 @@
-import { accessDetailRules, type AccessDetailAssetRule, type AccessDetailDataRule, type AccessDetailPageRule, type AccessDetailSiteRule, LaunchState } from '$lib'
+import { accessDetailRules, type AccessDetailAssetRule, type AccessDetailDataRule, type AccessDetailPageRule, type AccessDetailSiteRule, type LaunchState } from '$lib'
 import { mutationResponse } from './global'
 
 export const commentDetails = `

@@ -12,7 +12,7 @@
   import { setContext, tick } from 'svelte'
   import { csv, intersect, isBlank, isNull, pick, rescue, sleep, sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type CreateUserInput, globalStore, type UserListUser, uiLog, UserTrainingsChooser, SearchInput, actionPanelStore } from '$lib'
 
   export let system: boolean
@@ -50,7 +50,7 @@
 
   function singleactions (user: TypedUserItem) {
     const actions: ActionPanelAction[] = [
-      { label: 'Edit', icon: pencilIcon, disabled: !user.permissions.update, onClick: async () => await goto(base + '/auth/users/' + user.id) }
+      { label: 'Edit', icon: pencilIcon, disabled: !user.permissions.update, onClick: async () => await goto(resolve('/auth/users/[id]', { id: user.id })) }
     ]
     if (user.disabled) actions.push({ id: 'enabledisable', label: 'Enable', icon: accountCheck, disabled: !user.permissions.disable, onClick: () => openModal('enable') })
     else actions.push({ id: 'enabledisable', label: 'Disable', icon: accountCancel, disabled: !user.permissions.disable, onClick: () => openModal('disable') })
@@ -95,11 +95,11 @@
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
       data: resp.success
         ? {
-            userId: resp.user!.id,
-            firstname: resp.user!.firstname,
-            lastname: resp.user!.lastname,
-            email: resp.user!.email
-          }
+          userId: resp.user!.id,
+          firstname: resp.user!.firstname,
+          lastname: resp.user!.lastname,
+          email: resp.user!.email
+        }
         : undefined
     }
   }
@@ -121,7 +121,7 @@
   let emailElement: HTMLInputElement
   let createItems: PopupMenuItem[] = []
   let hideEmptyText = true
-  // eslint-disable-next-line prefer-const
+  // eslint-disable-next-line prefer-const -- intentionally mutable; kept as let so loading state can be toggled later
   let createMenuLoading = false
   let counter = 0
   interface ExternalUser {
@@ -131,7 +131,8 @@
     email: string
   }
   async function findExternalUsers (q: string) {
-    const myCounter = ++counter
+    counter += 1
+    const myCounter = counter
     await sleep(200)
     if (myCounter !== counter) return
     if (isBlank(q)) {
@@ -245,7 +246,7 @@
   <svelte:fragment slot="abovePanel" let:panelHidden>
     <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
   </svelte:fragment>
-  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/users/' + detail.id)} headers={[
+  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(resolve('/auth/users/[id]', { id: detail.id }))} headers={[
     { id: 'username', label: system ? 'Service Account' : 'Username', get: 'id', fixed: '10em', icon: u => ({ icon: u.disabled ? accountOff : accountIcon }) },
     { id: 'fullname', label: 'Full Name', get: 'name', fixed: '17em' },
     { id: 'roles', label: 'Roles', render: renderRoles, grow: 5 }

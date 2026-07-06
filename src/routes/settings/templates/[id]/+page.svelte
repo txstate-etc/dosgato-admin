@@ -1,19 +1,19 @@
 <script lang="ts">
   import { DetailPageContent, DetailList, DetailPanel, DetailPanelSection, SortableTable, Accordion } from '$lib'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { _store as store } from './+page'
   import { sortby } from 'txstate-utils'
   const panelHeaderColor = '#BFF3FD'
 
   $: templateInfo = {
-  Name: $store.template.name,
-  Key: $store.template.key,
-  Type: $store.template.type,
-  ...( $store.template.type !== 'DATA'
-    ? { Availability: $store.template.universal ? 'Universal' : 'Restricted' }
-    : {}
-  )
-}
+    Name: $store.template.name,
+    Key: $store.template.key,
+    Type: $store.template.type,
+    ...($store.template.type !== 'DATA'
+      ? { Availability: $store.template.universal ? 'Universal' : 'Restricted' }
+      : {}
+    )
+  }
 </script>
 
 <DetailPageContent>
@@ -26,9 +26,9 @@
     {#if $store.template.type !== 'DATA'}
       <DetailPanel header='Components Available Within This Template' headerColor={panelHeaderColor}>
         <DetailPanelSection>
-          {#each $store.template.areas as area}
+          {#each $store.template.areas as area (area.name)}
             <h3>Components available in {area.name} area</h3>
-              <SortableTable items={sortby(area.availableComponents, 'name')} headers = {[{ id: 'name', label: 'Template name', render: (item) => `<a href="${base}/settings/templates/${item.id}">${item.name}</a>` }, { id: 'key', label: 'Template key', get: 'key' }]} />
+              <SortableTable items={sortby(area.availableComponents, 'name')} headers = {[{ id: 'name', label: 'Template name', render: item => `<a href="${resolve('/settings/templates/[id]', { id: item.id })}">${item.name}</a>` }, { id: 'key', label: 'Template key', get: 'key' }]} />
           {:else}
             <div>This template has no nested components.</div>
           {/each}
@@ -38,7 +38,7 @@
     {#if $store.template.type === 'COMPONENT'}
     <DetailPanel header="Page Templates That Allow This Component" headerColor={panelHeaderColor}>
       <DetailPanelSection>
-        <SortableTable items={$store.pageTemplates} headers={[{ id: 'name', label: 'Name', render: (item) => `<a href="${base}/settings/templates/${item.id}">${item.name}</a>` }, { id: 'key', label: 'Template Key', get: 'key' }]} />
+        <SortableTable items={$store.pageTemplates} headers={[{ id: 'name', label: 'Name', render: item => `<a href="${resolve('/settings/templates/[id]', { id: item.id })}">${item.name}</a>` }, { id: 'key', label: 'Template Key', get: 'key' }]} />
       </DetailPanelSection>
     </DetailPanel>
     {/if}

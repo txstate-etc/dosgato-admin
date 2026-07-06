@@ -1,5 +1,5 @@
 import { error, type Load, redirect } from '@sveltejs/kit'
-import { base } from '$app/paths'
+import { resolve } from '$app/paths'
 import { api, pageEditorStore, subnavStore, templateRegistry } from '$lib'
 import type { PageSubNavLink } from './helpers'
 import { editPageIcon, editSandboxPageIcon, editArchivePageIcon } from './editpageicon'
@@ -18,7 +18,7 @@ export const load: Load<{ id: string }> = async ({ params }) => {
     if (!page) throw error(404)
     const pagetemplate = templateRegistry.getTemplate(page.data.templateKey)
     if (!pagetemplate) throw error(500, 'Unrecognized Page Template')
-    subnavStore.open('pages', { href: `${base}/pages/${page.id}`, label: page.name, icon: getPageIcon(page.pagetree.type), pageId: page.id, onClose: free })
+    subnavStore.open('pages', { href: resolve('/pages/[id]', { id: page.id }), label: page.name, icon: getPageIcon(page.pagetree.type), onClose: free })
     toBeFreed.delete(page.id)
     setTimeout(() => {
       for (const pageId of toBeFreed.values()) pageEditorStore.free(pageId)
@@ -29,6 +29,6 @@ export const load: Load<{ id: string }> = async ({ params }) => {
     if (err.status === 404) {
       throw error(404)
     }
-    redirect(302, `${base}/pages`)
+    redirect(302, resolve('/pages'))
   }
 }

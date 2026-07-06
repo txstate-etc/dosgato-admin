@@ -8,7 +8,7 @@
   export let title: string
   export let helptext: string | undefined = undefined
   export let uploadPath: string
-  export let maxFiles: number = 200
+  export let maxFiles = 200
   export let escapable = true
   export let mimeWhitelist: string[] = []
   export let mimeBlacklist: string[] = []
@@ -27,11 +27,11 @@
   let tooManyFiles = false
 
   function onUploadEnter (e: DragEvent) {
-    if (e.dataTransfer?.items.length) dragover++
+    if (e.dataTransfer?.items.length) dragover += 1
   }
 
   function onUploadLeave (e: DragEvent) {
-    if (e.dataTransfer?.items.length) dragover--
+    if (e.dataTransfer?.items.length) dragover -= 1
   }
 
   function onUploadDrop (e: DragEvent) {
@@ -47,7 +47,7 @@
     const files = e.currentTarget.files
     if (files?.length) {
       tooManyFiles = files.length > maxFiles
-      uploadList = unique(uploadList.concat(Array.from(files)), 'name').slice(-1 * maxFiles)
+      uploadList = unique(Array.from(files).concat(uploadList), 'name').slice(-1 * maxFiles)
     }
     e.currentTarget.value = ''
   }
@@ -105,7 +105,7 @@
     }
   }
 
-  let typeNotAllowedErrors: HTMLDivElement[] = []
+  const typeNotAllowedErrors: HTMLDivElement[] = []
 </script>
 
 <Dialog {title} disabled={!uploadList.length || !!typeNotAllowedErrors.filter(isNotNull).length} cancelText="Cancel" continueText="Upload" on:escape={onUploadEscape} on:continue={onUploadSubmit}>
@@ -121,9 +121,9 @@
       on:dragover|preventDefault={() => {}} on:drop={onUploadDrop}
     >
       <input type="file" id="uploader_input" multiple on:change={onUploadChange}>
-      <label for="uploader_input">Choose or drag {$$props.maxFiles ? `${maxFiles > 1 ? `up to ${maxFiles}` : 'a'}` : ''} file{maxFiles === 1 ? '' : 's'}</label>
+      <label for="uploader_input">Choose or drag {$$props.maxFiles ? (maxFiles > 1 ? `up to ${maxFiles}` : 'a') : ''} file{maxFiles === 1 ? '' : 's'}</label>
       <ul>
-        {#each uploadList as file, i}
+        {#each uploadList as file, i (file.name)}
           <li>
             <FileIcon width="1.5em" mime={file.type} inline />{file.name}{#if maxFiles > 1}<button type="button" on:click={onDeleteFile(file)}><Icon icon={trashLight} width="1.5em" hiddenLabel="Remove File" inline /></button>{/if}
             {#if (whitelist.size && !whitelist.has(file.type)) || (blacklist.size && blacklist.has(file.type))}

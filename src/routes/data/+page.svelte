@@ -1,7 +1,7 @@
 <script lang="ts">
   import cubeOutline from '@iconify-icons/mdi/cube-outline'
   import { Icon } from '@dosgato/dialog'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { ActionPanel, templateRegistry, type TemplateListTemplate, uiLog } from '$lib'
   import { setContext } from 'svelte'
 
@@ -22,7 +22,7 @@
       {#each data.templates as template (template.key)}
         {@const tmpl = templateRegistry.getTemplate(template.key)}
         {#if tmpl}
-          <a href={`${base}/data/${template.key}`}
+          <a href={resolve('/data/[id]', { id: template.key })}
            on:click={() => logInteraction(template.name, template.key)} >
             <Icon icon={tmpl.icon ?? cubeOutline} height="50%"/>
             <div class="template-name">{template.name}</div>

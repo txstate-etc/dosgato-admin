@@ -48,8 +48,8 @@
     if (preload.grants.undelete) grants.push('undelete')
     return {
       ...preload,
-      siteId: preload.global ? 'global' : (preload.siteId === undefined ? 'allsites' : preload.siteId),
-      templateId: preload.templateId === undefined ? 'alltemplates' : preload.templateId,
+      siteId: preload.global ? 'global' : (preload.siteId ?? 'allsites'),
+      templateId: preload.templateId ?? 'alltemplates',
       path: preload.path === '/' ? undefined : preload.path,
       grants
     } as DataRuleDialogState

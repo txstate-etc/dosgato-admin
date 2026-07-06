@@ -14,11 +14,11 @@
 </script>
 
 {#if rules.length}
-  <SortableTable cardedOnMobile mobileHeader={(item) => item.template ? item.template.name : 'All Templates'} items={rules}
+  <SortableTable cardedOnMobile mobileHeader={item => item.template ? item.template.name : 'All Templates'} items={rules}
     headers={[
-      { id: 'template', label: 'Template', render: (item) => { return item.template ? item.template.name : 'All Templates' } },
-      { id: 'use', label: 'Use', icon: (item) => { return item.grants.use ? { icon: checkIcon, hiddenLabel: 'May use template' } : { icon: minusIcon, hiddenLabel: 'May not use template' } } },
-      { id: 'deleteaction', label: 'Delete', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => { dispatch('deleterule', { id: item.id, type: 'template' }) } }] }
+      { id: 'template', label: 'Template', render: item => item.template ? item.template.name : 'All Templates' },
+      { id: 'use', label: 'Use', icon: item => item.grants.use ? { icon: checkIcon, hiddenLabel: 'May use template' } : { icon: minusIcon, hiddenLabel: 'May not use template' } },
+      { id: 'deleteaction', label: 'Delete', actions: [{ icon: deleteIcon, label: 'Delete', onClick: item => { dispatch('deleterule', { id: item.id, type: 'template' }) } }] }
     ]} />
 {:else}
   <div>This role has no template rules.</div>

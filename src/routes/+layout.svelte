@@ -18,9 +18,9 @@
   import { onMount, setContext, tick } from 'svelte'
   import { isNotNull } from 'txstate-utils'
   import { afterNavigate, goto } from '$app/navigation'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { page } from '$app/stores'
-  import { confirmationStore, currentSubNav, globalStore, subNavSize, subnavStore, toasts, LabeledIcon, LabeledIconButton, TopNavLink, environmentConfig, uiLog, api } from '$lib'
+  import { confirmationStore, currentSubNav, globalStore, subNavSize, subnavStore, toasts, LabeledIconButton, TopNavLink, environmentConfig, uiLog, api, smartGoto, type SmartLink } from '$lib'
   import { uiConfig } from '../local'
   import '../local/tracking.js'
   import '../normalize.css'
@@ -111,7 +111,7 @@
       if (!e.shiftKey || (!e.metaKey && !e.ctrlKey)) return
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
       const links = $currentSubNav?.links
-      if (!links || !links[index]?.movable) return
+      if (!links?.[index]?.movable) return
       const targetIndex = e.key === 'ArrowLeft' ? index - 1 : index + 1
       if (targetIndex < 0 || targetIndex >= Math.min(links.length, $currentSubNav!.maxItems)) return
       if (!links[targetIndex]?.movable) return
@@ -157,12 +157,7 @@
         }
       }
     } else if (item.value) {
-      if (/^https?:\/\//.test(item.value)) {
-        // we can't use goto for external links
-        window.location.href = item.value
-      } else {
-        void goto(item.value)
-      }
+      void smartGoto(item.value as SmartLink)
     }
   }
 
@@ -171,7 +166,7 @@
       const identifiers = subnavStore.getActiveIdentifiers(i)
       uiLog.log({ eventType: 'SubNav', action: 'Close Tab', target: identifiers?.href, additionalProperties: { label: identifiers?.label } })
       const href = subnavStore.close(i)
-      if (href) void goto(href)
+      if (href) void smartGoto(href)
     }
   }
 
@@ -196,7 +191,7 @@
     document.body.append(iframe)
   })
 
-  afterNavigate((nav) => {
+  afterNavigate(nav => {
     subnavStore.setMaxItems(Math.floor(($subNavSize.clientWidth ?? 800) / 140))
     if ($currentSubNav && subnavLinks.length > 1) {
       const selectedSubNavLink = subnavLinks.find(link => link.classList.contains('selected')) ?? subnavLinks[0]
@@ -205,7 +200,7 @@
     // Making a direct call to logRaw since after we navigate our uiLog.screen will be the target, not the originating screen.
     uiLog.logRaw({
       eventType: 'navigation',
-      action: nav.type.toString(),
+      action: nav.type,
       screen: nav.to?.route?.id ?? nav.to?.url?.pathname ?? 'unknown',
       target: nav.to?.url?.pathname,
       additionalProperties: {
@@ -230,24 +225,24 @@
 
   function getTopNavItems () {
     const items: PopupMenuItem[] = []
-    if ($globalStore.access.viewPageManager) items.push({ label: 'Pages', value: `${base}/pages` })
-    if ($globalStore.access.viewAssetManager) items.push({ label: 'Assets', value: `${base}/assets` })
-    if ($globalStore.access.viewDataManager) items.push({ label: 'Data', value: `${base}/data` })
-    items.push({ label: 'Dashboard', value: `${base}/dashboard` })
-    if ($globalStore.access.viewSiteManager) items.push({ label: 'Sites', value: `${base}/sites` })
-    if ($globalStore.access.viewRoleManager) items.push({ label: 'Access', value: `${base}/auth/users` })
-    if ($globalStore.access.manageTemplates) items.push({ label: 'More', value: `${base}/settings/templates/pages` })
+    if ($globalStore.access.viewPageManager) items.push({ label: 'Pages', value: resolve('/pages') })
+    if ($globalStore.access.viewAssetManager) items.push({ label: 'Assets', value: resolve('/assets') })
+    if ($globalStore.access.viewDataManager) items.push({ label: 'Data', value: resolve('/data') })
+    items.push({ label: 'Dashboard', value: resolve('/dashboard') })
+    if ($globalStore.access.viewSiteManager) items.push({ label: 'Sites', value: resolve('/sites') })
+    if ($globalStore.access.viewRoleManager) items.push({ label: 'Access', value: resolve('/auth/users') })
+    if ($globalStore.access.manageTemplates) items.push({ label: 'More', value: resolve('/settings/templates/pages') })
     return items
   }
 
   function getNavLabel (path) {
-    if (path.startsWith(`${base}/pages`)) return 'Pages'
-    else if (path.startsWith(`${base}/dashboard`)) return 'Dashboard'
-    else if (path.startsWith(`${base}/assets`)) return 'Assets'
-    else if (path.startsWith(`${base}/sites`)) return 'Sites'
-    else if (path.startsWith(`${base}/auth`)) return 'Access'
-    else if (path.startsWith(`${base}/data`)) return 'Data'
-    else if (path.startsWith(`${base}/settings`)) return 'More'
+    if (path.startsWith(resolve('/pages'))) return 'Pages'
+    else if (path.startsWith(resolve('/dashboard'))) return 'Dashboard'
+    else if (path.startsWith(resolve('/assets'))) return 'Assets'
+    else if (path.startsWith(resolve('/sites'))) return 'Sites'
+    else if (path.startsWith(resolve('/auth'))) return 'Access'
+    else if (path.startsWith(resolve('/data'))) return 'Data'
+    else if (path.startsWith(resolve('/settings'))) return 'More'
     return ''
   }
 
@@ -285,6 +280,7 @@
   let useMobileNav = false
   $: if (typeof $topbarsize !== 'undefined') {
     // the dropdown nav should have the same width as the button that opens it, which changes based on screen width
+    // eslint-disable-next-line svelte/no-reactive-reassign -- intentional recompute on resize since offsetWidth changes are not reactive
     navButtonWidth = `${navbutton?.offsetWidth ?? 0}px`
     // Recompute logo whenever topbarsize changes
     logo = getLogo()
@@ -296,13 +292,12 @@
     }
   }
 
-
 </script>
 
 <svelte:head>
   <title>{environmentTitle} {uiConfig.title ?? 'DG Editing'}</title>
   {#if uiConfig.favicon}
-    <link rel="icon" href="{typeof uiConfig.favicon === 'string' ? `${uiConfig.favicon}` : uiConfig.favicon(environmentConfig)}">
+    <link rel="icon" href="{typeof uiConfig.favicon === 'string' ? uiConfig.favicon : uiConfig.favicon(environmentConfig)}">
   {/if}
 </svelte:head>
 
@@ -322,13 +317,13 @@
           <Icon icon={logo} width={logo?.width} height={logo?.height}/>
         </div>
         <ul class="topnav" bind:this={topNavListElement} class:hide={useMobileNav}>
-          {#if $globalStore.access.viewPageManager}<li class:selected={$page.url.pathname.startsWith(`${base}/pages`)}><TopNavLink href="{base}/pages" icon={fileCode} label="Pages"/></li>{/if}
-          {#if $globalStore.access.viewAssetManager}<li class:selected={$page.url.pathname.startsWith(`${base}/assets`)}><TopNavLink href="{base}/assets" icon={copySimple} label="Assets" /></li>{/if}
-          {#if $globalStore.access.viewDataManager}<li class:selected={$page.url.pathname.startsWith(`${base}/data`)}><TopNavLink href="{base}/data" icon={database} label="Data" /></li>{/if}
-          <li class:selected={$page.url.pathname.startsWith(`${base}/dashboard`)}><TopNavLink href="{base}/dashboard" icon={gaugeIcon} label="Dashboard" /></li>
-          {#if $globalStore.access.viewSiteManager}<li class="separator" class:selected={$page.url.pathname.startsWith(`${base}/sites`)}><TopNavLink href="{base}/sites" icon={globe} label="Sites" /></li>{/if}
-          {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager} class:selected={$page.url.pathname.startsWith(`${base}/auth`)}><TopNavLink href="{base}/auth/users" icon={usersIcon} label="Access" /></li>{/if}
-          {#if $globalStore.access.manageTemplates}<li class:selected={$page.url.pathname.startsWith(`${base}/settings`)}><TopNavLink href="{base}/settings/templates/pages" icon={bag} label="More" /></li>{/if}
+          {#if $globalStore.access.viewPageManager}<li class:selected={$page.route.id?.startsWith('/pages')}><TopNavLink href={resolve('/pages')} icon={fileCode} label="Pages"/></li>{/if}
+          {#if $globalStore.access.viewAssetManager}<li class:selected={$page.route.id?.startsWith('/assets')}><TopNavLink href={resolve('/assets')} icon={copySimple} label="Assets" /></li>{/if}
+          {#if $globalStore.access.viewDataManager}<li class:selected={$page.route.id?.startsWith('/data')}><TopNavLink href={resolve('/data')} icon={database} label="Data" /></li>{/if}
+          <li class:selected={$page.route.id?.startsWith('/dashboard')}><TopNavLink href={resolve('/dashboard')} icon={gaugeIcon} label="Dashboard" /></li>
+          {#if $globalStore.access.viewSiteManager}<li class="separator" class:selected={$page.route.id?.startsWith('/sites')}><TopNavLink href={resolve('/sites')} icon={globe} label="Sites" /></li>{/if}
+          {#if $globalStore.access.viewRoleManager}<li class:separator={!$globalStore.access.viewSiteManager} class:selected={$page.route.id?.startsWith('/auth')}><TopNavLink href={resolve('/auth/users')} icon={usersIcon} label="Access" /></li>{/if}
+          {#if $globalStore.access.manageTemplates}<li class:selected={$page.route.id?.startsWith('/settings')}><TopNavLink href={resolve('/settings/templates/pages')} icon={bag} label="More" /></li>{/if}
         </ul>
         <!-- Button with dropdown menu for mobile navigation -->
         <button type="button" bind:this={navbutton} class="mobile-nav reset" aria-expanded={mobileNavMenuShown} class:hide={!useMobileNav}>
@@ -352,7 +347,7 @@
       </div>
       <button type="button" bind:this={profileelement} class="login-status reset" on:click={() => { uiLog.log({ eventType: 'button', action: 'LoginStatus', target: 'Login-PopupMenu' }) }} aria-expanded={false}>
         <Icon icon={userIcon} inline width="1.5em"/>
-        {`${isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}`}<ScreenReaderOnly>Application Actions</ScreenReaderOnly>
+        {isNotNull($globalStore.me.lastname) ? `${$globalStore.me.firstname} ${$globalStore.me.lastname}` : 'Unauthorized User'}<ScreenReaderOnly>Application Actions</ScreenReaderOnly>
       </button>
       <PopupMenu usemenurole {buttonelement} items={profileItems} showSelected={true} hideSelectedIndicator={true} on:change={onProfileChange} let:item let:label menuContainerClass="profile-menu" gap={5}>
         {@const icon = profileIcons[item.value]}
@@ -377,7 +372,7 @@
     {#if $currentSubNav}
       <div class="subnav">
         <ul use:resize={{ store: subNavSize }} style:background-color={environmentBackgroundColor ? `color-mix(in srgb, ${environmentBackgroundColor} 70%, black)` : undefined}>
-          {#each $currentSubNav.links.slice(0, $currentSubNav.maxItems) as link, i}
+          {#each $currentSubNav.links.slice(0, $currentSubNav.maxItems) as link, i (link.href)}
             {@const selected = $page.url.pathname === link.href || (!$currentSubNav.links.some(l => l.href === $page.url.pathname) && $page.url.pathname.startsWith(link.href + (link.href.endsWith('/') ? '' : '/')))}
             <li
               class:selected
@@ -385,7 +380,7 @@
               class:dragging={dragFromIndex === i}
               class:drop-left={dragOverIndex === i && dropSide === 'left' && dragFromIndex !== i}
               class:drop-right={dragOverIndex === i && dropSide === 'right' && dragFromIndex !== i}
-              style:flex-shrink={Math.pow(Math.max(0.00000001, link.label.length - 12), 0.5)}
+              style:flex-shrink={Math.max(0.00000001, link.label.length - 12) ** 0.5}
               draggable={link.movable ? 'true' : 'false'}
               on:dragstart={link.movable ? handleDragStart(i) : undefined}
               on:dragover={handleDragOver(i)}
@@ -393,6 +388,7 @@
               on:drop={handleDrop(i)}
               on:dragend={handleDragEnd}
             >
+              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- link.href is a pre-resolved URL from the subnav store -->
               <a bind:this={subnavLinks[i]} class:selected href={link.href} on:keydown={link.movable ? handleSubnavKeydown(i) : undefined}>{#if link.icon}<Icon icon={link.icon} inline/>{/if} {link.label}</a>
               {#if link.closeable}
                 <button type="button" class="reset" on:click={closeSubNav(i)}><Icon icon={closeThick} inline hiddenLabel="Close {link.label}" width="1.2em" /></button>
@@ -413,7 +409,7 @@
   </main>
   {#if $toasts.length > 1}
     <ul class="toasts" aria-live="assertive">
-      {#each $toasts as toast}
+      {#each $toasts as toast (toast.id)}
         <li><InlineMessage message={{ message: toast.message, type: toast.type }} /></li>
       {/each}
     </ul>

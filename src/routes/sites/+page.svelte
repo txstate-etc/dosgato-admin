@@ -8,7 +8,7 @@
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { api, ActionPanel, globalStore, type SiteListSite, type ActionPanelAction, type CreateWithPageState, CreateWithPageDialog, uiLog, LaunchState, SearchInput, actionPanelStore } from '$lib'
   import { buildAuditCSV } from './audit'
 
@@ -139,10 +139,10 @@
   <svelte:fragment slot="abovePanel" let:panelHidden>
     <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
   </svelte:fragment>
-  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/sites/' + detail.id)} headers={[
+  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(resolve('/sites/[id]', { id: detail.id }))} headers={[
     { id: 'name', label: 'Site Name', get: 'name', grow: 10, icon: { icon: globeLight } },
-    { id: 'url', label: 'URL', grow: 10, render: (site) => `<span class="${site.launchState === LaunchState.LAUNCHED ? '' : 'not-live'}">${site.url?.prefix ?? ''}</span>` },
-    { id: 'launchstate', label: 'Launch State', render: (site) => site.launchState === 'LAUNCHED' ? 'Live' : (site.launchState === 'PRELAUNCH' ? 'Prelaunch' : 'Inactive'), grow: 5},
+    { id: 'url', label: 'URL', grow: 10, render: site => `<span class="${site.launchState === LaunchState.LAUNCHED ? '' : 'not-live'}">${site.url?.prefix ?? ''}</span>` },
+    { id: 'launchstate', label: 'Launch State', render: site => site.launchState === 'LAUNCHED' ? 'Live' : (site.launchState === 'PRELAUNCH' ? 'Prelaunch' : 'Inactive'), grow: 5 },
     { id: 'organization', label: 'Organization', get: 'organization.name', grow: 8 },
     { id: 'owner', label: 'Owner', render: renderOwner, grow: 7 }
   ]} {searchable} filter={filter} enableResize responsiveHeaders={handleResponsiveHeaders}>

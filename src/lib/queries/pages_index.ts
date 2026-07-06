@@ -78,7 +78,7 @@ export interface TreePage {
   hasUnpublishedChanges: boolean
   schedules: {
     id: string
-    action: string
+    action: ScheduledPublishAction
     status: string
     targetDate: string
   }[]

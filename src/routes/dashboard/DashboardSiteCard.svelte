@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { base } from '$app/paths'
-  import { getSiteIcon, type DashboardSiteWithRoleSummary, uiLog } from '$lib'
+  import { resolve } from '$app/paths'
+  import { getSiteIcon, type DashboardSiteWithRoleSummary, uiLog, LaunchState } from '$lib'
   import { Icon } from '@dosgato/dialog'
   export let site: DashboardSiteWithRoleSummary
 
   const icon = getSiteIcon(site.launchState, 'PRIMARY')
 </script>
 
-<a class="site-card" href={`${base}/dashboard/${site.id}`} on:click={() => uiLog.log({ eventType: 'DashboardSiteCard', action: 'ClickSiteCard', target: site.name })}>
-  <div class="site-card-header" class:launched={site.launchState === 'LAUNCHED'} class:prelaunch={site.launchState === 'PRELAUNCH'} class:decommissioned={site.launchState === 'DECOMMISSIONED'}>
+<a class="site-card" href={resolve('/dashboard/[id]', { id: site.id })} on:click={() => uiLog.log({ eventType: 'DashboardSiteCard', action: 'ClickSiteCard', target: site.name })}>
+  <div class="site-card-header" class:launched={site.launchState === LaunchState.LAUNCHED} class:prelaunch={site.launchState === LaunchState.PRELAUNCH} class:decommissioned={site.launchState === LaunchState.DECOMMISSIONED}>
     <div class="left">
       <div class="top">
         <Icon {icon} width="1.5em" class={site.launchState.toLowerCase()}/>
@@ -20,7 +20,7 @@
       </div>
     </div>
     <div class="status">
-      <div class="launch-state">{site.launchState === 'LAUNCHED' ? 'ACTIVE' : site.launchState === 'PRELAUNCH' ? 'PRELAUNCH' : 'INACTIVE'}</div>
+      <div class="launch-state">{site.launchState === LaunchState.LAUNCHED ? 'ACTIVE' : site.launchState === LaunchState.PRELAUNCH ? 'PRELAUNCH' : 'INACTIVE'}</div>
     </div>
   </div>
   <div class="site-card-details">

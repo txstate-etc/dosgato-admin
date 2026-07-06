@@ -35,7 +35,7 @@ async function fetchChildren (item?: TypedPageItem) {
 async function moveHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean) {
   return await api.movePages(selectedItems.map(itm => itm.id), dropTarget.id, above)
 }
-async function copyHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean, userWantsRecursive: boolean = false) {
+async function copyHandler (selectedItems: TypedPageItem[], dropTarget: TypedPageItem, above: boolean, userWantsRecursive = false) {
   return await api.copyPages(selectedItems.map(itm => itm.id), dropTarget.id, above, userWantsRecursive)
 }
 function dragEligible (items: TypedPageItem[], userWantsCopy: boolean) {

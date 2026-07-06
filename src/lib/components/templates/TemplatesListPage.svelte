@@ -3,7 +3,7 @@
   import { ActionPanel, actionPanelStore, api, SearchInput, templateRegistry, uiLog, type ActionPanelAction, type TemplateListTemplateArea, type TemplateListTemplateWithAreas } from '$lib'
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { Dialog, Tree, type TreeStore, type TreeHeader } from '@dosgato/dialog'
   import checkIcon from '@iconify-icons/mdi/check'
   import earthIcon from '@iconify-icons/mdi/earth'
@@ -84,7 +84,7 @@
   <svelte:fragment slot="abovePanel" let:panelHidden>
     <SearchInput bind:searchInput asYouType on:search={e => { filter = e.detail }} on:maximize={onClickMinifiedSearch} minimized={panelHidden} />
   </svelte:fragment>
-  <Tree singleSelect {store} on:choose={({ detail }) => { if (detail.type === 'template') void goto(base + '/settings/templates/' + detail.id) }} headers={treeHeaders} enableResize responsiveHeaders={handleResponsiveHeaders} searchable={['name', 'id']} {filter} />
+  <Tree singleSelect {store} on:choose={({ detail }) => { if (detail.type === 'template') void goto(resolve('/settings/templates/[id]', { id: detail.id })) }} headers={treeHeaders} enableResize responsiveHeaders={handleResponsiveHeaders} searchable={['name', 'id']} {filter} />
 </ActionPanel>
 {#if modal === 'setuniversal'}
   <Dialog title="Make Template Universal" cancelText="Cancel" continueText="Set Universal" on:escape={onModalEscape} on:continue={async () => await setUniversal(true)}>

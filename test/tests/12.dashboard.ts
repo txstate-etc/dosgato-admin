@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures'
-import { Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
 interface ButtonsShown {
   pagesTopNav: boolean
@@ -123,6 +123,6 @@ test.describe('dashboard', () => {
       requestDeactivatePagetree: true,
       individualGoToPageTree: true
     }
-    await testButtonVisibility(dbEditorPage, buttonVisiblity) 
+    await testButtonVisibility(dbEditorPage, buttonVisiblity)
   })
 })

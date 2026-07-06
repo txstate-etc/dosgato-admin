@@ -11,7 +11,7 @@
   export { className as class }
   export let header: string
   export let button: DetailPanelButton | DetailPanelButton[] | undefined = undefined
-  export let headerColor: string = '#00507A'
+  export let headerColor = '#00507A'
   export let loading = false
   export let collapsible = false
 
@@ -22,13 +22,12 @@
   const bodyId = randomid()
 </script>
 
-
 <section class="panel {className}" aria-labelledby={h2id} use:eq>
   <header class:useborder={!shouldUseWhiteText(headerColor)} class:collapsed={collapsible && !open} style="background-color: {headerColor}; color: {color}">
     <h2 id={h2id}>{header}</h2>{#if loading}<LoadIcon size="2em" />{/if}
     {#if buttons.length || collapsible}
       <div class="panel-actions">
-        {#each buttons as button, i}
+        {#each buttons as button, i (button)}
           <button type="button" class="reset" disabled={button.disabled} class:leftmost={i === 0 && !collapsible} on:click={button.onClick} {...omit(button, 'onClick', 'disabled', 'hiddenLabel', 'icon')}><Icon icon={button.icon} hiddenLabel={button.hiddenLabel} width="1.5em" /></button>
         {/each}
         {#if collapsible}

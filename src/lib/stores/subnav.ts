@@ -2,6 +2,7 @@ import type { IconifyIcon } from '@iconify/svelte'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
 import { findIndex, set, splice } from 'txstate-utils'
 import { ResizeStore } from '@txstate-mws/svelte-components'
+import type { SmartLink } from '$lib'
 
 export interface ISubNavStore {
   /** SubNavs can contain multiple sections (groups of links) identified by a string. */
@@ -19,7 +20,7 @@ export interface ISubNavSection {
   maxItems: number
 }
 export interface SubNavLink {
-  href: string
+  href: SmartLink
   label: string
   icon?: IconifyIcon
   closeable?: boolean
@@ -32,7 +33,7 @@ class SubNavStore extends Store<ISubNavStore> {
     this.update(v => ({ ...v, sections: { ...v.sections, [section]: v.sections[section] ?? { active: 0, links, maxItems: 5 } }, active: section }))
   }
 
-  open<LinkType extends SubNavLink = SubNavLink> (section: string, link: LinkType) {
+  open (section: string, link: SubNavLink) {
     this.update(v => {
       const current = v.sections[section]
       if (!current) return v

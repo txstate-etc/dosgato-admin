@@ -1,7 +1,7 @@
 <script lang="ts">
   export let message: string
-  export let open: boolean = false
-  export let dismissable: boolean = true
+  export let open = false
+  export let dismissable = true
 </script>
 
 <dialog open={open}>

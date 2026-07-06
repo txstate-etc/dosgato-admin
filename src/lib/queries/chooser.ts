@@ -253,11 +253,11 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
     url: `/.assets${asset.path}`,
     image: asset.box
       ? {
-          ...asset.box,
-          thumbnailUrl: `${environmentConfig.renderBase}/.asset/${asset.id}/w/150/${asset.checksum.substring(0, 12)}/${asset.name}.${asset.extension}`,
-          previewUrl: `${environmentConfig.renderBase}/.asset/${asset.id}/w/700/${asset.checksum.substring(0, 12)}/${asset.name}.${asset.extension}`,
-          altText: asset.data?.meta?.altText || undefined
-        }
+        ...asset.box,
+        thumbnailUrl: `${environmentConfig.renderBase}/.asset/${asset.id}/w/150/${asset.checksum.substring(0, 12)}/${asset.name}.${asset.extension}`,
+        previewUrl: `${environmentConfig.renderBase}/.asset/${asset.id}/w/700/${asset.checksum.substring(0, 12)}/${asset.name}.${asset.extension}`,
+        altText: asset.data?.meta?.altText || undefined
+      }
       : undefined
   }
 }

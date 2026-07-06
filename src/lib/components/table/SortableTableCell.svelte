@@ -5,9 +5,9 @@
 
   export let header: SortableTableHeader
   export let item: any
-  let showModal: boolean = false
+  let showModal = false
   $: icon = typeof header.icon === 'function' ? header.icon(item) : header.icon
-  $: actions = (typeof header.actions === 'function' ? header.actions(item) : header.actions)?.filter(a => { return a.allowed ? a.allowed(item) : true })
+  $: actions = (typeof header.actions === 'function' ? header.actions(item) : header.actions)?.filter(a => a.allowed ? a.allowed(item) : true)
   const combineActions: boolean = isNotNull(header.combinedActionsLabel)
 
 </script>

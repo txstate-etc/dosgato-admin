@@ -11,7 +11,7 @@
     }
   `
 
-  async function fetchSelectedAsset(selectedAsset) {
+  async function fetchSelectedAsset (selectedAsset) {
     if (!selectedAsset) return null
     const parsed = JSON.parse(selectedAsset.id)
     const link = { ...pick(parsed, 'siteId', 'path', 'checksum'), linkId: parsed.id }

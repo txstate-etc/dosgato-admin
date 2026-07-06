@@ -99,7 +99,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
   /** Convenience function for logging response information associated with an action implemented by a PageEditorStore api call.
    * - `extraInfo` is a good location to put info needed for the action such as the initial target in cases where the action
    * response ends up acting on a different target. */
-  logActionResponse<R extends ISuccess> (resp: R, eventContext: string, path?: string, extraInfo?: Record<string, string | undefined>) {
+  logActionResponse (resp: ISuccess, eventContext: string, path?: string, extraInfo?: Record<string, string | undefined>) {
     const active = this.getActiveState()
     const additionalProperties = { ...(active && { id: active.editor.page.id }), ...(path && { path }), ...extraInfo }
     uiLog.log({
@@ -193,7 +193,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
     const templateKey = parentData.templateKey
     const availableComponents = await api.getAvailableComponents(templateKey, area, active.pageId)
     const availableComponentsByCategory = Object.entries(groupby(availableComponents, 'displayCategory')).map(([category, templates]) => ({ category, templates }))
-    this.update(v => set(v, `editors["${active.pageId}"]`, { ...active.editor, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + (String(parentData.areas?.[area]?.length) ?? '0'), data: undefined, availableComponents, availableComponentsByCategory, disableAddToTop } }))
+    this.update(v => set(v, `editors["${active.pageId}"]`, { ...active.editor, modal: 'create', editing: undefined, creating: { path, componentEventualPath: path + '.' + String(parentData.areas?.[area]?.length ?? 0), data: undefined, availableComponents, availableComponentsByCategory, disableAddToTop } }))
     this.logActionShown('Add Component', path)
     if (availableComponents.length === 1) await this.addComponentChooseTemplate(availableComponents[0].templateKey, refreshIframe, !!addToTop)
   }
@@ -430,4 +430,4 @@ export const pageEditorStore = new PageEditorStore()
 // hacked these together to never be undefined, only to be used on the page detail page
 export const editorStore = derivedStore(pageEditorStore, s => (s.active ? s.editors[s.active] : undefined)!)
 export const pageStore = derivedStore(editorStore, 'page')
-export const actionsStore = derivedStore(pageEditorStore, v => ({ clipboardData: v.clipboardData, clipboardPath: v.active === v.clipboardPage ? v.clipboardPath : undefined, clipboardPage: v.clipboardPage, clipboardLabel: v.clipboardLabel, selectedPath: v.editors[v.active!]?.selectedPath, clipboardActive: v.clipboardData || (v.clipboardPath && v.clipboardPage === v.active) }))
+export const actionsStore = derivedStore(pageEditorStore, v => ({ clipboardData: v.clipboardData, clipboardPath: v.active === v.clipboardPage ? v.clipboardPath : undefined, clipboardPage: v.clipboardPage, clipboardLabel: v.clipboardLabel, selectedPath: v.editors[v.active!]?.selectedPath, clipboardActive: !!v.clipboardData || (!!v.clipboardPath && v.clipboardPage === v.active) }))

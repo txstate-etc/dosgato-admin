@@ -140,14 +140,13 @@ return [
     }
   }
 
-
   async function run (formData: any) {
     error = ''
     running = true
     try {
       const data = await api.query(formData.query)
       const js = transpile(formData.transform, { target: ScriptTarget.ES2022, module: ModuleKind.ESNext })
-      // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+      // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval -- report transforms are user-authored code that must be evaluated
       const fn = new Function('data', js)
       const rows: any[][] = fn(data)
       if (!Array.isArray(rows) || !rows.every(r => Array.isArray(r))) {
@@ -187,7 +186,7 @@ return [
     <div class="load-report">
       <label for="load-report-select">Load Saved Report</label>
       <select id="load-report-select" value={reportName} on:change={e => loadReportIntoForm(e.currentTarget.value)}>
-        {#each savedReportNames as name}
+        {#each savedReportNames as name (name)}
           <option value={name}>{name}</option>
         {/each}
       </select>

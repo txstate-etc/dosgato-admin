@@ -1,4 +1,3 @@
-/* eslint-disable no-trailing-spaces */
 import { Store } from '@txstate-mws/svelte-store'
 import type { FullSite, SitePagetree } from '$lib/queries'
 import { sortby, set, keyby, unique } from 'txstate-utils'
@@ -167,10 +166,10 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
         pagetreeComponentTemplates[temp.key].pagetrees.push(ptree.name)
       }
     }
-    for (const key in pagetreePageTemplates) {
+    for (const key of Object.keys(pagetreePageTemplates)) {
       pageTemplates.push(pagetreePageTemplates[key])
     }
-    for (const key in pagetreeComponentTemplates) {
+    for (const key of Object.keys(pagetreeComponentTemplates)) {
       componentTemplates.push(pagetreeComponentTemplates[key])
     }
     this.set({ site, siteRoles: { specific: sortby(siteRoles.specific, 'name'), universal: sortby(siteRoles.universal, 'name') }, groups, users, pageTemplates: sortby(pageTemplates, 'universal', 'name'), componentTemplates: sortby(componentTemplates, 'universal', 'name') })
@@ -183,26 +182,18 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
   }
 
   setPagetreeEditing (id: string, name: string) {
-    this.update(v => {
-      return set(v, 'editingPagetree', { id, name })
-    })
+    this.update(v => set(v, 'editingPagetree', { id, name }))
   }
 
   cancelEditPagetree () {
-    this.update(v => {
-      return set(v, 'editingPagetree', undefined)
-    })
+    this.update(v => set(v, 'editingPagetree', undefined))
   }
 
   setTemplateAuthEditing (key: string, name: string, pagetrees: string[]) {
-    this.update(v => {
-      return set(v, 'templateAuthEditing', { key, name, pagetrees })
-    })
+    this.update(v => set(v, 'templateAuthEditing', { key, name, pagetrees }))
   }
 
   cancelEditTemplateAuth () {
-    this.update(v => {
-      return set(v, 'templateAuthEditing', undefined)
-    })
+    this.update(v => set(v, 'templateAuthEditing', undefined))
   }
 }

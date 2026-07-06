@@ -4,11 +4,11 @@
   import updownIcon from '@iconify-icons/ph/caret-up-down-fill'
   import { randomid } from 'txstate-utils'
   import { tick } from 'svelte'
-  
-  let dropdownid = randomid()
+
+  const dropdownid = randomid()
   export let label: string
   export let options: { label: string, value: string }[] = []
-  export let includeNone: boolean = false
+  export let includeNone = false
   export let icon: IconifyIcon = updownIcon
   export let onSelect: (value: string | undefined) => void = () => {}
 
@@ -22,7 +22,7 @@
   $: allOptions = includeNone ? [{ label: 'None', value: '' }, ...options] : options
   $: if (!open) focusedIndex = -1
 
-  async function toggle() {
+  async function toggle () {
     open = !open
     if (open) {
       focusedIndex = 0
@@ -31,7 +31,7 @@
     }
   }
 
-  function select(option: { label: string, value: string }) {
+  function select (option: { label: string, value: string }) {
     if (option.value === '') {
       selected = undefined
       onSelect(undefined)
@@ -43,12 +43,12 @@
     buttonEl.focus()
   }
 
-  function close() {
+  function close () {
     open = false
     buttonEl.focus()
   }
 
-  function handleKeydown(e: KeyboardEvent) {
+  function handleKeydown (e: KeyboardEvent) {
     if (!open) return
     switch (e.key) {
       case 'Escape':
@@ -79,7 +79,7 @@
     }
   }
 
-  function handleClickOutside(e: MouseEvent) {
+  function handleClickOutside (e: MouseEvent) {
     if (open && dropdownEl && !dropdownEl.contains(e.target as Node)) {
       open = false
     }

@@ -26,8 +26,8 @@
       messages: messageForDialog(resp.messages, 'args'),
       data: resp.success
         ? {
-            grants: resp.globalRule.grants
-          }
+          grants: resp.globalRule.grants
+        }
         : undefined
     }
   }
@@ -55,8 +55,8 @@
       messages: messageForDialog(resp.messages, 'args'),
       data: resp.success
         ? {
-            grants: resp.globalRule.grants
-          }
+          grants: resp.globalRule.grants
+        }
         : undefined
     }
   }

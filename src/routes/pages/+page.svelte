@@ -28,7 +28,7 @@
   import { onMount, setContext, tick } from 'svelte'
   import { htmlEncode, isBlank, isNotBlank, sortby } from 'txstate-utils'
   import { goto } from '$app/navigation'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import {
     api, ActionPanel, messageForDialog, dateStamp, type ActionPanelAction, DeleteState, environmentConfig,
     UploadUI, dateStampShort, type ActionPanelGroup, type CreateWithPageState, DialogWarning, uiLog,
@@ -94,9 +94,9 @@
   }
 
   function singlepageactions (page: TypedPageItem, ..._: any) {
-    const editAction = { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: async () => await goto(base + '/pages/' + page.id) }
-    const previewAction = { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${page.path}.html`), '_blank') } }
-    const showVersionsAction = { label: 'Show Versions', icon: historyIcon, onClick: async () => await goto(base + '/pages/' + page.id + '#versions') }
+    const editAction = { label: 'Edit', icon: pencilIcon, disabled: !page.permissions.update, onClick: async () => await goto(resolve('/pages/[id]', { id: page.id })) }
+    const previewAction = { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(resolve(`/preview?url=${encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${page.path}.html`)}`), '_blank') } }
+    const showVersionsAction = { label: 'Show Versions', icon: historyIcon, onClick: async () => await goto(resolve('/pages/[id]#versions', { id: page.id })) }
     const publishAction = { label: 'Publish', icon: publishIcon, disabled: !page.permissions.publish, onClick: () => openModal('publishpages') }
     const unpublishAction = { label: 'Unpublish', icon: publishOffIcon, disabled: !page.permissions.unpublish, onClick: () => { void countPages('unpublishpages') } }
     const exportAction = { label: 'Export', icon: exportIcon, disabled: false, onClick: async () => await api.download(`${environmentConfig.renderBase}/.page/${page.id}`) }
@@ -437,7 +437,7 @@
   </svelte:fragment>
   {#if $pagesStore.showsearch}
     {#if $searchStore.loading || $searchStore.rootItems?.length}
-      <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}
+      <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(resolve('/pages/[id]', { id: detail.id })) }} responsiveHeaders={handleResponsiveHeaders}
         headers={[
           { label: 'Name', id: 'name', grow: 4.5, icon: item => ({ icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) }), render: item => `<div class="page-name">${item.name}<div class="page-path">${item.path.split('/').slice(0, -1).join('/')}</div></div><button class="reset search-find-in-tree" type="button" tabindex="-1" onclick="window.dgPagesFindInPageTree(this, event)" data-path="${htmlEncode(item.path)}">${findInTreeIconSVG}<span>Find in page tree</span></button>` },
           { label: 'Title', id: 'title', grow: 3, get: 'title' },
@@ -448,12 +448,12 @@
             fixed: '4em',
             icon: item => [
               { icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', class: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', tooltip: item.deleteState === DeleteState.NOTDELETED ? item.status : 'Page is deleted' },
-                ...(item.schedules?.length
-                  ? [{ icon: alarmFill, label: 'Schedule', tooltip: scheduleTooltip(item.schedules), class: 'scheduled' }]
-                  : itemAncestors(item).some(a => a.schedules?.some(s => s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES))
-                    ? [{ icon: alarmFill, label: 'Has scheduled actions via an ancestor', class: 'scheduled subpage' }]
-                    : []
-                )
+              ...(item.schedules?.length
+                ? [{ icon: alarmFill, label: 'Schedule', tooltip: scheduleTooltip(item.schedules), class: 'scheduled' }]
+                : itemAncestors(item).some(a => a.schedules?.some(s => s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES))
+                  ? [{ icon: alarmFill, label: 'Has scheduled actions via an ancestor', class: 'scheduled subpage' }]
+                  : []
+              )
             ]
           },
           { label: 'Modified', id: 'modified', fixed: '10em', render: item => `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` },
@@ -473,12 +473,12 @@
       </div>
     {/if}
   {:else}
-  <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/pages/' + detail.id) }} responsiveHeaders={handleResponsiveHeaders}
+  <Tree {store} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(resolve('/pages/[id]', { id: detail.id })) }} responsiveHeaders={handleResponsiveHeaders}
     headers={[
       { label: 'Path', id: 'name', grow: 4, icon: item => [
-          { icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) },
-          ...(item.userTags?.length ? [{ icon: tagIndicatorIcon, trailing: true, label: 'has page tags', tooltip: tagTooltip(item.userTags), class: 'tag-indicator' }] : [])
-        ], render: item => `<div class="page-name">${item.name}</div>` },
+        { icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : getSiteIcon(item.site.launchState, item.type) },
+        ...(item.userTags?.length ? [{ icon: tagIndicatorIcon, trailing: true, label: 'has page tags', tooltip: tagTooltip(item.userTags), class: 'tag-indicator' }] : [])
+      ], render: item => `<div class="page-name">${item.name}</div>` },
       { label: 'Title', id: 'title', grow: 3, get: 'title' },
       { label: 'Template', id: 'template', fixed: '8.5em', get: 'template.name' },
       {
@@ -552,7 +552,7 @@
             cancelText='Go Back'
             continueIcon={arrowSquareOut}
             icon={warningIcon}
-            on:continue={async () => { await goto(base + '/data/dosgato-core-tags') }}
+            on:continue={async () => { await goto(resolve('/data/[id]', { id: 'dosgato-core-tags' })) }}
             on:escape={() => { pageTagsModalOpen = false }}>
             Page tags are managed in the Data section of the CMS. Any changes made in the previous window may not be saved. Do you wish to continue?
           </Dialog>

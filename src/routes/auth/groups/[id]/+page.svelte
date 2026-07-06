@@ -3,7 +3,7 @@
   import plusIcon from '@iconify-icons/ph/plus'
   import deleteIcon from '@iconify-icons/ph/trash'
   import { Dialog, FieldText, FieldMultiselect, FieldSelect, FormDialog } from '@dosgato/dialog'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { api, BackButton, DetailList, DetailPanel, DetailPanelSection, messageForDialog, StyledList, type RoleListRole, type UserListUser, uiLog } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
@@ -24,7 +24,8 @@
   $: directRoleIds = $store.group.directRoles.map(r => r.id)
 
   function modalTarget () {
-    return $store.group.name ?? $store.group.id  }
+    return $store.group.name ?? $store.group.id
+  }
 
   async function onEditBasic (state) {
     const resp = await api.editGroup($store.group.id, state.name)
@@ -89,7 +90,7 @@
   function renderIndirectRoleGroups (role) {
     // This role is an indirect role. It comes from an ancestor group of the group we are inspecting.
     // Look at the role's direct groups to see which one(s) are in the supergroups list
-    return role.groups.filter(g => supergroupIds.includes(g.id)).map(g => `<a href="${base}/auth/groups/${g.id}">${g.name}</a>`).join(', ')
+    return role.groups.filter(g => supergroupIds.includes(g.id)).map(g => `<a href="${resolve('/auth/groups/[id]', { id: g.id })}">${g.name}</a>`).join(', ')
   }
 
   async function openAddRoleDialog () {
@@ -142,7 +143,7 @@
 </script>
 
 <DetailPageContent>
-  <BackButton destination="group list" url={`${base}/auth/groups/`}/>
+  <BackButton destination="group list" url={resolve('/auth/groups')}/>
   <div class="panel-grid">
     <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={{ icon: pencilIcon, hiddenLabel: 'Edit group name', onClick: () => openModal('editbasic') }}>
       <DetailPanelSection>
@@ -152,8 +153,8 @@
         <DetailPanelSection>
           <SortableTable items={$store.group.subgroups}
             headers={[
-              { id: 'name', label: 'Subgroup', render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>`, sortable: true },
-              { id: 'parents', label: 'Subgroup parent', render: (item) => item.parents.map(g => g.name).join(', ') }
+              { id: 'name', label: 'Subgroup', render: item => `<a href="${resolve('/auth/groups/[id]', { id: item.id })}">${item.name}</a>`, sortable: true },
+              { id: 'parents', label: 'Subgroup parent', render: item => item.parents.map(g => g.name).join(', ') }
             ]}/>
         </DetailPanelSection>
       {/if}
@@ -163,8 +164,8 @@
           {#if $store.group.directMembers.length}
             <SortableTable items={$store.group.directMembers}
               headers={[
-                { id: 'name', label: 'Member names', render: (item) => `<a href="${base}/auth/users/${item.id}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a> `, sortable: true, sortFunction: (item) => item.lastname },
-                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickRemoveGroupMember(item.id) }] }
+                { id: 'name', label: 'Member names', render: item => `<a href="${resolve('/auth/users/[id]', { id: item.id })}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a> `, sortable: true, sortFunction: item => item.lastname },
+                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Delete', onClick: item => onClickRemoveGroupMember(item.id) }] }
               ]}/>
           {:else}
             <span>This group has no directly assigned members.</span>
@@ -172,8 +173,8 @@
           {#if $store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id)).length}
           <SortableTable items={$store.group.indirectMembers.filter(m => !directMemberIds.includes(m.id))}
                   headers={[
-                    { id: 'name', label: 'Inherited members', render: (item) => `<a href="${base}/auth/users/${item.id}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a>`, sortable: true, sortFunction: (item) => item.lastname },
-                    { id: 'remove', label: 'From group', render: (item) => getMemberDirectGroup(item.groups) }
+                    { id: 'name', label: 'Inherited members', render: item => `<a href="${resolve('/auth/users/[id]', { id: item.id })}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a>`, sortable: true, sortFunction: item => item.lastname },
+                    { id: 'remove', label: 'From group', render: item => getMemberDirectGroup(item.groups) }
                   ]}/>
           {/if}
         </DetailPanelSection>
@@ -184,8 +185,8 @@
           {#if $store.group.directRoles.length}
             <SortableTable items={$store.group.directRoles}
               headers={[
-                { id: 'name', label: 'Assigned Role Names', render: (item) => `<a href="${base}/auth/roles/${item.id}">${item.name}</a>`, sortable: true },
-                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Delete', onClick: (item) => onClickRemoveRole(item.id) }] }
+                { id: 'name', label: 'Assigned Role Names', render: item => `<a href="${resolve('/auth/roles/[id]', { id: item.id })}">${item.name}</a>`, sortable: true },
+                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Delete', onClick: item => onClickRemoveRole(item.id) }] }
               ]}/>
           {:else}
             <span>This group has no assigned roles.</span>
@@ -193,8 +194,8 @@
           {#if $store.group.rolesThroughParentGroup.length}
             <SortableTable items={$store.group.rolesThroughParentGroup}
               headers={[
-                { id: 'name', label: 'Inherited Role Names', render: (item) => `<a href="${base}/auth/roles/${item.id}">${item.name}</a>`, sortable: true },
-                { id: 'source', label: 'From group', render: (item) => renderIndirectRoleGroups(item) }
+                { id: 'name', label: 'Inherited Role Names', render: item => `<a href="${resolve('/auth/roles/[id]', { id: item.id })}">${item.name}</a>`, sortable: true },
+                { id: 'source', label: 'From group', render: item => renderIndirectRoleGroups(item) }
               ]}/>
           {/if}
         </DetailPanelSection>

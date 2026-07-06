@@ -36,10 +36,8 @@ export async function buildAuditCSV () {
       row.push(pagetree.rootPage.template?.name ?? '')
       if (pagetree.type === 'SANDBOX') row.push('Sandbox')
       else if (pagetree.type === 'ARCHIVE') row.push('Archive')
-      else {
-        if (site.launched) row.push('Live')
-        else row.push('Not Launched')
-      }
+      else if (site.launched) row.push('Live')
+      else row.push('Not Launched')
       // listing users with write access, looking at page rules and asset rules
       const usersWithAccess: string[] = []
       for (const role of site.roles) {

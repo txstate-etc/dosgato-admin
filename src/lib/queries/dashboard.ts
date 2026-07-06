@@ -341,5 +341,3 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
     pagetreeLastModifiedById
   }
 }
-
-

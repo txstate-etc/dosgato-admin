@@ -1,4 +1,4 @@
-import { base } from '$app/paths'
+import { resolve } from '$app/paths'
 import { subnavStore } from '$lib'
 import accountIcon from '@iconify-icons/mdi/account'
 import accountWrenchIcon from '@iconify-icons/mdi/account-wrench'
@@ -17,5 +17,5 @@ function getTabIcon (type: 'users' | 'system' | 'groups' | 'roles') {
 }
 
 export function updateAuthSubnav (type: 'users' | 'system' | 'groups' | 'roles') {
-  subnavStore.open('auth', { href: `${base}/auth/${type}`, label: getTabLabel(type), icon: getTabIcon(type) })
+  subnavStore.open('auth', { href: resolve(`/auth/${type}`), label: getTabLabel(type), icon: getTabIcon(type) })
 }

@@ -2,7 +2,7 @@
   import { isNotBlank } from 'txstate-utils'
 
   export let records: Record<string, string | undefined | null>
-  export let columns: number = 2
+  export let columns = 2
   $: entries = Object.entries(records).filter(([k, v]) => isNotBlank(v))
 </script>
 

@@ -3,8 +3,9 @@
   import { Icon } from '@dosgato/dialog'
   import type { IconifyIcon } from '@iconify/svelte'
   import { getContext } from 'svelte'
+  import type { ResolvedPathname } from '$app/types'
 
-  export let href: string
+  export let href: ResolvedPathname
   export let label: string
   export let icon: IconifyIcon
 

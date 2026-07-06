@@ -1,23 +1,19 @@
 <script lang="ts">
-  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, environmentConfig, getSiteIcon, SortableTable, toast, titleCaseAccess, uiLog } from '$lib'
+  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, environmentConfig, getSiteIcon, LaunchState, SortableTable, toast, titleCaseAccess, uiLog } from '$lib'
   import type { DashboardSiteDetailDisplay, DashboardSiteTeamMemberWithRole } from '$lib'
   import { Button, FieldSelect, FormDialog, Icon } from '@dosgato/dialog'
   import eye from '@iconify-icons/ph/eye-bold'
   import clipboard from '@iconify-icons/ph/clipboard-fill'
-  import list from '@iconify-icons/ph/list-bullets-bold'
   import treeStructure from '@iconify-icons/ph/tree-structure'
-  import exportIcon from '@iconify-icons/ph/export-bold'
   import editUserIcon from '@iconify-icons/ph/user-gear-fill'
   import trashIcon from '@iconify-icons/ph/trash-simple-fill'
   import infoIcon from '@iconify-icons/ph/info-fill'
   import linkOutIcon from '@iconify-icons/ph/arrow-square-out-bold'
-  import teamSettingsIcon from '@iconify-icons/ph/user-gear-fill'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { goto } from '$app/navigation'
   import UserDetailDialog from './UserDetailDialog.svelte'
   import DashboardPagetreeTable from './DashboardPagetreeTable.svelte'
   import { uiConfig } from '../../../local'
-
 
   export let data: { site: DashboardSiteDetailDisplay }
   $: site = data.site
@@ -36,7 +32,7 @@
 
   function revealInPageTree (pageId?: string) {
     if (!pageId) return
-    void goto(`${base}/pages?selectedPage=${pageId}`)
+    void goto(resolve(`/pages?selectedPage=${pageId}`))
   }
 
   async function onDownloadPageList (state) {
@@ -72,7 +68,7 @@
 
 <DetailPageContent>
   <div class="site-stats">
-    <div class="top" class:launched={site.launchState === 'LAUNCHED'} class:prelaunch={site.launchState === 'PRELAUNCH'} class:decommissioned={site.launchState === 'DECOMMISSIONED'}>
+    <div class="top" class:launched={site.launchState === LaunchState.LAUNCHED} class:prelaunch={site.launchState === LaunchState.PRELAUNCH} class:decommissioned={site.launchState === LaunchState.DECOMMISSIONED}>
       <div class="basic-info">
         <Icon {icon} width="1.75em" class="state-icon"/>
         <div class="title-block">
@@ -83,11 +79,11 @@
           </div>
           <div class="site-actions">
             {#if site.rootPageId}
-              <Button type="button" icon={eye} on:click={() => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${site.rootPagePath}.html`), '_blank') }}>Gato Preview</Button>
+              <Button type="button" icon={eye} on:click={() => { window.open(resolve(`/preview?url=${encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${site.rootPagePath}.html`)}`), '_blank') }}>Gato Preview</Button>
             {/if}
             {#if site.launched}<Button type="button" icon={clipboard} on:click={onCopyURL}>Copy Live URL</Button>{/if}
             {#if site.rootPageId}
-              <Button type="button" icon={treeStructure} on:click={(e) => { e.preventDefault(); revealInPageTree(site.rootPageId) }}>Go to Page Tree</Button>
+              <Button type="button" icon={treeStructure} on:click={e => { e.preventDefault(); revealInPageTree(site.rootPageId) }}>Go to Page Tree</Button>
             {/if}
           </div>
         </div>
@@ -106,7 +102,7 @@
           </div>
           <div class="status">
             <dt>Site Status:</dt>
-            <dd>{site.launchState === 'LAUNCHED' ? 'Active' : site.launchState === 'PRELAUNCH' ? 'Prelaunch' : 'Inactive'}</dd>
+            <dd>{site.launchState === LaunchState.LAUNCHED ? 'Active' : site.launchState === LaunchState.PRELAUNCH ? 'Prelaunch' : 'Inactive'}</dd>
           </div>
           <div>
             <dt>Total Pages:</dt>
@@ -116,7 +112,7 @@
       </div>
       <div class="secondary-actions">
         {#if uiConfig?.dashboardActions?.updateWebsiteManagementUrl}<Button secondary icon={editUserIcon} on:click={() => window.open(uiConfig.dashboardActions?.updateWebsiteManagementUrl, '_blank')}>Update Website Management</Button>{/if}
-        {#if site.launchState !== 'DECOMMISSIONED' && site.permissions.audit && uiConfig?.dashboardActions?.requestSiteDecommissionUrl}<Button secondary icon={trashIcon} on:click={() => window.open(uiConfig.dashboardActions?.requestSiteDecommissionUrl, '_blank')}>Request Site Decommission</Button>{/if}
+        {#if site.launchState !== LaunchState.DECOMMISSIONED && site.permissions.audit && uiConfig?.dashboardActions?.requestSiteDecommissionUrl}<Button secondary icon={trashIcon} on:click={() => window.open(uiConfig.dashboardActions?.requestSiteDecommissionUrl, '_blank')}>Request Site Decommission</Button>{/if}
       </div>
     </div>
   </div>
@@ -141,7 +137,7 @@
         </div>
       </div>
       {#if uiConfig?.dashboardActions?.defineAccessLevelUrl}
-        <a class="dashboard-link with-icon" href="{uiConfig.dashboardActions.defineAccessLevelUrl}" target="_blank">
+        <a class="dashboard-link with-icon" href={uiConfig.dashboardActions.defineAccessLevelUrl} rel="external" target="_blank">
           <span>What are access levels?</span>
           <Icon icon={linkOutIcon} width="1.2em" />
         </a>
@@ -151,15 +147,15 @@
         <Button icon={teamIcon}>Audit Team</Button>
         <Button icon={exportIcon}>Export CSV</Button> -->
         <!-- TODO: TEMPORARY UNTIL ACTIONS AVAILABLE IN GATO -->
-        <Button icon={teamSettingsIcon} on:click={ () => { window.open('https://gato.its.txst.edu/manage-user-access/update-access-form.html', '_blank')} } >Update Team Member Access</Button>
+        <Button icon={editUserIcon} on:click={ () => { window.open('https://gato.its.txst.edu/manage-user-access/update-access-form.html', '_blank') } } >Update Team Member Access</Button>
      </div>
       {#if site.team.length}
       <SortableTable items={site.team} headers={[
         { id: 'access', label: 'Access Level', get: 'access', sortable: true, mobileRole: 'subtitle' },
         { id: 'name', label: 'Name', get: 'name', sortable: true, mobileRole: 'title' },
         { id: 'username', label: 'User ID', get: 'id' },
-        { id: 'lastlogin', label: 'Last Login', render: (item) => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true },
-        { id: 'details', label: 'Details', actions: [{ icon: infoIcon, class: 'user-detail', label: 'Details', onClick: async (user) => await viewUserDetail(user.id) }] }
+        { id: 'lastlogin', label: 'Last Login', render: item => item.lastlogin ? dateStamp(item.lastlogin) : '', sortable: true },
+        { id: 'details', label: 'Details', actions: [{ icon: infoIcon, class: 'user-detail', label: 'Details', onClick: async user => await viewUserDetail(user.id) }] }
       ]} cardedOnMobile={true} />
       {:else}
         <p>No team members have been added to this site.</p>
@@ -168,19 +164,19 @@
   </DetailPanel>
   <DetailPanel header="Role Management" headerColor="#F5F1EE" collapsible>
     <DetailPanelSection>
-      <p>All team members in your site should have at least one role assigned. To add or remove roles, or update existing role permissions, contact {#if uiConfig?.dashboardActions?.contactSupportUrl}<a class="dashboard-link" href="{uiConfig.dashboardActions.contactSupportUrl}">Support</a>{:else}Support{/if}.</p>
+      <p>All team members in your site should have at least one role assigned. To add or remove roles, or update existing role permissions, contact {#if uiConfig?.dashboardActions?.contactSupportUrl}<a class="dashboard-link" rel="external" href="{uiConfig.dashboardActions.contactSupportUrl}">Support</a>{:else}Support{/if}.</p>
       {#if uiConfig?.dashboardActions?.defineRolesUrl}
-        <a class="dashboard-link with-icon" href="{uiConfig.dashboardActions.defineRolesUrl}" target="_blank">
+        <a class="dashboard-link with-icon" rel="external" href="{uiConfig.dashboardActions.defineRolesUrl}" target="_blank">
           <span>What are roles?</span>
           <Icon icon={linkOutIcon} width="1.2em" />
         </a>
       {/if}
       {#if site.auditRoles.length}
       <SortableTable items={site.auditRoles} headers={[
-        { id: 'role', label: 'Role Title', get: 'name', sortable: true, sortFunction: (item) => item.name, mobileRole: 'title' },
-        { id: 'access', label: 'Access Level', render: (item) => item.access ? titleCaseAccess[item.access] : '', mobileRole: 'subtitle' },
+        { id: 'role', label: 'Role Title', get: 'name', sortable: true, sortFunction: item => item.name, mobileRole: 'title' },
+        { id: 'access', label: 'Access Level', render: item => item.access ? titleCaseAccess[item.access] : '', mobileRole: 'subtitle' },
         { id: 'description', label: 'Description', get: 'description' },
-        { id: 'users', label: 'Assignees', render: (item) => item.users.length, sortable: true, sortFunction: (item) => item.users.length }
+        { id: 'users', label: 'Assignees', render: item => item.users.length, sortable: true, sortFunction: item => item.users.length }
       ]} cardedOnMobile={true} />
       {:else}
         <p>No roles have been associated with this site.</p>
@@ -196,7 +192,7 @@
         </div>
       </div>
       {#if uiConfig?.dashboardActions?.definePagetreeUrl}
-        <a class="dashboard-link with-icon" href="{uiConfig.dashboardActions.definePagetreeUrl}" target="_blank">
+        <a class="dashboard-link with-icon" rel="external" href="{uiConfig.dashboardActions.definePagetreeUrl}" target="_blank">
           <span>What is a page tree?</span>
           <Icon icon={linkOutIcon} width="1.2em" />
         </a>

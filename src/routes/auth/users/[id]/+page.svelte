@@ -6,7 +6,7 @@
   import deleteIcon from '@iconify-icons/ph/trash'
   import { DateTime } from 'luxon'
   import { sortby } from 'txstate-utils'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type GroupListGroup, type RoleListRole, BackButton, uiLog, UserTrainingsChooser } from '$lib'
   import { _store as store } from './+page'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
@@ -39,9 +39,7 @@
   }
 
   function getIndirectRoleGroup (role) {
-    const relevantGroups = role.groups.filter(g => {
-      return allUserGroups.find(ug => ug.id === g.id)
-    })
+    const relevantGroups = role.groups.filter(g => allUserGroups.find(ug => ug.id === g.id))
     return relevantGroups.map(g => g.name).join(', ')
   }
 
@@ -63,9 +61,7 @@
   }
 
   async function searchGroups (term: string) {
-    return data.allGroups.filter(g => {
-      return g.name.includes(term)
-    }).map(g => ({ label: g.name, value: g.id }))
+    return data.allGroups.filter(g => g.name.includes(term)).map(g => ({ label: g.name, value: g.id }))
   }
 
   async function lookupGroupByValue (val: string) {
@@ -160,7 +156,7 @@
 
 <DetailPageContent>
 
-  <BackButton destination="user list" url={`${base}/auth/users/`}/>
+  <BackButton destination="user list" url={resolve('/auth/users')}/>
 
   <div class="panel-grid">
     <div class="grid-item">
@@ -180,13 +176,13 @@
           <Accordion title="Group Memberships">
             {#if $store.user.directGroups.length}
               <SortableTable items={$store.user.directGroups}
-                headers={[{ id: 'name', label: 'Group name', sortable: true, render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>` }, { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, hiddenLabel: 'Remove user from group', label: 'Delete', onClick: (item) => { onClickRemoveGroup(item.id, item.name) } }] }]}/>
+                headers={[{ id: 'name', label: 'Group name', sortable: true, render: item => `<a href="${resolve('/auth/groups/[id]', { id: item.id })}">${item.name}</a>` }, { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, hiddenLabel: 'Remove user from group', label: 'Delete', onClick: item => { onClickRemoveGroup(item.id, item.name) } }] }]}/>
             {:else}
               <div>User {$store.user.id} is not a member of any groups.</div>
             {/if}
             {#if $store.user.indirectGroups.length}
               <SortableTable items={$store.user.indirectGroups}
-                headers={[{ id: 'name', label: 'Indirect group name', sortable: true, render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>` }, { id: 'relationship', label: 'Via group', render: (item) => getGroupParents(item) }]}/>
+                headers={[{ id: 'name', label: 'Indirect group name', sortable: true, render: item => `<a href="${resolve('/auth/groups/[id]', { id: item.id })}">${item.name}</a>` }, { id: 'relationship', label: 'Via group', render: item => getGroupParents(item) }]}/>
             {/if}
           </Accordion>
         </DetailPanelSection>
@@ -216,8 +212,8 @@
           {#if $store.user.directRoles.length}
             <SortableTable items = {sortby($store.user.directRoles, 'name')}
               headers={[
-                { id: 'name', label: 'Role name', render: (item) => `<a href="${base}/auth/roles/${item.id}">${item.name}</a>` },
-                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, hiddenLabel: 'Remove role from user', label: 'Delete', onClick: (item) => { onClickRemoveRole(item.id, item.name) } }] }
+                { id: 'name', label: 'Role name', render: item => `<a href="${resolve('/auth/roles/[id]', { id: item.id })}">${item.name}</a>` },
+                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, hiddenLabel: 'Remove role from user', label: 'Delete', onClick: item => { onClickRemoveRole(item.id, item.name) } }] }
               ]} />
           {:else}
           <div>User {$store.user.id} has no roles assigned.</div>
@@ -225,8 +221,8 @@
           {#if $store.user.indirectRoles.length}
             <SortableTable items = {sortby($store.user.indirectRoles, 'name')}
               headers={[
-                { id: 'name', label: 'Inherited role name', render: (item) => `<a href="${base}/auth/roles/${item.id}">${item.name}</a>` },
-                { id: 'origin', label: 'Inherited from', render: (item) => getIndirectRoleGroup(item) }
+                { id: 'name', label: 'Inherited role name', render: item => `<a href="${resolve('/auth/roles/[id]', { id: item.id })}">${item.name}</a>` },
+                { id: 'origin', label: 'Inherited from', render: item => getIndirectRoleGroup(item) }
               ]} />
           {/if}
         </DetailPanelSection>
@@ -262,7 +258,7 @@
     {#if !$store.user.system}
       <FieldText path='firstname' label='First Name' required={true}/>
     {/if}
-    <FieldText path='lastname' label={`${$store.user.system ? 'Name' : 'Last Name'}`} required={true}/>
+    <FieldText path='lastname' label={$store.user.system ? 'Name' : 'Last Name'} required={true}/>
     <FieldText path='email' label='Email' required={true}/>
     <UserTrainingsChooser trainings={data.allTrainings} />
   </FormDialog>

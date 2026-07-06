@@ -25,8 +25,8 @@ This component is also used when creating a site or pagetree, both of which requ
   export let templateChoices: PopupMenuItem[]
   export let pagetreeId: string | undefined = undefined
   /** whether or not to add a name field to the first dialog. true when adding sites and pages, false when adding pagetrees because their root page name defaults to the site name */
-  export let addName: boolean = true
-  export let creatingSite: boolean = false
+  export let addName = true
+  export let creatingSite = false
   /** The path or name of the parent item this page is being created under, used as the log target. */
   export let logTarget: string | undefined
   type Modals = 'addpage-name' | 'addpage-properties'
@@ -63,7 +63,7 @@ This component is also used when creating a site or pagetree, both of which requ
     const resp = await validate(state)
     const messages = resp.filter(m => m.path === 'name' || m.path === 'templateKey')
     const ret: SubmitResponse<CreateWithPageState> = { success: true, data: state, messages }
-    if (messages.some(m => m.type === MessageType.ERROR)) {
+    if (messages.some(m => m.type === 'error')) {
       ret.success = false
     } else {
       nameDialogData = state

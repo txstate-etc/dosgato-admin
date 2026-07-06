@@ -21,11 +21,11 @@
 
   $: previewDesc = version
     ? (version?.version === latestVersion
-        ? 'Latest '
-        : version.version === publishedVersion
-          ? 'Published '
-          : ''
-      ) + 'Version: ' + formatDateTime(version.date)
+      ? 'Latest '
+      : version.version === publishedVersion
+        ? 'Published '
+        : ''
+    ) + 'Version: ' + formatDateTime(version.date)
     : ''
   const offsetStore = new OffsetStore()
   const footerSize = new ResizeStore()
@@ -54,7 +54,7 @@
     </header>
     <iframe style:height="calc(100dvh - {$offsetStore.top}px - {$footerSize.clientHeight}px - {$headerSize.clientHeight}px - 2em)" src="{environmentConfig.renderBase}/.preview/{version.version}{page.path}" title="page preview for restoring"></iframe>
     <footer use:resize={{ store: footerSize }}>
-      <div class="restore-feedback">{#if restoreFeedback.length && version.version !== latestVersion}{#each restoreFeedback as msg}<div>{msg.message}</div>{/each}{:else}&nbsp;{/if}</div>
+      <div class="restore-feedback">{#if restoreFeedback.length && version.version !== latestVersion}{#each restoreFeedback as msg (msg)}<div>{msg.message}</div>{/each}{:else}&nbsp;{/if}</div>
       <Button type="button" cancel on:click={() => { dispatch('cancel') }}>Cancel</Button>
       <Button type="button" on:click={() => { dispatch('restore', version?.version) }} disabled={restoreFeedback.filter(f => f.type === 'error').length > 0}>Restore this version</Button>
     </footer>

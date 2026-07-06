@@ -10,8 +10,8 @@ export const load: Load = async input => {
     const preview = new URL('.preview', rBase).toString()
     const compare = new URL('.compare', rBase).toString()
     if (
-      !requestedUrl.startsWith(preview) &&
-      !requestedUrl.startsWith(compare)
+      !requestedUrl.startsWith(preview)
+      && !requestedUrl.startsWith(compare)
     ) throw error(400, 'This path only helps with preview and compare links.')
     const parsedUrl = new URL(requestedUrl, input.url)
     parsedUrl.searchParams.append('token', api.token)

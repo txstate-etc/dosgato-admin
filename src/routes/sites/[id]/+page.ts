@@ -1,4 +1,4 @@
-import { base } from '$app/paths'
+import { resolve } from '$app/paths'
 import { api, siteListStore, SiteDetailStore, subnavStore } from '$lib'
 import globe from '@iconify-icons/ph/globe'
 import { error, type Load } from '@sveltejs/kit'
@@ -16,7 +16,7 @@ export const load: Load<{ id: string }> = async ({ params }) => {
 
   if (!_store.siteFetched()) throw error(404)
 
-  subnavStore.open('sites', { label: site.name, href: base + '/sites/' + site.id, icon: globe })
+  subnavStore.open('sites', { label: site.name, href: resolve('/sites/[id]', { id: site.id }), icon: globe })
   siteListStore.open({ id: params.id, name: site.name })
   return { organizations, users, allPageTemplates, allComponentTemplates }
 }

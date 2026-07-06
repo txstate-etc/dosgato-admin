@@ -8,9 +8,9 @@ export const colorDataTemplate: UITemplateData = {
   icon: paletteOutline,
   columns: [
     { title: 'Color', get: 'color' },
-    { title: 'Alignment', get: 'align'}
+    { title: 'Alignment', get: 'align' }
   ],
-  responsiveDataColumns(width) {
+  responsiveDataColumns (width) {
     if (width > 700) {
       return ['Color', 'Alignment']
     } else if (width > 400) {

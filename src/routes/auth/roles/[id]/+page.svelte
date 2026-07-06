@@ -12,7 +12,7 @@
   import accountIcon from '@iconify-icons/ph/user-light'
   import accountGroup from '@iconify-icons/ph/users-three-light'
   import { isNotBlank, unique } from 'txstate-utils'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { api, DetailPanel, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog, BackButton, DetailPanelSection, Accordion, DetailPageContent, DetailList, type DetailPanelButton, type UserListUser, type GroupListGroup, uiLog, type TemplateListTemplate } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
@@ -26,15 +26,15 @@
 
   export let data: { siteOptions: { value: string, label: string }[], users: UserListUser[], groups: GroupListGroup[], templates: TemplateListTemplate[] }
   $: ({ siteOptions, users, groups, templates } = data)
-  $: siteNamesById = siteOptions.reduce((acc, site) => {
+  $: siteNamesById = siteOptions.reduce<Record<string, string>>((acc, site) => {
     acc[site.value] = site.label
     return acc
-  }, {} as Record<string, string>)
+  }, {})
   $: dataTemplateOptions = templates.filter(t => t.type === 'DATA').map(t => ({ label: t.name, value: t.key }))
 
-  type Modals = 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' | 'assignrole' |
-  'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | 'assigntogroup' | 'unassignfromgroup' |
-  'addsiterule' | 'editsiterule' | 'addtemplaterule' | 'assigntouser' | 'unassignfromuser' | 'addeditorrule' | 'addadminrule'
+  type Modals = 'editbasic' | 'addassetrule' | 'editassetrule' | 'adddatarule' | 'editdatarule' | 'assignrole'
+    | 'addglobalrule' | 'editglobalrule' | 'deleterule' | 'addpagerule' | 'editpagerule' | 'assigntogroup' | 'unassignfromgroup'
+    | 'addsiterule' | 'editsiterule' | 'addtemplaterule' | 'assigntouser' | 'unassignfromuser' | 'addeditorrule' | 'addadminrule'
   let modal: Modals | undefined
 
   const panelHeaderColor = '#C2BCD2'
@@ -61,9 +61,10 @@
   async function searchUsers (term: string) {
     term = term.toLowerCase()
     const directUserIds = $store.role.directUsers.map(u => u.id)
-    return users.filter(u => {
-      return !directUserIds.includes(u.id) && (u.name.toLowerCase().includes(term) || u.id.includes(term))
-    }).map(u => ({ label: u.name, value: u.id }))
+    return users.filter(u =>
+      !directUserIds.includes(u.id)
+      && (u.name.toLowerCase().includes(term) || u.id.includes(term))
+    ).map(u => ({ label: u.name, value: u.id }))
   }
 
   async function lookupUserByValue (val: string) {
@@ -74,16 +75,16 @@
   async function searchGroups (term: string) {
     term = term.toLowerCase()
     const directGroupIds = $store.role.directGroups.map(g => g.id)
-    return groups.filter(g => {
-      return !directGroupIds.includes(g.id) && g.name.toLowerCase().includes(term)
-    }).map(g => ({ label: g.name, value: g.id }))
+    return groups.filter(g =>
+      !directGroupIds.includes(g.id)
+      && g.name.toLowerCase().includes(term)).map(g => ({ label: g.name, value: g.id })
+    )
   }
 
   async function lookupGroupByValue (val: string) {
     const group = groups.find(g => g.id === val)
     if (group) return { label: group.name, value: group.id }
   }
-
 
   async function validateBasic (state) {
     const resp = await api.editRole($store.role.id, state, true)
@@ -98,8 +99,8 @@
       messages: resp.messages.map(m => ({ ...m, path: m.arg })),
       data: resp.success
         ? {
-            name: resp.role.name
-          }
+          name: resp.role.name
+        }
         : undefined
     }
   }
@@ -215,7 +216,7 @@
 </script>
 
 <DetailPageContent>
-  <BackButton destination="role list" url={`${base}/auth/roles/`}/>
+  <BackButton destination="role list" url={resolve('/auth/roles')}/>
 
   <div class="vertical-list">
     <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={basicInfoButtons}>
@@ -227,8 +228,8 @@
           {#if $store.role.directUsers.length}
             <SortableTable items={$store.role.directUsers}
               headers={[
-                { id: 'name', label: 'User names', render: (item) => `<a href="${base}/auth/users/${item.id}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a>`, sortable: true, sortFunction: (item) => item.lastname, widthPercent: 50 },
-                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Remove', onClick: (item) => onClickUnassign(item.id, `${item.firstname} ${item.lastname}`) }], widthPercent: 50 }
+                { id: 'name', label: 'User names', render: item => `<a href="${resolve('/auth/users/[id]', { id: item.id })}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a>`, sortable: true, sortFunction: item => item.lastname, widthPercent: 50 },
+                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Remove', onClick: item => onClickUnassign(item.id, `${item.firstname} ${item.lastname}`) }], widthPercent: 50 }
               ]} />
           {:else}
             <span>This role is not directly assigned to any users.</span>
@@ -236,8 +237,8 @@
           {#if $store.role.usersThroughGroups.length}
             <SortableTable items={$store.role.usersThroughGroups}
               headers={[
-                { id: 'name', label: 'User from group', render: (item) => `<a href="${base}/auth/users/${item.id}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a>`, sortable: true, sortFunction: (item) => item.lastname, widthPercent: 50 },
-                { id: 'groups', label: 'Group(s)', render: (item) => getUserGroups(item.groups), widthPercent: 50 }
+                { id: 'name', label: 'User from group', render: item => `<a href="${resolve('/auth/users/[id]', { id: item.id })}"><span class="${item.disabled ? 'inactive' : ''}">${item.name} (${item.id})</span>${item.disabled ? ' (Inactive)' : ''}</a>`, sortable: true, sortFunction: item => item.lastname, widthPercent: 50 },
+                { id: 'groups', label: 'Group(s)', render: item => getUserGroups(item.groups), widthPercent: 50 }
               ]} />
           {/if}
         </Accordion>
@@ -247,8 +248,8 @@
           {#if $store.role.directGroups.length}
             <SortableTable items={$store.role.directGroups}
               headers={[
-                { id: 'name', label: 'Assigned Group', render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>`, sortable: true, sortFunction: (item) => item.name, widthPercent: 50 },
-                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Remove', onClick: (item) => onClickUnassignGroup(item.id, item.name) }], widthPercent: 50 }
+                { id: 'name', label: 'Assigned Group', render: item => `<a href="${resolve('/auth/groups/[id]', { id: item.id })}">${item.name}</a>`, sortable: true, sortFunction: item => item.name, widthPercent: 50 },
+                { id: 'remove', label: 'Remove', actions: [{ icon: deleteIcon, label: 'Remove', onClick: item => onClickUnassignGroup(item.id, item.name) }], widthPercent: 50 }
               ]}/>
           {:else}
             <span>This role is not directly assigned to any groups.</span>
@@ -256,8 +257,8 @@
           {#if $store.role.indirectGroups.length}
             <SortableTable items={$store.role.indirectGroups}
               headers={[
-                { id: 'name', label: 'Subgroup', render: (item) => `<a href="${base}/auth/groups/${item.id}">${item.name}</a>`, sortable: true, sortFunction: (item) => item.name, widthPercent: 50 },
-                { id: 'source', label: 'Subgroup parent', render: (item) => item.parents.map(g => g.name).join(', '), widthPercent: 50 }
+                { id: 'name', label: 'Subgroup', render: item => `<a href="${resolve('/auth/groups/[id]', { id: item.id })}">${item.name}</a>`, sortable: true, sortFunction: item => item.name, widthPercent: 50 },
+                { id: 'source', label: 'Subgroup parent', render: item => item.parents.map(g => g.name).join(', '), widthPercent: 50 }
               ]} />
           {/if}
         </Accordion>
@@ -268,15 +269,15 @@
       <div class="desktop-layout">
         <DetailPanelSection>
           <h3>Page Rules</h3>
-          <PageRuleTable rules={$store.role.pageRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+          <PageRuleTable rules={$store.role.pageRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
         </DetailPanelSection>
         <DetailPanelSection>
           <h3>Asset Rules</h3>
-          <AssetRuleTable rules={$store.role.assetRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+          <AssetRuleTable rules={$store.role.assetRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
         </DetailPanelSection>
         <DetailPanelSection>
           <h3>Data Rules</h3>
-          <DataRuleTable rules={$store.role.dataRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+          <DataRuleTable rules={$store.role.dataRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
         </DetailPanelSection>
       </div>
       <div class="mobile-layout">
@@ -284,21 +285,21 @@
           <Tabs tabs={editorTabs} accordionOnMobile={false}>
             <Tab name="Page Rules">
               {#if $store.role.pageRules.length}
-                <PageRuleTable rules={$store.role.pageRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+                <PageRuleTable rules={$store.role.pageRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
               {:else}
                 <span>This role has no page rules.</span>
               {/if}
             </Tab>
             <Tab name="Asset Rules">
               {#if $store.role.assetRules.length}
-                <AssetRuleTable rules={$store.role.assetRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+                <AssetRuleTable rules={$store.role.assetRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
               {:else}
                 <span>This role has no asset rules.</span>
               {/if}
             </Tab>
             <Tab name="Data Rules">
               {#if $store.role.dataRules.length}
-                <DataRuleTable rules={$store.role.dataRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+                <DataRuleTable rules={$store.role.dataRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
               {:else}
                 <span>This role has no data rules.</span>
               {/if}
@@ -312,28 +313,28 @@
       <div class="desktop-layout">
         <DetailPanelSection>
           <h3>Site Rules</h3>
-          <SiteRuleTable rules={$store.role.siteRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+          <SiteRuleTable rules={$store.role.siteRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
         </DetailPanelSection>
         <DetailPanelSection>
           <h3>Global Rules</h3>
-          <GlobalRuleTable rules={$store.role.globalRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+          <GlobalRuleTable rules={$store.role.globalRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
         </DetailPanelSection>
         <DetailPanelSection>
           <h3>Template Rules</h3>
-          <TemplateRuleTable rules={$store.role.templateRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+          <TemplateRuleTable rules={$store.role.templateRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
         </DetailPanelSection>
       </div>
       <div class="mobile-layout">
         <DetailPanelSection>
           <Tabs tabs={adminTabs} accordionOnMobile={false}>
             <Tab name="Site Rules">
-              <SiteRuleTable rules={$store.role.siteRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+              <SiteRuleTable rules={$store.role.siteRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
             </Tab>
             <Tab name="Global Rules">
-              <GlobalRuleTable rules={$store.role.globalRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+              <GlobalRuleTable rules={$store.role.globalRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
             </Tab>
             <Tab name="Template Rules">
-              <TemplateRuleTable rules={$store.role.templateRules} on:editrule={(e) => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={(e) => onClickDelete(e.detail.id, e.detail.type)}/>
+              <TemplateRuleTable rules={$store.role.templateRules} on:editrule={e => onClickEdit(e.detail.id, e.detail.type, e.detail.rule)} on:deleterule={e => onClickDelete(e.detail.id, e.detail.type)}/>
             </Tab>
           </Tabs>
         </DetailPanelSection>

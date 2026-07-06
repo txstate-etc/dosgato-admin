@@ -2,7 +2,7 @@ import { error, redirect, type Load } from '@sveltejs/kit'
 import { api, globalStore } from '$lib'
 import { uiConfig } from '../local'
 
-export const load: Load = async (input) => {
+export const load: Load = async input => {
   api.fetch = input.fetch
   let errObj
   try {

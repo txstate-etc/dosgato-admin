@@ -5,7 +5,7 @@
   import { onMount } from 'svelte'
   import { unique } from 'txstate-utils'
   import { api, dateStamp, type ScheduledPublish, ScheduledPublishAction, ScheduledPublishStatus, ScheduledPublishRecurrenceType, toast } from '$lib'
-    import DismissableWarning from '$lib/components/DismissableWarning.svelte';
+  import DismissableWarning from '$lib/components/DismissableWarning.svelte'
 
   export let page: { id: string, permissions: { schedulePublish: boolean, scheduleUnpublish: boolean } }
 
@@ -242,9 +242,9 @@
           </table>
           {#if finalPage > 1}
             <div class="pagination">
-              <Button compact secondary disabled={currentPage <= 1} on:click={() => loadHistory(currentPage - 1)}>Previous</Button>
+              <Button compact secondary disabled={currentPage <= 1} on:click={async () => await loadHistory(currentPage - 1)}>Previous</Button>
               <span>Page {currentPage} of {finalPage}</span>
-              <Button compact secondary disabled={currentPage >= finalPage} on:click={() => loadHistory(currentPage + 1)}>Next</Button>
+              <Button compact secondary disabled={currentPage >= finalPage} on:click={async () => await loadHistory(currentPage + 1)}>Next</Button>
             </div>
           {/if}
         {/if}

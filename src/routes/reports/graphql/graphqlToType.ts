@@ -13,7 +13,8 @@ import {
   isObjectType,
   isAbstractType,
   getNamedType,
-  Kind
+  Kind,
+  OperationTypeNode
 } from 'graphql'
 
 const SCALAR_MAP: Record<string, string> = {
@@ -37,12 +38,12 @@ function typeToTS (type: GraphQLOutputType, nullable = true): string {
   const inner = isListType(type)
     ? `(${typeToTS(type.ofType)})[]`
     : (() => {
-        const named = getNamedType(type)
-        if (!named) return 'unknown'
-        if (isScalarType(named)) return SCALAR_MAP[named.name] ?? 'unknown'
-        if (isEnumType(named)) return named.getValues().map(v => JSON.stringify(v.value)).join(' | ')
-        return 'unknown'
-      })()
+      const named = getNamedType(type)
+      if (!named) return 'unknown'
+      if (isScalarType(named)) return SCALAR_MAP[named.name] ?? 'unknown'
+      if (isEnumType(named)) return named.getValues().map(v => JSON.stringify(v.value)).join(' | ')
+      return 'unknown'
+    })()
   return nullable ? `${inner} | null` : inner
 }
 
@@ -113,9 +114,9 @@ export function graphqlQueryToTypeScript (schema: GraphQLSchema, query: string):
     visit(doc, visitWithTypeInfo(typeInfo, {
       OperationDefinition: {
         enter (node) {
-          const opType = node.operation === 'query'
+          const opType = node.operation === OperationTypeNode.QUERY
             ? schema.getQueryType()
-            : node.operation === 'mutation'
+            : node.operation === OperationTypeNode.MUTATION
               ? schema.getMutationType()
               : schema.getSubscriptionType()
           if (!opType || !node.selectionSet) return

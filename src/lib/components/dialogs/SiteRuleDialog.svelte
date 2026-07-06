@@ -38,7 +38,7 @@
     if (preload.grants.delete) grants.push('delete')
     return {
       ...preload,
-      siteId: preload.siteId === undefined ? 'allsites' : preload.siteId,
+      siteId: preload.siteId ?? 'allsites',
       grants
     } as SiteRuleDialogState
   }

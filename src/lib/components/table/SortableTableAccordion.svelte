@@ -50,7 +50,7 @@
       </dl>
       {#if actions.length}
         <div class="actions">
-          {#each actions as action}
+          {#each actions as action (action.label)}
             <button type="button" on:click={async () => await action.onClick(item)}>
               <div class="button-content">
                 <Icon icon={action.icon} width="1.5em" class={action.class}/>

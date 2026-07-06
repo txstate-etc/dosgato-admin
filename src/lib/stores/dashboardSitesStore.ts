@@ -46,7 +46,7 @@ function sortByDate (sites: DashboardSiteWithRoleSummary[], dateFn: (site: Dashb
 }
 
 export const dashboardSitesStore = new DashboardSitesStore()
-export const filtered = derivedStore(dashboardSitesStore, (state) => {
+export const filtered = derivedStore(dashboardSitesStore, state => {
   const { sites, sort, filter } = state
   let filtered = [...sites]
   // filters

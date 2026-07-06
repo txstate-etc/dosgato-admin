@@ -5,7 +5,7 @@
   import usersThree from '@iconify-icons/ph/users-three'
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { ActionPanel, type ActionPanelAction, api, type GroupListGroup, messageForDialog, uiLog, actionPanelStore } from '$lib'
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
@@ -38,7 +38,6 @@
 
   const store = new TreeStore<GroupListGroup>(fetchChildren)
 
-
   async function onAddGroup (state) {
     const parentId: string | undefined = $store.selectedItems.length ? $store.selectedItems[0].id : undefined
     const resp = await api.addGroup(state.name, parentId)
@@ -52,8 +51,8 @@
       messages: messageForDialog(resp.messages, ''),
       data: resp.success
         ? {
-            name: resp.group!.name
-          }
+          name: resp.group!.name
+        }
         : undefined
     }
   }
@@ -92,7 +91,7 @@
 </script>
 
 <ActionPanel actionsTitle={$store.selected.size === 1 ? $store.selectedItems[0].name : 'Groups'} actions={$store.selected.size === 1 ? singleactions($store.selectedItems[0]) : noneselectedactions()}>
-  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(base + '/auth/groups/' + detail.id)} headers ={[
+  <Tree singleSelect {store} on:choose={async ({ detail }) => await goto(resolve('/auth/groups/[id]', { id: detail.id }))} headers ={[
     { id: 'name', label: 'Name', get: 'name', grow: 2, icon: { icon: usersThree } },
     { id: 'members', label: 'Members', render: item => String(item.users.length), fixed: '7em' },
     { id: 'roles', label: 'Roles', render: item => (item.roles.map(r => r.name)).join(', '), grow: 3 }

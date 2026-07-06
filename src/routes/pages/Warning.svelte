@@ -1,7 +1,7 @@
 <script lang="ts">
   import { randomid } from 'txstate-utils'
   export let message: string
-  export let open: boolean = false
+  export let open = false
   export let messageId: string = randomid()
 </script>
 

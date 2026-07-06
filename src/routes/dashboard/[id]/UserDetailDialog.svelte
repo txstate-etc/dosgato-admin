@@ -45,7 +45,7 @@
         <SortableTable items={userDetail.roles} headers={[
           { id: 'role', label: 'Role', get: 'name' },
           { id: 'description', label: 'Description', get: 'description' }
-        ]} cardedOnMobile={true} mobileHeader={(item) => item.name}/>
+        ]} cardedOnMobile={true} mobileHeader={item => item.name}/>
       {:else}
         <p>No roles assigned.</p>
       {/if}

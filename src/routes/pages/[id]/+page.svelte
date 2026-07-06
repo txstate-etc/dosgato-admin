@@ -1,6 +1,6 @@
 <script lang="ts">
   import { beforeNavigate, goto } from '$app/navigation'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { Checkbox, Dialog, FormDialog, Icon, Tab, Tabs } from '@dosgato/dialog'
   import type { UITemplate } from '@dosgato/templating'
   import clipboardFill from '@iconify-icons/ph/clipboard-fill'
@@ -38,7 +38,7 @@
       id: 'previewgroup',
       actions: [
         { label: 'Preview', icon: eye, onClick: () => { navigating = true; pageEditorStore.previewVersion({ version: $pageStore.version.version, date: DateTime.fromISO($pageStore.version.date), modifiedBy: $pageStore.version.user.name }) } },
-        { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${$editorStore.page.path}.html`), '_blank') } },
+        { label: 'Preview in new window', icon: copySimple, onClick: () => { window.open(resolve(`/preview?url=${encodeURIComponent(`${environmentConfig.renderBase}/.preview/latest${$editorStore.page.path}.html`)}`), '_blank') } },
         { label: 'Show Difference From Public', icon: historyIcon, onClick: () => pageEditorStore.compareVersions({ version: $pageStore.versions[0].version, date: DateTime.fromISO($pageStore.versions[0].date), modifiedBy: $pageStore.versions[0].user.name }, { version: $pageStore.version.version, date: DateTime.fromISO($pageStore.version.date), modifiedBy: $pageStore.version.user.name }), disabled: !$pageStore.published || !$pageStore.hasUnpublishedChanges }
       ]
     }
@@ -68,12 +68,12 @@
         { label: 'Delete', icon: trash, disabled: !$editorStore.selectedMayDelete, onClick: () => pageEditorStore.removeComponentShowModal(selectedPath) },
         ...($actionsStore.clipboardActive
           ? [
-              { label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, icon: fileX, onClick: () => { pageEditorStore.clearClipboard(); iframe.contentWindow?.postMessage({ action: 'cancelcopy' }, '*') } }
-            ]
+            { label: `Cancel ${$actionsStore.clipboardPath ? 'Cut' : 'Copy'}`, icon: fileX, onClick: () => { pageEditorStore.clearClipboard(); iframe.contentWindow?.postMessage({ action: 'cancelcopy' }, '*') } }
+          ]
           : [
-              { label: 'Cut', icon: scissors, disabled: !$editorStore.selectedMayDelete, onClick: () => handleCopyAndCut(true) },
-              { label: 'Copy', icon: copyIcon, onClick: () => handleCopyAndCut(false) }
-            ]),
+            { label: 'Cut', icon: scissors, disabled: !$editorStore.selectedMayDelete, onClick: () => handleCopyAndCut(true) },
+            { label: 'Copy', icon: copyIcon, onClick: () => handleCopyAndCut(false) }
+          ]),
         { label: `Paste${printIf($actionsStore.clipboardPath ?? $actionsStore.clipboardData, ` (${$actionsStore.clipboardLabel})`)}`, icon: clipboardText, disabled: !$editorStore.pasteAllowed, onClick: async () => await pageEditorStore.pasteComponent(selectedPath).then(refreshIframe) }
       ]
     } else {
@@ -91,12 +91,14 @@
       return
     }
     if (message.action === 'drag') {
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local Set is sent via postMessage, never used reactively
       const validdrops = new Set<string>()
       for (const p of message.allpaths ?? []) {
         if (pageEditorStore.validMove($editorStore.page.data, message.path, p)) validdrops.add(p)
       }
       iframe.contentWindow?.postMessage({ validdrops }, '*')
     } else if (message.action === 'maymove') {
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local Set is sent via postMessage, never used reactively
       const movablePaths = new Set<string>()
       for (const p of message.editbarpaths ?? []) {
         for (const t of message.allpaths ?? []) {
@@ -134,7 +136,7 @@
     } else if (message.action === 'deselect') {
       pageEditorStore.select(undefined)
     } else if (message.action === 'jump') {
-      void goto(base + '/pages/' + message.pageId!)
+      void goto(resolve('/pages/[id]', { id: message.pageId! }))
     } else if (message.action === 'menu') {
       panelelement.querySelector<HTMLElement>('.actions li button')?.focus()
     } else if (message.action === 'save') {
@@ -147,6 +149,7 @@
       // need to determine which of the newbarpaths allow the clipboard component to be pasted
       // then send them back so the buttons can be turned on.
       if ($actionsStore.clipboardActive) {
+        // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local Set is sent via postMessage, never used reactively
         const validPastePaths = new Set<string>()
         for (const p of message.newbarpaths ?? []) {
           if (pageEditorStore.allowPasteInArea(p.path, p.maxreached, $pageEditorStore)) validPastePaths.add(p.path)
@@ -253,6 +256,7 @@
   beforeNavigate(navigation => {
     if (navigation.to?.route.id === navigation.from?.route.id && navigation.to?.params?.id !== navigation.from?.params?.id) {
       navigating = true
+      // eslint-disable-next-line svelte/no-reactive-reassign -- intentionally show the spinner until the new page's data replaces `loaded`
       loaded = false
     }
   })
@@ -271,10 +275,10 @@
     : editable && !$editorStore.previewing
       ? `${environmentConfig.renderBase}/.edit${$pageStore.path}`
       : (
-          $editorStore.previewing?.fromVersion?.version
-            ? `${environmentConfig.renderBase}/.compare/${$editorStore.previewing.fromVersion.version}/${$editorStore.previewing.version.version ?? 'latest'}${$pageStore.path}`
-            : `${environmentConfig.renderBase}/.preview/${$editorStore.previewing?.version.version ?? 'latest'}${$pageStore.path}`
-        )
+        $editorStore.previewing?.fromVersion?.version
+          ? `${environmentConfig.renderBase}/.compare/${$editorStore.previewing.fromVersion.version}/${$editorStore.previewing.version.version ?? 'latest'}${$pageStore.path}`
+          : `${environmentConfig.renderBase}/.preview/${$editorStore.previewing?.version.version ?? 'latest'}${$pageStore.path}`
+      )
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
   $: actionPanelTarget.target = $editorStore.page.path
@@ -285,11 +289,11 @@
     { label: 'Mobile', width: 400 }
   ], 'label')
   $: deviceDefault = Object.values(deviceWidths).reduce((acc, curr) => !(acc.default) && ((curr.width ?? Number.MAX_SAFE_INTEGER) > (acc.width ?? Number.MAX_SAFE_INTEGER) || curr.default) ? curr : acc, Object.values(deviceWidths)[0])
-  $: allowEditorMaxWidth = $editorStore.previewing || pagetemplate.devicePreview?.showWhileEditing
+  $: allowEditorMaxWidth = !!$editorStore.previewing || !!pagetemplate.devicePreview?.showWhileEditing
   $: resolvedDevice = $editorStore.device ?? deviceDefault.label
   $: editorMaxWidth = allowEditorMaxWidth ? ((deviceWidths[resolvedDevice]?.width ?? 0) > 0 ? deviceWidths[resolvedDevice]?.width + 'px' : undefined) : undefined
 
-  let addToTop: boolean = false
+  let addToTop = false
 
   $: previewURL = `${environmentConfig.renderBase}/.preview/latest${$pageStore.path}.html`
   $: showLiveURL = $pageStore.site.url?.prefix && $pageStore.pagetree.type !== 'ARCHIVE'
@@ -317,7 +321,7 @@
         <div class="page-bar-controls">
           {#if !$editorStore.previewing}
             <div class="page-bar-buttons {pagetemplate.pageBarButtons ? 'has-buttons' : ''}">
-              {#each pagetemplate.pageBarButtons ?? [] as button, idx}
+              {#each pagetemplate.pageBarButtons ?? [] as button, idx (button.label)}
                 {#if !button.shouldAppear || button.shouldAppear($editorStore.page.data, $editorStore.page.path)}
                   <button id={`pagebar-button-${idx}`} type="button" class="user-button" on:click={onUserButtonClick(button, idx)}>
                     <Icon icon={button.icon} hiddenLabel={button.hideLabel ? button.label : undefined} />
@@ -330,7 +334,7 @@
           {/if}
           {#if allowEditorMaxWidth}
             <select value={resolvedDevice} on:change={function () { pageEditorStore.setPreviewMode(this.value) }}>
-              {#each Object.keys(deviceWidths) as device}
+              {#each Object.keys(deviceWidths) as device (device)}
                 <option value={device}>{deviceWidths[device].label}</option>
               {/each}
             </select>
@@ -382,7 +386,7 @@
               {/if}
               <div class="chooser-container">
                 <div class="component-chooser">
-                  {#each templates as availableComponent}
+                  {#each templates as availableComponent (availableComponent.templateKey)}
                     {@const templateIcon = availableComponent.preview ?? availableComponent.icon}
                     <button type="button" on:click={onAddComponentChooseTemplate(availableComponent.templateKey)}>
                       {#if isNotNull(templateIcon)}
@@ -432,7 +436,7 @@
       <div class="url-label">Preview URL</div>
       <div class="url-value-row">
         <div class="url-value">{previewURL}</div>
-        <button type="button" class="url-copy" on:click={() => copyURL(previewURL, 'Preview URL')}>
+        <button type="button" class="url-copy" on:click={async () => await copyURL(previewURL, 'Preview URL')}>
           <Icon icon={clipboardFill} hiddenLabel="Copy Preview URL" inline />
           Copy
         </button>
@@ -443,7 +447,7 @@
         <div class="url-label">Live URL</div>
         <div class="url-value-row">
           <div class="url-value">{liveURL}</div>
-          <button type="button" class="url-copy" on:click={() => copyURL(liveURL, 'Live URL')}>
+          <button type="button" class="url-copy" on:click={async () => await copyURL(liveURL, 'Live URL')}>
             <Icon icon={clipboardFill} hiddenLabel="Copy Live URL" inline />
             Copy
           </button>

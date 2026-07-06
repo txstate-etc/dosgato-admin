@@ -39,7 +39,7 @@
 
   $: showActionColumn = pagetrees.some(p => p.permissions.viewPages)
 
-  let openPanels: Record<string, boolean> = {}
+  let openPanels: Record<string, boolean | undefined> = {}
   function togglePanel (id: string) {
     openPanels[id] = !openPanels[id]
     openPanels = openPanels
@@ -204,7 +204,7 @@
     fill: #006699;
   }
   table :global(button.open-pagetree) {
-    background: transparent; 
+    background: transparent;
     color: #006699;
   }
 

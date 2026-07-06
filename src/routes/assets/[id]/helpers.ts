@@ -1,5 +1,5 @@
 import { iconForMime } from '@dosgato/dialog'
-import { base } from '$app/paths'
+import { resolve } from '$app/paths'
 import { api, subnavStore, type PagetreeTypes } from '$lib'
 import type { AssetData } from '@dosgato/templating'
 
@@ -60,6 +60,6 @@ export async function getAssetDetail (id: string) {
     }
   `, { id })
   const asset = assets[0]
-  if (asset) subnavStore.open('assets', { href: `${base}/assets/${asset.id}`, label: asset.filename, icon: iconForMime(asset.mime) })
+  if (asset) subnavStore.open('assets', { href: resolve('/assets/[id]', { id: asset.id }), label: asset.filename, icon: iconForMime(asset.mime) })
   return asset
 }

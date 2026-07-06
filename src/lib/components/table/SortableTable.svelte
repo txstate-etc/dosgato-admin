@@ -26,9 +26,11 @@
     if (!header) return
     const sort = header.sortFunction ?? header.id
     if (sortBy?.column === header.id) {
+      // eslint-disable-next-line svelte/no-reactive-reassign -- intentional: sortedItems resets from the items prop and user-initiated sorting overrides it
       sortedItems = sortby(sortedItems, sort, !sortBy.desc)
       sortBy = { column: header.id, desc: !sortBy.desc }
     } else {
+      // eslint-disable-next-line svelte/no-reactive-reassign -- intentional: sortedItems resets from the items prop and user-initiated sorting overrides it
       sortedItems = sortby(sortedItems, sort)
       sortBy = { column: header.id, desc: false }
     }
@@ -38,7 +40,7 @@
 <div class="table-actions">
   {#if filteredHeaders.some(h => h.sortable)}
     <div class="sort-table">
-      <Dropdown label="Sort by" options={filteredHeaders.filter(h => h.sortable).map(h => ({ label: h.label, value: h.id }))} onSelect={(value) => { sortColumn = value; sortItems() }} />
+      <Dropdown label="Sort by" options={filteredHeaders.filter(h => h.sortable).map(h => ({ label: h.label, value: h.id }))} onSelect={value => { sortColumn = value; sortItems() }} />
     </div>
   {/if}
 </div>
@@ -142,7 +144,6 @@
   table tr > td:last-child {
     padding-right: 0.5em;
   }
-
 
   .mobile-list {
     display: none;

@@ -17,8 +17,6 @@ interface IUserDetailStore {
   }
 }
 
-
-
 const initialValue: FullUser = { id: '', firstname: '', lastname: '', name: '', email: '', disabled: false, trainings: [], directGroups: [], indirectGroups: [], directRoles: [], indirectRoles: [], sitesOwned: [], sitesManaged: [], permissions: { update: false }, system: false }
 
 export class UserDetailStore extends Store<IUserDetailStore> {
@@ -57,7 +55,7 @@ export class UserDetailStore extends Store<IUserDetailStore> {
     }
     // rulesBySite looks like { siteId1: [rules about site1], all: [rules with no site specified], anothersiteId: [more rules]}
 
-    for (const site in rulesBySite) {
+    for (const site of Object.keys(rulesBySite)) {
       const permissionsForThisSite = getSiteAccess(rulesBySite[site])
       userAccessBySite[site] ??= []
       userAccessBySite[site].push(...permissionsForThisSite)
@@ -87,7 +85,7 @@ export class UserDetailStore extends Store<IUserDetailStore> {
       }
     }
     const dataTemplates: { id: string, name: string, permissions: string[] }[] = []
-    for (const key in dataTemplatesByKey) {
+    for (const key of Object.keys(dataTemplatesByKey)) {
       const access = getDataAccess(rulesByDataTemplate[key])
       dataTemplates.push({ id: key, name: dataTemplatesByKey[key], permissions: access })
     }
@@ -104,26 +102,18 @@ export class UserDetailStore extends Store<IUserDetailStore> {
   }
 
   setGroupRemoving (id: string, name: string) {
-    this.update(v => {
-      return set(v, 'groupRemoving', { id, name })
-    })
+    this.update(v => set(v, 'groupRemoving', { id, name }))
   }
 
   resetGroupRemoving () {
-    this.update(v => {
-      return set(v, 'groupRemoving', undefined)
-    })
+    this.update(v => set(v, 'groupRemoving', undefined))
   }
 
   setRoleRemoving (id: string, name: string) {
-    this.update(v => {
-      return set(v, 'roleRemoving', { id, name })
-    })
+    this.update(v => set(v, 'roleRemoving', { id, name }))
   }
 
   resetRoleRemoving () {
-    this.update(v => {
-      return set(v, 'roleRemoving', undefined)
-    })
+    this.update(v => set(v, 'roleRemoving', undefined))
   }
 }

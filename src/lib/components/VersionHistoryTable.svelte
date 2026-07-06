@@ -68,7 +68,7 @@
       dayCount[day] = (dayCount[day] ?? 0) + 1
       if (!keepers[day] || v.tags.includes('published') || (!keepers[day].tags.includes('published') && v.marked && !keepers[day].marked)) keepers[day] = v
       if (!firstSeenDay) continue
-      uniqueDays++
+      uniqueDays += 1
       if (uniqueDays === 10) { boundaryMonth = month; boundaryYear = year }
     }
   }
@@ -89,10 +89,8 @@
           else {
             const minSelected = Math.min(...selected)
             if (version < minSelected) selected.delete(minSelected)
-            else {
-              if (Math.abs(minSelected - version) > Math.abs(maxSelected - version)) selected.delete(maxSelected)
-              else selected.delete(minSelected)
-            }
+            else if (Math.abs(minSelected - version) > Math.abs(maxSelected - version)) selected.delete(maxSelected)
+            else selected.delete(minSelected)
           }
         }
         selected.add(version)
@@ -170,7 +168,7 @@
     <tr class="tier-header year">
       <td><span class="sr-only">No Data</span></td>
       <td colspan="5">
-        <button type="button" class="reset" bind:this={yearExpandables[year]} on:click={() => toggleYear(year)}>
+        <button type="button" class="reset" bind:this={yearExpandables[year]} on:click={async () => await toggleYear(year)}>
           {year}
           <Icon icon={yearShowing[year] ? caretDown : caretRight} inline hiddenLabel="{yearShowing[year] ? 'Hide' : 'Show'} versions from {year}" />
         </button>
@@ -181,14 +179,14 @@
     <tr class="tier-header month" class:hidden={tier === 'year' && !yearShowing[year]}>
     <td><span class="sr-only">No Data</span></td>
       <td colspan="5">
-        <button type="button" class="reset" bind:this={monthExpandables[month]} on:click={() => toggleMonth(month)}>
+        <button type="button" class="reset" bind:this={monthExpandables[month]} on:click={async () => await toggleMonth(month)}>
           {DateTime.fromFormat(month, 'yyyyLL').toFormat('LLLL yyyy')}
           <Icon icon={monthShowing[month] ? caretDown : caretRight} inline hiddenLabel="{monthShowing[month] ? 'Hide' : 'Show'} versions from {DateTime.fromFormat(month, 'yyyyLL').toFormat('LLLL yyyy')}" />
         </button>
       </td>
     </tr>
     {/if}
-    <tr on:mouseenter={function () { hoverRow = this }} on:mouseleave={() => { hoverRow = undefined }} data-idx={i} class:hidden>
+    <tr on:mouseenter={e => { hoverRow = e.currentTarget }} on:mouseleave={() => { hoverRow = undefined }} data-idx={i} class:hidden>
       <td class="checkbox"><Checkbox name="version-compare-{version.version}" value={selected.has(version.version)} disabled={selected.has(version.version) && selectedInTitle.get(version.version) !== title} onChange={onSelect(version.version)} id={checkboxid} /><label for={checkboxid}><ScreenReaderOnly>Select for Preview/Compare</ScreenReaderOnly></label></td>
       <td class="date" class:expandable on:click={async () => { if (expandable) await toggleExpanded(day) }}>
         {#if showsDate || (dayCount[day] ?? 0) <= 1}

@@ -140,13 +140,9 @@
         } else {
           target = { aboveTarget: dropTarget.id }
         }
-      } else {
-        if (dropTarget.type === 'folder') {
-          target = { folderId: dropTarget.id }
-        } else {
-          if (!dropTarget.id.includes('global-')) target = { siteId: (dropTarget as TreeDataRoot).siteId }
-        }
-      }
+      } else if (dropTarget.type === 'folder') {
+        target = { folderId: dropTarget.id }
+      } else if (!dropTarget.id.includes('global-')) target = { siteId: (dropTarget as TreeDataRoot).siteId }
       await api.moveData(ids, target)
       // TODO: log the response?
     } else if (selectedItems[0].type === 'folder') {
@@ -167,30 +163,27 @@
     if (selectedItems[0].type === 'folder') {
       if (dropTarget.type !== 'root') return 'none'
       return above || !dropTarget.permissions.create ? 'none' : 'move'
-    } else {
+    } else if (above) {
       // Data item(s) moving
-      if (above) {
-        // can't move anything above a site
-        if (dropTarget.type === 'root') return 'none'
-        else if (dropTarget.type === 'folder') {
-          // moving it above a folder means moving it into a site
-          const parent = dropTarget.parent as TreeDataRoot
-          return parent.permissions.create ? 'move' : 'none'
-        } else {
-          // moving it above another data item
-          const parent = dropTarget.parent!.type === 'root' ? dropTarget.parent as TreeDataRoot : dropTarget.parent as TreeDataFolder
-          return parent.permissions.create ? 'move' : 'none'
-        }
+      // can't move anything above a site
+      if (dropTarget.type === 'root') return 'none'
+      else if (dropTarget.type === 'folder') {
+        // moving it above a folder means moving it into a site
+        const parent = dropTarget.parent as TreeDataRoot
+        return parent.permissions.create ? 'move' : 'none'
       } else {
-        // data items can't contain other data items
-        if (dropTarget.type === 'data') return 'none'
-        else {
-          // It doesn't make sense to drag something into its own parent
-          const parents = selectedItems.map(i => i.parent!.id)
-          if (parents.includes(dropTarget.id)) return 'none'
-          return dropTarget.permissions.create ? 'move' : 'none'
-        }
+        // moving it above another data item
+        const parent = dropTarget.parent!.type === 'root' ? dropTarget.parent as TreeDataRoot : dropTarget.parent as TreeDataFolder
+        return parent.permissions.create ? 'move' : 'none'
       }
+    } else if (dropTarget.type === 'data') {
+      // data items can't contain other data items
+      return 'none'
+    } else {
+      // It doesn't make sense to drag something into its own parent
+      const parents = selectedItems.map(i => i.parent!.id)
+      if (parents.includes(dropTarget.id)) return 'none'
+      return dropTarget.permissions.create ? 'move' : 'none'
     }
   }
 
@@ -246,20 +239,20 @@
   function multipleActions (items: TypedDataTreeItem[]) {
     // the only data/datafolder actions available for sites are Adding data and datafolders
     // and that doesn't make sense in the context of multiple selections
-    if (items.some((item) => item.type === 'root')) return []
-    if (items.every((item) => item.type === 'folder')) {
-      if (items.every((item) => item.deleteState === DeleteState.NOTDELETED)) {
+    if (items.some(item => item.type === 'root')) return []
+    if (items.every(item => item.type === 'folder')) {
+      if (items.every(item => item.deleteState === DeleteState.NOTDELETED)) {
         return [
-          { label: 'Delete', icon: deleteOutline, disabled: items.some((item) => !item.permissions.delete), onClick: () => openModal('deletefolder') }
+          { label: 'Delete', icon: deleteOutline, disabled: items.some(item => !item.permissions.delete), onClick: () => openModal('deletefolder') }
         ]
-      } else if (items.every((item) => item.deleteState === DeleteState.MARKEDFORDELETE)) {
+      } else if (items.every(item => item.deleteState === DeleteState.MARKEDFORDELETE)) {
         return [
-          { label: 'Restore', icon: deleteRestore, disabled: items.some((item) => !item.permissions.undelete), onClick: () => openModal('restorefolder') },
-          { label: 'Finalize Deletion', icon: deleteOutline, disabled: items.some((item) => !item.permissions.delete), onClick: () => openModal('finalizedeletefolder') }
+          { label: 'Restore', icon: deleteRestore, disabled: items.some(item => !item.permissions.undelete), onClick: () => openModal('restorefolder') },
+          { label: 'Finalize Deletion', icon: deleteOutline, disabled: items.some(item => !item.permissions.delete), onClick: () => openModal('finalizedeletefolder') }
         ]
       } else return []
     }
-    if (items.every((item) => item.type === 'data')) {
+    if (items.every(item => item.type === 'data')) {
       const actions: ActionPanelAction[] = [
         { label: 'Publish', icon: publishIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.publish), onClick: () => openModal('publishdata') },
         { label: 'Unpublish', icon: publishOffIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.unpublish), onClick: () => openModal('unpublishdata') },
@@ -291,9 +284,7 @@
       success: resp.success,
       messages: messageForDialog(resp.messages, 'args'),
       data: resp.success
-        ? {
-            name: resp.dataFolder!.name
-          }
+        ? { name: resp.dataFolder!.name }
         : undefined
     }
   }
@@ -323,9 +314,7 @@
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
       data: resp.success
-        ? {
-            name: resp.dataFolder!.name
-          }
+        ? { name: resp.dataFolder!.name }
         : undefined
     }
   }
@@ -380,9 +369,9 @@
       messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')],
       data: resp.success
         ? {
-            name: resp.data.name,
-            data: state
-          }
+          name: resp.data.name,
+          data: state
+        }
         : state
     }
   }
@@ -420,7 +409,7 @@
   function onSaved () {
     void store.refresh()
     modal = undefined
-    if (itemEditing) itemEditing = undefined
+    itemEditing &&= undefined
   }
 
   async function onDeleteData () {
@@ -469,7 +458,6 @@
   }
 
   afterNavigate(() => { store.refresh().catch(console.error) })
-
 
   function getIcon (c: NonNullable<EnhancedDataTemplate['columns']>[0]) {
     if (!c?.icon) return undefined

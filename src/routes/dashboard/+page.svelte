@@ -13,8 +13,8 @@
   import bookIcon from '@iconify-icons/ph/book-fill'
   export let data: { sites: DashboardSiteWithRoleSummary[] }
 
-  let availableRoles: Set<string> = new Set()
-  let availableLaunchStates: Set<string> = new Set()
+  let availableRoles = new Set<string>()
+  let availableLaunchStates = new Set<string>()
 
   const actionPanelTarget: { target: string | undefined } = { target: undefined }
   setContext('ActionPanelTarget', { getTarget: () => actionPanelTarget.target })
@@ -35,25 +35,21 @@
       userAccessBySite[site.id] = ['Owner']
     }
     for (const site of user.sitesManaged) {
-      if (!userAccessBySite[site.id]) {
-        userAccessBySite[site.id] = []
-      }
+      userAccessBySite[site.id] ??= []
       userAccessBySite[site.id].push('Manager')
     }
 
     for (const role of user.roles) {
       // We are not interested in roles that are not associated with a particular site
       if (!role.site?.id || !role.access) continue // TODO: what do we do if the role has no access level set. is there a default?
-      if (!userAccessBySite[role.site.id]) {
-        userAccessBySite[role.site.id] = []
-      }
+      userAccessBySite[role.site.id] ??= []
       userAccessBySite[role.site.id].push(role.access ? titleCaseAccess[role.access] : '')
     }
     return allSites.map(site => ({ ...site, roleSummary: userAccessBySite[site.id] })) as DashboardSiteWithRoleSummary[]
   }
 
   const sitesPromise = fetchDashboardSites()
-  sitesPromise.then(sites => {
+  void sitesPromise.then(sites => {
     data.sites = sites
     dashboardSitesStore.setSites(sites)
     availableLaunchStates = new Set(sites.map(s => s.launchState))
@@ -82,7 +78,6 @@
       ]
     }
   ]
-
 
 </script>
 
@@ -144,7 +139,7 @@
       </div>
     {:then}
       <ul class="sites">
-        {#each $filtered as site}
+        {#each $filtered as site (site.id)}
           <li class="site-list-item"><DashboardSiteCard {site} /></li>
         {/each}
       </ul>

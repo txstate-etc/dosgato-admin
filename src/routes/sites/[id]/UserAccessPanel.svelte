@@ -10,7 +10,6 @@
   ]
 </script>
 
-
 <DetailPanel header="User Access" headerColor={panelHeaderColor}>
   <div class="desktop-layout">
     <DetailPanelSection>

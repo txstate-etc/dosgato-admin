@@ -22,8 +22,8 @@
       messages: messageForDialog(resp.messages, ''),
       data: resp.success
         ? {
-            templateId: resp.templateRule.template?.key
-          }
+          templateId: resp.templateRule.template?.key
+        }
         : state
     }
   }

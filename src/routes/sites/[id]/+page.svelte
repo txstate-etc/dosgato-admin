@@ -9,7 +9,7 @@
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { csv, isBlank, keyby, titleCase } from 'txstate-utils'
   import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, DetailList, LaunchState, Accordion, downloadPageList, uiLog } from '$lib'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
   import AuditPanel from './AuditPanel.svelte'
@@ -22,8 +22,8 @@
 
   export let data: { organizations: Organization[], users: UserListUser[], allPageTemplates: TemplateListTemplate[], allComponentTemplates: TemplateListTemplate[] }
 
-  type Modals = 'editbasic' | 'editsitemanagement' | 'editlaunch' | 'addcomment' | 'addpagetree' | 'editpagetree' | 'deletepagetree' | 'authorizetemplate' |
-  'promotepagetree' | 'archivepagetree' | 'edittemplates' | 'addpagetemplates' | 'addcomponenttemplates' | 'deletetemplateauth' | 'downloadcsv'
+  type Modals = 'editbasic' | 'editsitemanagement' | 'editlaunch' | 'addcomment' | 'addpagetree' | 'editpagetree' | 'deletepagetree' | 'authorizetemplate'
+    | 'promotepagetree' | 'archivepagetree' | 'edittemplates' | 'addpagetemplates' | 'addcomponenttemplates' | 'deletetemplateauth' | 'downloadcsv'
   let modal: Modals | undefined
 
   $: authorizedPageTemplateKeys = new Set($store.pageTemplates.map(t => t.key))
@@ -33,9 +33,7 @@
 
   async function searchUsers (search) {
     const query = search.toLowerCase()
-    return data.users.filter(u => {
-      return u.name.toLowerCase().includes(query) || u.id.includes(query)
-    }).map(u => ({ label: `${u.name}`, value: u.id }))
+    return data.users.filter(u => u.name.toLowerCase().includes(query) || u.id.includes(query)).map(u => ({ label: u.name, value: u.id }))
   }
 
   async function searchPagetrees (term) {
@@ -281,13 +279,13 @@
   function getPagetreeActions (pagetree) {
     const actions: SortableTableRowAction[] = []
     if (pagetree.type === 'SANDBOX' && pagetree.permissions.promote) {
-      actions.push({ icon: launchIcon, label: 'Promote to Primary', hiddenLabel: (tree) => `Promote pagetree ${tree.name} to primary`, onClick: async (tree) => await onClickPromotePagetree(tree.id, tree.name) })
+      actions.push({ icon: launchIcon, label: 'Promote to Primary', hiddenLabel: tree => `Promote pagetree ${tree.name} to primary`, onClick: async tree => await onClickPromotePagetree(tree.id, tree.name) })
     }
     if (pagetree.type === 'SANDBOX' && pagetree.permissions.archive) {
-      actions.push({ icon: archiveOutline, label: 'Archive', hiddenLabel: (tree) => `Archive pagetree ${tree.name}`, onClick: async (tree) => await onClickArchivePagetree(tree.id, tree.name) })
+      actions.push({ icon: archiveOutline, label: 'Archive', hiddenLabel: tree => `Archive pagetree ${tree.name}`, onClick: async tree => await onClickArchivePagetree(tree.id, tree.name) })
     }
     if (pagetree.type !== 'PRIMARY' && pagetree.permissions.delete) {
-      actions.push({ icon: deleteOutline, label: 'Delete', hiddenLabel: (tree) => `Delete pagetree ${tree.name}`, onClick: async (tree) => await onClickDeletePagetree(tree.id, tree.name) })
+      actions.push({ icon: deleteOutline, label: 'Delete', hiddenLabel: tree => `Delete pagetree ${tree.name}`, onClick: async tree => await onClickDeletePagetree(tree.id, tree.name) })
     }
     return actions
   }
@@ -320,7 +318,7 @@
     }
     modal = undefined
     const pagetree = $store.site.pagetrees.find(p => p.id === state.pagetree)
-    downloadPageList(state.pagetree, pagetree!.name, $store.site.name)
+    void downloadPageList(state.pagetree, pagetree!.name, $store.site.name)
     return { success: true, data: state, messages: [] }
   }
 </script>
@@ -357,7 +355,7 @@
               <div class="dl-row">
                 <span>
                   <span class="label">Launch Status:</span>
-                  <span>{$store.site.launchState === 'LAUNCHED' ? 'Live' : $store.site.launchState === 'PRELAUNCH' ? 'Prelaunch' : 'Inactive'}</span>
+                  <span>{$store.site.launchState === LaunchState.LAUNCHED ? 'Live' : $store.site.launchState === LaunchState.PRELAUNCH ? 'Prelaunch' : 'Inactive'}</span>
                 </span>
               </div>
             </div>
@@ -381,8 +379,8 @@
         <DetailPanelSection>
           <SortableTable items={$store.site.pagetrees} headers={[
             { id: 'name', label: 'Name', get: 'name', widthPercent: 65 },
-            { id: 'stage', label: 'Stage', render: (tree) => titleCase(tree.type), widthPercent: 15 },
-            { id: 'actions', label: 'pagetree actions', hideHeader: true, actions: (tree) => getPagetreeActions(tree), combinedActionsLabel: 'Manage', widthPercent: 20 }
+            { id: 'stage', label: 'Stage', render: tree => titleCase(tree.type), widthPercent: 15 },
+            { id: 'actions', label: 'pagetree actions', hideHeader: true, actions: tree => getPagetreeActions(tree), combinedActionsLabel: 'Manage', widthPercent: 20 }
           ]}/>
         </DetailPanelSection>
       </DetailPanel>
@@ -394,13 +392,13 @@
       <UserAccessPanel {panelHeaderColor} hasGroups={!!$store.groups.specific.length || !!$store.groups.universal.length}>
         <svelte:fragment slot="roles">
           <SortableTable items={$store.siteRoles.specific} headers={[
-            { id: 'name', label: 'Roles', render: (role) => `<a href="${base}/auth/roles/${role.id}">${role.name}</a>`, widthPercent: 75 },
+            { id: 'name', label: 'Roles', render: role => `<a href="${resolve('/auth/roles/[id]', { id: role.id })}">${role.name}</a>`, widthPercent: 75 },
             { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 }
           ]}/>
           <div class="indent">
             <Accordion title="More roles (with broad access)">
               <SortableTable items={$store.siteRoles.universal} headers={[
-                { id: 'name', label: 'Role', render: (role) => `<a href="${base}/auth/roles/${role.id}">${role.name}</a>`, widthPercent: 75 },
+                { id: 'name', label: 'Role', render: role => `<a href="${resolve('/auth/roles/[id]', { id: role.id })}">${role.name}</a>`, widthPercent: 75 },
                 { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 }
               ]}/>
             </Accordion>
@@ -408,13 +406,13 @@
         </svelte:fragment>
         <svelte:fragment slot="groups">
           <SortableTable items={$store.groups.specific} headers={[
-            { id: 'name', label: 'Groups', render: (group) => `<a href="${base}/auth/groups/${group.id}">${group.name}</a>`, widthPercent: 50 },
+            { id: 'name', label: 'Groups', render: group => `<a href="${resolve('/auth/groups/[id]', { id: group.id })}">${group.name}</a>`, widthPercent: 50 },
             { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
             { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
           ]}/>
           <Accordion title="More groups (with broad access)">
             <SortableTable slot="groups" items={$store.groups.universal} headers={[
-              { id: 'name', label: 'Groups', render: (group) => `<a href="${base}/auth/groups/${group.id}">${group.name}</a>`, widthPercent: 50 },
+              { id: 'name', label: 'Groups', render: group => `<a href="${resolve('/auth/groups/[id]', { id: group.id })}">${group.name}</a>`, widthPercent: 50 },
               { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
               { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
             ]}/>
@@ -422,14 +420,14 @@
         </svelte:fragment>
         <svelte:fragment slot="users">
           <SortableTable items={$store.users.specific} headers={[
-            { id: 'name', label: 'Users', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.disabled ? '<span class="inactive">' : ''}${user.firstname} ${user.lastname}${user.disabled ? '</span>' : ''}${user.disabled ? ' (Inactive)' : ''}</a>`, widthPercent: 50 },
+            { id: 'name', label: 'Users', sortable: true, sortFunction: user => user.lastname, render: user => `<a href="${resolve('/auth/users/[id]', { id: user.id })}">${user.disabled ? '<span class="inactive">' : ''}${user.firstname} ${user.lastname}${user.disabled ? '</span>' : ''}${user.disabled ? ' (Inactive)' : ''}</a>`, widthPercent: 50 },
             { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
             { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
           ]} />
           <div class="indent">
             <Accordion title="More users (with broad access)">
               <SortableTable items={$store.users.universal} headers={[
-                { id: 'name', label: 'Name', sortable: true, sortFunction: (user) => user.lastname, render: (user) => `<a href="${base}/auth/users/${user.id}">${user.disabled ? '<span class="inactive">' : ''}${user.firstname} ${user.lastname}${user.disabled ? '</span>' : ''}${user.disabled ? ' (Inactive)' : ''}</a>`, widthPercent: 50 },
+                { id: 'name', label: 'Name', sortable: true, sortFunction: user => user.lastname, render: user => `<a href="${resolve('/auth/users/[id]', { id: user.id })}">${user.disabled ? '<span class="inactive">' : ''}${user.firstname} ${user.lastname}${user.disabled ? '</span>' : ''}${user.disabled ? ' (Inactive)' : ''}</a>`, widthPercent: 50 },
                 { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
                 { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
               ]} />
@@ -442,19 +440,19 @@
         <div class="templates-mobile">
           <Tabs tabs={[{ name: 'Page templates' }, { name: 'Component templates' }]} accordionOnMobile={false}>
             <Tab name="Page templates">
-              <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+              <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={async e => await onClickEditTemplateAuth(e)} on:removeauth={async e => await onClickDeleteTemplateAuth(e)} on:addtemplate={e => onClickAuthorizeTemplate(e)}/>
             </Tab>
             <Tab name="Component templates">
-              <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+              <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={async e => await onClickEditTemplateAuth(e)} on:removeauth={async e => await onClickDeleteTemplateAuth(e)} on:addtemplate={e => onClickAuthorizeTemplate(e)}/>
             </Tab>
           </Tabs>
         </div>
         <div class="templates-desktop">
           <DetailPanelSection>
             <h3 class="template-header">Page templates</h3>
-            <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+            <TemplateAvailability type="page" authorizedTemplates={$store.pageTemplates} universalTemplates={universalPageTemplates.map(t => t.name)} unAuthorizedTemplates={data.allPageTemplates.filter(t => !t.universal && !authorizedPageTemplateKeys.has(t.key))} on:editauth={async e => await onClickEditTemplateAuth(e)} on:removeauth={async e => await onClickDeleteTemplateAuth(e)} on:addtemplate={e => onClickAuthorizeTemplate(e)}/>
             <h3 class="template-header">Specially authorized component templates</h3>
-            <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={async (e) => await onClickEditTemplateAuth(e)} on:removeauth={async (e) => await onClickDeleteTemplateAuth(e)} on:addtemplate={(e) => onClickAuthorizeTemplate(e)}/>
+            <TemplateAvailability type="component" authorizedTemplates={$store.componentTemplates} universalTemplates={universalComponentTemplates.map(t => t.name)} unAuthorizedTemplates={data.allComponentTemplates.filter(t => !t.universal && !authorizedComponentTemplateKeys.has(t.key))} on:editauth={async e => await onClickEditTemplateAuth(e)} on:removeauth={async e => await onClickDeleteTemplateAuth(e)} on:addtemplate={e => onClickAuthorizeTemplate(e)}/>
           </DetailPanelSection>
         </div>
       </DetailPanel>
@@ -570,7 +568,7 @@
     name='edittemplates'
     title='Edit Authorized Pagetrees'
     on:escape={() => { store.cancelEditTemplateAuth(); onModalEscape() }}
-    validate={async () => { return [] }}
+    validate={async () => []}
     preload={{ pagetrees: $store.templateAuthEditing?.pagetrees ?? [] }}
     submit={onEditTemplateAuthorizations}>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees} lookupByValue={lookupPagetreeByValue}/>

@@ -16,7 +16,7 @@
   import renameIcon from '@iconify-icons/material-symbols/format-color-text-rounded'
   import treeStructure from '@iconify-icons/ph/tree-structure'
   import { goto } from '$app/navigation'
-  import { base } from '$app/paths'
+  import { resolve } from '$app/paths'
   import { api, ActionPanel, environmentConfig, type CreateAssetFolderInput, messageForDialog, UploadUI, mutationForDialog, type ActionPanelAction, actionPanelStore, dateStamp, dateStampShort, DeleteState, uiLog, SearchInput, DetailList, findInTreeIconSVG } from '$lib'
   import { _store as store, _searchStore as searchStore, _assetsStore as assetsStore, type AssetFolderItem, type AssetItem, type TypedAnyAssetItem, type TypedAssetFolderItem, type TypedAssetItem } from './+page'
   import { setContext, tick } from 'svelte'
@@ -69,7 +69,7 @@
       if (item.kind === 'folder') return [] // should not happen
       const actions: ActionPanelAction[] = [
         { label: 'Find in Asset Tree', icon: treeStructure, onClick: findInAssetTree(item.path) },
-        { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: async () => await goto(base + '/assets/' + item.id) },
+        { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: async () => await goto(resolve('/assets/[id]', { id: item.id })) },
         { label: 'Download', icon: download, onClick: () => { void api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } }
       ]
       if (item.deleteState === DeleteState.NOTDELETED) {
@@ -84,16 +84,16 @@
     }
     const actions: ActionPanelAction[] = item.kind === 'asset'
       ? [
-          { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: async () => await goto(base + '/assets/' + item.id) },
-          { label: 'Download', icon: download, onClick: () => { void api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } },
-          { label: 'Rename Asset', icon: renameIcon, disabled: !item.permissions.update, onClick: () => { selectedAsset = item as TypedAssetItem; openModal('renameAsset') } }
-        ]
+        { label: 'Edit', icon: pencilIcon, disabled: !item.permissions.update, onClick: async () => await goto(resolve('/assets/[id]', { id: item.id })) },
+        { label: 'Download', icon: download, onClick: () => { void api.download(`${environmentConfig.renderBase}/.asset/${item.id}/${item.filename}`) } },
+        { label: 'Rename Asset', icon: renameIcon, disabled: !item.permissions.update, onClick: () => { selectedAsset = item as TypedAssetItem; openModal('renameAsset') } }
+      ]
       : [
-          { label: 'Upload', icon: uploadIcon, disabled: !item.permissions.create, onClick: () => { openModal('upload'); selectedFolder = item as TypedAssetFolderItem } },
-          { label: 'Download', icon: download, onClick: async () => await api.download(`${environmentConfig.renderBase}/.asset/zip/${item.gqlId}/${item.name}.zip`) },
-          { label: 'Rename Folder', icon: renameIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { openModal('rename'); selectedFolder = item as TypedAssetFolderItem } },
-          { label: 'Create Folder', icon: folderPlus, disabled: !item.permissions.create, onClick: () => { openModal('create'); selectedFolder = item as TypedAssetFolderItem } }
-        ]
+        { label: 'Upload', icon: uploadIcon, disabled: !item.permissions.create, onClick: () => { openModal('upload'); selectedFolder = item as TypedAssetFolderItem } },
+        { label: 'Download', icon: download, onClick: async () => await api.download(`${environmentConfig.renderBase}/.asset/zip/${item.gqlId}/${item.name}.zip`) },
+        { label: 'Rename Folder', icon: renameIcon, disabled: !item.permissions.update || !item.parent, onClick: () => { openModal('rename'); selectedFolder = item as TypedAssetFolderItem } },
+        { label: 'Create Folder', icon: folderPlus, disabled: !item.permissions.create, onClick: () => { openModal('create'); selectedFolder = item as TypedAssetFolderItem } }
+      ]
     if ($store.copied.size) {
       actions.push(
         { label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } },
@@ -199,7 +199,7 @@
   }
 
   function onChoose ({ detail }: CustomEvent<AssetItem | AssetFolderItem>) {
-    if (detail.kind === 'asset' && detail.permissions.update) void goto(base + '/assets/' + detail.id)
+    if (detail.kind === 'asset' && detail.permissions.update) void goto(resolve('/assets/[id]', { id: detail.id }))
   }
 
   async function onDelete () {
@@ -283,9 +283,9 @@
   </svelte:fragment>
   {#if $assetsStore.showsearch}
     {#if $searchStore.loading || $searchStore.rootItems?.length}
-      <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search asset-tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(base + '/assets/' + detail.id) }} responsiveHeaders={handleResponsiveSearchTreeHeaders}
+      <Tree store={searchStore} singleSelect nodeClass={() => 'tree-search asset-tree-search'} on:choose={({ detail }) => { if (detail.deleteState === DeleteState.NOTDELETED) void goto(resolve('/assets/[id]', { id: detail.id })) }} responsiveHeaders={handleResponsiveSearchTreeHeaders}
         headers={[
-          { label: 'Asset', id: 'image', fixed: '10em', class: item => { return 'image-column' }, render: item => { return isNotNull(item.box) ? `<div class="image-wrapper"><img src="${environmentConfig.renderBase}/.asset/${item.id}/w/400/${item.checksum.substring(0, 12)}/${encodeURIComponent(item.filename)}" width="${item.box.width}" height="${item.box.height}" alt="" style="object-fit: contain; max-height: 100px; max-width: 100%;"/>${item.deleteState === DeleteState.MARKEDFORDELETE ? '<span class="sr-only">asset marked for deletion</span><span class="deleted" aria-hidden="true">Deleted</span>' : ''}</div>` : '' }, icon: item => { if (isNull(item.box)) return { icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : iconForMime(item.mime), label: item.deleteState === DeleteState.MARKEDFORDELETE ? 'Deleted Asset' : undefined } } },
+          { label: 'Asset', id: 'image', fixed: '10em', class: item => 'image-column', render: item => isNotNull(item.box) ? `<div class="image-wrapper"><img src="${environmentConfig.renderBase}/.asset/${item.id}/w/400/${item.checksum.substring(0, 12)}/${encodeURIComponent(item.filename)}" width="${item.box.width}" height="${item.box.height}" alt="" style="object-fit: contain; max-height: 100px; max-width: 100%;"/>${item.deleteState === DeleteState.MARKEDFORDELETE ? '<span class="sr-only">asset marked for deletion</span><span class="deleted" aria-hidden="true">Deleted</span>' : ''}</div>` : '', icon: item => { if (isNull(item.box)) return { icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteEmpty : iconForMime(item.mime), label: item.deleteState === DeleteState.MARKEDFORDELETE ? 'Deleted Asset' : undefined } } },
           { label: 'Path', id: 'name', render: item => `<div class="page-name">${item.filename}<div class="page-path">${item.path.split('/').slice(0, -1).join('/')}</div></div><button class="reset search-find-in-tree" type="button" tabindex="-1" onclick="window.dgAssetsFindInAssetTree(this, event)" data-path="${htmlEncode(item.path)}">${findInTreeIconSVG}<span>Find in asset tree</span></button>`, class: item => 'name-column' },
           { label: 'Size', id: 'size', fixed: '6em', render: itm => bytesToHuman(itm.size) },
           { label: 'Type', id: 'type', fixed: '10em', render: itm => humanFileType(itm.mime, itm.extension) },

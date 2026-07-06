@@ -12,6 +12,8 @@
   import xLight from '@iconify-icons/ph/x-light'
   import { Modal } from '@txstate-mws/svelte-components'
   import { omit, roundTo } from 'txstate-utils'
+  import { afterNavigate } from '$app/navigation'
+  import { resolve } from '$app/paths'
   import {
     DetailList, DetailPanel, DetailPanelSection, environmentConfig, UploadUI, StyledList, dateStamp,
     ChooserClient, api, uiLog, toast, type DetailPanelButton, type AssetWithPages,
@@ -19,10 +21,9 @@
   } from '$lib'
   import { getAssetDetail, type AssetDetail } from './helpers'
   import { uiConfig } from '../../../local'
-  import { afterNavigate } from '$app/navigation'
-  import { base } from '$app/paths'
+  import type { PageData } from './$types'
 
-  export let data: { asset: AssetDetail }
+  export let data: PageData
   $: asset = data.asset
   $: image = asset.box
   let assetReferencesPending = false
@@ -42,6 +43,7 @@
   async function onUploadSaved () {
     uiLog.log({ eventType: 'AssetDetailPage-modal-' + modal, action: 'Success', target: asset.path })
     modal = undefined
+    // eslint-disable-next-line svelte/no-reactive-reassign -- intentional local override to refresh asset data after upload
     asset = await getAssetDetail(asset.id)
     watchForResizes()
   }
@@ -66,6 +68,7 @@
 
   async function onMetaSaved () {
     modal = undefined
+    // eslint-disable-next-line svelte/no-reactive-reassign -- intentional local override to refresh asset data after editing metadata
     asset = await getAssetDetail(asset.id)
   }
 
@@ -87,7 +90,9 @@
     refreshes = 1
     if (!image) return
     timer = setTimeout(async () => {
-      if (image && refreshes++ < 12 && asset.resizes.length < Math.floor(Math.log2(image.width) - Math.log2(100) + 1) * 2) {
+      refreshes += 1
+      if (image && refreshes <= 12 && asset.resizes.length < Math.floor(Math.log2(image.width) - Math.log2(100) + 1) * 2) {
+        // eslint-disable-next-line svelte/no-reactive-reassign -- intentional local override to refresh asset data while resizes generate
         asset = await getAssetDetail(asset.id)
         watchForResizes()
       } else {
@@ -120,10 +125,12 @@
     modal = m
   }
 
-  $: assetMetaDetails = omit((asset ? {
-    ...(asset.box ? { 'Alternate Text': asset.data.meta?.altText || 'Not Provided' } : {}),
-    ...(uiConfig.assetMeta?.details ? uiConfig.assetMeta.details(asset.data.meta ?? {}) : asset.data.meta ?? {})
-  } : {}), 'altText') // Remove 'altText' from details as it's shown separately with a better label
+  $: assetMetaDetails = omit((asset
+    ? {
+      ...(asset.box ? { 'Alternate Text': asset.data.meta?.altText || 'Not Provided' } : {}),
+      ...(uiConfig.assetMeta?.details ? uiConfig.assetMeta.details(asset.data.meta ?? {}) : asset.data.meta ?? {})
+    }
+    : {}), 'altText') // Remove 'altText' from details as it's shown separately with a better label
 </script>
 
 <div class="container">
@@ -182,7 +189,7 @@
         }} />
         <dl>
           <div><dt>Path:</dt><dd>{asset.path}</dd></div>
-          {#if asset.pagetree.type !== 'ARCHIVE'}<div><dt>External URL:</dt><dd><a bind:this={externalURLElement} href="{image ? `${assetBase}/${asset.id}/w/2000/${encodeURIComponent(asset.filename)}` : `${assetBase}/${asset.id}/${encodeURIComponent(asset.filename)}`}" on:click|preventDefault={onExternal}>{asset.filename}</a><button type="button" class="reset" on:click={onExternal}><Icon icon={clipboardText} hiddenLabel="copy external url to clipboard" inline /></button></dd></div>{/if}
+          {#if asset.pagetree.type !== 'ARCHIVE'}<div><dt>External URL:</dt><dd><a bind:this={externalURLElement} rel="external" href="{image ? `${assetBase}/${asset.id}/w/2000/${encodeURIComponent(asset.filename)}` : `${assetBase}/${asset.id}/${encodeURIComponent(asset.filename)}`}" on:click|preventDefault={onExternal}>{asset.filename}</a><button type="button" class="reset" on:click={onExternal}><Icon icon={clipboardText} hiddenLabel="copy external url to clipboard" inline /></button></dd></div>{/if}
         </dl>
       </DetailPanelSection>
     </DetailPanel>
@@ -203,27 +210,28 @@
           {#if assetReferences.length || !assetReferencesIndirect.length}
             <SortableTable items={assetReferences} emptyMessage="Could not find pages directly referencing this asset."
               headers={[
-                { id: 'name', label: 'Asset appears directly on', render: (item) => item.permissions.viewLatest ? `<a href="${base}/pages/${item.id}">${item.path}</a>` : item.path },
-                { id: 'view', label: 'Preview', actions: [{ icon: arrowSquareOut, hiddenLabel: 'Preview In New Window', label: 'Preview', onClick: (item) => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${item.permissions.viewLatest || !item.published ? 'latest' : 'public'}${item.path}.html`), '_blank') } }] }
+                { id: 'name', label: 'Asset appears directly on', render: item => item.permissions.viewLatest ? `<a href="${resolve('/pages/[id]', { id: item.id })}">${item.path}</a>` : item.path },
+                { id: 'view', label: 'Preview', actions: [{ icon: arrowSquareOut, hiddenLabel: 'Preview In New Window', label: 'Preview', onClick: item => { window.open(resolve('/preview') + '?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${item.permissions.viewLatest || !item.published ? 'latest' : 'public'}${item.path}.html`), '_blank') } }] }
               ]}
             />
           {/if}
           {#if assetReferencesIndirect.length}
             <SortableTable items={assetReferencesIndirect} emptyMessage="Could not find pages referencing this asset's parent folders."
               headers={[
-                { id: 'name', label: 'A parent folder appears on', render: (item) => item.permissions.viewLatest ? `<a href="${base}/pages/${item.id}">${item.path}</a>` : item.path },
-                { id: 'view', label: 'Preview', actions: [{ icon: arrowSquareOut, hiddenLabel: 'Preview In New Window', label: 'Preview', onClick: (item) => { window.open(base + '/preview?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${item.permissions.viewLatest || !item.published ? 'latest' : 'public'}${item.path}.html`), '_blank') } }] }
+                { id: 'name', label: 'A parent folder appears on', render: item => item.permissions.viewLatest ? `<a href="${resolve('/pages/[id]', { id: item.id })}">${item.path}</a>` : item.path },
+                { id: 'view', label: 'Preview', actions: [{ icon: arrowSquareOut, hiddenLabel: 'Preview In New Window', label: 'Preview', onClick: item => { window.open(resolve('/preview') + '?url=' + encodeURIComponent(`${environmentConfig.renderBase}/.preview/${item.permissions.viewLatest || !item.published ? 'latest' : 'public'}${item.path}.html`), '_blank') } }] }
               ]}
             />
           {/if}
         </DetailPanelSection>
       {/if}
     </DetailPanel>
+    <!-- eslint-disable-next-line no-constant-binary-expression -- resizes panel intentionally disabled for now -->
     {#if false && (asset.resizes.length || refreshes)}
         <DetailPanel headerColor="#E5D1BD" header="Resizes{refreshes ? ' (loading more...)' : ''}">
           <DetailPanelSection>
             <StyledList>
-              {#each asset.resizes as resize}
+              {#each asset.resizes as resize (resize.id)}
                 <li class="flex-row">
                   <img src="{environmentConfig.renderBase}/.asset/{asset.id}/resize/{resize.id}/{encodeURIComponent(asset.name)}_{resize.width}.{resize.extension}" width={resize.width} height={resize.height} alt="">
                   <span class="mime">{resize.mime}</span>
@@ -239,7 +247,7 @@
 </div>
 {#if modal === 'upload'}
   <UploadUI title="Upload new file for {asset.path}" helptext="Uploading a new file will replace this asset everywhere it appears." uploadPath="{environmentConfig.apiBase}/assets/replace/{asset.id}" maxFiles={1} on:escape={onModalEscape} on:saved={onUploadSaved} />
-{:else if modal === 'edit' && (uiConfig.assetMeta || !!asset.box)}
+{:else if modal === 'edit' && (!!uiConfig.assetMeta || !!asset.box)}
   <FormDialog icon={fileMagnifyingGlass} title="Edit Asset Details" submit={onMetaSubmit} validate={onMetaValidate} preload={asset.data.meta ?? {}} on:escape={onModalEscape} on:saved={onMetaSaved} let:data {chooserClient}>
     <FieldText path="altText" label="Alternate Text" helptext="Alternative text for the asset, used for accessibility purposes." conditional={!!asset.box}/>
     {#if uiConfig.assetMeta}<svelte:component this={uiConfig.assetMeta.dialog} {asset} {data} {environmentConfig} />{/if}

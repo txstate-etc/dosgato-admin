@@ -60,7 +60,7 @@
     if (preload.grants.undelete) grants.push('undelete')
     return {
       ...preload,
-      siteId: preload.siteId === undefined ? 'allsites' : preload.siteId,
+      siteId: preload.siteId ?? 'allsites',
       path: preload.path === '/' ? undefined : preload.path,
       grants
     } as PageRuleDialogState

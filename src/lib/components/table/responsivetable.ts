@@ -11,7 +11,7 @@ export interface ResponsiveTableRowAction {
   label: string
   onClick: (params: any) => void | Promise<void>
   hiddenLabel?: string
-  enabled?: (params: any) => boolean | boolean // based on the row data, should this action be available? For example, maybe no delete button for indirect groups?
+  enabled?: (params: any) => boolean // based on the row data, should this action be available? For example, maybe no delete button for indirect groups?
 }
 
 export interface ResponsiveTableHeader {

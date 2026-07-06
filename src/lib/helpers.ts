@@ -4,12 +4,17 @@ import { DateTime } from 'luxon'
 import { isNull, isNotBlank, omit } from 'txstate-utils'
 import browserIcon from '@iconify-icons/ph/browser'
 import archive from '@iconify-icons/ph/archive'
+import { goto } from '$app/navigation'
+import type { ResolvedPathname } from '$app/types'
 import { sandboxIcon } from './icons'
 
 export function messageForDialog (messages: MessageFromAPI[], prefix?: string) {
-  return messages.map(m => {
-    return { ...omit(m, 'arg'), path: isNull(m.arg) ? null : isNotBlank(prefix) ? m.arg.replace(RegExp('^' + prefix + '\\.'), '') : m.arg }
-  }) as Feedback[]
+  return messages.map(m => (
+    {
+      ...omit(m, 'arg'),
+      path: isNull(m.arg) ? null : isNotBlank(prefix) ? m.arg.replace(RegExp('^' + prefix + '\\.'), '') : m.arg
+    }
+  )) as Feedback[]
 }
 
 export function mutationForDialog (resp: MutationResponse, { prefix }: { prefix?: string }): SubmitResponse<undefined>
@@ -44,7 +49,7 @@ export function uploadWithProgress (url: URL | string, headers: Record<string, s
     request.addEventListener('error', () => reject(new Error('An error occurred during transfer. Upload not completed.')))
 
     request.addEventListener('abort', () => {
-      const err: any = new Error('aborted')
+      const err = new Error('aborted') as Error & { aborted: boolean }
       err.aborted = true
       reject(err)
     })
@@ -75,5 +80,16 @@ export function getSiteIcon (launchState, type) {
     return sandboxIcon
   } else {
     return archive
+  }
+}
+
+export type SmartLink = `http${string}` | ResolvedPathname
+export async function smartGoto (href: SmartLink) {
+  if (!href) return
+  if (/^https?:\/\//.test(href)) {
+    window.location.href = href
+  } else {
+    // eslint-disable-next-line svelte/no-navigation-without-resolve -- just determined that it's internal
+    await goto(href)
   }
 }

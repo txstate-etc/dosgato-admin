@@ -51,38 +51,26 @@ export class RoleDetailStore extends Store<IRoleDetailStore> {
   }
 
   setRuleEditing (id: string, type: 'asset' | 'data' | 'global' | 'page' | 'site' | 'template', rule?: any) {
-    this.update(v => {
-      return set(v, 'editing', { id, type, data: rule })
-    })
+    this.update(v => set(v, 'editing', { id, type, data: rule }))
   }
 
   resetRuleEditing () {
-    this.update(v => {
-      return set(v, 'editing', undefined)
-    })
+    this.update(v => set(v, 'editing', undefined))
   }
 
   setUserRemoving (id: string, name: string) {
-    this.update(v => {
-      return set(v, 'userRemoving', { id, name })
-    })
+    this.update(v => set(v, 'userRemoving', { id, name }))
   }
 
   resetUserRemoving () {
-    this.update(v => {
-      return set(v, 'userRemoving', undefined)
-    })
+    this.update(v => set(v, 'userRemoving', undefined))
   }
 
   setGroupRemoving (id: string, name: string) {
-    this.update(v => {
-      return set(v, 'groupRemoving', { id, name })
-    })
+    this.update(v => set(v, 'groupRemoving', { id, name }))
   }
 
   resetGroupRemoving () {
-    this.update(v => {
-      return set(v, 'groupRemoving', undefined)
-    })
+    this.update(v => set(v, 'groupRemoving', undefined))
   }
 }

@@ -25,8 +25,8 @@
   {#if authorizedTemplates.length}
     <SortableTable items={authorizedTemplates} headers={[
       { id: 'name', label: 'Template name', get: 'name' },
-      { id: 'pagetrees', label: 'Authorized Pagetree(s)', render: (template) => (template.pagetrees.length ? template.pagetrees.join(', ') : 'All pagetrees') },
-      { id: 'actions', label: 'Actions', hideHeader: true, actions: [{ icon: pencilIcon, label: 'Edit Authorized Pagetrees', hiddenLabel: (template) => `Edit authorized pagetrees for template ${template.name}`, onClick: (template) => { dispatch('editauth', { template }) }, allowed: (template) => template.permissions.assign }, { icon: deleteIcon, label: 'Remove Template Authorization', hiddenLabel: (template) => `Remove authorization for template ${template.name}.`, onClick: (template) => { dispatch('removeauth', { template }) }, allowed: (template) => template.permissions.assign }] }
+      { id: 'pagetrees', label: 'Authorized Pagetree(s)', render: template => (template.pagetrees.length ? template.pagetrees.join(', ') : 'All pagetrees') },
+      { id: 'actions', label: 'Actions', hideHeader: true, actions: [{ icon: pencilIcon, label: 'Edit Authorized Pagetrees', hiddenLabel: template => `Edit authorized pagetrees for template ${template.name}`, onClick: template => { dispatch('editauth', { template }) }, allowed: template => template.permissions.assign }, { icon: deleteIcon, label: 'Remove Template Authorization', hiddenLabel: template => `Remove authorization for template ${template.name}.`, onClick: template => { dispatch('removeauth', { template }) }, allowed: template => template.permissions.assign }] }
     ]}/>
   {:else}
     <span>No {type} templates have been authorized for this site.</span>
@@ -36,7 +36,7 @@
     {#if universalTemplates.length}
       <div class="wrapper">
         <ul class="universal-templates" style={`grid-template-rows: repeat(${Math.ceil(universalTemplates.length / 2)}, 1fr)`}>
-          {#each universalTemplates as template, index}
+          {#each universalTemplates as template, index (template)}
             <li class={hasBackground(universalTemplates.length, index) ? 'bg' : ''}>
               {template}
             </li>
@@ -52,7 +52,7 @@
     {#if unAuthorizedTemplates.length}
       <SortableTable items={unAuthorizedTemplates} headers={[
         { id: 'name', label: 'Template name', get: 'name' },
-        { id: 'actions', label: 'Actions', hideHeader: true, actions: [{ icon: pencilIcon, label: 'Authorize for pagetrees', hiddenLabel: (template) => `Authorize template ${template.name} for pagetrees`, onClick: (template) => { dispatch('addtemplate', { template }) }, allowed: (template) => template.permissions.assign }] }
+        { id: 'actions', label: 'Actions', hideHeader: true, actions: [{ icon: pencilIcon, label: 'Authorize for pagetrees', hiddenLabel: template => `Authorize template ${template.name} for pagetrees`, onClick: template => { dispatch('addtemplate', { template }) }, allowed: template => template.permissions.assign }] }
       ]}/>
     {:else}
       <span>No other {type} templates found.</span>

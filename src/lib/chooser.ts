@@ -1,12 +1,13 @@
 import type { AnyItem, ChooserType, Client, Folder, Page, Source } from '@dosgato/dialog'
-import type { AssetFolderLink, LinkDefinition } from '@dosgato/templating'
+import type { LinkDefinition } from '@dosgato/templating'
 import { Cache, isNotBlank, isNotNull, sortby, stringify } from 'txstate-utils'
 import { api, environmentConfig, uiLog, uploadWithProgress } from '$lib'
-import { base } from '$app/paths'
+import { resolve } from '$app/paths'
 
-const pagetreeInfoCache = new Cache(async (id: string) => {
-  return await api.getPagetreeContext(id)
-}, { freshseconds: 30, staleseconds: 300 })
+const pagetreeInfoCache = new Cache(
+  async (id: string) => await api.getPagetreeContext(id),
+  { freshseconds: 30, staleseconds: 300 }
+)
 
 export class ChooserClient implements Client {
   constructor (public pagetreeId?: string) {}
@@ -133,6 +134,6 @@ export class ChooserClient implements Client {
     if (link.type !== 'asset') return
     const asset = await api.assetByLink(link)
     if (!asset.length) return
-    return `${base}/assets/${asset[0].id}`
+    return resolve('/assets/[id]', { id: asset[0].id })
   }
 }

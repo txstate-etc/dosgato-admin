@@ -1,4 +1,4 @@
-import { base } from '$app/paths'
+import { resolve } from '$app/paths'
 import type { TagGroup } from '@dosgato/dialog'
 import type { AssetFolderLink, AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
@@ -100,7 +100,7 @@ export class Loader<T> {
           for (const resolve of resolves[id]) resolve(resultById[id])
         }
       })
-      .catch(e => {
+      .catch((e: unknown) => {
         for (const id of ids) {
           for (const reject of rejects[id]) reject(e)
         }
@@ -108,7 +108,8 @@ export class Loader<T> {
   }
 }
 
-function validateRequired <T = any> (data: any, requiredFields: string[]) {
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- return-only type parameter lets each caller shape the asserted mutation response type
+function validateRequired<T = any> (data: any, requiredFields: string[]) {
   const messages: MessageFromAPI[] = []
   for (const field of requiredFields) {
     if (isBlank(data[field])) {
@@ -219,7 +220,7 @@ class API {
   }
 
   async config () {
-    return await (await this.fetch(base + '/config')).json()
+    return await (await this.fetch(resolve('/config'))).json()
   }
 
   async getSelf () {
@@ -462,7 +463,7 @@ class API {
   }
 
   async setUserGroups (userId: string, groupIds: string[]) {
-    const { setUserGroups } = await this.query< { setUserGroups: MutationResponse }>(SET_USER_GROUPS, { userId, groupIds })
+    const { setUserGroups } = await this.query<{ setUserGroups: MutationResponse }>(SET_USER_GROUPS, { userId, groupIds })
     return setUserGroups
   }
 
@@ -558,7 +559,7 @@ class API {
   }
 
   async getAvailableTemplateInfo (keys: string[]) {
-    const { templates } = await this.query< { templates: TemplateListTemplate[] }>(GET_AVAILABLE_TEMPLATE_INFO, { keys })
+    const { templates } = await this.query<{ templates: TemplateListTemplate[] }>(GET_AVAILABLE_TEMPLATE_INFO, { keys })
     return templates.map(t => { t.id = t.key; return t })
   }
 
@@ -642,7 +643,7 @@ class API {
   }
 
   async addDataEntry (data: any, templateKey: string, siteId?: string, folderId?: string, validateOnly?: boolean) {
-    const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
+    const dataToSave = { ...data, templateKey, savedAtVersion: schemaVersion }
     const { createDataEntry } = await this.query<{ createDataEntry: MutationResponse & { data: DataItem } }>(CREATE_DATA_ITEM, { args: { data: dataToSave, siteId, folderId }, validateOnly })
     return createDataEntry
   }
@@ -653,7 +654,7 @@ class API {
   }
 
   async editDataEntry (dataId: string, data: DataData, templateKey: string, dataVersion: number, validateOnly?: boolean) {
-    const dataToSave = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
+    const dataToSave = { ...data, templateKey, savedAtVersion: schemaVersion }
     const { updateDataEntry } = await this.query<{ updateDataEntry: MutationResponse & { data: DataItem } }>(UPDATE_DATA, { dataId, args: { data: dataToSave, dataVersion }, validateOnly })
     return updateDataEntry
   }
@@ -781,7 +782,7 @@ class API {
   async addSite (name: string, templateKey: string, data: any, validateOnly?: boolean) {
     const resp = validateRequired<{ site: undefined }>({ name, templateKey, data }, ['name', 'templateKey'])
     if (resp) return resp
-    const pageData = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
+    const pageData = { ...data, templateKey, savedAtVersion: schemaVersion }
     const { createSite } = await this.query<{ createSite: MutationResponse & { site: SiteListSite } }>(ADD_SITE, { name, data: pageData, validateOnly })
     return createSite
   }
@@ -814,7 +815,7 @@ class API {
   async addPagetree (siteId: string, templateKey: string, data: any, validateOnly?: boolean) {
     const resp = validateRequired<{ pagetree: undefined }>({ templateKey, data }, ['templateKey'])
     if (resp) return resp
-    const pageData = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
+    const pageData = { ...data, templateKey, savedAtVersion: schemaVersion }
     const { createPagetree } = await this.query<{ createPagetree: MutationResponse & { pagetree: SitePagetree } }>(ADD_PAGETREE, { siteId, data: pageData, validateOnly })
     return createPagetree
   }
@@ -925,7 +926,7 @@ class API {
   async createPage (name: string, templateKey: string, data: any, targetId: string, above: boolean, validateOnly?: boolean) {
     const resp = validateRequired<{ page: undefined }>({ name, templateKey, data }, ['name', 'templateKey'])
     if (resp) return resp
-    const pageData = Object.assign({}, data, { templateKey, savedAtVersion: schemaVersion })
+    const pageData = { ...data, templateKey, savedAtVersion: schemaVersion }
     const { createPage } = await this.query<{ createPage: MutationResponse & { page: PageEditorPage } }>(CREATE_PAGE, { name, data: pageData, targetId, validateOnly })
     return createPage
   }
@@ -942,7 +943,7 @@ class API {
     return movePages.success
   }
 
-  async copyPages (pageIds: string[], targetId: string, above: boolean, recursive: boolean = false) {
+  async copyPages (pageIds: string[], targetId: string, above: boolean, recursive = false) {
     const { copyPages } = await this.query<{ copyPages: MutationResponse }>(COPY_PAGES, { pageIds, targetId, above, includeChildren: recursive })
     return copyPages.success
   }
