@@ -3,13 +3,16 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "playwright": "playwright test"
+    "playwright": "playwright test",
+    "lint": "eslint ."
   },
   "dependencies": {
-    "@playwright/test": "1.58.2"
+    "@playwright/test": "1.61.1"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^2.10.1",
-    "eslint-config-love": "^97.0.0"
+    "@stylistic/eslint-plugin": "^5.0.0",
+    "@types/node": "^26.0.0",
+    "eslint-config-love": "^154.0.0",
+    "typescript": "^6.0.3"
   }
 }

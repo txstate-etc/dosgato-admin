@@ -10,7 +10,7 @@ export async function loginAs (page: Page, netid: string) {
   await page.waitForURL(/^http:\/\/proxy\/\.admin\/(pages|dashboard)$/)
 }
 
-type MyFixtures = {
+interface MyFixtures {
   adminPage: Page
   editorPage: Page
   ownerPage: Page
@@ -18,36 +18,36 @@ type MyFixtures = {
   dbEditorPage: Page
 }
 
-export const test = base.extend<{}, MyFixtures>({
-  adminPage: [async ({ browser }, use) =>{
+export const test = base.extend<object, MyFixtures>({
+  adminPage: [async ({ browser }, use) => {
     const context = await browser.newContext()
     const adminPage = await context.newPage()
     await loginAs(adminPage, 'su01')
     await use(adminPage)
     await context.close()
   }, { scope: 'worker' }],
-  editorPage: [async ({ browser }, use) =>{
+  editorPage: [async ({ browser }, use) => {
     const context = await browser.newContext()
     const editorPage = await context.newPage()
     await loginAs(editorPage, 'ed01')
     await use(editorPage)
     await context.close()
   }, { scope: 'worker' }],
-  ownerPage: [async ({ browser }, use) =>{
+  ownerPage: [async ({ browser }, use) => {
     const context = await browser.newContext()
     const ownerPage = await context.newPage()
     await loginAs(ownerPage, 'db_owner')
     await use(ownerPage)
     await context.close()
   }, { scope: 'worker' }],
-  managerPage: [async ({ browser }, use) =>{
+  managerPage: [async ({ browser }, use) => {
     const context = await browser.newContext()
     const managerPage = await context.newPage()
     await loginAs(managerPage, 'db_manager1')
     await use(managerPage)
     await context.close()
   }, { scope: 'worker' }],
-  dbEditorPage: [async ({ browser }, use) =>{
+  dbEditorPage: [async ({ browser }, use) => {
     const context = await browser.newContext()
     const dbEditorPage = await context.newPage()
     await loginAs(dbEditorPage, 'db_editor1')

@@ -19,7 +19,7 @@ async function getUserEvents (page: Page): Promise<UserEvent[]> {
   const token = await page.evaluate(() => sessionStorage.getItem('token'))
   const resp = await page.request.get(`${API_BASE}/userEvents`, { headers: { Authorization: `Bearer ${token}` } })
   expect(resp.status(), 'expected an authenticated 200 from GET /userEvents').toBe(200)
-  return await resp.json()
+  return await resp.json() as UserEvent[]
 }
 
 /** The analytics plugin queues events server-side and only flushes every 5 seconds,

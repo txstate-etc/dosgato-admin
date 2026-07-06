@@ -3,7 +3,7 @@ import { test, expect } from '../fixtures'
 
 test.beforeEach(async ({ adminPage }) => {
   await adminPage.goto('/.admin/pages/13')
-  ;(await locateEditFrame(adminPage)).getByRole('button', { name: 'Add pagetemplate2 Content' }).click()
+  await locateEditFrame(adminPage).getByRole('button', { name: 'Add pagetemplate2 Content' }).click()
 })
 
 test.describe('pagetemplate2 contents', () => {

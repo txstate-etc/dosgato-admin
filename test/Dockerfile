@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.58.2
+FROM mcr.microsoft.com/playwright:v1.61.1
 
 COPY package.json ./
 RUN npm install --omit=dev

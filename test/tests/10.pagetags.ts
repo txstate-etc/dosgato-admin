@@ -7,7 +7,7 @@ const NEW_TAG_GROUP = {
   tagnames: ['one', 'two', 'three']
 }
 
-async function addTagGroup(page: Page, name: string) {
+async function addTagGroup (page: Page, name: string) {
   await page.getByLabel('Page Tag Set Display Name *').fill(name)
   for (const [index, tagname] of NEW_TAG_GROUP.tagnames.entries()) {
     await page.getByLabel('Tag Name').nth(index).fill(tagname)
@@ -42,15 +42,15 @@ test.describe('page tags', () => {
     await adminPage.getByRole('button', { name: 'Save' }).click()
     await adminPage.getByRole('button', { name: 'Edit', exact: true }).click()
     await expect(adminPage.getByRole('alertdialog')).toBeVisible()
-    const lastTagInput = adminPage.getByLabel('Tag Name').last();
-    await expect(lastTagInput).toHaveValue('four');
+    const lastTagInput = adminPage.getByLabel('Tag Name').last()
+    await expect(lastTagInput).toHaveValue('four')
     await adminPage.getByRole('button', { name: 'Cancel' }).click()
   })
 
   test('should get a warning message when deleting a tag from a tag group', async ({ adminPage }) => {
     await adminPage.getByRole('treeitem', { name: NEW_TAG_GROUP.name }).click()
     await adminPage.getByRole('button', { name: 'Edit', exact: true }).click()
-    adminPage.once('dialog', (dialog: { accept: () => Promise<void> }) => dialog.accept())
+    adminPage.once('dialog', async (dialog: { accept: () => Promise<void> }) => await dialog.accept())
     await adminPage.getByLabel('remove from list').nth(1).click()
     // await adminPage.screenshot({ path: '../test-results/screenshot1.png' })
     await expect(adminPage.getByText('A tag in this set has been marked for deletion: upon saving, all instances of this tag will be removed')).toBeVisible()

@@ -21,10 +21,11 @@ test.describe('page actions', async () => {
   test('should be able to add a page', async ({ isMobile, adminPage }) => {
     await addPage(adminPage, NEW_PAGE.name, NEW_PAGE.title, 'keyp1')
     await expect(adminPage.getByRole('group').getByText(NEW_PAGE.name)).toBeVisible()
-    if (isMobile)
+    if (isMobile) {
       await expect(adminPage.locator('div.title.tree-cell').getByText(NEW_PAGE.title)).toHaveCount(0)
-    else
+    } else {
       await expect(adminPage.locator('div.title.tree-cell').getByText(NEW_PAGE.title)).toBeVisible()
+    }
   })
   test('should not be able to add a page with same URL Slug on same location ', async ({ adminPage }) => {
     await adminPage.getByRole('button', { name: 'Add Page' }).click()
@@ -51,9 +52,11 @@ test.describe('page actions', async () => {
       await expect(adminPage.getByRole('treeitem', { name: NEW_PAGE.name })
         .locator('div.title.tree-cell', { hasText: NEW_PAGE.title }))
         .toHaveCount(0)
-    } else await expect(adminPage.getByRole('treeitem', { name: NEW_PAGE.name })
-      .locator('div.title.tree-cell', { hasText: NEW_PAGE.title }))
-      .toHaveCount(1)
+    } else {
+      await expect(adminPage.getByRole('treeitem', { name: NEW_PAGE.name })
+        .locator('div.title.tree-cell', { hasText: NEW_PAGE.title }))
+        .toHaveCount(1)
+    }
     await expect(adminPage.getByRole('treeitem', { name: NEW_PAGE.name }).locator('div.status.tree-cell .deleted')).toBeVisible()
   })
   test('should be able to hard delete a page', async ({ adminPage }) => {
@@ -97,18 +100,21 @@ test.describe('page actions', async () => {
   test('should be able to add a page with same URL Slug on diff location ', async ({ isMobile, adminPage }) => {
     await expect(adminPage.getByRole('treeitem', { name: TEST_SITE.name })).toHaveCount(1)
     await expect(adminPage.getByRole('group').getByText(TEST_SITE.name)).toHaveCount(0)
-    if (!isMobile)
+    if (!isMobile) {
       await expect(adminPage.locator('div.title.tree-cell').getByText(TEST_SITE.title)).toHaveCount(1)
+    }
     await addPage(adminPage, TEST_SITE.name, TEST_SITE.title, 'keyp1')
     await expect(adminPage.getByRole('treeitem', { name: TEST_SITE.name })).toHaveCount(2)
     await expect(adminPage.getByRole('group').getByText(TEST_SITE.name)).toHaveCount(1)
-    if (!isMobile)
+    if (!isMobile) {
       await expect(adminPage.locator('div.title.tree-cell').getByText(TEST_SITE.title)).toHaveCount(2)
+    }
     await removePage(adminPage, TEST_SITE.name)
     await expect(adminPage.getByRole('treeitem', { name: TEST_SITE.name })).toHaveCount(1)
     await expect(adminPage.getByRole('group').getByText(TEST_SITE.name)).toHaveCount(0)
-    if (!isMobile)
+    if (!isMobile) {
       await expect(adminPage.locator('div.title.tree-cell').getByText(TEST_SITE.title)).toHaveCount(1)
+    }
   })
 })
 
