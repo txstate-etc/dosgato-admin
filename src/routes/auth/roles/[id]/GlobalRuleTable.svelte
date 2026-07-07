@@ -4,10 +4,10 @@
   import minusIcon from '@iconify-icons/ph/minus-bold'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import deleteIcon from '@iconify-icons/ph/trash'
-  import type { GlobalRule } from '$lib'
+  import type { GlobalRule, RuleTableEvents } from '$lib'
   import { createEventDispatcher } from 'svelte'
 
-  const dispatch = createEventDispatcher()
+  const dispatch = createEventDispatcher<RuleTableEvents<'global', GlobalRule>>()
 
   export let rules: GlobalRule[]
 

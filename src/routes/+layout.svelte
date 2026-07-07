@@ -1,5 +1,7 @@
 <script lang="ts">
   import { Dialog, Icon, InlineMessage } from '@dosgato/dialog'
+  import type { IconOrSVG } from '@dosgato/templating'
+  import type { IconifyIcon } from '@iconify/svelte'
   import bag from '@iconify-icons/ph/bag-fill'
   import caretDown from '@iconify-icons/ph/caret-down-bold'
   import caretRightFill from '@iconify-icons/ph/caret-right-fill'
@@ -20,12 +22,12 @@
   import { afterNavigate, goto } from '$app/navigation'
   import { resolve } from '$app/paths'
   import { page } from '$app/stores'
+  import type { RouteId } from '$app/types'
   import { confirmationStore, currentSubNav, globalStore, subNavSize, subnavStore, toasts, LabeledIconButton, TopNavLink, environmentConfig, uiLog, api, smartGoto, type SmartLink } from '$lib'
   import { uiConfig } from '../local'
   import '../local/tracking.js'
   import '../normalize.css'
   import '../app.css'
-  import type { IconOrSVG } from '@dosgato/templating'
 
   uiLog.logger = uiConfig.uiInteractionsLogger ?? ((arg: any) => console.log('UI:', arg))
   $: uiLog.screen = $page.route.id ?? undefined
@@ -213,7 +215,7 @@
   const labeledIconButtonTarget: { target: string | undefined } = { target: 'Profile-PopupMenu' }
   setContext('LabeledIconButtonTarget', { getTarget: () => labeledIconButtonTarget.target })
 
-  const navIconsByLabel = {
+  const navIconsByLabel: Record<string, IconifyIcon | undefined> = {
     Pages: fileCode,
     Assets: copySimple,
     Data: database,
@@ -235,14 +237,15 @@
     return items
   }
 
-  function getNavLabel (path) {
-    if (path.startsWith(resolve('/pages'))) return 'Pages'
-    else if (path.startsWith(resolve('/dashboard'))) return 'Dashboard'
-    else if (path.startsWith(resolve('/assets'))) return 'Assets'
-    else if (path.startsWith(resolve('/sites'))) return 'Sites'
-    else if (path.startsWith(resolve('/auth'))) return 'Access'
-    else if (path.startsWith(resolve('/data'))) return 'Data'
-    else if (path.startsWith(resolve('/settings'))) return 'More'
+  function getNavLabel (path: RouteId | null) {
+    if (path == null) return ''
+    if (path.startsWith('/pages')) return 'Pages'
+    else if (path.startsWith('/dashboard')) return 'Dashboard'
+    else if (path.startsWith('/assets')) return 'Assets'
+    else if (path.startsWith('/sites')) return 'Sites'
+    else if (path.startsWith('/auth')) return 'Access'
+    else if (path.startsWith('/data')) return 'Data'
+    else if (path.startsWith('/settings')) return 'More'
     return ''
   }
 
@@ -252,7 +255,7 @@
 
   let mobileNavMenuShown = false
 
-  $: navlabel = getNavLabel($page.url.pathname)
+  $: navlabel = getNavLabel($page.route.id)
   $: navIcon = navIconsByLabel[navlabel]
 
   const topbarsize = new ResizeStore()

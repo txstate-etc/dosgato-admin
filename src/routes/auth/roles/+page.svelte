@@ -6,7 +6,7 @@
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { resolve } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type RoleListRole, messageForDialog, uiLog, SearchInput, actionPanelStore } from '$lib'
+  import { ActionPanel, type ActionPanelAction, api, type CreateRoleInput, type RoleListRole, messageForDialog, uiLog, SearchInput, actionPanelStore } from '$lib'
   import { isNotBlank } from 'txstate-utils'
 
   export let data: { siteOptions: { value: string, label: string }[] }
@@ -51,22 +51,23 @@
     return actions
   }
 
-  async function validateAddRole (state) {
+  async function validateAddRole (state: CreateRoleInput) {
     const resp = await api.addRole(state, true)
     return resp.messages.map(m => ({ path: m.arg, type: m.type, message: m.message }))
   }
 
-  async function onAddRole (state) {
+  async function onAddRole (state: CreateRoleInput) {
     const resp = await api.addRole(state)
     uiLog.log({ eventType: 'RolesPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: resp.role?.name })
+    const data: CreateRoleInput | undefined = resp.success
+      ? {
+        name: resp.role!.name
+      }
+      : undefined
     return {
       success: resp.success,
       messages: messageForDialog(resp.messages, ''),
-      data: resp.success
-        ? {
-          name: resp.role!.name
-        }
-        : undefined
+      data
     }
   }
 
@@ -119,11 +120,7 @@ let filter = ''
     { id: 'description', label: 'Description', get: 'description', grow: 2 },
     { id: 'site', label: 'Site', render: role => role.site?.id ? siteNamesById[role.site.id] : '', grow: 2 },
     { id: 'access', label: 'Access Level', get: 'access' }
-  ]} searchable='name' filter={filter} enableResize responsiveHeaders={handleResponsiveHeaders}>
-    <svelte:fragment slot="empty">
-      No roles found. Try expanding your search?
-    </svelte:fragment>
-  </Tree>
+  ]} searchable='name' filter={filter} enableResize responsiveHeaders={handleResponsiveHeaders}/>
 </ActionPanel>
 {#if modal === 'addrole'}
   <FormDialog

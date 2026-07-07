@@ -13,7 +13,7 @@
   import accountGroup from '@iconify-icons/ph/users-three-light'
   import { isNotBlank, unique } from 'txstate-utils'
   import { resolve } from '$app/paths'
-  import { api, DetailPanel, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog, BackButton, DetailPanelSection, Accordion, DetailPageContent, DetailList, type DetailPanelButton, type UserListUser, type GroupListGroup, uiLog, type TemplateListTemplate } from '$lib'
+  import { api, DetailPanel, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog, BackButton, DetailPanelSection, Accordion, DetailPageContent, DetailList, type CreateRoleInput, type DetailPanelButton, type UserListUser, type GroupListGroup, uiLog, type TemplateListTemplate, type AnyRule, type RuleType } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
@@ -53,7 +53,7 @@
 
   $: groupIds = unique([...$store.role.directGroups.map(g => g.id), ...$store.role.indirectGroups.map(g => g.id)])
 
-  function getUserGroups (userGroups) {
+  function getUserGroups (userGroups: { id: string, name: string }[]) {
     const relevantGroups = userGroups.filter(g => groupIds.includes(g.id))
     return relevantGroups.map(g => g.name).join(', ')
   }
@@ -86,12 +86,12 @@
     if (group) return { label: group.name, value: group.id }
   }
 
-  async function validateBasic (state) {
+  async function validateBasic (state: CreateRoleInput) {
     const resp = await api.editRole($store.role.id, state, true)
     return resp.messages.map(m => ({ ...m, path: m.arg }))
   }
 
-  async function onEditBasic (state) {
+  async function onEditBasic (state: CreateRoleInput) {
     const resp = await api.editRole($store.role.id, state)
     uiLog.log({ eventType: 'RoleDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.role.name, additionalProperties: { name: state.name, description: state.description, siteId: state.siteId } })
     return {
@@ -105,7 +105,7 @@
     }
   }
 
-  async function onAssignRoleToUser (state) {
+  async function onAssignRoleToUser (state: { userIds?: string[] }) {
     if (!state.userIds?.length) {
       return {
         success: false,
@@ -118,7 +118,7 @@
     return { ...resp, data: state }
   }
 
-  async function onAssignRoleToGroup (state) {
+  async function onAssignRoleToGroup (state: { groupIds: string[] }) {
     if (!state.groupIds.length) {
       return {
         success: false,
@@ -141,26 +141,24 @@
     openModal('unassignfromgroup')
   }
 
-  async function onUnassign (state) {
-    if (!$store.userRemoving) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Please select a user to remove.' }], data: state }
+  async function onUnassign () {
+    if (!$store.userRemoving) return
     const resp = await api.removeRoleFromUser($store.role.id, $store.userRemoving.id)
     uiLog.log({ eventType: 'RoleDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.role.name, additionalProperties: { userId: $store.userRemoving.id } })
     if (resp.success) {
       store.resetUserRemoving()
       onSaved()
     }
-    return { ...resp, data: state }
   }
 
-  async function onUnassignGroup (state) {
-    if (!$store.groupRemoving) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Please select a group to remove.' }], data: state }
+  async function onUnassignGroup () {
+    if (!$store.groupRemoving) return
     const resp = await api.removeRoleFromGroup($store.role.id, $store.groupRemoving.id)
     uiLog.log({ eventType: 'RoleDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.role.name, additionalProperties: { group: $store.groupRemoving.name } })
     if (resp.success) {
       store.resetGroupRemoving()
       onSaved()
     }
-    return { ...resp, data: state }
   }
 
   function onSaved () {
@@ -180,12 +178,12 @@
     modal = undefined
   }
 
-  function onClickDelete (ruleId, ruleType) {
+  function onClickDelete (ruleId: string, ruleType: RuleType) {
     store.setRuleEditing(ruleId, ruleType)
     openModal('deleterule')
   }
 
-  function onClickEdit (ruleId, ruleType, rule) {
+  function onClickEdit (ruleId: string, ruleType: RuleType, rule: AnyRule) {
     store.setRuleEditing(ruleId, ruleType, rule)
     if (ruleType === 'asset') {
       openModal('editassetrule')
@@ -258,7 +256,7 @@
             <SortableTable items={$store.role.indirectGroups}
               headers={[
                 { id: 'name', label: 'Subgroup', render: item => `<a href="${resolve('/auth/groups/[id]', { id: item.id })}">${item.name}</a>`, sortable: true, sortFunction: item => item.name, widthPercent: 50 },
-                { id: 'source', label: 'Subgroup parent', render: item => item.parents.map(g => g.name).join(', '), widthPercent: 50 }
+                { id: 'source', label: 'Subgroup parent', render: item => item.parents.map((g: { id: string, name: string }) => g.name).join(', '), widthPercent: 50 }
               ]} />
           {/if}
         </Accordion>

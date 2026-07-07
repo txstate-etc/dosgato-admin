@@ -8,7 +8,7 @@ export interface PageItem extends Omit<Omit<Omit<TreePage, 'modifiedAt'>, 'publi
   modifiedAt: DateTime
   publishedAt?: DateTime
   hasChildren: boolean
-  status: string
+  status: 'modified' | 'published' | 'unpublished'
   type: RootTreePage['pagetree']['type']
 }
 export type TypedPageItem = TypedTreeItem<PageItem>

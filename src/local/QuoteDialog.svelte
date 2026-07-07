@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { FieldText, Tabs, Tab } from '@dosgato/dialog'
 
   const tabs = [

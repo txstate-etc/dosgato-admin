@@ -8,7 +8,7 @@
   import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { csv, isBlank, keyby, titleCase } from 'txstate-utils'
-  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, DetailPanelSection, DetailPageContent, DialogWarning, DetailList, LaunchState, Accordion, downloadPageList, uiLog } from '$lib'
+  import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, type SitePagetree, type SiteTemplate, DetailPanelSection, DetailPageContent, DialogWarning, DetailList, LaunchState, Accordion, downloadPageList, uiLog } from '$lib'
   import { resolve } from '$app/paths'
   import { _store as store } from './+page'
   import CreateWithPageDialog from '$lib/components/dialogs/CreateWithPageDialog.svelte'
@@ -31,12 +31,12 @@
   $: universalComponentTemplates = data.allComponentTemplates.filter(t => t.universal && !authorizedComponentTemplateKeys.has(t.key))
   $: universalPageTemplates = data.allPageTemplates.filter(t => t.universal && !authorizedPageTemplateKeys.has(t.key))
 
-  async function searchUsers (search) {
+  async function searchUsers (search: string) {
     const query = search.toLowerCase()
     return data.users.filter(u => u.name.toLowerCase().includes(query) || u.id.includes(query)).map(u => ({ label: u.name, value: u.id }))
   }
 
-  async function searchPagetrees (term) {
+  async function searchPagetrees (term: string) {
     return $store.site.pagetrees.filter(p => p.name.includes(term)).map(p => ({ label: p.name, value: p.id }))
   }
 
@@ -45,7 +45,7 @@
     if (pagetree) return { label: pagetree.name, value: pagetree.id }
   }
 
-  async function onAddComment (state) {
+  async function onAddComment (state: { comment: string }) {
     const resp = await api.addSiteComment($store.site.id, state.comment)
     uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { comment: state.comment } })
     if (resp.success) {
@@ -55,7 +55,7 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
-  async function validateBasicInfo (state) {
+  async function validateBasicInfo (state: { name: string }) {
     const localMessages = ensureRequiredNotNull(state, ['name'])
     if (!localMessages.length) {
       const resp = await api.renameSite($store.site.id, state.name, true)
@@ -64,7 +64,7 @@
     return localMessages
   }
 
-  async function onRenameSite (state) {
+  async function onRenameSite (state: { name: string }) {
     const resp = await api.renameSite($store.site.id, state.name, false)
     uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { oldName: $store.site.name, newName: state.name } })
     if (resp.success) {
@@ -74,9 +74,9 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
-  async function onEditSiteManagement (state) {
+  async function onEditSiteManagement (state: { organization?: string, owner?: string, managers?: string[] }) {
     const resp = await api.updateSiteManagement($store.site.id, state.organization, state.owner, state.managers)
-    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { organization: state.organization, owner: state.owner, managers: state.managers } })
+    uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { organization: state.organization, owner: state.owner, managers: state.managers?.join(', ') } })
     if (resp.success) {
       void store.refresh($store.site.id)
       modal = undefined
@@ -84,7 +84,7 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
   }
 
-  async function onSetLaunchURL (state) {
+  async function onSetLaunchURL (state: { host?: string, path?: string, enabled?: LaunchState }) {
     const resp = await api.setLaunchURL($store.site.id, state.host, state.path, state.enabled)
     uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { host: state.host, path: state.path, enabled: state.enabled } })
     if (resp.success) {
@@ -94,7 +94,7 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
-  async function validateAddPagetree (state) {
+  async function validateAddPagetree (state: CreateWithPageState) {
     const resp = await api.addPagetree($store.site.id, state.templateKey, state.data, true)
     return resp.messages.map(m => ({ ...m, path: m.arg }))
   }
@@ -114,17 +114,17 @@
     modal = undefined
   }
 
-  async function onClickEditPagetree (id, name) {
+  async function onClickEditPagetree (id: string, name: string) {
     store.setPagetreeEditing(id, name)
     openModal('editpagetree')
   }
 
-  async function onRenamePagetree (state) {
+  async function onRenamePagetree (state: { name?: string }) {
     if (!$store.editingPagetree) {
       const error: Feedback = { message: 'Something went wrong. Please contact support for assistance', type: MessageType.ERROR }
       return { success: false, messages: [error], data: state }
     }
-    const resp = await api.updatePagetree($store.editingPagetree.id, state.name)
+    const resp = await api.updatePagetree($store.editingPagetree.id, state.name ?? '')
     uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.editingPagetree.name, additionalProperties: { oldName: $store.editingPagetree.name, newName: state.name } })
     if (resp.success) {
       void store.refresh($store.site.id)
@@ -134,7 +134,7 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
-  async function onClickDeletePagetree (id, name) {
+  async function onClickDeletePagetree (id: string, name: string) {
     store.setPagetreeEditing(id, name)
     openModal('deletepagetree')
   }
@@ -154,7 +154,7 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
-  async function onClickPromotePagetree (id, name) {
+  async function onClickPromotePagetree (id: string, name: string) {
     store.setPagetreeEditing(id, name)
     openModal('promotepagetree')
   }
@@ -174,7 +174,7 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
-  async function onClickArchivePagetree (id, name) {
+  async function onClickArchivePagetree (id: string, name: string) {
     store.setPagetreeEditing(id, name)
     openModal('archivepagetree')
   }
@@ -194,13 +194,13 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
-  function onClickAuthorizeTemplate (e) {
+  function onClickAuthorizeTemplate (e: CustomEvent<{ template: TemplateListTemplate }>) {
     const { key, name } = e.detail.template
     store.setTemplateAuthEditing(key, name, [])
     openModal('authorizetemplate')
   }
 
-  async function authorizeTemplate (state) {
+  async function authorizeTemplate (state: { pagetrees: string[] }) {
     if (!$store.templateAuthEditing) {
       const error: Feedback = { message: 'Something went wrong. Please contact support for assistance', type: MessageType.ERROR }
       return { success: false, messages: [error], data: state }
@@ -226,14 +226,14 @@
     }
   }
 
-  async function onClickEditTemplateAuth (e) {
+  async function onClickEditTemplateAuth (e: CustomEvent<{ template: SiteTemplate }>) {
     const { key, name, pagetrees } = e.detail.template
     const pagetreesByName = keyby($store.site.pagetrees, 'name')
     store.setTemplateAuthEditing(key, name, pagetrees.map((p: string) => pagetreesByName[p].id))
     openModal('edittemplates')
   }
 
-  async function onEditTemplateAuthorizations (state) {
+  async function onEditTemplateAuthorizations (state: { pagetrees: string[] }) {
     if (!$store.templateAuthEditing) {
       const error: Feedback = { message: 'Something went wrong. Please contact support for assistance', type: MessageType.ERROR }
       return { success: false, messages: [error], data: state }
@@ -254,7 +254,7 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
 
-  async function onClickDeleteTemplateAuth (e) {
+  async function onClickDeleteTemplateAuth (e: CustomEvent<{ template: SiteTemplate }>) {
     const { key, name, pagetrees } = e.detail.template
     const pagetreesByName = keyby($store.site.pagetrees, 'name')
     store.setTemplateAuthEditing(key, name, pagetrees.map((p: string) => pagetreesByName[p].id))
@@ -276,7 +276,7 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: {} }
   }
 
-  function getPagetreeActions (pagetree) {
+  function getPagetreeActions (pagetree: SitePagetree) {
     const actions: SortableTableRowAction[] = []
     if (pagetree.type === 'SANDBOX' && pagetree.permissions.promote) {
       actions.push({ icon: launchIcon, label: 'Promote to Primary', hiddenLabel: tree => `Promote pagetree ${tree.name} to primary`, onClick: async tree => await onClickPromotePagetree(tree.id, tree.name) })
@@ -312,7 +312,7 @@
     modal = m
   }
 
-  async function onDownloadPageList (state) {
+  async function onDownloadPageList (state: { pagetree?: string }) {
     if (!state.pagetree) {
       return { success: false, data: {}, messages: [] }
     }
@@ -411,7 +411,7 @@
             { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }
           ]}/>
           <Accordion title="More groups (with broad access)">
-            <SortableTable slot="groups" items={$store.groups.universal} headers={[
+            <SortableTable items={$store.groups.universal} headers={[
               { id: 'name', label: 'Groups', render: group => `<a href="${resolve('/auth/groups/[id]', { id: group.id })}">${group.name}</a>`, widthPercent: 50 },
               { id: 'summary', label: 'Role Summary', get: 'access', widthPercent: 25 },
               { id: 'source', label: 'Source Role(s)', get: 'roles', widthPercent: 25 }

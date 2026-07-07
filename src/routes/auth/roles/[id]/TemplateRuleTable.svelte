@@ -4,10 +4,10 @@
   import minusIcon from '@iconify-icons/ph/minus-bold'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import deleteIcon from '@iconify-icons/ph/trash'
-  import type { TemplateRule } from '$lib'
+  import type { RuleTableEvents, TemplateRule } from '$lib'
   import { createEventDispatcher } from 'svelte'
 
-  const dispatch = createEventDispatcher()
+  const dispatch = createEventDispatcher<Pick<RuleTableEvents<'template', TemplateRule>, 'deleterule'>>()
 
   export let rules: TemplateRule[]
 

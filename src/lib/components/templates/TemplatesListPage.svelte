@@ -38,10 +38,10 @@
     return actions
   }
 
-  async function setUniversal (universal) {
+  async function setUniversal (universal: boolean) {
     if ($store.selectedItems[0].type === 'template') {
       const resp = await api.setTemplateUniversal($store.selectedItems[0].key, universal)
-      uiLog.log({ eventType: 'TemplatesListPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.selectedItems[0].key, additionalProperties: { universal } })
+      uiLog.log({ eventType: 'TemplatesListPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.selectedItems[0].key, additionalProperties: { universal: String(universal) } })
       if (resp.success) {
         void store.refresh()
         modal = undefined

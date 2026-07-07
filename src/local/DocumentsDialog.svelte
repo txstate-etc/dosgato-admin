@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import { FieldChooserLink, FieldText } from '@dosgato/dialog'
 </script>
 <FieldText path="title" label="Title (optional)" />

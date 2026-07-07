@@ -7,7 +7,7 @@
   import { DateTime } from 'luxon'
   import { sortby } from 'txstate-utils'
   import { resolve } from '$app/paths'
-  import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type GroupListGroup, type RoleListRole, BackButton, uiLog, UserTrainingsChooser } from '$lib'
+  import { api, Accordion, DetailList, DetailPageContent, DetailPanel, DetailPanelSection, messageForDialog, ensureRequiredNotNull, type FullUser, type GroupListGroup, type GroupWithParents, type RoleListRole, BackButton, uiLog, UserTrainingsChooser } from '$lib'
   import { _store as store } from './+page'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
   import { uiConfig } from '../../../../local'
@@ -23,7 +23,7 @@
 
   $: allUserGroups = [...$store.user.directGroups, ...$store.user.indirectGroups]
 
-  function getGroupParents (group) {
+  function getGroupParents (group: GroupWithParents) {
     const parents: string[] = []
     for (const g of allUserGroups) {
       if (g.parents.find(p => p.id === group.id)) {
@@ -38,12 +38,12 @@
     modal = undefined
   }
 
-  function getIndirectRoleGroup (role) {
+  function getIndirectRoleGroup (role: FullUser['indirectRoles'][number]) {
     const relevantGroups = role.groups.filter(g => allUserGroups.find(ug => ug.id === g.id))
     return relevantGroups.map(g => g.name).join(', ')
   }
 
-  async function onEditBasic (state) {
+  async function onEditBasic (state: { firstname?: string, lastname: string, email: string, trainings: string[] }) {
     const resp = await api.updateUserInfo($store.user.id, state)
     uiLog.log({ eventType: 'UserDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.user.id })
     if (resp.success) void store.refresh($store.user.id)
@@ -51,7 +51,7 @@
     return { success: resp.success, messages: messageForDialog(resp.messages, 'args'), data: state }
   }
 
-  async function validateBasicInfo (state) {
+  async function validateBasicInfo (state: { firstname?: string, lastname: string, email: string, trainings: string[] }) {
     const localMessages = ensureRequiredNotNull(state, ['lastname', 'email'])
     if (!localMessages.length) {
       const resp = await api.updateUserInfo($store.user.id, state, true)
@@ -69,7 +69,7 @@
     if (name) return { label: name, value: val }
   }
 
-  async function onAddGroups (state) {
+  async function onAddGroups (state: { groups: string[] }) {
     const resp = await api.setUserGroups($store.user.id, state.groups)
     uiLog.log({ eventType: 'UserDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.user.id, additionalProperties: { groups: state.groups.map((id: string) => groupNamesById[id] ?? id).join(', ') } })
     if (resp.success) {
@@ -111,7 +111,7 @@
     return { ...resp, data: state }
   }
 
-  async function onRemoveRole (state) {
+  async function onRemoveRole () {
     if (!$store.roleRemoving) return
     const resp = await api.removeRoleFromUser($store.roleRemoving.id, $store.user.id)
     uiLog.log({ eventType: 'UserDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.user.id, additionalProperties: { roles: $store.roleRemoving.name } })
@@ -119,10 +119,9 @@
       store.resetRoleRemoving()
       onSaved()
     }
-    return { ...resp, data: state }
   }
 
-  async function onRemoveFromGroup (state) {
+  async function onRemoveFromGroup () {
     if (!$store.groupRemoving) return
     const resp = await api.removeUserFromGroup($store.user.id, $store.groupRemoving.id)
     uiLog.log({ eventType: 'UserDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.user.id, additionalProperties: { groups: $store.groupRemoving.name } })
@@ -130,15 +129,14 @@
       store.resetGroupRemoving()
       onSaved()
     }
-    return { ...resp, data: state }
   }
 
-  function onClickRemoveGroup (groupId, groupName) {
+  function onClickRemoveGroup (groupId: string, groupName: string) {
     store.setGroupRemoving(groupId, groupName)
     openModal('removefromgroup')
   }
 
-  function onClickRemoveRole (roleId, roleName) {
+  function onClickRemoveRole (roleId: string, roleName: string) {
     store.setRoleRemoving(roleId, roleName)
     openModal('removerole')
   }

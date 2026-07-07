@@ -26,7 +26,7 @@ interface ISiteDetailStore {
   templateAuthEditing?: {
     key: string
     name: string
-    pagetrees: SitePagetree[]
+    pagetrees: string[]
   }
 }
 
@@ -60,7 +60,7 @@ export interface SiteTemplate {
   universal: boolean
   pagetrees: string[]
   permissions: {
-    assign
+    assign: boolean
   }
 }
 
@@ -96,7 +96,7 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
     const site = await this.fetchSite(id)
     const siteRoles = { specific: [] as SiteRole[], universal: [] as SiteRole[] }
     const groupRoles: Record<string, { name: string, roles: string[] }> = {}
-    const userRoles = {}
+    const userRoles: Record<string, { name: string, firstname: string, lastname: string, disabled: boolean, roles: string[] }> = {}
 
     for (const role of site.roles) {
       const rules = [...role.assetRules, ...role.pageRules, ...role.dataRules, ...role.siteRules]

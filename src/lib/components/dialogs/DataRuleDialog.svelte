@@ -96,7 +96,7 @@
     return messageForDialog(resp.messages, 'args')
   }
 
-  async function onEditDataRule (state) {
+  async function onEditDataRule (state: DataRuleDialogState) {
     if (!ruleId) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Something went wrong' }], data: state }
     const args = {
       ...stateToPreload(state),

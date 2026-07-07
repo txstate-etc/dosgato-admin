@@ -55,11 +55,11 @@
     }
   }
 
-  let scrollY
+  let scrollY: number
   const offsetStore = new OffsetStore()
   let supportsDVH = false
   $: height = `calc(${supportsDVH ? '100dvh' : '100vh'} - ${Math.max(0, $offsetStore.bottom ?? 0)}px - ${Math.max(0, ($offsetStore.top ?? 0))}px)`
-  let arialive
+  let arialive: 'polite' | undefined
   onMount(() => {
     arialive = 'polite'
     supportsDVH = CSS.supports('height: 100dvh')

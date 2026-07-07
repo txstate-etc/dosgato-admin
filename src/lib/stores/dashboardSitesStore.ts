@@ -1,4 +1,4 @@
-import type { DashboardSiteWithRoleSummary } from '$lib'
+import { LaunchState, type DashboardSiteWithRoleSummary } from '$lib'
 import { derivedStore, Store } from '@txstate-mws/svelte-store'
 
 interface IDashboardSitesStore {
@@ -53,10 +53,10 @@ export const filtered = derivedStore(dashboardSitesStore, state => {
   if (filter !== 'all') {
     filtered = sites.filter(site => {
       if (['active', 'prelaunch', 'inactive'].includes(filter)) {
-        const map = { active: 'LAUNCHED', prelaunch: 'PRELAUNCH', inactive: 'DECOMMISSIONED' }
+        const map: Record<string, LaunchState> = { active: LaunchState.LAUNCHED, prelaunch: LaunchState.PRELAUNCH, inactive: LaunchState.DECOMMISSIONED }
         return site.launchState === map[filter]
       } else if (['owner', 'manager', 'editor', 'contributor', 'readonly'].includes(filter)) {
-        const roleMap = { owner: 'Owner', manager: 'Manager', editor: 'Editor', contributor: 'Contributor', readonly: 'Read-only' }
+        const roleMap: Record<string, string> = { owner: 'Owner', manager: 'Manager', editor: 'Editor', contributor: 'Contributor', readonly: 'Read-only' }
         return site.roleSummary.includes(roleMap[filter])
       }
       return true

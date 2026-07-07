@@ -35,7 +35,7 @@
     void goto(resolve(`/pages?selectedPage=${pageId}`))
   }
 
-  async function onDownloadPageList (state) {
+  async function onDownloadPageList (state: { pagetree?: string }) {
     if (!state.pagetree) {
       return { success: false, data: {}, messages: [] }
     }

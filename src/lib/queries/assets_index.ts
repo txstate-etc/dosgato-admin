@@ -1,3 +1,4 @@
+import type { AssetData } from '@dosgato/templating'
 import type { DeleteState, LaunchState } from '$lib'
 import { mutationResponse } from './global'
 
@@ -172,7 +173,7 @@ export interface AssetWithPages {
 }
 
 export interface AssetSearchResult extends TreeAsset {
-  data
+  data: AssetData
 }
 
 export const GET_SEARCH_ASSETS = `

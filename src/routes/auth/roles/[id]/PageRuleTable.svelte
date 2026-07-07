@@ -4,11 +4,11 @@
   import minusIcon from '@iconify-icons/ph/minus-bold'
   import pencilIcon from '@iconify-icons/mdi/pencil'
   import deleteIcon from '@iconify-icons/ph/trash'
-  import type { PageRule } from '$lib'
+  import type { PageRule, RuleTableEvents } from '$lib'
   import { createEventDispatcher } from 'svelte'
   import { resolve } from '$app/paths'
 
-  const dispatch = createEventDispatcher()
+  const dispatch = createEventDispatcher<RuleTableEvents<'page', PageRule>>()
 
   export let rules: PageRule[]
 

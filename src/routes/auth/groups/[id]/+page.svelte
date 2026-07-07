@@ -4,7 +4,7 @@
   import deleteIcon from '@iconify-icons/ph/trash'
   import { Dialog, FieldText, FieldMultiselect, FieldSelect, FormDialog } from '@dosgato/dialog'
   import { resolve } from '$app/paths'
-  import { api, BackButton, DetailList, DetailPanel, DetailPanelSection, messageForDialog, StyledList, type RoleListRole, type UserListUser, uiLog } from '$lib'
+  import { api, BackButton, DetailList, DetailPanel, DetailPanelSection, messageForDialog, StyledList, type FullGroup, type RoleListRole, type UserListUser, uiLog } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   import DetailPageContent from '$lib/components/DetailPageContent.svelte'
@@ -27,7 +27,7 @@
     return $store.group.name ?? $store.group.id
   }
 
-  async function onEditBasic (state) {
+  async function onEditBasic (state: { name: string }) {
     const resp = await api.editGroup($store.group.id, state.name)
     uiLog.log({ eventType: 'GroupDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: modalTarget() })
     return {
@@ -39,7 +39,7 @@
     }
   }
 
-  async function validateBasic (state) {
+  async function validateBasic (state: { name: string }) {
     const resp = await api.editGroup($store.group.id, state.name, true)
     return messageForDialog(resp.messages, '')
   }
@@ -54,7 +54,7 @@
     openModal('addmembers')
   }
 
-  async function onAddMembers (state) {
+  async function onAddMembers (state: { users: string[] }) {
     const resp = await api.setGroupUsers($store.group.id, state.users)
     uiLog.log({ eventType: 'GroupDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: modalTarget() })
     return {
@@ -71,7 +71,7 @@
     openModal('removegroupmember')
   }
 
-  async function onRemoveGroupMember (state) {
+  async function onRemoveGroupMember (state: CustomEvent) {
     if (!groupMemberRemovingId) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Something went wrong' }], data: state }
     const resp = await api.removeMemberFromGroup($store.group.id, groupMemberRemovingId)
     uiLog.log({ eventType: 'GroupDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: modalTarget(), additionalProperties: { userId: groupMemberRemovingId } })
@@ -83,11 +83,11 @@
   }
 
   // Takes the indirect member's direct groups and returns those that are subgroups of the group we are inspecting
-  function getMemberDirectGroup (groups) {
+  function getMemberDirectGroup (groups: FullGroup['indirectMembers'][number]['groups']) {
     return groups.filter(g => subgroupIds.includes(g.id)).map(g => g.name).join(', ')
   }
 
-  function renderIndirectRoleGroups (role) {
+  function renderIndirectRoleGroups (role: FullGroup['rolesThroughParentGroup'][number]) {
     // This role is an indirect role. It comes from an ancestor group of the group we are inspecting.
     // Look at the role's direct groups to see which one(s) are in the supergroups list
     return role.groups.filter(g => supergroupIds.includes(g.id)).map(g => `<a href="${resolve('/auth/groups/[id]', { id: g.id })}">${g.name}</a>`).join(', ')
@@ -98,8 +98,8 @@
     openModal('addrole')
   }
 
-  async function onAddRole (state) {
-    const resp = await api.addRoleToGroups(state.role, [$store.group.id])
+  async function onAddRole (state: { role?: string, roles?: string[] }) {
+    const resp = await api.addRoleToGroups(state.role!, [$store.group.id])
     uiLog.log({ eventType: 'GroupDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: modalTarget(), additionalProperties: { role: allRoles?.find(r => r.id === state.role)?.name ?? state.role } })
     return {
       success: resp.success,
@@ -115,7 +115,7 @@
     openModal('removerole')
   }
 
-  async function onRemoveRole (state) {
+  async function onRemoveRole (state: CustomEvent) {
     if (!roleRemovingId) return { success: false, messages: [{ type: MessageType.ERROR, message: 'Something went wrong' }], data: state }
     const resp = await api.removeRoleFromGroup(roleRemovingId, $store.group.id)
     uiLog.log({ eventType: 'GroupDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: modalTarget(), additionalProperties: { role: $store.group.directRoles.find(r => r.id === roleRemovingId)?.name ?? roleRemovingId } })
@@ -154,7 +154,7 @@
           <SortableTable items={$store.group.subgroups}
             headers={[
               { id: 'name', label: 'Subgroup', render: item => `<a href="${resolve('/auth/groups/[id]', { id: item.id })}">${item.name}</a>`, sortable: true },
-              { id: 'parents', label: 'Subgroup parent', render: item => item.parents.map(g => g.name).join(', ') }
+              { id: 'parents', label: 'Subgroup parent', render: item => item.parents.map((g: { id: string, name: string }) => g.name).join(', ') }
             ]}/>
         </DetailPanelSection>
       {/if}

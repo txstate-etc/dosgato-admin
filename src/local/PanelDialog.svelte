@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { FieldText } from '@dosgato/dialog'
 </script>
 

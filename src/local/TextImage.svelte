@@ -1,5 +1,5 @@
-<script>
-  import { FieldChooserLink, FieldText, FieldTextArea } from '@dosgato/dialog'
+<script lang="ts">
+  import { FieldChooserLink, FieldText, FieldTextArea, type AnyItem, type BrokenURL, type RawURL } from '@dosgato/dialog'
   import { dialogQuery } from '@dosgato/templating'
   import { pick } from 'txstate-utils'
 
@@ -11,8 +11,8 @@
     }
   `
 
-  async function fetchSelectedAsset (selectedAsset) {
-    if (!selectedAsset) return null
+  async function fetchSelectedAsset (selectedAsset: AnyItem | RawURL | BrokenURL | undefined) {
+    if (!selectedAsset?.id) return null
     const parsed = JSON.parse(selectedAsset.id)
     const link = { ...pick(parsed, 'siteId', 'path', 'checksum'), linkId: parsed.id }
     const result = await dialogQuery(GET_ASSET_METADATA, { link })

@@ -2,8 +2,10 @@
   import { FieldCheckbox, FieldHidden, FieldIdentifier, FieldMultiple, FieldText } from '@dosgato/dialog'
   import { isNotNull } from 'txstate-utils'
 
-  export let creating, data
-  let initialTags = []
+  interface UserTag { id: string, name: string, disabled?: boolean }
+  export let creating: boolean
+  export let data: { title?: string, tags: UserTag[] }
+  let initialTags: string[] = []
   let tagsReady = false
   $: if (data?.tags) {
     if (data.tags.every(t => t?.name)) {

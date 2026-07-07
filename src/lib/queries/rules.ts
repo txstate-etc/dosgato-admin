@@ -308,6 +308,15 @@ export interface TemplateRule {
   }
 }
 
+export type AnyRule = GlobalRule | SiteRule | PageRule | AssetRule | TemplateRule | DataRule
+
+export type RuleType = 'asset' | 'data' | 'global' | 'page' | 'site' | 'template'
+
+export interface RuleTableEvents<T extends RuleType, R extends AnyRule> {
+  editrule: { id: string, type: T, rule: R }
+  deleterule: { id: string, type: T }
+}
+
 export const accessDetailRules = `
   dataRules {
     site {

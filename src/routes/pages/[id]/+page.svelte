@@ -165,7 +165,7 @@
     iframe.contentWindow?.postMessage({ focus: returnPath }, '*')
   }
 
-  function handleCopyAndCut (isCut) {
+  function handleCopyAndCut (isCut: boolean) {
     if (isCut) {
       pageEditorStore.cutComponent($editorStore.selectedPath)
     } else {
@@ -232,7 +232,7 @@
 
   function messages (el: HTMLIFrameElement) {
     iframe = el
-    const handler = e => { if (e.source === el.contentWindow) onMessage(e.data) }
+    const handler = (e: MessageEvent) => { if (e.source === el.contentWindow) onMessage(e.data) }
     window.addEventListener('message', handler)
     return {
       destroy: () => window.removeEventListener('message', handler)

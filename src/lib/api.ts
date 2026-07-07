@@ -251,7 +251,7 @@ class API {
       hasChildren: false,
       modifiedAt: DateTime.fromISO(p.modifiedAt),
       publishedAt: p.publishedAt ? DateTime.fromISO(p.publishedAt) : undefined,
-      status: p.published ? (p.hasUnpublishedChanges ? 'modified' : 'published') : 'unpublished'
+      status: p.published ? (p.hasUnpublishedChanges ? 'modified' as const : 'published' as const) : 'unpublished' as const
     }))
   }
 

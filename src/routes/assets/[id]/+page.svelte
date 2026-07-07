@@ -83,7 +83,7 @@
 
   const assetBase = environmentConfig.assetLiveBase || (environmentConfig.apiBase + '/assets')
 
-  let timer
+  let timer: ReturnType<typeof setTimeout>
   let refreshes = 0
   function watchForResizes () {
     clearTimeout(timer)

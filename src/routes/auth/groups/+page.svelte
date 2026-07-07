@@ -38,7 +38,7 @@
 
   const store = new TreeStore<GroupListGroup>(fetchChildren)
 
-  async function onAddGroup (state) {
+  async function onAddGroup (state: { name: string }) {
     const parentId: string | undefined = $store.selectedItems.length ? $store.selectedItems[0].id : undefined
     const resp = await api.addGroup(state.name, parentId)
     uiLog.log({ eventType: 'GroupsPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.selectedItems[0]?.name, additionalProperties: { name: resp.group?.name ?? state.name } })
@@ -57,7 +57,7 @@
     }
   }
 
-  async function validateAddGroup (state) {
+  async function validateAddGroup (state: { name: string }) {
     const resp = await api.addGroup(state.name, undefined, true)
     return resp.messages.map(m => ({ path: m.arg, type: m.type, message: m.message }))
   }

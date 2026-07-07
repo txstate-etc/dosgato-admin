@@ -1,12 +1,12 @@
 import { Store } from '@txstate-mws/svelte-store'
-import type { FullRole } from '$lib/queries'
+import type { FullRole, RuleType } from '$lib/queries'
 import { set } from 'txstate-utils'
 
 interface IRoleDetailStore {
   role: FullRole
   editing?: {
     id: string
-    type: 'asset' | 'data' | 'global' | 'page' | 'site' | 'template'
+    type: RuleType
     data: any
   }
   userRemoving?: {
@@ -50,7 +50,7 @@ export class RoleDetailStore extends Store<IRoleDetailStore> {
     return this.value.role.id.length > 0
   }
 
-  setRuleEditing (id: string, type: 'asset' | 'data' | 'global' | 'page' | 'site' | 'template', rule?: any) {
+  setRuleEditing (id: string, type: RuleType, rule?: any) {
     this.update(v => set(v, 'editing', { id, type, data: rule }))
   }
 

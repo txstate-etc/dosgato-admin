@@ -1,4 +1,4 @@
-import { LaunchState, type MessageFromAPI, type MutationResponse } from '$lib'
+import { LaunchState, type MessageFromAPI, type MutationResponse, type PagetreeTypes } from '$lib'
 import { MessageType, type Feedback, type SubmitResponse } from '@txstate-mws/svelte-forms'
 import { DateTime } from 'luxon'
 import { isNull, isNotBlank, omit } from 'txstate-utils'
@@ -20,7 +20,7 @@ export function messageForDialog (messages: MessageFromAPI[], prefix?: string) {
 export function mutationForDialog (resp: MutationResponse, { prefix }: { prefix?: string }): SubmitResponse<undefined>
 export function mutationForDialog<T = any> (resp: MutationResponse, { prefix, dataName }: { prefix?: string, dataName: string }): SubmitResponse<T>
 export function mutationForDialog<T = any> (resp: MutationResponse, { prefix, dataName }: { prefix?: string, dataName?: string }) {
-  return { success: resp.success, messages: messageForDialog(resp.messages, prefix), data: (dataName ? resp[dataName] : undefined) as T }
+  return { success: resp.success, messages: messageForDialog(resp.messages, prefix), data: (dataName ? (resp as MutationResponse & Record<string, unknown>)[dataName] : undefined) as T }
 }
 
 export function ensureRequiredNotNull (data: any, requiredFields: string[]) {
@@ -69,7 +69,7 @@ export function dateStampShort (dt: string | Date | DateTime) {
   return luxdt.toFormat('L/d/yy ha').replace(/(AM|PM)$/, v => v.toLocaleLowerCase())
 }
 
-export function getSiteIcon (launchState, type) {
+export function getSiteIcon (launchState: LaunchState, type: PagetreeTypes) {
   if (type === 'PRIMARY') {
     if (launchState === LaunchState.LAUNCHED) {
       return browserIcon

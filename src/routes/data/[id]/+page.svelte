@@ -52,7 +52,7 @@
     hasChildren: boolean
     modifiedAt: DateTime
     publishedAt: DateTime
-    status: string
+    status: 'published' | 'modified' | 'unpublished'
     deleteState: DeleteState
   }
 
@@ -276,7 +276,7 @@
     return []
   }
 
-  async function onAddFolder (state) {
+  async function onAddFolder (state: { name: string }) {
     const siteId: string | undefined = ($store.selectedItems[0] as TreeDataRoot).siteId
     const resp = await api.addDataFolder(state.name, templateKey, siteId)
     uiLog.log({ eventType: 'DataPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: resp.dataFolder?.name, ...({ parent: actionPanelTarget.target }) })
@@ -294,7 +294,7 @@
     modal = undefined
   }
 
-  async function validateFolder (state) {
+  async function validateFolder (state: { name: string }) {
     const siteId: string | undefined = ($store.selectedItems[0] as TreeDataRoot).siteId
     const resp = await api.addDataFolder(state.name, templateKey, siteId, true)
     return messageForDialog(resp.messages, 'args')
@@ -307,7 +307,7 @@
     modal = undefined
   }
 
-  async function onRenameFolder (state) {
+  async function onRenameFolder (state: { name: string }) {
     const resp = await api.renameDataFolder($store.selectedItems[0].id, state.name)
     uiLog.log({ eventType: 'DataPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target, ...({ newName: resp.dataFolder?.name }) })
     return {
@@ -319,7 +319,7 @@
     }
   }
 
-  async function validateRenameFolder (state) {
+  async function validateRenameFolder (state: { name: string }) {
     const resp = await api.renameDataFolder($store.selectedItems[0].id, state.name, true)
     return messageForDialog(resp.messages, '')
   }
@@ -351,28 +351,19 @@
     return { siteId, folderId }
   }
 
-  async function validateAddData (state) {
+  async function validateAddData (state: { data: DataData }) {
     const { siteId, folderId } = getSiteAndFolder()
     const resp = await api.addDataEntry(state.data, templateKey, siteId, folderId, true)
-    const messages = messageForDialog(resp.messages, 'args')
-    const nameError = resp.messages.find(m => m.arg === 'name')
-    if (nameError) messages.push({ type: nameError.type, message: nameError.message, path: nameError.arg })
-    return messages
+    return messageForDialog(resp.messages, 'args')
   }
 
-  async function onAddData (state) {
+  async function onAddData (state: { data: DataData }) {
     const { siteId, folderId } = getSiteAndFolder()
     const resp = await api.addDataEntry(state.data, templateKey, siteId, folderId)
     uiLog.log({ eventType: 'DataPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: resp.data?.name, ...({ siteId, folderId }) })
     return {
       success: resp.success,
-      messages: [...messageForDialog(resp.messages, ''), ...messageForDialog(resp.messages, 'args')],
-      data: resp.success
-        ? {
-          name: resp.data.name,
-          data: state
-        }
-        : state
+      messages: messageForDialog(resp.messages, 'args')
     }
   }
 
@@ -389,7 +380,7 @@
     openModal('editdata')
   }
 
-  async function onEditData (state) {
+  async function onEditData (state: { data: DataData }) {
     if (!itemEditing) return { success: false, messages: [{ message: 'Something went wrong. Please contact support for help.', type: MessageType.ERROR }], data: state }
     const resp = await api.editDataEntry(itemEditing.id, state.data, templateKey, itemEditing.version.version)
     uiLog.log({ eventType: 'DataPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: actionPanelTarget.target })
@@ -400,7 +391,7 @@
     }
   }
 
-  async function validateEdit (state) {
+  async function validateEdit (state: { data: DataData }) {
     if (!itemEditing) return [{ message: 'Something went wrong. Please contact support for help.', type: MessageType.ERROR }]
     const resp = await api.editDataEntry(itemEditing.id, state.data, templateKey, itemEditing.version.version, true)
     return messageForDialog(resp.messages, 'args')
@@ -461,7 +452,8 @@
 
   function getIcon (c: NonNullable<EnhancedDataTemplate['columns']>[0]) {
     if (!c?.icon) return undefined
-    return (item: TypedTreeItem<TreeDataItem>) => {
+    return (item: TypedDataTreeItem) => {
+      if (item.type !== 'data') return undefined
       const icon = c.icon!(item.data)
       return icon ? { icon } : undefined
     }
@@ -503,7 +495,7 @@
       icon: getIcon(c),
       render: renderCustomColumn(c.get)
     })) ?? []),
-    ...(tmpl.nopublish ? [] : [{ label: 'Status', id: 'status', fixed: '5em', icon: item => ({ icon: item.type === 'data' ? (item.deleteState === DeleteState.MARKEDFORDELETE ? deleteOutline : statusIcon[item.status]) : undefined, label: item.type === 'data' ? item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted' : undefined, class: item.type === 'data' ? (item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status) : '' }) }]),
+    ...(tmpl.nopublish ? [] : [{ label: 'Status', id: 'status', fixed: '5em', icon: (item: TypedDataTreeItem) => item.type === 'data' ? { icon: item.deleteState === DeleteState.MARKEDFORDELETE ? deleteOutline : statusIcon[item.status], label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', class: item.deleteState === DeleteState.MARKEDFORDELETE ? 'deleted' : item.status } : undefined }]),
     { label: 'Modified', id: 'modified', fixed: '10em', render: item => item.type === 'data' ? `<span class="full">${dateStamp(item.modifiedAt)}</span><span class="short">${dateStampShort(item.modifiedAt)}</span>` : '' },
     { label: 'By', id: 'modifiedBy', fixed: '5em', get: 'modifiedBy.id' }
   ]} searchable='name' on:choose={onClickEdit} enableResize responsiveHeaders={handleResponsiveHeaders}/>
@@ -578,7 +570,7 @@
     title='Edit Data'
     on:escape={onModalEscape}
     on:saved={onSaved}
-    preload={{ data: itemEditing ? itemEditing.data : {} }}>
+    preload={{ data: itemEditing ? itemEditing.data : {} as DataData }}>
     {#if loadedData.template.dialog}
       <SubForm path='data' let:value>
         <svelte:component this={loadedData.template.dialog} creating={false} {environmentConfig} data={value ?? {}} />
