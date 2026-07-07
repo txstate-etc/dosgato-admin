@@ -17,7 +17,7 @@
   }
   const dispatch = createEventDispatcher()
 
-  function onChange (e: (KeyboardEvent | InputEvent) & { currentTarget: HTMLInputElement }) {
+  function onChange (e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
     value = e.currentTarget?.value
     if (asYouType || ('key' in e && e.key === 'Enter')) dispatch('search', e.currentTarget?.value ?? '')
   }

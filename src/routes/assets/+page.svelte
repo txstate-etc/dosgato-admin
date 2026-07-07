@@ -169,7 +169,7 @@
     return messageForDialog(messages, 'args')
   }
 
-  async function onRenameValidate (data: CreateAssetFolderInput) {
+  async function onRenameValidate (data: { name: string }) {
     if (!selectedFolder) return []
     const { success, messages } = await api.renameAssetFolder(selectedFolder.gqlId, data.name, true)
     return messageForDialog(messages)
@@ -181,7 +181,7 @@
     return mutationForDialog(resp, { dataName: 'assetFolder' })
   }
 
-  async function onRenameAssetValidate (data: CreateAssetFolderInput) {
+  async function onRenameAssetValidate (data: { name: string }) {
     if (!selectedAsset) return []
     const { success, messages } = await api.renameAsset(selectedAsset.id, data.name, true)
     return messageForDialog(messages)

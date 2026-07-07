@@ -13,7 +13,7 @@ export type LogEvent = Omit<UserEvent, 'screen'>
  * `uiLog.log()` for normal events or `uiLog.logRaw()` when they need full control. */
 class InteractionLogger {
   screen: string | undefined
-  logger: (...args: any[]) => void
+  logger: (...args: any[]) => void = (arg: any) => {}
 
   /** Log a user interaction event. Adds `screen` from the current route and delegates
    * to the configured logger. Silently drops events if `screen` has not been set yet

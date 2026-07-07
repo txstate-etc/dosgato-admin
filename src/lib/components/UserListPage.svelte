@@ -92,15 +92,7 @@
     uiLog.log({ eventType: 'UserListPage-modal-create', action: resp.success ? 'Success' : 'Failed', target: resp.user?.id ?? data.userId })
     return {
       success: resp.success,
-      messages: resp.messages.map(m => ({ ...m, path: m.arg })),
-      data: resp.success
-        ? {
-          userId: resp.user!.id,
-          firstname: resp.user!.firstname,
-          lastname: resp.user!.lastname,
-          email: resp.user!.email
-        }
-        : undefined
+      messages: resp.messages.map(m => ({ ...m, path: m.arg }))
     }
   }
 

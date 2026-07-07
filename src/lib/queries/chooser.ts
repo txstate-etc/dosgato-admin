@@ -1,5 +1,5 @@
 import { environmentConfig } from '$lib/stores'
-import { getSiteIcon } from '$lib'
+import { getSiteIcon, type LaunchState } from '$lib'
 import type { Asset, Folder, Page } from '@dosgato/dialog'
 import type { AssetFolderLink } from '@dosgato/templating'
 import { isNotBlank, omit, pick, stringify } from 'txstate-utils'
@@ -23,7 +23,7 @@ export interface ChooserPageDetails {
   path: string
   title?: string
   children: { id: string }[]
-  site: { id: string, name: string, launchState: number }
+  site: { id: string, name: string, launchState: LaunchState }
   pagetree: { type: PagetreeTypes }
 }
 

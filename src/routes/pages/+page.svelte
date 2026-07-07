@@ -565,7 +565,7 @@
     submit={onChangeTemplateSubmit}
     validate={validateChangeTemplate}
     title='Change Page Template'
-    preload={{ templateKey: $activeStore.selectedItems[0].template?.key }}
+    preload={{ templateKey: $activeStore.selectedItems[0].template?.key ?? '' }}
     on:escape={onModalEscape}
     on:saved={onChangeTemplateSaved}>
     <FieldSelect notNull path="templateKey" choices={availableTemplates} />

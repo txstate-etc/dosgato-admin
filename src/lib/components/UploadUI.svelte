@@ -43,7 +43,7 @@
     }
   }
 
-  function onUploadChange (e: InputEvent & { currentTarget: HTMLInputElement }) {
+  function onUploadChange (e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
     const files = e.currentTarget.files
     if (files?.length) {
       tooManyFiles = files.length > maxFiles

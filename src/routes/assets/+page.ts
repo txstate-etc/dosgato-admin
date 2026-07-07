@@ -18,8 +18,10 @@ export interface AssetFolderItem extends TreeAssetFolder {
 export type TypedAssetFolderItem = TypedTreeItem<AssetFolderItem>
 export type TypedAnyAssetItem = TypedTreeItem<AssetItem | AssetFolderItem>
 
-async function fetchChildren (item?: TypedAssetFolderItem) {
-  const { folders, assets } = item ? (await api.getSubFoldersAndAssets(item.gqlId))! : { folders: await api.getRootAssetFolders(), assets: [] as TreeAsset[] }
+async function fetchChildren (item?: TypedAnyAssetItem) {
+  // only folders have children, so item is always a folder here, but the TreeStore
+  // signature has to accept any tree item
+  const { folders, assets } = item ? (await api.getSubFoldersAndAssets((item as TypedAssetFolderItem).gqlId))! : { folders: await api.getRootAssetFolders(), assets: [] as TreeAsset[] }
   const typedfolders = folders.map<AssetFolderItem>((f: TreeAssetFolder) => ({
     ...f,
     id: 'folder-' + f.id,
@@ -36,38 +38,38 @@ async function fetchChildren (item?: TypedAssetFolderItem) {
   return sortby([...typedfolders, ...typedassets], 'name')
 }
 
-async function copyHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAssetFolderItem, above: boolean) {
+async function copyHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean) {
   const resp = await api.query(`mutation copyAssetsAndFolders ($assetIds: [ID!]!, $folderIds: [ID!]!, $targetFolderId: ID!) {
     copyAssetsAndFolders (assetIds: $assetIds, folderIds: $folderIds, targetFolderId: $targetFolderId) {
       ${mutationResponse}
     }
   }`, {
     assetIds: selectedItems.filter(itm => itm.kind === 'asset').map(itm => itm.id),
-    folderIds: selectedItems.filter(itm => itm.kind === 'folder').map((itm: TypedAssetFolderItem) => itm.gqlId),
-    targetFolderId: dropTarget.gqlId
+    folderIds: selectedItems.filter(itm => itm.kind === 'folder').map(itm => itm.gqlId),
+    targetFolderId: (dropTarget as TypedAssetFolderItem).gqlId
   })
   return resp.success
 }
 
-async function moveHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAssetFolderItem, above: boolean) {
+async function moveHandler (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean) {
   const resp = await api.query(`mutation moveAssetsAndFolders ($assetIds: [ID!]!, $folderIds: [ID!]!, $targetFolderId: ID!) {
     moveAssetsAndFolders (assetIds: $assetIds, folderIds: $folderIds, targetFolderId: $targetFolderId) {
       ${mutationResponse}
     }
   }`, {
     assetIds: selectedItems.filter(itm => itm.kind === 'asset').map(itm => itm.id),
-    folderIds: selectedItems.filter(itm => itm.kind === 'folder').map((itm: TypedAssetFolderItem) => itm.gqlId),
-    targetFolderId: dropTarget.gqlId
+    folderIds: selectedItems.filter(itm => itm.kind === 'folder').map(itm => itm.gqlId),
+    targetFolderId: (dropTarget as TypedAssetFolderItem).gqlId
   })
   return resp.success
 }
 
-function dragEligible (items: (TypedAssetFolderItem | TypedAssetItem)[]) {
+function dragEligible (items: TypedAnyAssetItem[]) {
   // sites cannot be dragged: they are ordered alphabetically and should not be copied wholesale into other sites
   return items.every(item => !!item.parent && item.permissions.move)
 }
 
-function dropEffect (selectedItems: (TypedAssetFolderItem | TypedAssetItem)[], dropTarget: TypedAnyAssetItem, above: boolean, userWantsCopy: boolean) {
+function dropEffect (selectedItems: TypedAnyAssetItem[], dropTarget: TypedAnyAssetItem, above: boolean, userWantsCopy: boolean) {
   // assets are alphabetical, so `above` isn't allowed since it's only for controlling ordering
   if (above) return 'none'
   if (dropTarget.kind === 'asset' || !dropTarget.permissions.create) return 'none'

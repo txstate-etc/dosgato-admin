@@ -254,11 +254,11 @@
     }
     if (items.every(item => item.type === 'data')) {
       const actions: ActionPanelAction[] = [
-        { label: 'Publish', icon: publishIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.publish), onClick: () => openModal('publishdata') },
-        { label: 'Unpublish', icon: publishOffIcon, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.unpublish), onClick: () => openModal('unpublishdata') },
-        { label: 'Delete', icon: deleteOutline, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.delete), onClick: () => openModal('deletedata') },
+        { label: 'Publish', icon: publishIcon, disabled: items.some(item => !item.permissions.publish), onClick: () => openModal('publishdata') },
+        { label: 'Unpublish', icon: publishOffIcon, disabled: items.some(item => !item.permissions.unpublish), onClick: () => openModal('unpublishdata') },
+        { label: 'Delete', icon: deleteOutline, disabled: items.some(item => !item.permissions.delete), onClick: () => openModal('deletedata') },
         { label: 'Publish Deletion', icon: deleteOutline, disabled: publishMultipleDeletionDisabled(items as TypedTreeItem<TreeDataItem>[]), onClick: () => openModal('publishdeletedata') },
-        { label: 'Restore Data', icon: deleteRestore, disabled: items.some((item: TypedTreeItem<TreeDataItem>) => !item.permissions.undelete), onClick: () => openModal('undeletedata') }
+        { label: 'Restore Data', icon: deleteRestore, disabled: items.some(item => !item.permissions.undelete), onClick: () => openModal('undeletedata') }
       ]
       if ($store.copied.size) {
         actions.push({ label: `Cancel ${$store.cut ? 'Move' : 'Copy'}`, icon: fileX, onClick: () => { store.cancelCopy() } })
