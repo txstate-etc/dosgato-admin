@@ -5,7 +5,7 @@
   import archiveOutline from '@iconify-icons/ph/archive'
   import launchIcon from '@iconify-icons/ph/rocket-launch'
   import exportIcon from '@iconify-icons/mdi/export'
-  import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldAutocomplete, FormDialog, Tabs, Tab } from '@dosgato/dialog'
+  import { Dialog, Icon, FieldText, FieldSelect, FieldMultiselect, FieldAutocomplete, FormDialog, Tabs, Tab, FieldTextArea } from '@dosgato/dialog'
   import { type Feedback, MessageType } from '@txstate-mws/svelte-forms'
   import { csv, isBlank, keyby, titleCase } from 'txstate-utils'
   import { api, DetailPanel, ensureRequiredNotNull, messageForDialog, type CreateWithPageState, type Organization, type UserListUser, type TemplateListTemplate, type SitePagetree, type SiteTemplate, DetailPanelSection, DetailPageContent, DialogWarning, DetailList, LaunchState, Accordion, downloadPageList, uiLog } from '$lib'
@@ -468,7 +468,7 @@
     name='addcomment'
     title='Add Comment'
     on:escape={onModalEscape}>
-    <FieldText path='comment' label='Comment'/>
+    <FieldTextArea path='comment' label='Comment' rows={3}/>
   </FormDialog>
 {:else if modal === 'editbasic'}
   <FormDialog
