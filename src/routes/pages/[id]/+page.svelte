@@ -25,8 +25,11 @@
   import type { PageData } from './$types'
 
   export let data: PageData
-  $: ({ page, pagetemplate, loaded } = data)
+  $: ({ page, loaded } = data)
   $: pageEditorStore.open(page)
+  // derive the page template from the live editor store rather than the load-time `data` prop, so it
+  // stays correct when the page's templateKey changes (e.g. restoring a version that used a different template)
+  $: pagetemplate = templateRegistry.getTemplate($editorStore.page.data.templateKey) ?? data.pagetemplate
   $: chooserClient = new ChooserClient(page.pagetree.id)
   $: tagClient = new TagClientByLink(page.pagetree.id)
   let iframe: HTMLIFrameElement
