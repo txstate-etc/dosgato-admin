@@ -108,7 +108,7 @@ export class ChooserClient implements Client {
     }
   }
 
-  async upload (folder: Folder, files: File[], progress: (ratio: number) => void) {
+  async upload (folder: Folder, files: File[], progress: (ratio: number) => void, signal?: AbortSignal) {
     const data = new FormData()
     for (let i = 0; i < files.length; i++) {
       data.append('file' + String(i), files[i])
@@ -118,7 +118,8 @@ export class ChooserClient implements Client {
         `${environmentConfig.apiBase}/assets/${(folder as any).originalId}`,
         { Authorization: `Bearer ${api.token!}` },
         data,
-        progress
+        progress,
+        signal
       )
       await promise
       uiLog.log({ eventType: 'ChooserClient-upload', action: 'Success', target: folder.path, additionalProperties: { fileCount: String(files.length) } })

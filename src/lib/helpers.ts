@@ -33,7 +33,7 @@ export function ensureRequiredNotNull (data: any, requiredFields: string[]) {
   return messages
 }
 
-export function uploadWithProgress (url: URL | string, headers: Record<string, string>, formData: FormData, progress: (ratio: number) => void): { promise: Promise<number>, abort: () => void } {
+export function uploadWithProgress (url: URL | string, headers: Record<string, string>, formData: FormData, progress: (ratio: number) => void, signal?: AbortSignal): { promise: Promise<number>, abort: () => void } {
   const request = new XMLHttpRequest()
   const promise = new Promise<number>((resolve, reject) => {
     request.open('POST', url)
@@ -55,6 +55,9 @@ export function uploadWithProgress (url: URL | string, headers: Record<string, s
     })
 
     request.send(formData)
+
+    if (signal?.aborted) request.abort()
+    else signal?.addEventListener('abort', () => request.abort())
   })
   return { promise, abort: () => request.abort() }
 }
