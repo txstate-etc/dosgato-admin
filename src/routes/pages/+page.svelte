@@ -450,7 +450,7 @@
               { icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', class: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', tooltip: item.deleteState === DeleteState.NOTDELETED ? item.status : 'Page is deleted' },
               ...(item.schedules?.length
                 ? [{ icon: alarmFill, label: 'Schedule', tooltip: scheduleTooltip(item.schedules), class: 'scheduled' }]
-                : itemAncestors(item).some(a => a.schedules?.some(s => s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES))
+                : itemAncestors(item).some(a => a.schedules?.some(s => [ScheduledPublishAction.PUBLISH_WITH_SUBPAGES, ScheduledPublishAction.UNPUBLISH].includes(s.action)))
                   ? [{ icon: alarmFill, label: 'Has scheduled actions via an ancestor', class: 'scheduled subpage' }]
                   : []
               )
@@ -489,7 +489,7 @@
           { icon: item.deleteState === DeleteState.NOTDELETED ? statusIcon[item.status] : deleteOutline, label: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', class: item.deleteState === DeleteState.NOTDELETED ? item.status : 'deleted', tooltip: item.deleteState === DeleteState.NOTDELETED ? item.status : 'Page is deleted' },
           ...(item.schedules?.length
             ? [{ icon: alarmFill, label: 'Schedule', tooltip: scheduleTooltip(item.schedules), class: 'scheduled' }]
-            : itemAncestors(item).some(a => a.schedules?.some(s => s.action === ScheduledPublishAction.PUBLISH_WITH_SUBPAGES))
+            : itemAncestors(item).some(a => a.schedules?.some(s => [ScheduledPublishAction.PUBLISH_WITH_SUBPAGES, ScheduledPublishAction.UNPUBLISH].includes(s.action)))
               ? [{ icon: alarmFill, label: 'Has scheduled actions via an ancestor', class: 'scheduled subpage' }]
               : []
           )
