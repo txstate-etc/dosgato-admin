@@ -1,6 +1,6 @@
 import { resolve } from '$app/paths'
 import type { TagGroup } from '@dosgato/dialog'
-import type { AssetFolderLink, AssetLink, ComponentData, DataData, PageData, PageLink } from '@dosgato/templating'
+import type { AssetFolderLink, AssetLink, ComponentData, DataData, DataLink, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
 import { MessageType } from '@txstate-mws/svelte-forms'
 import { Cache, get, isBlank, isNotBlank, keyby, pick, sortby, toArray, unique } from 'txstate-utils'
@@ -47,7 +47,10 @@ import {
   type DashboardSite, GET_DASHBOARD_USER_DETAILS, type DashboardUser, GET_DASHBOARD_SITE_BY_ID, type DashboardSiteDetailRaw,
   apiSiteToDashboardSite, GET_PAGE_PATH_BY_ID, type ScheduledPublish, GET_SCHEDULED_PUBLISHES, CREATE_SCHEDULED_PUBLISH,
   UPDATE_SCHEDULED_PUBLISH, CANCEL_SCHEDULED_PUBLISH, type ScheduledPublishStatus, type ScheduledPublishAction,
-  type ScheduledPublishRecurrenceType
+  type ScheduledPublishRecurrenceType,
+  DATA_CHOOSER_ROOTS, type DataChooserRoots, DATA_CHOOSER_ROOT_CHILDREN, type DataChooserRootChildren,
+  DATA_CHOOSER_DATA_BY_PATH, type DataChooserDataByPath, DATA_CHOOSER_DATA_BY_LINK, type DataChooserDataByLink,
+  apiDataToChooserData, apiDataFolderToChooserFolder
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -319,6 +322,27 @@ class API {
   async chooserAssetFolderByLink (link: AssetFolderLink, pagetreeId?: string) {
     const { assetfolders } = await this.query<ChooserAssetFolderByLink>(CHOOSER_ASSET_FOLDER_BY_LINK, { link: { ...pick(link, 'siteId', 'path'), linkId: link.id, context: pagetreeId ? { pagetreeId } : undefined } })
     return apiAssetFolderToChooserFolder(assetfolders[0])
+  }
+
+  async dataChooserRoots (templateKey: string) {
+    const { dataroots } = await this.query<DataChooserRoots>(DATA_CHOOSER_ROOTS, { templateKey })
+    return dataroots
+  }
+
+  async dataChooserRootChildren (rootId: string) {
+    const { dataroots } = await this.query<DataChooserRootChildren>(DATA_CHOOSER_ROOT_CHILDREN, { id: rootId })
+    if (!dataroots.length) return []
+    return [...dataroots[0].datafolders.map(apiDataFolderToChooserFolder), ...dataroots[0].data.map(apiDataToChooserData)]
+  }
+
+  async dataChooserDataByPath (templateKey: string, path: string) {
+    const { data } = await this.query<DataChooserDataByPath>(DATA_CHOOSER_DATA_BY_PATH, { templateKey, path })
+    return data.map(apiDataToChooserData)
+  }
+
+  async dataChooserDataByLink (link: DataLink) {
+    const { data } = await this.query<DataChooserDataByLink>(DATA_CHOOSER_DATA_BY_LINK, { link: pick(link, 'id', 'siteId', 'path', 'templateKey') })
+    return data.length ? apiDataToChooserData(data[0]) : undefined
   }
 
   async getSubFoldersAndAssets (folderId: string) {

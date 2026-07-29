@@ -1,6 +1,7 @@
 export * from './access.js'
 export * from './api.js'
 export * from './chooser.js'
+export * from './datachooser.js'
 export * from './components/index.js'
 export * from './helpers.js'
 export * from './icons.js'

@@ -18,7 +18,7 @@
   import { DateTime } from 'luxon'
   import { onMount, setContext } from 'svelte'
   import { get, isNotNull, keyby, printIf, titleCase } from 'txstate-utils'
-  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, schemaVersion, ChooserClient, type ActionPanelGroup, api, VersionHistory, TagClientByLink, toast } from '$lib'
+  import { ActionPanel, actionsStore, editorStore, environmentConfig, pageStore, pageEditorStore, type ActionPanelAction, templateRegistry, schemaVersion, ChooserClient, DataChooserClient, type ActionPanelGroup, api, VersionHistory, TagClientByLink, toast } from '$lib'
   import { statusIcon } from './helpers'
   import SchedulePublishDialog from '../SchedulePublishDialog.svelte'
   import VersionView from './VersionView.svelte'
@@ -31,6 +31,7 @@
   // stays correct when the page's templateKey changes (e.g. restoring a version that used a different template)
   $: pagetemplate = templateRegistry.getTemplate($editorStore.page.data.templateKey) ?? data.pagetemplate
   $: chooserClient = new ChooserClient(page.pagetree.id)
+  const dataChooserClient = new DataChooserClient()
   $: tagClient = new TagClientByLink(page.pagetree.id)
   let iframe: HTMLIFrameElement
   let panelelement: HTMLElement
@@ -353,7 +354,7 @@
 {#if $editorStore.modal === 'edit' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
   {#if template?.dialog}
-    <FormDialog {chooserClient} {tagClient} icon={template.icon} title={template.name} preload={$editorStore.editing.data} submit={onEditComponentSubmit} validate={onEditComponentValidate} on:escape={cancelModal} let:data>
+    <FormDialog {chooserClient} {dataChooserClient} {tagClient} icon={template.icon} title={template.name} preload={$editorStore.editing.data} submit={onEditComponentSubmit} validate={onEditComponentValidate} on:escape={cancelModal} let:data>
       <svelte:component this={template.dialog} creating={false} page={$editorStore.page} path={$editorStore.editing.path} {data} templateProperties={pagetemplate.templateProperties} {environmentConfig} />
     </FormDialog>
   {:else}
@@ -364,7 +365,7 @@
     {@const template = templateRegistry.getTemplate($editorStore.creating.templateKey)}
     {#if template}
       {#if template.dialog}
-        <FormDialog {chooserClient} {tagClient} icon={template.icon} title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} validate={onAddComponentValidate} on:escape={cancelModal} let:data>
+        <FormDialog {chooserClient} {dataChooserClient} {tagClient} icon={template.icon} title={template.name} preload={$editorStore.creating.data} submit={onAddComponentSubmit} validate={onAddComponentValidate} on:escape={cancelModal} let:data>
           <svelte:component this={template.dialog} creating={true} page={$editorStore.page} path={$editorStore.creating.componentEventualPath} {data} templateProperties={pagetemplate.templateProperties} {environmentConfig} />
         </FormDialog>
       {/if}
@@ -417,7 +418,7 @@
   </Dialog>
 {:else if $editorStore.modal === 'properties' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
-  <FormDialog {chooserClient} {tagClient} icon={template?.icon} title="Edit Page Properties" submit={onEditPagePropertiesSubmit} validate={onEditPagePropertiesValidate} on:escape={cancelModal} preload={$editorStore.editing.data} let:data>
+  <FormDialog {chooserClient} {dataChooserClient} {tagClient} icon={template?.icon} title="Edit Page Properties" submit={onEditPagePropertiesSubmit} validate={onEditPagePropertiesValidate} on:escape={cancelModal} preload={$editorStore.editing.data} let:data>
     {#if template?.dialog}
       <svelte:component this={template.dialog} creating={false} page={$editorStore.page} {data} templateProperties={template.templateProperties} {environmentConfig} />
     {:else}

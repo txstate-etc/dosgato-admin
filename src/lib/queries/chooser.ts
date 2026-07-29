@@ -1,7 +1,10 @@
 import { environmentConfig } from '$lib/stores'
-import { getSiteIcon, type LaunchState } from '$lib'
-import type { Asset, Folder, Page } from '@dosgato/dialog'
-import type { AssetFolderLink } from '@dosgato/templating'
+import { getSiteIcon, templateRegistry, type LaunchState } from '$lib'
+import folderOutline from '@iconify-icons/mdi/folder-outline'
+import cube from '@iconify-icons/ph/cube'
+import type { Asset, DataChooserItem, Folder, Page } from '@dosgato/dialog'
+import type { AssetFolderLink, DataData, DataFolderLink, DataLink } from '@dosgato/templating'
+import { DateTime } from 'luxon'
 import { isNotBlank, omit, pick, stringify } from 'txstate-utils'
 import type { RootAssetFolder } from './assets_index'
 import type { PagetreeTypes, RootTreePage } from './pages_index'
@@ -259,6 +262,159 @@ export function apiAssetToChooserAsset (asset: ChooserAssetDetails | undefined):
         altText: asset.data?.meta?.altText || undefined
       }
       : undefined
+  }
+}
+
+const dataChooserDataDetails = `
+id
+name
+path
+data
+published
+publishedAt
+modifiedAt
+template { key }
+site { id }
+`
+export interface DataChooserDataDetails {
+  id: string
+  name: string
+  path: string
+  data: DataData
+  published: boolean
+  publishedAt?: string
+  modifiedAt: string
+  template: { key: string }
+  site?: { id: string }
+}
+
+const dataChooserFolderDetails = `
+id
+name
+path
+template { key }
+site { id }
+data { id }
+`
+export interface DataChooserFolderDetails {
+  id: string
+  name: string
+  path: string
+  template: { key: string }
+  site?: { id: string }
+  data: { id: string }[]
+}
+
+export const DATA_CHOOSER_ROOTS = `
+  query dataChooserRoots ($templateKey: ID!) {
+    dataroots (filter: { templateKeys: [$templateKey] }) {
+      id
+      site { id name }
+      datafolders { id }
+      data (filter: { root: true }) { id }
+    }
+  }
+`
+
+export interface DataChooserRoot {
+  id: string
+  site?: { id: string, name: string }
+  datafolders: { id: string }[]
+  data: { id: string }[]
+}
+
+export interface DataChooserRoots {
+  dataroots: DataChooserRoot[]
+}
+
+export const DATA_CHOOSER_ROOT_CHILDREN = `
+  query dataChooserRootChildren ($id: ID!) {
+    dataroots (filter: { ids: [$id] }) {
+      id
+      datafolders {
+        ${dataChooserFolderDetails}
+      }
+      data (filter: { root: true }) {
+        ${dataChooserDataDetails}
+      }
+    }
+  }
+`
+
+export interface DataChooserRootChildren {
+  dataroots: {
+    id: string
+    datafolders: DataChooserFolderDetails[]
+    data: DataChooserDataDetails[]
+  }[]
+}
+
+export const DATA_CHOOSER_DATA_BY_PATH = `
+  query dataChooserDataByPath ($templateKey: ID!, $path: UrlSafePath!) {
+    data (filter: { templateKeys: [$templateKey], beneathOrAt: [$path] }) {
+      ${dataChooserDataDetails}
+    }
+  }
+`
+
+export interface DataChooserDataByPath {
+  data: DataChooserDataDetails[]
+}
+
+export const DATA_CHOOSER_DATA_BY_LINK = `
+  query dataChooserDataByLink ($link: DataLinkInput!) {
+    data (filter: { links: [$link] }) {
+      ${dataChooserDataDetails}
+    }
+  }
+`
+
+export interface DataChooserDataByLink {
+  data: DataChooserDataDetails[]
+}
+
+/** API data paths look like /global/folder/entry or /sitename/folder/entry; the
+ * chooser's global source drops the /global prefix while the sites source keeps
+ * site names in the path */
+function apiDataPathToChooserPath (path: string) {
+  if (!path.startsWith('/global/') && path !== '/global') return path
+  const stripped = path.substring('/global'.length)
+  return stripped === '' ? '/' : stripped
+}
+
+export function apiDataToChooserData (d: DataChooserDataDetails): DataChooserItem {
+  const templateKey = d.template.key
+  const tmpl = templateRegistry.getDataTemplate(templateKey)
+  const modifiedAt = DateTime.fromISO(d.modifiedAt)
+  const publishedAt = d.publishedAt ? DateTime.fromISO(d.publishedAt) : undefined
+  const status = d.published ? (publishedAt! >= modifiedAt ? 'Published' : 'Has Unpublished Changes') : 'Unpublished'
+  const link: DataLink = { type: 'data', id: d.id, siteId: d.site?.id, path: d.path, templateKey }
+  const icon = tmpl?.nameColumn?.icon?.(d.data) ?? tmpl?.icon ?? cube
+  return {
+    id: stringify(link),
+    name: d.name,
+    path: apiDataPathToChooserPath(d.path),
+    source: d.site ? 'sites' : 'global',
+    templateKey,
+    hasChildren: false,
+    icon: { icon, label: tmpl?.name },
+    details: [
+      { label: 'Status', value: status },
+      { label: 'Modified', value: modifiedAt.toLocaleString(DateTime.DATETIME_SHORT) }
+    ]
+  }
+}
+
+export function apiDataFolderToChooserFolder (f: DataChooserFolderDetails): DataChooserItem {
+  const link: DataFolderLink = { type: 'datafolder', id: f.id, siteId: f.site?.id, path: f.path, templateKey: f.template.key }
+  return {
+    id: stringify(link),
+    name: f.name,
+    path: apiDataPathToChooserPath(f.path),
+    source: f.site ? 'sites' : 'global',
+    hasChildren: f.data.length > 0,
+    childCount: f.data.length,
+    icon: { icon: folderOutline, label: 'folder' }
   }
 }
 

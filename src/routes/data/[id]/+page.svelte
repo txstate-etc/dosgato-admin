@@ -23,7 +23,7 @@
   import { MessageType, SubForm } from '@txstate-mws/svelte-forms'
   import { DateTime } from 'luxon'
   import { htmlEncode, unique, get, isNull } from 'txstate-utils'
-  import { api, ActionPanel, messageForDialog, type DataItem, type DataFolder, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, uiLog, type EnhancedDataTemplate, dateStamp, dateStampShort, type DataRoot } from '$lib'
+  import { api, ActionPanel, messageForDialog, type DataItem, type DataFolder, type DataWithData, DeleteState, type MoveDataTarget, type ActionPanelAction, environmentConfig, ChooserClient, DataChooserClient, uiLog, type EnhancedDataTemplate, dateStamp, dateStampShort, type DataRoot } from '$lib'
   import { afterNavigate } from '$app/navigation'
   import { setContext } from 'svelte'
 
@@ -40,6 +40,7 @@
   let modal: Modals | undefined
 
   const chooserClient = new ChooserClient()
+  const dataChooserClient = new DataChooserClient()
 
   const statusIcon = {
     published: triangleIcon,
@@ -551,6 +552,7 @@
 {:else if modal === 'adddata'}
   <FormDialog
     {chooserClient}
+    {dataChooserClient}
     submit={onAddData}
     validate={validateAddData}
     title='Add Data'
@@ -565,6 +567,7 @@
 {:else if modal === 'editdata'}
   <FormDialog
     {chooserClient}
+    {dataChooserClient}
     submit={onEditData}
     validate={validateEdit}
     title='Edit Data'

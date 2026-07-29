@@ -4,7 +4,7 @@ Two dialogs in sequence used to create a page.
 This component is also used when creating a site or pagetree, both of which require creating a root page.
 -->
 <script lang="ts">
-  import { ChooserClient, environmentConfig, templateRegistry, uiLog } from '$lib'
+  import { ChooserClient, DataChooserClient, environmentConfig, templateRegistry, uiLog } from '$lib'
   import { Dialog, FieldHidden, FieldSelect, FieldText, FormDialog } from '@dosgato/dialog'
   import type { PopupMenuItem } from '@txstate-mws/svelte-components'
   import { type SubmitResponse, type Feedback, FormStore, SubForm, MessageType } from '@txstate-mws/svelte-forms'
@@ -35,6 +35,7 @@ This component is also used when creating a site or pagetree, both of which requ
   let nameDialogData: { name?: string, templateKey: string } | undefined = undefined
 
   const chooserClient = new ChooserClient(pagetreeId)
+  const dataChooserClient = new DataChooserClient()
   const store = new FormStore<CreateWithPageState>(submitWrapper, validateWrapper)
 
   async function submitWrapper (state: CreateWithPageState) {
@@ -83,7 +84,7 @@ This component is also used when creating a site or pagetree, both of which requ
 </script>
 
 {#if modal === 'addpage-name'}
-  <FormDialog {chooserClient} {title} submit={onSaveNameAndTemplate} validate={validateNameAndTemplate} on:escape={onEscape} on:saved={onNameAndTemplateComplete}>
+  <FormDialog {chooserClient} {dataChooserClient} {title} submit={onSaveNameAndTemplate} validate={validateNameAndTemplate} on:escape={onEscape} on:saved={onNameAndTemplateComplete}>
     {#if addName}
       <FieldText path='name' label={creatingSite ? 'Name' : 'URL Slug'} required/>
     {/if}
@@ -92,7 +93,7 @@ This component is also used when creating a site or pagetree, both of which requ
 {:else if modal === 'addpage-properties' && nameDialogData}
   {@const template = templateRegistry.getTemplate(nameDialogData.templateKey)}
   {#if template?.dialog}
-    <FormDialog {chooserClient} title={propertyDialogTitle} submit={submitWrapper} validate={validateWrapper} {store} on:escape={onEscape} on:saved let:data>
+    <FormDialog {chooserClient} {dataChooserClient} title={propertyDialogTitle} submit={submitWrapper} validate={validateWrapper} {store} on:escape={onEscape} on:saved let:data>
       {#if addName}
         <FieldHidden path='name' value={nameDialogData.name} />
       {/if}
