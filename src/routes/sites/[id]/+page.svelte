@@ -209,21 +209,18 @@
       // no pagetrees selected, authorize template at site level
       const resp = await api.authorizeTemplateForSite($store.templateAuthEditing.key, $store.site.id)
       uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { templateKey: $store.templateAuthEditing.key } })
-      if (resp.success) {
-        void store.refresh($store.site.id)
-        modal = undefined
-      }
       return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
     } else {
       const resp = await api.authorizeTemplateForPagetrees($store.templateAuthEditing.key, state.pagetrees)
       uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { templateKey: $store.templateAuthEditing.key } })
-      if (resp.success) {
-        void store.refresh($store.site.id)
-        store.cancelEditTemplateAuth()
-        modal = undefined
-      }
       return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
     }
+  }
+
+  async function authorizeTemplateOnSaved () {
+    void store.refresh($store.site.id)
+    store.cancelEditTemplateAuth()
+    modal = undefined
   }
 
   async function onClickEditTemplateAuth (e: CustomEvent<{ template: SiteTemplate }>) {
@@ -245,11 +242,6 @@
     } else {
       resp = await api.authorizeTemplateForPagetrees($store.templateAuthEditing.key, state.pagetrees)
       uiLog.log({ eventType: 'SiteDetailPage-modal-' + modal, action: resp.success ? 'Success' : 'Failed', target: $store.site.name, additionalProperties: { templateKey: $store.templateAuthEditing.key } })
-    }
-    if (resp.success) {
-      void store.refresh($store.site.id)
-      store.cancelEditTemplateAuth()
-      modal = undefined
     }
     return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
   }
@@ -559,7 +551,8 @@
     name="authorizetemplate"
     title="Authorize Template"
     on:escape={() => { store.cancelEditTemplateAuth(); onModalEscape() }}
-    submit={authorizeTemplate}>
+    submit={authorizeTemplate}
+    on:saved={authorizeTemplateOnSaved}>
     <div>Authorize for use in specific pagetrees, or leave blank to authorize for all pagetrees in the site.</div>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees}/>
   </FormDialog>
@@ -570,7 +563,8 @@
     on:escape={() => { store.cancelEditTemplateAuth(); onModalEscape() }}
     validate={async () => []}
     preload={{ pagetrees: $store.templateAuthEditing?.pagetrees ?? [] }}
-    submit={onEditTemplateAuthorizations}>
+    submit={onEditTemplateAuthorizations}
+    on:saved={authorizeTemplateOnSaved}>
     <FieldMultiselect path='pagetrees' label='Authorized for' getOptions={searchPagetrees} lookupByValue={lookupPagetreeByValue}/>
   </FormDialog>
 {:else if modal === 'deletetemplateauth'}

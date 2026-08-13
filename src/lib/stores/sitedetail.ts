@@ -172,7 +172,7 @@ export class SiteDetailStore extends Store<ISiteDetailStore> {
     for (const key of Object.keys(pagetreeComponentTemplates)) {
       componentTemplates.push(pagetreeComponentTemplates[key])
     }
-    this.set({ site, siteRoles: { specific: sortby(siteRoles.specific, 'name'), universal: sortby(siteRoles.universal, 'name') }, groups, users, pageTemplates: sortby(pageTemplates, 'universal', 'name'), componentTemplates: sortby(componentTemplates, 'universal', 'name') })
+    this.update(v => ({ ...v, site, siteRoles: { specific: sortby(siteRoles.specific, 'name'), universal: sortby(siteRoles.universal, 'name') }, groups, users, pageTemplates: sortby(pageTemplates, 'universal', 'name'), componentTemplates: sortby(componentTemplates, 'universal', 'name') }))
 
     return site // TODO: Is there a better way to get the site name in the site detail page load function?
   }
