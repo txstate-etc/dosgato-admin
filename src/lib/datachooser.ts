@@ -1,6 +1,6 @@
 import applicationOutline from '@iconify-icons/mdi/application-outline'
 import type { DataChooserClient as DataChooserClientInterface, DataChooserItem, DataChooserSource } from '@dosgato/dialog'
-import type { DataLink } from '@dosgato/templating'
+import type { DataFolderLink, DataLink } from '@dosgato/templating'
 import { Cache, isNotBlank } from 'txstate-utils'
 import { api } from '$lib'
 
@@ -48,9 +48,10 @@ export class DataChooserClient implements DataChooserClientInterface {
 
   async findById (rootTemplateKey: string, id: string): Promise<DataChooserItem | undefined> {
     try {
-      const link = JSON.parse(id) as DataLink
-      if (link.type !== 'data') return undefined
-      return await api.dataChooserDataByLink(link)
+      const link = JSON.parse(id) as DataLink | DataFolderLink
+      if (link.type === 'data') return await api.dataChooserDataByLink(link)
+      if (link.type === 'datafolder') return await api.dataChooserFolderByLink(link)
+      return undefined
     } catch {
       return undefined
     }

@@ -373,6 +373,18 @@ export interface DataChooserDataByLink {
   data: DataChooserDataDetails[]
 }
 
+export const DATA_CHOOSER_FOLDER_BY_LINK = `
+  query dataChooserFolderByLink ($link: DataFolderLinkInput!) {
+    datafolders (filter: { links: [$link] }) {
+      ${dataChooserFolderDetails}
+    }
+  }
+`
+
+export interface DataChooserFolderByLink {
+  datafolders: DataChooserFolderDetails[]
+}
+
 /** API data paths look like /global/folder/entry or /sitename/folder/entry; the
  * chooser's global source drops the /global prefix while the sites source keeps
  * site names in the path */
@@ -387,7 +399,6 @@ export function apiDataToChooserData (d: DataChooserDataDetails): DataChooserIte
   const tmpl = templateRegistry.getDataTemplate(templateKey)
   const modifiedAt = DateTime.fromISO(d.modifiedAt)
   const publishedAt = d.publishedAt ? DateTime.fromISO(d.publishedAt) : undefined
-  const status = d.published ? (publishedAt! >= modifiedAt ? 'Published' : 'Has Unpublished Changes') : 'Unpublished'
   const link: DataLink = { type: 'data', id: d.id, siteId: d.site?.id, path: d.path, templateKey }
   const icon = tmpl?.nameColumn?.icon?.(d.data) ?? tmpl?.icon ?? cube
   return {
@@ -397,9 +408,9 @@ export function apiDataToChooserData (d: DataChooserDataDetails): DataChooserIte
     source: d.site ? 'sites' : 'global',
     templateKey,
     hasChildren: false,
+    published: d.published ? (publishedAt! >= modifiedAt ? 'published' : 'modified') : 'unpublished',
     icon: { icon, label: tmpl?.name },
     details: [
-      { label: 'Status', value: status },
       { label: 'Modified', value: modifiedAt.toLocaleString(DateTime.DATETIME_SHORT) }
     ]
   }
@@ -413,6 +424,7 @@ export function apiDataFolderToChooserFolder (f: DataChooserFolderDetails): Data
     path: apiDataPathToChooserPath(f.path),
     source: f.site ? 'sites' : 'global',
     hasChildren: f.data.length > 0,
+    folder: true,
     childCount: f.data.length,
     icon: { icon: folderOutline, label: 'folder' }
   }

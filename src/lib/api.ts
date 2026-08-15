@@ -1,6 +1,6 @@
 import { resolve } from '$app/paths'
 import type { TagGroup } from '@dosgato/dialog'
-import type { AssetFolderLink, AssetLink, ComponentData, DataData, DataLink, PageData, PageLink } from '@dosgato/templating'
+import type { AssetFolderLink, AssetLink, ComponentData, DataData, DataFolderLink, DataLink, PageData, PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
 import { MessageType } from '@txstate-mws/svelte-forms'
 import { Cache, get, isBlank, isNotBlank, keyby, pick, sortby, toArray, unique } from 'txstate-utils'
@@ -50,7 +50,7 @@ import {
   type ScheduledPublishRecurrenceType,
   DATA_CHOOSER_ROOTS, type DataChooserRoots, DATA_CHOOSER_ROOT_CHILDREN, type DataChooserRootChildren,
   DATA_CHOOSER_DATA_BY_PATH, type DataChooserDataByPath, DATA_CHOOSER_DATA_BY_LINK, type DataChooserDataByLink,
-  apiDataToChooserData, apiDataFolderToChooserFolder
+  DATA_CHOOSER_FOLDER_BY_LINK, type DataChooserFolderByLink, apiDataToChooserData, apiDataFolderToChooserFolder
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -343,6 +343,11 @@ class API {
   async dataChooserDataByLink (link: DataLink) {
     const { data } = await this.query<DataChooserDataByLink>(DATA_CHOOSER_DATA_BY_LINK, { link: pick(link, 'id', 'siteId', 'path', 'templateKey') })
     return data.length ? apiDataToChooserData(data[0]) : undefined
+  }
+
+  async dataChooserFolderByLink (link: DataFolderLink) {
+    const { datafolders } = await this.query<DataChooserFolderByLink>(DATA_CHOOSER_FOLDER_BY_LINK, { link: pick(link, 'id', 'siteId', 'path', 'templateKey') })
+    return datafolders.length ? apiDataFolderToChooserFolder(datafolders[0]) : undefined
   }
 
   async getSubFoldersAndAssets (folderId: string) {
