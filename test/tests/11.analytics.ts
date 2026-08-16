@@ -23,12 +23,14 @@ async function getUserEvents (page: Page): Promise<UserEvent[]> {
 }
 
 /** The analytics plugin queues events server-side and only flushes every 5 seconds,
- * so we poll until the event we're looking for shows up. */
-async function findUserEvent (page: Page, description: string, predicate: (e: UserEvent) => boolean): Promise<UserEvent> {
+ * so we poll until the event we're looking for shows up. The event store is shared
+ * across all tests and append-only, so pass `since` (a count captured before acting)
+ * to skip events logged by earlier tests that would otherwise match the predicate. */
+async function findUserEvent (page: Page, description: string, predicate: (e: UserEvent) => boolean, since = 0): Promise<UserEvent> {
   let found: UserEvent | undefined
   await expect(async () => {
     const events = await getUserEvents(page)
-    found = events.find(predicate)
+    found = events.slice(since).find(predicate)
     expect(found, description).toBeDefined()
   }).toPass({ timeout: 15000 })
   return found!
@@ -80,6 +82,10 @@ test.describe('analytics', () => {
     const login = `autotest1-${browserName}`
     await adminPage.getByRole('treeitem').getByText(login).click()
 
+    // earlier tests (06.user, 07.systemuser) log the same modal eventTypes, so only
+    // consider events that enter the store after this point
+    const baseline = (await getUserEvents(adminPage)).length
+
     // Disable the user
     await adminPage.getByRole('button', { name: 'Disable' }).click()
     await adminPage.getByRole('alertdialog').getByRole('button', { name: 'Disable User' }).click()
@@ -90,12 +96,12 @@ test.describe('analytics', () => {
     await adminPage.getByRole('alertdialog').getByRole('button', { name: 'Enable User' }).click()
     await expect(adminPage.getByRole('button', { name: 'Disable' })).toBeVisible()
 
-    const disableOpen = await findUserEvent(adminPage, 'expected an Open event for the disable modal', e => e.eventType === 'UserListPage-modal-disable' && e.action === 'Open')
+    const disableOpen = await findUserEvent(adminPage, 'expected an Open event for the disable modal', e => e.eventType === 'UserListPage-modal-disable' && e.action === 'Open' && e.target === login, baseline)
     expect(disableOpen.screen).toBe('/auth/users')
 
-    await findUserEvent(adminPage, 'expected a Success event for the disable modal', e => e.eventType === 'UserListPage-modal-disable' && e.action === 'Success' && e.target === login)
-    await findUserEvent(adminPage, 'expected an Open event for the enable modal', e => e.eventType === 'UserListPage-modal-enable' && e.action === 'Open')
-    await findUserEvent(adminPage, 'expected a Success event for the enable modal', e => e.eventType === 'UserListPage-modal-enable' && e.action === 'Success' && e.target === login)
+    await findUserEvent(adminPage, 'expected a Success event for the disable modal', e => e.eventType === 'UserListPage-modal-disable' && e.action === 'Success' && e.target === login, baseline)
+    await findUserEvent(adminPage, 'expected an Open event for the enable modal', e => e.eventType === 'UserListPage-modal-enable' && e.action === 'Open' && e.target === login, baseline)
+    await findUserEvent(adminPage, 'expected a Success event for the enable modal', e => e.eventType === 'UserListPage-modal-enable' && e.action === 'Success' && e.target === login, baseline)
   })
 
   test('adding a component to a page logs Add Component and addComponent Success', async ({ adminPage }) => {
