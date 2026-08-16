@@ -1,4 +1,4 @@
-import { locateEditFrame } from '../common'
+import { fillVerified, locateEditFrame } from '../common'
 import { test, expect } from '../fixtures'
 
 test.beforeEach(async ({ adminPage }) => {
@@ -13,16 +13,16 @@ test.describe('pagetemplate1 contents', () => {
     })
     test('should be able to add a quote', async ({ adminPage }) => {
       await adminPage.getByRole('button', { name: 'Quote' }).click()
-      await adminPage.getByLabel('Author').fill('author1')
-      await adminPage.getByLabel('Quote').fill('Get healthy life and be happy!')
+      await fillVerified(adminPage.getByLabel('Author'), 'author1')
+      await fillVerified(adminPage.getByLabel('Quote'), 'Get healthy life and be happy!')
       await adminPage.getByRole('button', { name: 'Save' }).click()
       await expect(locateEditFrame(adminPage).getByText('Get healthy life and be happy!- author1').last()).toBeVisible()
     })
     test('should be able to add rich text', async ({ adminPage }) => {
       await adminPage.getByRole('tab', { name: 'Standard' }).click()
       await adminPage.getByRole('button', { name: 'Rich Text' }).click()
-      await adminPage.getByLabel('Title').fill('Rich Text Title')
-      await adminPage.getByLabel('Rich Text').fill('Where is the rich text tool bars?')
+      await fillVerified(adminPage.getByLabel('Title'), 'Rich Text Title')
+      await fillVerified(adminPage.getByLabel('Rich Text'), 'Where is the rich text tool bars?')
       await adminPage.getByRole('button', { name: 'Save' }).click()
       await expect(locateEditFrame(adminPage).getByRole('heading', { name: 'Rich Text Title' }).last()).toBeVisible()
       await expect(locateEditFrame(adminPage).getByText('Where is the rich text tool bars?').last()).toBeVisible()
@@ -33,8 +33,8 @@ test.describe('pagetemplate1 contents', () => {
     })
     test('should be able to add text & image', async ({ adminPage }) => {
       await adminPage.getByRole('button', { name: 'Text & Image' }).click()
-      await adminPage.getByLabel('Title').fill('Text and Image Title')
-      await adminPage.getByLabel('Rich Text').fill('Where is rich text tool bars')
+      await fillVerified(adminPage.getByLabel('Title'), 'Text and Image Title')
+      await fillVerified(adminPage.getByLabel('Rich Text'), 'Where is rich text tool bars')
       await adminPage.getByRole('button', { name: 'Select Image' }).click()
       await adminPage.getByRole('treeitem', { name: /\bsite1\b/ }).click()
       await adminPage.getByText('bobcat').click()

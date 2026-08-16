@@ -1,4 +1,16 @@
-import type { Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
+
+/** Dialogs wrestle over focus for a few frames after they open or replace one another
+ * (FocusLock restores focus one rAF after unmount), and fill() types via insertText into
+ * whatever has focus when it lands — silently losing the value if focus was stolen.
+ * Fill, verify the value stuck, and retry until it does. Use this for fields in a dialog
+ * that just opened, especially the template chooser -> form dialog swap. */
+export async function fillVerified (locator: Locator, value: string) {
+  await expect(async () => {
+    await locator.fill(value)
+    await expect(locator).toHaveValue(value)
+  }).toPass()
+}
 
 export async function loadAdminPages (page: Page) {
   await page.goto('/.admin/pages')
