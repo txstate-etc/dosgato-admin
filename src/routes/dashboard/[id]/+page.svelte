@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, environmentConfig, getSiteIcon, LaunchState, SortableTable, toast, titleCaseAccess, uiLog } from '$lib'
-  import type { DashboardSiteDetailDisplay, DashboardSiteTeamMemberWithRole } from '$lib'
-  import { Button, FieldSelect, FormDialog, Icon } from '@dosgato/dialog'
+  import { api, dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, ensureRequiredNotNull, environmentConfig, getSiteIcon, LaunchState, messageForDialog, SortableTable, toast, titleCaseAccess, uiLog } from '$lib'
+  import type { AddSiteTeamMemberUser, DashboardSiteDetailDisplay, DashboardSiteTeamMemberWithRole } from '$lib'
+  import { isBlank, isNull } from 'txstate-utils'
+  import { Button, Dialog, FieldRadio, FieldSelect, FieldText, FormDialog, Icon } from '@dosgato/dialog'
+  import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
   import eye from '@iconify-icons/ph/eye-bold'
   import clipboard from '@iconify-icons/ph/clipboard-fill'
   import treeStructure from '@iconify-icons/ph/tree-structure'
@@ -9,18 +11,20 @@
   import trashIcon from '@iconify-icons/ph/trash-simple-fill'
   import infoIcon from '@iconify-icons/ph/info-fill'
   import linkOutIcon from '@iconify-icons/ph/arrow-square-out-bold'
+  import plusIcon from '@iconify-icons/ph/plus-bold'
   import { resolve } from '$app/paths'
-  import { goto } from '$app/navigation'
+  import { goto, invalidateAll } from '$app/navigation'
   import UserDetailDialog from './UserDetailDialog.svelte'
   import DashboardPagetreeTable from './DashboardPagetreeTable.svelte'
   import { uiConfig } from '../../../local'
+  import FieldRoleTable from './FieldRoleTable.svelte'
 
   export let data: { site: DashboardSiteDetailDisplay }
   $: site = data.site
 
   $: icon = getSiteIcon(site.launchState, 'PRIMARY')
 
-  type Modals = 'downloadcsv' | 'userdetail'
+  type Modals = 'downloadcsv' | 'userdetail' | 'adduser'
   let modal: Modals | undefined
 
   function onCopyURL (e: MouseEvent) {
@@ -50,20 +54,75 @@
     modal = m
   }
 
-  let userDetailId: string | null = null
   let userDetail: DashboardSiteTeamMemberWithRole | null = null
   async function viewUserDetail (userId: string) {
-    userDetailId = userId
     userDetail = site.teamMembersWithRolesById[userId]
     openModal('userdetail')
   }
 
   function dismissUserDetail () {
-    userDetailId = null
     userDetail = null
     uiLog.log({ eventType: 'DashboardDetailPage-modal-' + modal, action: 'Cancel', target: site.name })
     modal = undefined
   }
+
+  interface AddUserInput {
+    userId: string
+    access: 'EDITOR' | 'CONTRIBUTOR' | 'READONLY'
+    roleIds: string[]
+  }
+
+  let addUserConfirmResolve: ((ok: boolean) => void) | undefined
+
+  async function confirmAddUser () {
+    return await new Promise<boolean>(resolve => { addUserConfirmResolve = resolve })
+  }
+
+  // the mutation looks the requested login up and hands back the user it found, so the dialog
+  // can show the administrator who they are about to add
+  let foundUser: AddSiteTeamMemberUser | undefined
+
+  async function onAddUser (state: AddUserInput) {
+    if (!await confirmAddUser()) {
+      return { success: false, messages: [] }
+    }
+    const resp = await api.addSiteTeamMember(site.id, state.userId, state.access, state.roleIds)
+    foundUser = resp.user
+    uiLog.log({ eventType: 'DashboardDetailPage-modal-adduser', action: resp.success ? 'Success' : 'Failed', target: site.name, additionalProperties: { userId: state.userId, access: state.access } })
+    return { success: resp.success, messages: messageForDialog(resp.messages, ''), data: state }
+  }
+
+  async function validateAddUser (state: AddUserInput) {
+    const localMessages: Feedback[] = ensureRequiredNotNull(state, ['access'])
+    if (isBlank(state.userId)) localMessages.push({ type: MessageType.ERROR, message: 'This field is required.', path: 'userId' })
+    if (state.access === 'CONTRIBUTOR' && !state.roleIds?.length) {
+      localMessages.push({ type: MessageType.ERROR, message: 'This field is required.', path: 'roleIds' })
+    }
+    if (isBlank(state.userId) || isNull(state.access)) {
+      foundUser = undefined
+      return localMessages
+    }
+    const resp = await api.addSiteTeamMember(site.id, state.userId, state.access, state.roleIds, true)
+    foundUser = resp.user
+    return [...localMessages, ...messageForDialog(resp.messages, '').filter(m => !localMessages.some(l => l.path === m.path))]
+  }
+
+  function onCompleteAddUser () {
+    toast(`${foundUser?.name ?? 'User'} has been added.`, 'success')
+    modal = undefined
+    foundUser = undefined
+    void invalidateAll()
+  }
+
+  function getAvailableAccessLevels () {
+    const choices: { label?: string, value: any }[] = [
+      { label: 'Editor', value: 'EDITOR' },
+      { label: 'Contributor', value: 'CONTRIBUTOR' },
+      { label: 'Read-Only', value: 'READONLY' }
+    ]
+    return choices
+  }
+
 </script>
 
 <DetailPageContent>
@@ -143,11 +202,11 @@
         </a>
       {/if}
      <div class="team-actions">
-        <!-- <Button icon={plusIcon}>Add User</Button>
-        <Button icon={teamIcon}>Audit Team</Button>
+        {#if site.permissions.audit}<Button type="button" icon={plusIcon} on:click={() => openModal('adduser')}>Add User</Button>{/if}
+        <!-- <Button icon={teamIcon}>Audit Team</Button>
         <Button icon={exportIcon}>Export CSV</Button> -->
         <!-- TODO: TEMPORARY UNTIL ACTIONS AVAILABLE IN GATO -->
-        <Button icon={editUserIcon} on:click={ () => { window.open('https://gato.its.txst.edu/manage-user-access/update-access-form.html', '_blank') } } >Update Team Member Access</Button>
+        <!-- <Button icon={editUserIcon} on:click={ () => { window.open('https://gato.its.txst.edu/manage-user-access/update-access-form.html', '_blank') } } >Update Team Member Access</Button> -->
      </div>
       {#if site.team.length}
       <SortableTable items={site.team} headers={[
@@ -217,6 +276,45 @@
     </FormDialog>
 {:else if modal === 'userdetail'}
     <UserDetailDialog siteName={site.name} userDetail={userDetail} on:dismiss={dismissUserDetail}/>
+{:else if modal === 'adduser'}
+    <FormDialog
+      name='adduser'
+      title='Add User'
+      on:escape={() => { uiLog.log({ eventType: 'DashboardDetailPage-modal-' + modal, action: 'Cancel', target: site.name }); modal = undefined; foundUser = undefined }}
+      on:saved={onCompleteAddUser}
+      submit={onAddUser}
+      validate={validateAddUser}
+      let:data>
+      <FieldText path='userId' label='Search User IDs' required helptext="To be added as an editor or contributor, the desired user must have completed the required training." />
+      {#if foundUser && !foundUser.disabled}
+        <section class="found-user">
+          <header>User Details</header>
+          <dl>
+            <div>
+              <dt>Name</dt>
+              <dd>{foundUser.name}</dd>
+            </div>
+            <div>
+              <dt>ID</dt>
+              <dd>{foundUser.id}</dd>
+            </div>
+            <div>
+              <dt>Training Status</dt>
+              <dd>{foundUser.trainings.length > 0 ? 'Trained' : 'Incomplete' }</dd>
+            </div>
+          </dl>
+        </section>
+      {/if}
+      <FieldRadio path='access' label='Access Level' choices={getAvailableAccessLevels()} required />
+      <FieldRoleTable path='roleIds' label='Available Roles' conditional={ (data as AddUserInput)?.access === 'CONTRIBUTOR'} required helptext='Tailor what page trees, actions and content this team member has access to.' auditRoles = {site.auditRoles.filter(r => r.access === 'CONTRIBUTOR')} />
+      {#if addUserConfirmResolve}
+        <Dialog title="Confirmation" size="small" continueText="Confirm and Add" cancelText="Cancel" on:continue={() => { addUserConfirmResolve?.(true); addUserConfirmResolve = undefined }} on:escape={() => { addUserConfirmResolve?.(false); addUserConfirmResolve = undefined }}>
+          <p>
+            Add <strong>{foundUser?.name ?? 'user'}</strong> to <strong>{site.name}</strong> team with <strong>{data?.access?.toLowerCase()}</strong> access?
+          </p>
+        </Dialog>
+      {/if}
+    </FormDialog>
 {/if}
 
 <style>
@@ -378,5 +476,31 @@
       flex-direction: column;
       gap: 0.5em;
     }
+  }
+  /* Add User dialog */
+  section.found-user {
+    border: 1px dashed #767676;
+    padding: 1em;
+  }
+  section header {
+    font-weight: 500;
+    font-size: 1rem;
+  }
+  section dl {
+    display: flex;
+    gap: 2em;
+  }
+  section dl div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+  }
+  section dl dt {
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+  section dl dd {
+    margin-left: 0;
   }
 </style>

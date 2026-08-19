@@ -45,6 +45,7 @@ import {
   GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE, type TemplateWithPagetrees, GET_TEMPLATE_PAGETREES,
   type AssetSearchResult, GET_SEARCH_ASSETS, GET_PAGE_TEMPLATES_ALLOWING_COMPONENT, type CreateRoleInput, GET_DASHBOARD_SITE_LIST,
   type DashboardSite, GET_DASHBOARD_USER_DETAILS, type DashboardUser, GET_DASHBOARD_SITE_BY_ID, type DashboardSiteDetailRaw,
+  ADD_SITE_TEAM_MEMBER, type AddSiteTeamMemberUser,
   apiSiteToDashboardSite, GET_PAGE_PATH_BY_ID, type ScheduledPublish, GET_SCHEDULED_PUBLISHES, CREATE_SCHEDULED_PUBLISH,
   UPDATE_SCHEDULED_PUBLISH, CANCEL_SCHEDULED_PUBLISH, type ScheduledPublishStatus, type ScheduledPublishAction,
   type ScheduledPublishRecurrenceType,
@@ -1202,6 +1203,11 @@ class API {
   async getDashboardSiteById (siteId: string) {
     const { sites } = await this.query<{ sites: DashboardSiteDetailRaw[] }>(GET_DASHBOARD_SITE_BY_ID, { siteId })
     return sites[0]
+  }
+
+  async addSiteTeamMember (siteId: string, userId: string, access: string, roleIds?: string[], validateOnly?: boolean) {
+    const { addSiteTeamMember } = await this.query<{ addSiteTeamMember: MutationResponse & { user?: AddSiteTeamMemberUser } }>(ADD_SITE_TEAM_MEMBER, { siteId, userId: userId?.trim(), access, roleIds, validateOnly })
+    return addSiteTeamMember
   }
 
   async getPagePathById (pageId: string) {

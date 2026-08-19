@@ -246,6 +246,37 @@ export const GET_DASHBOARD_SITE_BY_ID = `
   }
 `
 
+export const ADD_SITE_TEAM_MEMBER = `
+  mutation AddSiteTeamMember ($siteId: ID!, $userId: ID!, $access: RoleAccessLevel!, $roleIds: [ID!], $validateOnly: Boolean) {
+    addSiteTeamMember (siteId: $siteId, userId: $userId, access: $access, roleIds: $roleIds, validateOnly: $validateOnly) {
+      success
+      user {
+        id
+        name
+        email
+        disabled
+        trainings {
+          id
+          name
+        }
+      }
+      messages {
+        message
+        arg
+        type
+      }
+    }
+  }
+`
+
+export interface AddSiteTeamMemberUser {
+  id: string
+  name: string
+  email: string
+  disabled: boolean
+  trainings: { id: string, name: string }[]
+}
+
 export interface DashboardSiteTeamMember {
   id: string
   name: string
@@ -256,6 +287,7 @@ export interface DashboardSiteTeamMember {
 
 export interface DashboardSiteTeamMemberWithRole extends DashboardSiteTeamMember {
   roles: {
+    id: string
     name: string
     description?: string
     access?: string
@@ -316,6 +348,7 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
     teamMembersWithRolesById[user.id] = {
       ...user,
       roles: site.auditRoles.filter(role => role.users.some(u => u.id === user.id)).map(role => ({
+        id: role.id,
         name: role.name,
         description: role.description,
         access: titleCaseAccess[role.access] ?? ''
