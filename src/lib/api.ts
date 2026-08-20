@@ -351,6 +351,11 @@ class API {
     return datafolders.length ? apiDataFolderToChooserFolder(datafolders[0]) : undefined
   }
 
+  async dataChooserPreviewData (link: DataLink) {
+    const { data } = await this.query<DataChooserDataByLink>(DATA_CHOOSER_DATA_BY_LINK, { link: pick(link, 'id', 'siteId', 'path', 'templateKey') })
+    return data[0]?.data
+  }
+
   async getSubFoldersAndAssets (folderId: string) {
     return await this.assetFolderChildrenLoader.get(folderId)
   }

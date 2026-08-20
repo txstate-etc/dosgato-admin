@@ -409,10 +409,7 @@ export function apiDataToChooserData (d: DataChooserDataDetails): DataChooserIte
     templateKey,
     hasChildren: false,
     published: d.published ? (publishedAt! >= modifiedAt ? 'published' : 'modified') : 'unpublished',
-    icon: { icon, label: tmpl?.name },
-    details: [
-      { label: 'Modified', value: modifiedAt.toLocaleString(DateTime.DATETIME_SHORT) }
-    ]
+    icon: { icon, label: tmpl?.name }
   }
 }
 

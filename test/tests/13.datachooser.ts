@@ -34,6 +34,21 @@ test.describe('data chooser', () => {
     await adminPage.getByRole('button', { name: 'Cancel' }).click()
   })
 
+  test('should preview a data entry\'s payload while choosing', async ({ adminPage }) => {
+    await adminPage.getByRole('button', { name: 'Select Data' }).first().click()
+    // selecting an item fetches its payload and renders it in the preview pane
+    await adminPage.getByRole('treeitem', { name: 'cottonwood-hall' }).click()
+    await expect(adminPage.getByText('Cottonwood Hall', { exact: true })).toBeVisible()
+    await expect(adminPage.getByText('floors:', { exact: true })).toBeVisible()
+    await expect(adminPage.getByText('3', { exact: true })).toBeVisible()
+    // internal bookkeeping fields are redacted from the preview
+    await expect(adminPage.getByText('templateKey:', { exact: true })).toHaveCount(0)
+    await expect(adminPage.getByText('savedAtVersion:', { exact: true })).toHaveCount(0)
+    // the chooser dialog sits on top of the component dialog, so two Cancel buttons are open
+    await adminPage.getByRole('button', { name: 'Cancel' }).last().click()
+    await adminPage.getByRole('button', { name: 'Cancel' }).click()
+  })
+
   test('should be able to browse sources and folders and pick from a folder', async ({ adminPage }) => {
     // the Color field is the second data chooser field in the dialog
     await adminPage.getByRole('button', { name: 'Select Data' }).nth(1).click()
