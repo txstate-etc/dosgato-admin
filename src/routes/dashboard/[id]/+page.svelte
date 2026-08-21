@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { api, dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, ensureRequiredNotNull, environmentConfig, getSiteIcon, LaunchState, messageForDialog, SortableTable, toast, titleCaseAccess, uiLog } from '$lib'
+  import { api, confirmationStore, dateStamp, DetailPageContent, DetailPanel, DetailPanelSection, downloadPageList, ensureRequiredNotNull, environmentConfig, getSiteIcon, LaunchState, messageForDialog, SortableTable, toast, titleCaseAccess, uiLog } from '$lib'
   import type { AddSiteTeamMemberUser, DashboardSiteDetailDisplay, DashboardSiteTeamMemberWithRole } from '$lib'
-  import { isBlank, isNull } from 'txstate-utils'
-  import { Button, Dialog, FieldRadio, FieldSelect, FieldText, FormDialog, Icon } from '@dosgato/dialog'
+  import { htmlEncode, isBlank, isNull } from 'txstate-utils'
+  import { Button, FieldRadio, FieldSelect, FieldText, FormDialog, Icon } from '@dosgato/dialog'
   import { MessageType, type Feedback } from '@txstate-mws/svelte-forms'
   import eye from '@iconify-icons/ph/eye-bold'
   import clipboard from '@iconify-icons/ph/clipboard-fill'
@@ -72,18 +72,19 @@
     roleIds: string[]
   }
 
-  let addUserConfirmResolve: ((ok: boolean) => void) | undefined
-
-  async function confirmAddUser () {
-    return await new Promise<boolean>(resolve => { addUserConfirmResolve = resolve })
-  }
-
   // the mutation looks the requested login up and hands back the user it found, so the dialog
   // can show the administrator who they are about to add
   let foundUser: AddSiteTeamMemberUser | undefined
 
   async function onAddUser (state: AddUserInput) {
-    if (!await confirmAddUser()) {
+    const confirmed = await confirmationStore.confirm({
+      id: 'DashboardDetailPage-modal-adduser-confirm',
+      title: 'Confirmation',
+      html: true,
+      yesText: 'Confirm and Add',
+      body: `<p>Add <strong>${htmlEncode(foundUser?.name ?? 'user')}</strong> to <strong>${htmlEncode(site.name)}</strong> team with <strong>${htmlEncode(state.access?.toLowerCase())}</strong> access?</p>`
+    })
+    if (!confirmed) {
       return { success: false, messages: [] }
     }
     const resp = await api.addSiteTeamMember(site.id, state.userId, state.access, state.roleIds)
@@ -307,13 +308,6 @@
       {/if}
       <FieldRadio path='access' label='Access Level' choices={getAvailableAccessLevels()} required />
       <FieldRoleTable path='roleIds' label='Available Roles' conditional={ (data as AddUserInput)?.access === 'CONTRIBUTOR'} required helptext='Tailor what page trees, actions and content this team member has access to.' auditRoles = {site.auditRoles.filter(r => r.access === 'CONTRIBUTOR')} />
-      {#if addUserConfirmResolve}
-        <Dialog title="Confirmation" size="small" continueText="Confirm and Add" cancelText="Cancel" on:continue={() => { addUserConfirmResolve?.(true); addUserConfirmResolve = undefined }} on:escape={() => { addUserConfirmResolve?.(false); addUserConfirmResolve = undefined }}>
-          <p>
-            Add <strong>{foundUser?.name ?? 'user'}</strong> to <strong>{site.name}</strong> team with <strong>{data?.access?.toLowerCase()}</strong> access?
-          </p>
-        </Dialog>
-      {/if}
     </FormDialog>
 {/if}
 
