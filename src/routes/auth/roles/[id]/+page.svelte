@@ -13,7 +13,7 @@
   import accountGroup from '@iconify-icons/ph/users-three-light'
   import { isNotBlank, unique } from 'txstate-utils'
   import { resolve } from '$app/paths'
-  import { api, DetailPanel, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog, BackButton, DetailPanelSection, Accordion, DetailPageContent, DetailList, type CreateRoleInput, type DetailPanelButton, type UserListUser, type GroupListGroup, uiLog, type TemplateListTemplate, type AnyRule, type RuleType } from '$lib'
+  import { accessLevelChoices, titleCaseAccess, api, DetailPanel, AssetRuleDialog, DataRuleDialog, GlobalRuleDialog, PageRuleDialog, SiteRuleDialog, TemplateRuleDialog, BackButton, DetailPanelSection, Accordion, DetailPageContent, DetailList, type CreateRoleInput, type DetailPanelButton, type UserListUser, type GroupListGroup, uiLog, type TemplateListTemplate, type AnyRule, type RuleType } from '$lib'
   import { _store as store } from './+page'
   import { MessageType } from '@txstate-mws/svelte-forms'
   import SortableTable from '$lib/components/table/SortableTable.svelte'
@@ -219,7 +219,7 @@
   <div class="vertical-list">
     <DetailPanel header='Basic Information' headerColor={panelHeaderColor} button={basicInfoButtons}>
       <DetailPanelSection>
-        <DetailList records={{ Name: $store.role.name, Description: $store.role.description, Site: $store.role.site?.id ? siteNamesById[$store.role.site.id] : '', 'Access Level': $store.role.access ?? '' }} columns={1} />
+        <DetailList records={{ Name: $store.role.name, Description: $store.role.description, Site: $store.role.site?.id ? siteNamesById[$store.role.site.id] : '', 'Access Level': $store.role.access ? titleCaseAccess[$store.role.access] : '' }} columns={1} />
       </DetailPanelSection>
       <DetailPanelSection addTopBorder hasBackground>
         <Accordion title="List of Users with this Role">
@@ -354,11 +354,7 @@
     <FieldText path='name' label="Name" required/>
     <FieldText path='description' label="Description" maxlength={200} />
     <FieldSelect path='siteId' label='Site' choices={siteOptions} />
-    <FieldSelect path='access' label="Access Level" choices={[
-      { value: 'EDITOR', label: 'Editor' },
-      { value: 'CONTRIBUTOR', label: 'Contributor' },
-      { value: 'READONLY', label: 'Read Only' }
-    ]} required conditional={isNotBlank(data.siteId)} helptext="A summary of the access level this role provides. Rules must be created to define what users with this role can do." />
+    <FieldSelect path='access' label="Access Level" choices={accessLevelChoices} required conditional={isNotBlank(data.siteId)} helptext="A summary of the access level this role provides. Rules must be created to define what users with this role can do." />
   </FormDialog>
 {:else if modal === 'assignrole'}
   <Dialog title="Assign Role" on:escape={onModalEscape} continueText="Cancel" on:continue={onModalEscape}>

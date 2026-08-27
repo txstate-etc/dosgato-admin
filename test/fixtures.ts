@@ -15,6 +15,7 @@ interface MyFixtures {
   editorPage: Page
   ownerPage: Page
   managerPage: Page
+  manager2Page: Page
   dbEditorPage: Page
 }
 
@@ -45,6 +46,15 @@ export const test = base.extend<object, MyFixtures>({
     const managerPage = await context.newPage()
     await loginAs(managerPage, 'db_manager1')
     await use(managerPage)
+    await context.close()
+  }, { scope: 'worker' }],
+  /** the second dashboard-test manager, kept separate so a test may strip their access
+   * without breaking every other test that needs a manager */
+  manager2Page: [async ({ browser }, use) => {
+    const context = await browser.newContext()
+    const manager2Page = await context.newPage()
+    await loginAs(manager2Page, 'db_manager2')
+    await use(manager2Page)
     await context.close()
   }, { scope: 'worker' }],
   dbEditorPage: [async ({ browser }, use) => {

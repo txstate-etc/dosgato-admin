@@ -15,11 +15,35 @@ export interface DashboardSite {
   }[]
 }
 
-export const titleCaseAccess: Record<string, string> = {
+/**
+ * The API's RoleAccessLevel enum. These are the wire values - display labels for them live in
+ * titleCaseAccess and are applied at render time, never stored on our data.
+ */
+export type RoleAccessLevel = 'EDITOR' | 'CONTRIBUTOR' | 'READONLY'
+
+// most access to least, so we can pick the highest level a user holds
+export const accessLevelsByRank: RoleAccessLevel[] = ['EDITOR', 'CONTRIBUTOR', 'READONLY']
+
+export const titleCaseAccess: Record<RoleAccessLevel, string> = {
   EDITOR: 'Editor',
   CONTRIBUTOR: 'Contributor',
   READONLY: 'Read-only'
 }
+
+// every access level picker in the UI uses this so the labels only exist in one place
+export const accessLevelChoices = accessLevelsByRank.map(value => ({ value, label: titleCaseAccess[value] }))
+
+export function highestAccessLevel (levels: RoleAccessLevel[] | undefined) {
+  return accessLevelsByRank.find(level => levels?.includes(level))
+}
+
+/**
+ * UI-only sentinel for a team member (always a manager) who holds no access level via any of the
+ * site's audit roles. It is never sent to the API - the API has no concept of it.
+ */
+export const NO_ACCESS = 'NONE'
+export type AccessLevelSelection = RoleAccessLevel | typeof NO_ACCESS
+export const noAccessChoice = { value: NO_ACCESS, label: 'No Access' }
 
 export interface DashboardSiteWithRoleSummary extends DashboardSite {
   roleSummary: string[]
@@ -62,7 +86,7 @@ export interface DashboardUser {
   roles: {
     id: string
     name: string
-    access?: string
+    access?: RoleAccessLevel
     site?: {
       id: string
     }
@@ -102,6 +126,23 @@ export const GET_DASHBOARD_USER_DETAILS = `
   }
 `
 
+export interface SiteAuditRole {
+  id: string
+  name: string
+  description: string
+  access: RoleAccessLevel
+  users: {
+    id: string
+    name: string
+    email: string
+    lastlogin: string
+    trainings: {
+      id: string
+      name: string
+    }[]
+  }[]
+}
+
 export interface DashboardSiteDetailRaw {
   id: string
   name: string
@@ -121,6 +162,10 @@ export interface DashboardSiteDetailRaw {
     name: string
     email: string
     lastlogin: string
+    trainings: {
+      id: string
+      name: string
+    }[]
   }[]
   primaryPagetree: {
     pages: {
@@ -155,18 +200,7 @@ export interface DashboardSiteDetailRaw {
       id: string
     }[]
   }[]
-  auditRoles: {
-    id: string
-    name: string
-    description: string
-    access: string
-    users: {
-      id: string
-      name: string
-      email: string
-      lastlogin: string
-    }[]
-  }[]
+  auditRoles: SiteAuditRole[]
   permissions: {
     audit: boolean
   }
@@ -193,6 +227,10 @@ export const GET_DASHBOARD_SITE_BY_ID = `
         name
         email
         lastlogin
+        trainings {
+          id
+          name
+        }
       }
       primaryPagetree {
         pages {
@@ -237,6 +275,10 @@ export const GET_DASHBOARD_SITE_BY_ID = `
           name
           email
           lastlogin
+          trainings {
+            id
+            name
+          }
         }
       }
       permissions {
@@ -269,6 +311,42 @@ export const ADD_SITE_TEAM_MEMBER = `
   }
 `
 
+export const EDIT_SITE_TEAM_MEMBER = `
+ mutation EditSiteTeamMember ($siteId: ID!, $userId: ID!, $access: RoleAccessLevel!, $roleIds: [ID!], $validateOnly: Boolean) {
+  editSiteTeamMember (siteId: $siteId, userId: $userId, access: $access, roleIds: $roleIds, validateOnly: $validateOnly) {
+      success
+      user {
+        id
+        name
+        email
+        disabled
+        trainings {
+          id
+          name
+        }
+      }
+      messages {
+        message
+        arg
+        type
+      }
+    }
+ }
+`
+
+export const REMOVE_SITE_TEAM_MEMBER = `
+  mutation RemoveSiteTeamMember ($siteId: ID!, $userId: ID!, $validateOnly: Boolean) {
+    removeSiteTeamMember (siteId: $siteId, userId: $userId, validateOnly: $validateOnly) {
+      success
+      messages {
+        message
+        arg
+        type
+      }
+    }
+  }
+`
+
 export interface AddSiteTeamMemberUser {
   id: string
   name: string
@@ -282,7 +360,12 @@ export interface DashboardSiteTeamMember {
   name: string
   email: string
   lastlogin: string
-  access: string
+  /** the raw access levels this user holds through the site's audit roles, highest first */
+  accessLevels: RoleAccessLevel[]
+  isManager: boolean
+  /** human readable summary of isManager + accessLevels, e.g. 'Contributor, Manager' */
+  accessDisplay: string
+  trainings: { id: string, name: string }[]
 }
 
 export interface DashboardSiteTeamMemberWithRole extends DashboardSiteTeamMember {
@@ -290,7 +373,7 @@ export interface DashboardSiteTeamMemberWithRole extends DashboardSiteTeamMember
     id: string
     name: string
     description?: string
-    access?: string
+    access?: RoleAccessLevel
   }[]
 }
 
@@ -315,33 +398,40 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
     : new Date()
 
   const { primaryPagetree, ...rest } = site
-  const teamMembersById: Record<string, Omit<DashboardSiteTeamMember, 'access'>> = {}
-  const accessByUserId = new Map<string, Set<string>>()
+  type TeamMemberIdentity = Omit<DashboardSiteTeamMember, 'accessLevels' | 'isManager' | 'accessDisplay'>
+  const teamMembersById: Record<string, TeamMemberIdentity> = {}
+  // raw enum values only - the display labels get derived below
+  const accessLevelsByUserId = new Map<string, Set<RoleAccessLevel>>()
+  const managerIds = new Set<string>()
 
   // Add managers
   for (const manager of site.managers) {
     teamMembersById[manager.id] = manager
-    const accessSet = accessByUserId.get(manager.id) ?? new Set()
-    accessSet.add('Manager')
-    accessByUserId.set(manager.id, accessSet)
+    managerIds.add(manager.id)
   }
 
   // Add audit role users and their access
   for (const role of site.auditRoles) {
-    const access = titleCaseAccess[role.access] ?? ''
     for (const user of role.users) {
       teamMembersById[user.id] = user
-      const accessSet = accessByUserId.get(user.id) ?? new Set()
-      accessSet.add(access)
-      accessByUserId.set(user.id, accessSet)
+      const accessSet = accessLevelsByUserId.get(user.id) ?? new Set<RoleAccessLevel>()
+      accessSet.add(role.access)
+      accessLevelsByUserId.set(user.id, accessSet)
     }
   }
 
   // Build team array
-  const team: DashboardSiteTeamMember[] = Object.values(teamMembersById).map(user => ({
-    ...user,
-    access: Array.from(accessByUserId.get(user.id) ?? []).sort().join(', ')
-  }))
+  const team: DashboardSiteTeamMember[] = Object.values(teamMembersById).map(user => {
+    const isManager = managerIds.has(user.id)
+    const held = accessLevelsByUserId.get(user.id)
+    const accessLevels = accessLevelsByRank.filter(level => held?.has(level))
+    return {
+      ...user,
+      accessLevels,
+      isManager,
+      accessDisplay: [...(isManager ? ['Manager'] : []), ...accessLevels.map(level => titleCaseAccess[level])].join(', ')
+    }
+  })
 
   const teamMembersWithRolesById: Record<string, DashboardSiteTeamMemberWithRole> = {}
   for (const user of team) {
@@ -351,7 +441,7 @@ export function apiSiteToDashboardSite (site: DashboardSiteDetailRaw) {
         id: role.id,
         name: role.name,
         description: role.description,
-        access: titleCaseAccess[role.access] ?? ''
+        access: role.access
       }))
     }
   }

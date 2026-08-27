@@ -6,7 +6,7 @@
   import { setContext, tick } from 'svelte'
   import { goto } from '$app/navigation'
   import { resolve } from '$app/paths'
-  import { ActionPanel, type ActionPanelAction, api, type CreateRoleInput, type RoleListRole, messageForDialog, uiLog, SearchInput, actionPanelStore } from '$lib'
+  import { accessLevelChoices, ActionPanel, type ActionPanelAction, api, type CreateRoleInput, type RoleListRole, messageForDialog, titleCaseAccess, uiLog, SearchInput, actionPanelStore } from '$lib'
   import { isNotBlank } from 'txstate-utils'
 
   export let data: { siteOptions: { value: string, label: string }[] }
@@ -119,7 +119,7 @@ let filter = ''
     { id: 'name', label: 'Name', get: 'name', icon: { icon: keyIcon }, grow: 2 },
     { id: 'description', label: 'Description', get: 'description', grow: 2 },
     { id: 'site', label: 'Site', render: role => role.site?.id ? siteNamesById[role.site.id] : '', grow: 2 },
-    { id: 'access', label: 'Access Level', get: 'access' }
+    { id: 'access', label: 'Access Level', render: role => role.access ? titleCaseAccess[role.access] : '' }
   ]} searchable='name' filter={filter} enableResize responsiveHeaders={handleResponsiveHeaders}/>
 </ActionPanel>
 {#if modal === 'addrole'}
@@ -134,11 +134,7 @@ let filter = ''
     <FieldText path='name' label='Name' required />
     <FieldText path='description' label='Description' maxlength={200} />
     <FieldSelect path='siteId' label='Site' choices={siteOptions} />
-    <FieldSelect path='access' label="Access Level" conditional={isNotBlank(data.siteId)} required choices={[
-      { value: 'EDITOR', label: 'Editor' },
-      { value: 'CONTRIBUTOR', label: 'Contributor' },
-      { value: 'READONLY', label: 'Read Only' }
-    ]} helptext="A summary of the access level this role provides. Once the role is created, you need to assign rules to it to define what users with this role can do." />
+    <FieldSelect path='access' label="Access Level" conditional={isNotBlank(data.siteId)} required choices={accessLevelChoices} helptext="A summary of the access level this role provides. Once the role is created, you need to assign rules to it to define what users with this role can do." />
   </FormDialog>
 {:else if modal === 'deleterole'}
   <Dialog

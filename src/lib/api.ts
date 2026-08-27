@@ -45,13 +45,15 @@ import {
   GET_TEMPLATE_DETAIL, GET_TEMPLATE_AREAS, GET_TEMPLATES_WITH_AREAS_BY_TYPE, type TemplateWithPagetrees, GET_TEMPLATE_PAGETREES,
   type AssetSearchResult, GET_SEARCH_ASSETS, GET_PAGE_TEMPLATES_ALLOWING_COMPONENT, type CreateRoleInput, GET_DASHBOARD_SITE_LIST,
   type DashboardSite, GET_DASHBOARD_USER_DETAILS, type DashboardUser, GET_DASHBOARD_SITE_BY_ID, type DashboardSiteDetailRaw,
-  ADD_SITE_TEAM_MEMBER, type AddSiteTeamMemberUser,
+  ADD_SITE_TEAM_MEMBER, type AddSiteTeamMemberUser, type RoleAccessLevel,
   apiSiteToDashboardSite, GET_PAGE_PATH_BY_ID, type ScheduledPublish, GET_SCHEDULED_PUBLISHES, CREATE_SCHEDULED_PUBLISH,
   UPDATE_SCHEDULED_PUBLISH, CANCEL_SCHEDULED_PUBLISH, type ScheduledPublishStatus, type ScheduledPublishAction,
   type ScheduledPublishRecurrenceType,
   DATA_CHOOSER_ROOTS, type DataChooserRoots, DATA_CHOOSER_ROOT_CHILDREN, type DataChooserRootChildren,
   DATA_CHOOSER_DATA_BY_PATH, type DataChooserDataByPath, DATA_CHOOSER_DATA_BY_LINK, type DataChooserDataByLink,
-  DATA_CHOOSER_FOLDER_BY_LINK, type DataChooserFolderByLink, apiDataToChooserData, apiDataFolderToChooserFolder
+  DATA_CHOOSER_FOLDER_BY_LINK, type DataChooserFolderByLink, apiDataToChooserData, apiDataFolderToChooserFolder,
+  REMOVE_SITE_TEAM_MEMBER,
+  EDIT_SITE_TEAM_MEMBER
 } from './queries'
 import { uiConfig } from '../local/index.js'
 import { templateRegistry } from './registry'
@@ -1210,9 +1212,19 @@ class API {
     return sites[0]
   }
 
-  async addSiteTeamMember (siteId: string, userId: string, access: string, roleIds?: string[], validateOnly?: boolean) {
+  async addSiteTeamMember (siteId: string, userId: string, access: RoleAccessLevel, roleIds?: string[], validateOnly?: boolean) {
     const { addSiteTeamMember } = await this.query<{ addSiteTeamMember: MutationResponse & { user?: AddSiteTeamMemberUser } }>(ADD_SITE_TEAM_MEMBER, { siteId, userId: userId?.trim(), access, roleIds, validateOnly })
     return addSiteTeamMember
+  }
+
+  async editSiteTeamMember (siteId: string, userId: string, access: RoleAccessLevel, roleIds?: string[], validateOnly?: boolean) {
+    const { editSiteTeamMember } = await this.query<{ editSiteTeamMember: MutationResponse & { user?: AddSiteTeamMemberUser } }>(EDIT_SITE_TEAM_MEMBER, { siteId, userId: userId?.trim(), access, roleIds, validateOnly })
+    return editSiteTeamMember
+  }
+
+  async removeSiteTeamMember (siteId: string, userId: string, validateOnly?: boolean) {
+    const { removeSiteTeamMember } = await this.query<{ removeSiteTeamMember: MutationResponse & { user?: AddSiteTeamMemberUser } }>(REMOVE_SITE_TEAM_MEMBER, { siteId, userId, validateOnly })
+    return removeSiteTeamMember
   }
 
   async getPagePathById (pageId: string) {

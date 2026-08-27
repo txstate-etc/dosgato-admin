@@ -33,7 +33,7 @@
         </div>
         <div class="user-detail">
           <div class="label">Current Access Level(s)</div>
-          <div class="value">{userDetail?.access}</div>
+          <div class="value">{userDetail?.accessDisplay}</div>
         </div>
       </div>
     </section>

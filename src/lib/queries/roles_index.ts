@@ -1,11 +1,12 @@
 import { assetRuleDetails, dataRuleDetails, globalRuleDetails, pageRuleDetails, siteRuleDetails, templateRuleDetails, type AssetRule, type DataRule, type GlobalRule, type PageRule, type SiteRule, type TemplateRule } from '$lib'
 import { mutationResponse } from './global'
+import type { RoleAccessLevel } from './dashboard'
 
 export interface CreateRoleInput {
   name: string
   description?: string
   siteId?: string
-  access?: string
+  access?: RoleAccessLevel
 }
 
 const roleDetails = `
@@ -28,7 +29,7 @@ export interface RoleListRole {
   id: string
   name: string
   description?: string
-  access?: string
+  access?: RoleAccessLevel
   site?: {
     id: string
   }
@@ -108,7 +109,7 @@ export interface FullRole {
   id: string
   name: string
   description?: string
-  access?: string
+  access?: RoleAccessLevel
   site?: {
     id: string
   }
