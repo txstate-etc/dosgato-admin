@@ -1,5 +1,15 @@
 import type { MutationResponse } from '$lib/api'
 import type { DialogPageProp } from '@dosgato/templating'
+import { DateTime } from 'luxon'
+import { schemaVersion } from '../schemaversion'
+
+/**
+ * The admin UI's schema version as an ISO string, for the API's `data (schemaversion:)` argument.
+ * Page data must be requested at the version this build's dialogs and templates expect, and the
+ * API migrates it on the way in and back out on save. Without this the UI would edit whatever
+ * shape the API happens to store, and its dialogs could write fields the stored shape does not use.
+ */
+export const schemaVersionISO = DateTime.fromFormat(schemaVersion, 'yyyyLLddHHmmss', { zone: 'utc' }).toISO()!
 
 export const VERSION_DETAILS = `
 version
@@ -31,7 +41,7 @@ export const EDITOR_PAGE_DETAILS = `
 id
 path
 name
-data
+data (schemaversion: "${schemaVersionISO}")
 title
 fallbackTitle
 published
