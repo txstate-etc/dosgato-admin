@@ -1,1 +1,1 @@
-export const schemaVersion = '20230227085049'
+export const schemaVersion = new Date().toISOString().replace(/\D/g, '').slice(0, 14)
