@@ -86,6 +86,8 @@
   let foundUser: AddSiteTeamMemberUser | undefined
 
   async function onAddUser (state: AddUserInput) {
+    const messages = await validateAddUser(state)
+    if (messages.some(m => m.type === 'error')) return { success: false, messages }
     const confirmed = await confirmationStore.confirm({
       id: 'DashboardDetailPage-modal-adduser-confirm',
       title: 'Confirmation',
@@ -106,7 +108,7 @@
     const localMessages: Feedback[] = ensureRequiredNotNull(state, ['access'])
     if (isBlank(state.userId)) localMessages.push({ type: MessageType.ERROR, message: 'This field is required.', path: 'userId' })
     if (state.access === 'CONTRIBUTOR' && !state.roleIds?.length) {
-      localMessages.push({ type: MessageType.ERROR, message: 'This field is required.', path: 'roleIds' })
+      localMessages.push({ type: MessageType.ERROR, message: 'At least one role must be selected.', path: 'roleIds' })
     }
     if (isBlank(state.userId) || isNull(state.access)) {
       foundUser = undefined
