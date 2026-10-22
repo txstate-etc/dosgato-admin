@@ -392,7 +392,7 @@
               on:dragend={handleDragEnd}
             >
               <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- link.href is a pre-resolved URL from the subnav store -->
-              <a bind:this={subnavLinks[i]} class:selected href={link.href} on:keydown={link.movable ? handleSubnavKeydown(i) : undefined}>{#if link.icon}<Icon icon={link.icon} inline/>{/if} {link.label}</a>
+              <a bind:this={subnavLinks[i]} class:selected href={link.href} on:keydown={link.movable ? handleSubnavKeydown(i) : undefined}>{#if link.icon}<Icon icon={link.icon} inline/>{/if}<span class="label">{link.label}</span></a>
               {#if link.closeable}
                 <button type="button" class="reset" on:click={closeSubNav(i)}><Icon icon={closeThick} inline hiddenLabel="Close {link.label}" width="1.2em" /></button>
               {/if}
@@ -461,10 +461,10 @@
     margin: 0;
     list-style: none;
     display: flex;
-    flex-wrap: wrap;
   }
   ul.topnav {
     justify-content: center;
+    flex-wrap: wrap;
   }
   ul.topnav.hide {
     display: none;
@@ -525,6 +525,7 @@
     position: relative;
     width: 100%;
     display: flex;
+    flex-wrap: nowrap;
     align-items: flex-end;
     gap: 4px;
     background-color: #CCCED1;
@@ -533,15 +534,17 @@
   .subnav li {
     position: relative;
     white-space: nowrap;
+    /* override flex's min-width: auto (= full label width) so tabs can shrink and ellipsize */
+    min-width: 1.5em;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
     color: #767676;
   }
   .subnav li.closeable {
-    min-width: 1.5em;
     flex-basis: max-content;
   }
   .subnav li.overflow {
+    flex-shrink: 0;
     min-width: 2em;
     display: flex;
     align-items: center;
@@ -559,11 +562,19 @@
     align-items: center;
     padding: 0.5em;
     text-decoration: none;
-    text-overflow: ellipsis;
     overflow: hidden;
     color: inherit;
     width: 100%;
     height: 28px;
+  }
+  .subnav li a .label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .subnav li a :global(svg) {
+    flex-shrink: 0;
   }
   .subnav li.closeable a {
    padding-right: 2.2em;
