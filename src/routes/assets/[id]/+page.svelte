@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FileIcon, FormDialog, bytesToHuman, Icon, FieldText } from '@dosgato/dialog'
+  import { FileIcon, FormDialog, bytesToHuman, Icon, FieldText, FieldTextArea } from '@dosgato/dialog'
   import arrowSquareOut from '@iconify-icons/ph/arrow-square-out'
   import refreshIcon from '@iconify-icons/mdi/refresh'
   import clipboardText from '@iconify-icons/ph/clipboard-text'
@@ -250,7 +250,7 @@
   <UploadUI title="Upload new file for {asset.path}" helptext="Uploading a new file will replace this asset everywhere it appears." uploadPath="{environmentConfig.apiBase}/assets/replace/{asset.id}" maxFiles={1} on:escape={onModalEscape} on:saved={onUploadSaved} />
 {:else if modal === 'edit' && (!!uiConfig.assetMeta || !!asset.box)}
   <FormDialog icon={fileMagnifyingGlass} title="Edit Asset Details" submit={onMetaSubmit} validate={onMetaValidate} preload={asset.data.meta ?? {}} on:escape={onModalEscape} on:saved={onMetaSaved} let:data {chooserClient} {dataChooserClient}>
-    <FieldText path="altText" label="Alternate Text" helptext="Alternative text for the asset, used for accessibility purposes." conditional={!!asset.box}/>
+    <FieldTextArea path="altText" label="Alternate Text" helptext="Alternative text for the asset, used for accessibility purposes." rows={3} conditional={!!asset.box} />
     {#if uiConfig.assetMeta}<svelte:component this={uiConfig.assetMeta.dialog} {asset} {data} {environmentConfig} />{/if}
   </FormDialog>
 {:else if modal === 'preview' && image}
