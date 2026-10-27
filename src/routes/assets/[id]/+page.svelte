@@ -1,6 +1,7 @@
 <script lang="ts">
   import { FileIcon, FormDialog, bytesToHuman, Icon, FieldText, FieldTextArea } from '@dosgato/dialog'
   import arrowSquareOut from '@iconify-icons/ph/arrow-square-out'
+  import infoIcon from '@iconify-icons/ph/info'
   import refreshIcon from '@iconify-icons/mdi/refresh'
   import clipboardText from '@iconify-icons/ph/clipboard-text'
   import downloadIcon from '@iconify-icons/ph/download'
@@ -250,7 +251,19 @@
   <UploadUI title="Upload new file for {asset.path}" helptext="Uploading a new file will replace this asset everywhere it appears." uploadPath="{environmentConfig.apiBase}/assets/replace/{asset.id}" maxFiles={1} on:escape={onModalEscape} on:saved={onUploadSaved} />
 {:else if modal === 'edit' && (!!uiConfig.assetMeta || !!asset.box)}
   <FormDialog icon={fileMagnifyingGlass} title="Edit Asset Details" submit={onMetaSubmit} validate={onMetaValidate} preload={asset.data.meta ?? {}} on:escape={onModalEscape} on:saved={onMetaSaved} let:data {chooserClient} {dataChooserClient}>
-    <FieldTextArea path="altText" label="Alternate Text" helptext="Alternative text for the asset, used for accessibility purposes." rows={3} conditional={!!asset.box} />
+    {#if asset.box}
+      <div class="field-guidance" role="note" aria-labelledby="asset-meta-guidance-title">
+        <span class="field-guidance-icon"><Icon icon={infoIcon} width="1.5em" /></span>
+        <div>
+          <p id="asset-meta-guidance-title" class="field-guidance-title">Alternate Text vs. Description</p>
+          <dl>
+            <div><dt>Alternate Text</dt><dd>Read aloud by screen readers and shown if the image cannot load. Describe what the image shows or means in one or two sentences. Leave it blank only when the image is purely decorative.</dd></div>
+            {#if uiConfig.assetMeta}<div><dt>Description</dt><dd>Longer, optional notes about the asset, such as its subject, source, or intended use. It is not a substitute for alternate text and is not used by assistive technology in its place.</dd></div>{/if}
+          </dl>
+        </div>
+      </div>
+    {/if}
+    <FieldTextArea path="altText" label="Alternate Text" helptext="What the image shows or means, in one or two sentences. Screen readers read this aloud. Leave blank only if the image is purely decorative." rows={3} conditional={!!asset.box} />
     {#if uiConfig.assetMeta}<svelte:component this={uiConfig.assetMeta.dialog} {asset} {data} {environmentConfig} />{/if}
   </FormDialog>
 {:else if modal === 'preview' && image}
@@ -387,5 +400,43 @@
     color: #A80000;
     text-align: center;
     padding: 1em;
+  }
+  .field-guidance {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75em;
+    margin-bottom: 1em;
+    padding: 0.75em 1em;
+    border-left: 4px solid var(--dosgato-info-border, #0A6EBD);
+    background-color: var(--dosgato-info-bg, #EEF5FB);
+    border-radius: 0 4px 4px 0;
+    font-size: 0.9em;
+  }
+  .field-guidance-icon {
+    color: var(--dosgato-info-border, #0A6EBD);
+    flex-shrink: 0;
+  }
+  .field-guidance-title {
+    margin: 0 0 0.5em 0;
+    font-weight: bold;
+  }
+  .field-guidance dl {
+    margin: 0;
+  }
+  .field-guidance dl > div {
+    padding: 0;
+    border-bottom: 0;
+  }
+  .field-guidance dl > div + div {
+    margin-top: 0.5em;
+  }
+  .field-guidance dt {
+    display: block;
+    font-weight: bold;
+    padding: 0;
+  }
+  .field-guidance dd {
+    display: block;
+    margin: 0;
   }
 </style>
