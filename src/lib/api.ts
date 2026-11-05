@@ -1,6 +1,6 @@
 import { resolve } from '$app/paths'
 import type { TagGroup } from '@dosgato/dialog'
-import type { AssetFolderLink, AssetLink, ComponentData, DataData, DataFolderLink, DataLink, PageData, PageLink } from '@dosgato/templating'
+import { matchArea, type AssetFolderLink, type AssetLink, type ComponentData, type DataData, type DataFolderLink, type DataLink, type PageData, type PageLink } from '@dosgato/templating'
 import { error } from '@sveltejs/kit'
 import { MessageType } from '@txstate-mws/svelte-forms'
 import { Cache, get, isBlank, isNotBlank, keyby, pick, sortby, toArray, unique } from 'txstate-utils'
@@ -622,7 +622,8 @@ class API {
 
   async getAvailableComponents (templateKey: string, area: string, pageId: string) {
     const { templates } = await this.query<GetAvailableComponents>(GET_AVAILABLE_COMPONENTS, { templateKey, pageId })
-    return templates[0]?.areas.find(a => a.name === area)?.availableComponents.filter(ac => ac.permissions.useOnPage).map(ac => ({ ...templateRegistry.getTemplate(ac.key)!, useOnPageWithoutRole: ac.permissions.useOnPageWithoutRole })) ?? []
+    const t = templates[0]
+    return matchArea(area, keyby(t?.areas ?? [], 'name'), keyby(t?.dynamicAreas ?? [], 'name'))?.availableComponents.filter(ac => ac.permissions.useOnPage).map(ac => ({ ...templateRegistry.getTemplate(ac.key)!, useOnPageWithoutRole: ac.permissions.useOnPageWithoutRole })) ?? []
   }
 
   async getDataRootsByTemplateKey (key: string) {

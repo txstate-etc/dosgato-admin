@@ -140,6 +140,17 @@ export const GET_AVAILABLE_COMPONENTS = `
           }
         }
       }
+      dynamicAreas {
+        name
+        availableComponents {
+          key
+          name
+          permissions {
+            useOnPage (pageId: $pageId)
+            useOnPageWithoutRole (pageId: $pageId)
+          }
+        }
+      }
     }
   }
 `
@@ -157,6 +168,7 @@ export interface TemplateArea {
 export interface GetAvailableComponents {
   templates: [{
     areas: TemplateArea[]
+    dynamicAreas: TemplateArea[]
   }]
 }
 

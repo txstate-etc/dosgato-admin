@@ -1,4 +1,4 @@
-import type { ComponentData, UITemplate, UITemplateData } from '@dosgato/templating'
+import { matchArea, type ComponentData, type UITemplate, type UITemplateData } from '@dosgato/templating'
 import tags from '@iconify-icons/mdi/tags'
 import { Cache, rescue } from 'txstate-utils'
 import { api } from '$lib'
@@ -6,7 +6,7 @@ import UserTagsDialog from './components/UserTagsDialog.svelte'
 import { uiConfig } from '../local/index.js'
 
 const templateCache = new Cache(async (_, templateMap: Map<string, EnhancedUITemplate>) => {
-  const { templates } = await api.query<{ templates: { key: string, name: string, templateProperties: any, displayCategory?: string, global?: boolean, nopublish: boolean, areas: { name: string, availableComponents: { key: string }[] }[] }[] }>('query enhanceTemplateInfo { templates { key name templateProperties displayCategory global nopublish areas { name availableComponents { key } } } }')
+  const { templates } = await api.query<{ templates: { key: string, name: string, templateProperties: any, displayCategory?: string, global?: boolean, nopublish: boolean, areas: { name: string, availableComponents: { key: string }[] }[], dynamicAreas: { name: string, availableComponents: { key: string }[] }[] }[] }>('query enhanceTemplateInfo { templates { key name templateProperties displayCategory global nopublish areas { name availableComponents { key } } dynamicAreas { name availableComponents { key } } } }')
   for (const t of templates) {
     const old = templateMap.get(t.key)
     if (old) {
@@ -14,10 +14,12 @@ const templateCache = new Cache(async (_, templateMap: Map<string, EnhancedUITem
       old.templateProperties = t.templateProperties
       old.displayCategory = t.displayCategory ?? 'Standard'
       old.areas = new Map()
+      old.dynamicAreas = new Map()
       ;(old as any).global = t.global
       old.nopublish = t.nopublish
       old.genDefaultContent = typeof old.defaultContent === 'undefined' ? () => ({}) : (typeof old.defaultContent === 'object' ? () => old.defaultContent! : old.defaultContent)
       for (const a of t.areas) old.areas.set(a.name, { name: a.name, availableComponents: new Set(a.availableComponents.map(ac => ac.key)) })
+      for (const a of t.dynamicAreas) old.dynamicAreas.set(a.name, { name: a.name, availableComponents: new Set(a.availableComponents.map(ac => ac.key)) })
     }
   }
 })
@@ -31,6 +33,7 @@ interface UITemplateEnhancement {
 export interface EnhancedUITemplate extends UITemplate, UITemplateEnhancement {
   displayCategory?: string
   areas: Map<string, { name: string, availableComponents: Set<string> }>
+  dynamicAreas: Map<string, { name: string, availableComponents: Set<string> }>
   genDefaultContent: (data: ComponentData) => Record<string, ComponentData[]>
 }
 
@@ -52,6 +55,12 @@ class TemplateRegistry {
 
   getTemplate (key: string) {
     return this.templateMap.get(key)
+  }
+
+  getArea (templateKey: string, areaName: string) {
+    const t = this.templateMap.get(templateKey)
+    if (!t) return undefined
+    return matchArea(areaName, t.areas, t.dynamicAreas)
   }
 
   getDataTemplate (key: string) {

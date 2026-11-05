@@ -134,13 +134,13 @@ class PageEditorStore extends Store<IPageEditorStore> {
       const cpath = parts.slice(0, -2).join('.')
       const aname = parts[parts.length - 1]
       const tkey = get<ComponentData>(pageData, cpath).templateKey
-      return !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(templateKey)
+      return !!templateRegistry.getArea(tkey, aname)?.availableComponents?.has(templateKey)
     } else {
       const parts = to.split('.')
       const cpath = parts.slice(0, -3).join('.')
       const aname = parts[parts.length - 2]
       const tkey = get<ComponentData>(pageData, cpath).templateKey
-      return !!templateRegistry.getTemplate(tkey)?.areas.get(aname)?.availableComponents?.has(templateKey)
+      return !!templateRegistry.getArea(tkey, aname)?.availableComponents?.has(templateKey)
     }
   }
 
@@ -186,7 +186,7 @@ class PageEditorStore extends Store<IPageEditorStore> {
   async addComponentShowModal (path: string, refreshIframe: () => Promise<void>, disableAddToTop: boolean, addToTop?: boolean) {
     const active = this.getActiveState()
     if (!active) return
-    const m = path.match(/(.*)\.?areas\.(\w+)$/)
+    const m = path.match(/(.*)\.?areas\.([\w-]+)$/)
     if (!m) return
     const [_, componentPath, area] = Array.from(m)
     const parentData = isBlank(componentPath) ? active.editor.page.data : get<ComponentData>(active.editor.page.data, componentPath)
