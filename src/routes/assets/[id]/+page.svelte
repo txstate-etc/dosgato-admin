@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FileIcon, FormDialog, bytesToHuman, Icon, FieldText, FieldTextArea } from '@dosgato/dialog'
+  import { FileIcon, FormDialog, bytesToHuman, Icon, FieldTextArea } from '@dosgato/dialog'
   import arrowSquareOut from '@iconify-icons/ph/arrow-square-out'
   import refreshIcon from '@iconify-icons/mdi/refresh'
   import clipboardText from '@iconify-icons/ph/clipboard-text'
@@ -250,14 +250,8 @@
   <UploadUI title="Upload new file for {asset.path}" helptext="Uploading a new file will replace this asset everywhere it appears." uploadPath="{environmentConfig.apiBase}/assets/replace/{asset.id}" maxFiles={1} on:escape={onModalEscape} on:saved={onUploadSaved} />
 {:else if modal === 'edit' && (!!uiConfig.assetMeta || !!asset.box)}
   <FormDialog icon={fileMagnifyingGlass} title="Edit Asset Details" submit={onMetaSubmit} validate={onMetaValidate} preload={asset.data.meta ?? {}} on:escape={onModalEscape} on:saved={onMetaSaved} let:data {chooserClient} {dataChooserClient}>
-    {#if uiConfig.assetMeta}
-      <!-- the local dialog decides where the alternate text field goes (and may add guidance around it) via its default slot -->
-      <svelte:component this={uiConfig.assetMeta.dialog} {asset} {data} {environmentConfig}>
-        <FieldTextArea path="altText" label="Alternate Text" helptext="What the image shows or means, in one or two sentences. Screen readers read this aloud. Leave blank only if the image is purely decorative." rows={3} conditional={!!asset.box} />
-      </svelte:component>
-    {:else}
-      <FieldTextArea path="altText" label="Alternate Text" helptext="What the image shows or means, in one or two sentences. Screen readers read this aloud. Leave blank only if the image is purely decorative." rows={3} conditional={!!asset.box} />
-    {/if}
+    <FieldTextArea path="altText" label="Alternate Text" helptext="What the image shows or means, in one or two sentences. Screen readers read this aloud. Leave blank only if the image is purely decorative." rows={3} conditional={!!asset.box} />
+    {#if uiConfig.assetMeta}<svelte:component this={uiConfig.assetMeta.dialog} {asset} {data} {environmentConfig} />{/if}
   </FormDialog>
 {:else if modal === 'preview' && image}
   <Modal escapable on:escape={onModalEscape}>

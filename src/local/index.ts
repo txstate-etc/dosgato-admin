@@ -5,6 +5,7 @@ import { buildingDataTemplate } from './building.js'
 import { colorDataTemplate } from './colordata.js'
 import { linkTestComponentTemplate } from './linkcomponent.js'
 import { dynamicOnlyComponentTemplate } from './dynamiconly.js'
+import { ownBarComponentTemplate } from './ownbar.js'
 import { panelTemplate } from './panel.js'
 import { quoteTemplate } from './quote.js'
 import { pageTemplate1 } from './pagetemplate1.js'
@@ -29,6 +30,7 @@ export const uiConfig: UIConfig = {
     colorDataTemplate,
     linkTestComponentTemplate,
     dynamicOnlyComponentTemplate,
+    ownBarComponentTemplate,
     quoteTemplate,
     HorizontalRule,
     panelTemplate,

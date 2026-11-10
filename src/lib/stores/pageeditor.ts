@@ -25,12 +25,13 @@ export interface PageEditorVersionPreview {
 
 export interface EditorState {
   page: PageEditorPage
-  modal?: 'edit' | 'create' | 'delete' | 'move' | 'properties' | 'versions' | 'editschedule' | 'viewURL'
+  modal?: 'edit' | 'create' | 'delete' | 'restore' | 'move' | 'properties' | 'versions' | 'editschedule' | 'viewURL'
   selectedPath?: string
   selectedLabel?: string
   selectedMaxReached?: boolean
   selectedMayDelete?: boolean
   selectedMayEdit?: boolean
+  selectedCustomize?: { customized: boolean }
   state?: any
   cutAllowed?: boolean
   copyAllowed?: boolean
@@ -69,10 +70,12 @@ class PageEditorStore extends Store<IPageEditorStore> {
     if (v.active) {
       const editorState = v.editors[v.active]
       if (editorState) {
-        const editBarSelected = editorState.selectedPath && /\.\d+$/.test(editorState.selectedPath)
+        // a customized customize bar's path also ends in an index, but customize bars never cut, copy or paste
+        const customizeSelected = !!editorState.selectedCustomize
+        const editBarSelected = !customizeSelected && editorState.selectedPath && /\.\d+$/.test(editorState.selectedPath)
         editorState.copyAllowed = !!editBarSelected
         editorState.cutAllowed = !!editBarSelected
-        editorState.pasteAllowed = !!editorState.selectedPath && !this.pasteDisabled(editorState.selectedPath, v)
+        editorState.pasteAllowed = !customizeSelected && !!editorState.selectedPath && !this.pasteDisabled(editorState.selectedPath, v)
       }
     }
     super.set(v)
@@ -253,12 +256,25 @@ class PageEditorStore extends Store<IPageEditorStore> {
     })
   }
 
+  /**
+   * Restore Default removes the component that customized an area, so the area's default
+   * content shows again. Submitting uses removeComponentSubmit.
+   */
+  restoreDefaultShowModal (path: string) {
+    this.logActionShown('Restore Default', path)
+    this.updateEditorState(editorState => {
+      const data = get<ComponentData>(editorState.page.data, path)
+      return { ...editorState, modal: 'restore', editing: { path, data, templateKey: data.templateKey }, creating: undefined }
+    })
+  }
+
+  /** submits both the delete modal and the restore default modal */
   async removeComponentSubmit () {
     const active = this.getActiveState()
     if (!active?.editor.editing) return
     const [page, editing] = [active.editor.page, active.editor.editing]
     const resp = await api.removeComponent(active.pageId, page.version.version, page.data, editing.path)
-    this.logActionResponse(resp, 'removeComponent', editing.path, { templateKey: editing.templateKey, name: active.editor.selectedLabel })
+    this.logActionResponse(resp, active.editor.modal === 'restore' ? 'restoreDefault' : 'removeComponent', editing.path, { templateKey: editing.templateKey, name: active.editor.selectedLabel })
     if (resp.success) {
       this.updateEditorState(editorState => ({ ...editorState, page: resp.page, modal: undefined, editing: undefined, creating: undefined, clipboardPath: undefined }), true)
     } else {
@@ -323,9 +339,9 @@ class PageEditorStore extends Store<IPageEditorStore> {
     this.updateEditorState(editorState => ({ ...editorState, modal: undefined, editing: undefined, creating: undefined }))
   }
 
-  select (path?: string, label?: string, maxreached?: boolean, mayDelete?: boolean, mayEdit?: boolean) {
+  select (path?: string, label?: string, maxreached?: boolean, mayDelete?: boolean, mayEdit?: boolean, customize?: { customized: boolean }) {
     // TODO: Determine if we want to log every component select.
-    this.updateEditorState(editorState => ({ ...editorState, selectedPath: path, selectedLabel: label, selectedMaxReached: !!maxreached, selectedMayDelete: !!mayDelete, selectedMayEdit: !!mayEdit }))
+    this.updateEditorState(editorState => ({ ...editorState, selectedPath: path, selectedLabel: label, selectedMaxReached: !!maxreached, selectedMayDelete: !!mayDelete, selectedMayEdit: !!mayEdit, selectedCustomize: path ? customize : undefined }))
   }
 
   cutComponent (path?: string) {

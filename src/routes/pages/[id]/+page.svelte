@@ -7,6 +7,7 @@
   import clipboardText from '@iconify-icons/ph/clipboard-text'
   import copyIcon from '@iconify-icons/ph/copy'
   import copySimple from '@iconify-icons/ph/copy-simple'
+  import eraser from '@iconify-icons/ph/eraser'
   import eye from '@iconify-icons/ph/eye'
   import fileX from '@iconify-icons/ph/file-x'
   import alarmFill from '@iconify-icons/ph/alarm-fill'
@@ -65,6 +66,17 @@
         ]
       }
       return [previewGroup, editGroup]
+    } else if ($editorStore.selectedCustomize) {
+      // editing mode, customize bar selected; it can't be deleted, moved, cut, copied or pasted into
+      if (!$editorStore.selectedCustomize.customized) {
+        return [previewGroup,
+          { label: 'Customize', icon: pencilIcon, onClick: () => { void pageEditorStore.addComponentShowModal(selectedPath, refreshIframe, true) } }
+        ]
+      }
+      return [previewGroup,
+        { label: 'Edit', icon: pencilIcon, disabled: !$editorStore.selectedMayEdit, onClick: () => pageEditorStore.editComponentShowModal(selectedPath) },
+        { label: 'Restore Default', icon: eraser, onClick: () => pageEditorStore.restoreDefaultShowModal(selectedPath) }
+      ]
     } else if (/\.\d+$/.test(selectedPath)) {
       // editing mode, edit bar selected
       return [previewGroup,
@@ -89,7 +101,7 @@
     }
   }
 
-  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean, mayEdit?: boolean, editbarpaths?: string[], buttonIndex?: number, disableAddToTop?: boolean, newbarpaths?: { path: string, maxreached: boolean }[] }) {
+  function onMessage (message: { action: string, path: string, allpaths?: string[], from?: string, to?: string, scrollTop?: number, pageId?: string, label?: string, maxreached?: boolean, state?: any, mayDelete?: boolean, mayEdit?: boolean, customize?: boolean, customized?: boolean, editbarpaths?: string[], buttonIndex?: number, disableAddToTop?: boolean, newbarpaths?: { path: string, maxreached: boolean }[] }) {
     if (message.action === 'scroll') {
       $editorStore.scrollY = message.scrollTop!
       return
@@ -111,9 +123,11 @@
       }
       iframe.contentWindow?.postMessage({ movablePaths }, '*')
     } else if (message.action === 'select') {
-      pageEditorStore.select(message.path, message.label, message.maxreached, message.mayDelete, message.mayEdit)
+      pageEditorStore.select(message.path, message.label, message.maxreached, message.mayDelete, message.mayEdit, message.customize ? { customized: !!message.customized } : undefined)
     } else if (message.action === 'edit') {
       pageEditorStore.editComponentShowModal(message.path)
+    } else if (message.action === 'restore') {
+      pageEditorStore.restoreDefaultShowModal(message.path)
     } else if (message.action === 'cut') {
       handleCopyAndCut(true)
     } else if (message.action === 'copy') {
@@ -319,7 +333,7 @@
     <VersionView version={$editorStore.previewing.version} sidebyside={!!$editorStore.previewing?.fromVersion} latestVersion={$editorStore.page.version.version} publishedVersion={$editorStore.page.versions[0]?.version} page={$editorStore.page} on:cancel={() => pageEditorStore.cancelPreview()} on:restore={e => pageEditorStore.initRestore(e.detail)}/>
   </div>
 {:else}
-  <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath, $editorStore.previewing, $pageStore)} on:returnfocus={onReturnFocus}>
+  <ActionPanel bind:panelelement actionsTitle={$editorStore.selectedPath ? $editorStore.selectedLabel ?? '' : 'Page Actions'} actions={getActions($actionsStore.selectedPath, $editorStore.previewing, $pageStore, $editorStore.selectedCustomize)} on:returnfocus={onReturnFocus}>
     <div class="page-bar"><span>{$editorStore.page.path}</span>
       {#if !$editorStore.previewing || allowEditorMaxWidth}
         <div class="page-bar-controls">
@@ -415,6 +429,11 @@
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
   <Dialog icon={template?.icon} title="Delete {template?.name ?? 'Content'}" cancelText="Cancel" continueText="Delete" on:escape={cancelModal} on:continue={onDeleteComponentSubmit}>
     Are you sure you want to delete the {template?.name ?? 'unrecognized content'}?
+  </Dialog>
+{:else if $editorStore.modal === 'restore' && $editorStore.editing}
+  {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
+  <Dialog icon={eraser} title="Restore Default Content" cancelText="Cancel" continueText="Restore" on:escape={cancelModal} on:continue={onDeleteComponentSubmit}>
+    This will remove your customized {template?.name ?? 'content'} and show the default content again.
   </Dialog>
 {:else if $editorStore.modal === 'properties' && $editorStore.editing}
   {@const template = templateRegistry.getTemplate($editorStore.editing.templateKey)}
