@@ -50,8 +50,12 @@ class SubNavStore extends Store<ISubNavStore> {
       for (let i = active; i < current.links.length; i++) {
         if (current.links[i].href !== linkToMove.href) newLinks.push(current.links[i])
       }
+      // Deliberately do NOT change v.active here. Only init() (called from a section's layout load at the
+      // start of navigation) decides which section is shown. open() may be called late by an async load or
+      // refresh that finishes after the user has already navigated to another section, and it must not
+      // drag the subnav back to its own section when that happens.
       return {
-        active: section,
+        ...v,
         sections: {
           ...v.sections,
           [section]: {

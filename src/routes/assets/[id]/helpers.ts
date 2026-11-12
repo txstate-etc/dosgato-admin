@@ -59,7 +59,9 @@ export async function getAssetDetail (id: string) {
       }
     }
   `, { id })
-  const asset = assets[0]
-  if (asset) subnavStore.open('assets', { href: resolve('/assets/[id]', { id: asset.id }), label: asset.filename, icon: iconForMime(asset.mime) })
-  return asset
+  return assets[0]
+}
+
+export function openAssetSubnav (asset: AssetDetail) {
+  subnavStore.open('assets', { href: resolve('/assets/[id]', { id: asset.id }), label: asset.filename, icon: iconForMime(asset.mime) })
 }

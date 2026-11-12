@@ -12,6 +12,7 @@
   import xLight from '@iconify-icons/ph/x-light'
   import { Modal } from '@txstate-mws/svelte-components'
   import { omit, roundTo } from 'txstate-utils'
+  import { onDestroy } from 'svelte'
   import { afterNavigate } from '$app/navigation'
   import { resolve } from '$app/paths'
   import {
@@ -86,16 +87,20 @@
 
   let timer: ReturnType<typeof setTimeout>
   let refreshes = 0
-  function watchForResizes () {
+  function watchForResizes (reset = true) {
     clearTimeout(timer)
-    refreshes = 1
+    if (reset) refreshes = 1
     if (!image) return
     timer = setTimeout(async () => {
       refreshes += 1
       if (image && refreshes <= 12 && asset.resizes.length < Math.floor(Math.log2(image.width) - Math.log2(100) + 1) * 2) {
+        const id = asset.id
+        const refreshed = await getAssetDetail(id)
+        // the user may have navigated to another asset (or away entirely) while we were waiting
+        if (destroyed || id !== asset.id || !refreshed) return
         // eslint-disable-next-line svelte/no-reactive-reassign -- intentional local override to refresh asset data while resizes generate
-        asset = await getAssetDetail(asset.id)
-        watchForResizes()
+        asset = refreshed
+        watchForResizes(false)
       } else {
         refreshes = 0
       }
@@ -110,7 +115,15 @@
     return buttons
   }
 
+  let destroyed = false
+  onDestroy(() => {
+    destroyed = true
+    clearTimeout(timer)
+  })
+
   afterNavigate(() => {
+    clearTimeout(timer)
+    refreshes = 0
     assetReferencesPending = false
     assetReferences = undefined
     assetReferencesIndirect = undefined
